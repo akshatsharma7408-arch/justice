@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Search, ArrowRight, SlidersHorizontal, ArrowUpRight, Sparkles, Loader2 } from 'lucide-react';
+import { Search, ArrowRight, ArrowUpRight, Sparkles, SlidersHorizontal, Scale } from 'lucide-react';
 import { LANDMARK_PRECEDENTS } from '../data/legalCorpus';
 import { searchPrecedentsWithBackend } from '../config/gemini';
 
@@ -78,43 +78,47 @@ export default function UniversalSearch({ onSelectCaseForCitator }) {
   };
 
   return (
-    <div className="module-container">
-      {/* Editorial Header Section */}
-      <div className="editorial-hero-section">
-        <div className="editorial-meta-label">COLLECTION 01 / SEMANTIC JURISPRUDENCE &bull; FASTAPI RETRIEVAL</div>
-        <h1 className="hero-editorial-title">Universal Search</h1>
-        <p className="hero-editorial-subtitle">
-          Natural language neural retrieval engineered for Indian constitutional law and commercial precedents. 
-          Powered by Gemini 3.8 Flash HyDE synthesis and dual-encoder InLegalBERT retrieval through FastAPI.
+    <div className="workspace-module-pane">
+      {/* Module Workspace Header */}
+      <div className="workspace-module-header">
+        <div className="module-breadcrumbs">
+          <span className="crumb-root">WORKSPACE</span>
+          <span className="crumb-sep">/</span>
+          <span className="crumb-leaf">UNIVERSAL SEARCH</span>
+        </div>
+        <h1 className="module-heading font-judicial">Universal Search</h1>
+        <p className="module-description">
+          Natural language jurisprudence retrieval across Indian Supreme Court and High Court precedents.
+          Synthesized with Gemini 3.8 Flash HyDE reasoning and dual-encoder InLegalBERT embeddings.
         </p>
 
-        {/* Minimalist Stark Search Box */}
-        <form onSubmit={handleSearchSubmit} className="editorial-search-bar">
-          <div className="search-input-inner">
-            <Search className="search-icon-stark" size={18} />
+        {/* Clean Workspace Search Bar */}
+        <form onSubmit={handleSearchSubmit} className="workspace-search-bar">
+          <div className="search-input-wrapper">
+            <Search className="search-input-icon" size={18} />
             <input
               type="text"
               className="search-input-field"
               value={query}
               onChange={(e) => setQuery(e.target.value)}
-              placeholder="Search legal issues, statutes, or doctrines in natural English..."
+              placeholder="Search legal doctrines, statutory questions, or case citations..."
             />
           </div>
           <button type="submit" className="btn-primary search-action-btn" disabled={isSearching}>
-            <span>{isSearching ? 'Synthesizing...' : 'Query Precedents'}</span>
-            <ArrowRight size={14} />
+            <span>{isSearching ? 'Synthesizing...' : 'Search Precedents'}</span>
+            <ArrowRight size={15} />
           </button>
         </form>
 
-        {/* Sample Queries as Minimalist Editorial Chips */}
-        <div className="sample-queries-strip">
-          <span className="queries-label">EXPLORE TOPICS:</span>
-          <div className="queries-buttons-wrap">
+        {/* Topic Suggestion Chips */}
+        <div className="search-topics-strip">
+          <span className="topics-label">POPULAR QUERIES:</span>
+          <div className="topics-list">
             {sampleQueries.map((q, idx) => (
               <button
                 key={idx}
                 type="button"
-                className="query-pill-minimal"
+                className="topic-chip"
                 onClick={() => handleSelectSampleQuery(q.text)}
               >
                 {q.label}
@@ -124,117 +128,156 @@ export default function UniversalSearch({ onSelectCaseForCitator }) {
         </div>
       </div>
 
-      {/* HyDE Ratio Decidendi Synthetic Preview (Editorial Blockquote) */}
+      {/* HyDE Ratio Decidendi Synthetic Preview Box */}
       {showHyde && (
-        <div className="editorial-hyde-box">
-          <div className="hyde-top-row">
-            <span className="editorial-meta-label">
-              HYPOTHETICAL JUDICIAL HOLDING &bull; GEMINI 3.8 FLASH HyDE RATIO
-            </span>
-            <button className="btn-dismiss-text" onClick={() => setShowHyde(false)}>DISMISS</button>
+        <div className="workspace-callout-card hyde-callout">
+          <div className="callout-header">
+            <div className="callout-title-wrap">
+              <Sparkles size={14} className="callout-icon" />
+              <span className="callout-title">GEMINI 3.8 FLASH HYDE RATIO DECIDENDI</span>
+            </div>
+            <button 
+              type="button" 
+              className="btn-text-subtle" 
+              onClick={() => setShowHyde(false)}
+            >
+              Dismiss
+            </button>
           </div>
-          <blockquote className="hyde-quote-text">
+          <blockquote className="hyde-quote font-judicial">
             "{hydeRatio}"
           </blockquote>
-          <div className="hyde-telemetry-meta">
-            <span>MODEL: <strong>gemini-3.8-flash (via FastAPI)</strong></span>
-            <span>&bull;</span>
-            <span>EMBEDDING: <strong>law-ai/InLegalBERT (768-dim)</strong></span>
-            <span>&bull;</span>
-            <span>SPARSE LEXICAL: <strong>BM25 + Article 141 NER</strong></span>
+          <div className="callout-footer-meta">
+            <span className="meta-tag">Model: <strong>gemini-3.8-flash</strong></span>
+            <span className="meta-sep">&bull;</span>
+            <span className="meta-tag">Encoder: <strong>InLegalBERT (768-dim)</strong></span>
+            <span className="meta-sep">&bull;</span>
+            <span className="meta-tag">Retrieval: <strong>HyDE Dense + BM25 Lexical</strong></span>
           </div>
         </div>
       )}
 
       {/* Filter and Control Bar */}
-      <div className="editorial-filter-bar">
-        <div className="filter-count-indicator">
-          <span>SHOWING</span>
-          <strong>{results.length}</strong>
-          <span>AUTHORITATIVE PRECEDENTS {isSearching && '(UPDATING...)'}</span>
+      <div className="workspace-filter-row">
+        <div className="filter-summary">
+          <span className="filter-count">{results.length}</span>
+          <span className="filter-label">
+            precedents retrieved {isSearching && '(updating...)'}
+          </span>
         </div>
 
-        <div className="editorial-filter-controls">
-          <div className="select-wrapper">
-            <label className="select-label">BENCH</label>
-            <select value={benchFilter} onChange={(e) => handleBenchChange(e.target.value)}>
+        <div className="filter-dropdowns">
+          <div className="dropdown-control">
+            <label className="dropdown-label">BENCH:</label>
+            <select 
+              value={benchFilter} 
+              onChange={(e) => handleBenchChange(e.target.value)}
+              className="workspace-select"
+            >
               <option value="ALL">All Benches</option>
               <option value="CONSTITUTION">Constitution Bench (5+ Judges)</option>
               <option value="DIVISION">Division Bench (2 Judges)</option>
             </select>
           </div>
 
-          <div className="select-wrapper">
-            <label className="select-label">FORUM</label>
-            <select value={courtFilter} onChange={(e) => handleCourtChange(e.target.value)}>
-              <option value="ALL">All Courts</option>
+          <div className="dropdown-control">
+            <label className="dropdown-label">COURT:</label>
+            <select 
+              value={courtFilter} 
+              onChange={(e) => handleCourtChange(e.target.value)}
+              className="workspace-select"
+            >
+              <option value="ALL">All Jurisdictions</option>
               <option value="Supreme Court of India">Supreme Court of India</option>
             </select>
           </div>
         </div>
       </div>
 
-      {/* Precedents Grid - Clean Editorial List */}
-      <div className="editorial-precedents-list">
-        {results.length === 0 ? (
-          <div className="editorial-empty-state">
-            <div className="empty-title">NO MATCHING PRECEDENTS</div>
-            <p className="empty-desc">No authorities match the selected bench criteria. Expand your query or select All Benches.</p>
+      {/* Precedents Card Results List */}
+      <div className="precedents-card-list">
+        {/* SKELETON LOADING STATE */}
+        {isSearching ? (
+          <div className="skeleton-cards-stack">
+            {[1, 2, 3].map((n) => (
+              <div key={n} className="skeleton-card">
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                  <div className="skeleton-line skeleton-shimmer" style={{ width: '40%' }} />
+                  <div className="skeleton-badge skeleton-shimmer" />
+                </div>
+                <div className="skeleton-title skeleton-shimmer" />
+                <div className="skeleton-line skeleton-shimmer" style={{ width: '25%' }} />
+                <div className="skeleton-block skeleton-shimmer" />
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '4px' }}>
+                  <div className="skeleton-line skeleton-shimmer" style={{ width: '30%' }} />
+                  <div className="skeleton-line skeleton-shimmer" style={{ width: '20%' }} />
+                </div>
+              </div>
+            ))}
+          </div>
+        ) : results.length === 0 ? (
+          <div className="workspace-empty-card">
+            <Scale size={32} className="empty-icon" />
+            <h3 className="empty-heading font-judicial">No matching precedents found</h3>
+            <p className="empty-text">
+              Try adjusting your bench or jurisdiction filters, or query using different legal doctrines.
+            </p>
           </div>
         ) : (
           results.map((precedent) => (
-            <article key={precedent.id} className="editorial-precedent-entry">
-              <div className="entry-header-row">
-                <div className="entry-meta-top">
-                  <span className="court-name">{precedent.court}</span>
-                  <span className="meta-sep">/</span>
-                  <span className="bench-name">{precedent.benchType} ({precedent.benchSize} JUDGES)</span>
-                  <span className="meta-sep">/</span>
-                  <span className="decision-year">{precedent.decisionYear}</span>
+            <article key={precedent.id} className="precedent-result-card">
+              {/* Meta Row: Court, Bench, Year, Relevance, Status */}
+              <div className="card-meta-row">
+                <div className="card-meta-left">
+                  <span className="court-chip">{precedent.court}</span>
+                  <span className="meta-dot">&bull;</span>
+                  <span className="bench-chip">{precedent.benchType} ({precedent.benchSize} Judges)</span>
+                  <span className="meta-dot">&bull;</span>
+                  <span className="year-chip">{precedent.decisionYear}</span>
+
+                  {/* Subtle Relevance Indicator */}
                   {precedent.relevance_score && (
                     <>
-                      <span className="meta-sep">/</span>
-                      <span className="mono" style={{ fontSize: '11px', color: '#666' }}>
-                        SCORE: {Math.round(precedent.relevance_score * 100)}%
+                      <span className="meta-dot">&bull;</span>
+                      <span className="relevance-score-badge mono">
+                        Match {Math.round(precedent.relevance_score * 100)}%
                       </span>
                     </>
                   )}
                 </div>
 
-                <div className={`editorial-status-tag status-${(precedent.status || 'GREEN').toLowerCase()}`}>
-                  <span className="status-mark">
-                    {precedent.status === 'GREEN' && '●'}
-                    {precedent.status === 'YELLOW' && '▲'}
-                    {precedent.status === 'RED' && '✕'}
-                  </span>
-                  <span>{precedent.statusLabel || precedent.status}</span>
+                {/* Citator Status Pill */}
+                <div className={`status-pill status-${(precedent.status || 'GREEN').toLowerCase()}`}>
+                  <span className="status-dot-indicator" />
+                  <span className="status-pill-text">{precedent.statusLabel || precedent.status}</span>
                 </div>
               </div>
 
-              <div className="entry-title-row">
-                <h2 className="entry-case-title">{precedent.title}</h2>
-                <span className="entry-citation-code mono">{precedent.citation}</span>
+              {/* Case Title & Citation */}
+              <div className="card-title-row">
+                <h2 className="case-title-heading font-judicial">{precedent.title}</h2>
+                <span className="citation-code-badge mono">{precedent.citation}</span>
               </div>
 
-              {/* Statutes Cited */}
+              {/* Statutory Provisions Chips */}
               {precedent.statutes && (
-                <div className="entry-statutes-strip">
+                <div className="card-statutes-row">
                   {precedent.statutes.map((st, i) => (
-                    <span key={i} className="statute-mono-tag">{st}</span>
+                    <span key={i} className="statute-chip mono">{st}</span>
                   ))}
                 </div>
               )}
 
               {/* Ratio Decidendi */}
-              <div className="entry-ratio-block">
-                <div className="ratio-caption">RATIO DECIDENDI / LEGAL PRINCIPLE</div>
-                <p className="ratio-paragraph">"{precedent.ratioSummary}"</p>
+              <div className="card-ratio-box">
+                <div className="ratio-header-label">RATIO DECIDENDI / LEGAL PRINCIPLE</div>
+                <p className="ratio-text font-judicial">"{precedent.ratioSummary}"</p>
               </div>
 
-              {/* Footer / Actions */}
-              <div className="entry-footer-row">
-                <div className="coram-info">
-                  <span className="coram-label">CORAM:</span>
+              {/* Card Footer: Coram & Action */}
+              <div className="card-footer-row">
+                <div className="coram-details">
+                  <span className="coram-label">Coram:</span>
                   <span className="coram-names">
                     {precedent.judges ? precedent.judges.slice(0, 3).join(', ') : "Coram details in citator"}
                     {precedent.judges && precedent.judges.length > 3 && ` + ${precedent.judges.length - 3} others`}
@@ -243,7 +286,7 @@ export default function UniversalSearch({ onSelectCaseForCitator }) {
 
                 <button
                   type="button"
-                  className="btn-editorial-link"
+                  className="btn-card-action"
                   onClick={() => onSelectCaseForCitator(precedent)}
                 >
                   <span>Verify in Smart Citator</span>

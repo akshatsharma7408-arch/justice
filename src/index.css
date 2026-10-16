@@ -1,79 +1,82 @@
 /* ==========================================================================
-   JUSTICE — Editorial Design System (Zara-Inspired Minimalist Framework)
-   Strict Aesthetic Rules:
-   - Editorial Minimalism: No heavy bounding boxes, zero box-shadows, pure white spaces.
-   - Color Palette: Pure monochrome (#000000, #FFFFFF) with curated architectural grays (#111111, #767676, #E5E5E5, #F5F5F5).
-   - Typography: Sharp Editorial Serif (Playfair Display) for commanding headlines, clean Helvetica/Inter for high-legibility body.
-   - Visual Restraint: 0px border-radius, hairline borders, deliberate whitespace.
-   - Accessible UX: Generous readable font sizes (14px–16px body), high contrast ratios, non-overlapping layouts.
+   JUSTICE — Legal Research Workspace Design System
+   Theme: Warm paper background (#FAF8F4), white surfaces (#FFFFFF),
+   ink-navy text (#16213E), muted gray secondary, restrained deep saffron (#C2410C),
+   Fraunces serif headings, Inter body, 8px radius cards, clean border lines.
    ========================================================================== */
 
 :root {
-  /* Strict Monochrome & Neutral Palette */
-  --color-black: #000000;
-  --color-charcoal: #111111;
-  --color-gray-900: #1a1a1a;
-  --color-gray-800: #2d2d2d;
-  --color-gray-700: #4a4a4a;
-  --color-gray-600: #666666;
-  --color-gray-500: #767676;
-  --color-gray-400: #999999;
-  --color-gray-300: #cccccc;
-  --color-gray-200: #e5e5e5;
-  --color-gray-100: #f2f2f2;
-  --color-gray-50:  #f8f8f8;
-  --color-white: #ffffff;
+  /* Surface & Background Palette */
+  --bg-paper: #FAF8F4;
+  --bg-primary: #FAF8F4;
+  --bg-surface: #FFFFFF;
+  --bg-surface-hover: #FDFBF7;
+  --bg-subtle: #F4EFEA;
+  --bg-muted: #EBE5DC;
+  --bg-card: #FFFFFF;
+  --bg-card-hover: #FDFCF9;
 
-  /* Semantic UI Tokens */
-  --bg-primary: #ffffff;
-  --bg-surface: #ffffff;
-  --bg-surface-subtle: #f8f8f8;
-  --bg-card: #ffffff;
-  --bg-card-hover: #fafafa;
-  --bg-glass: rgba(255, 255, 255, 0.98);
+  /* Text & Ink Tokens */
+  --text-primary: #16213E;
+  --text-secondary: #5A6A85;
+  --text-muted: #8E9AA8;
+  --text-inverse: #FFFFFF;
 
-  /* Hairlines & Borders */
-  --border-hairline: #e5e5e5;
-  --border-light: #d1d1d1;
-  --border-medium: #767676;
-  --border-black: #000000;
+  /* Accent: Deep Saffron (Restrained for Primary Actions & Active States) */
+  --accent-saffron: #C2410C;
+  --accent-saffron-hover: #9A3412;
+  --accent-saffron-subtle: #FFF7ED;
+  --accent-saffron-border: #FFEDD5;
+  --accent-saffron-ring: rgba(194, 65, 12, 0.2);
 
-  /* Typography Colors */
-  --text-primary: #000000;
-  --text-secondary: #4a4a4a;
-  --text-muted: #767676;
-  --text-inverse: #ffffff;
+  /* Border & Hairlines */
+  --border-color: #E8E3DA;
+  --border-light: #EFEBE3;
+  --border-subtle: #E8E3DA;
+  --border-medium: #D1C9BE;
+  --border-hairline: #E8E3DA;
+  --border-hover: #C5BCB0;
 
-  /* Subtle Minimalist Status Annotations (Restrained & Elegant) */
-  --status-good-text: #111111;
-  --status-good-bg: #f2f2f2;
-  --status-good-border: #000000;
+  /* Legal Status Semantics (Good Law vs Overruled vs Caution) */
+  --status-good-text: #15803D;
+  --status-good-bg: #DCFCE7;
+  --status-good-border: #BBF7D0;
+  --status-good-dot: #16A34A;
 
-  --status-caution-text: #111111;
-  --status-caution-bg: #f5f5f5;
-  --status-caution-border: #767676;
+  --status-risk-text: #B91C1C;
+  --status-risk-bg: #FEE2E2;
+  --status-risk-border: #FECACA;
+  --status-risk-dot: #DC2626;
 
-  --status-risk-text: #111111;
-  --status-risk-bg: #f0f0f0;
-  --status-risk-border: #000000;
+  --status-caution-text: #B45309;
+  --status-caution-bg: #FEF3C7;
+  --status-caution-border: #FDE68A;
+  --status-caution-dot: #D97706;
 
-  /* High-Fashion Editorial Typography */
-  --font-serif: 'Playfair Display', Didot, 'Bodoni MT', Georgia, serif;
-  --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, 'Helvetica Neue', Arial, sans-serif;
+  /* Typography */
+  --font-serif: 'Fraunces', 'Source Serif 4', Georgia, 'Times New Roman', serif;
+  --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
   --font-mono: 'JetBrains Mono', Menlo, Consolas, monospace;
 
-  /* Zero Shadows & Zero Radius */
-  --shadow-none: none;
-  --shadow-subtle: 0 1px 3px rgba(0, 0, 0, 0.04);
-  --shadow-modal: 0 20px 40px rgba(0, 0, 0, 0.08);
+  /* Radii */
+  --radius-sm: 4px;
+  --radius-md: 8px;
+  --radius-lg: 12px;
+  --radius-full: 9999px;
 
-  --radius-none: 0px;
-  --radius-subtle: 0px;
+  /* Shadows (Calm & Restrained) */
+  --shadow-none: none;
+  --shadow-subtle: 0 1px 2px rgba(22, 33, 62, 0.04);
+  --shadow-card: 0 1px 3px rgba(22, 33, 62, 0.04), 0 1px 2px rgba(22, 33, 62, 0.02);
+  --shadow-card-hover: 0 4px 12px rgba(22, 33, 62, 0.06), 0 1px 3px rgba(22, 33, 62, 0.02);
+  --shadow-dropdown: 0 8px 24px -4px rgba(22, 33, 62, 0.12), 0 2px 6px -1px rgba(22, 33, 62, 0.04);
+  --shadow-modal: 0 20px 48px -12px rgba(22, 33, 62, 0.22);
 
   /* Layout Constants */
-  --nav-height: 80px;
-  --transition-fast: 0.15s cubic-bezier(0.2, 0, 0, 1);
-  --transition-normal: 0.25s cubic-bezier(0.2, 0, 0, 1);
+  --topbar-height: 56px;
+  --sidebar-width: 260px;
+  --transition-fast: 0.15s ease-in-out;
+  --transition-normal: 0.22s ease-in-out;
 }
 
 /* ==========================================================================
@@ -88,215 +91,122 @@
 html, body {
   height: 100%;
   font-family: var(--font-sans);
-  background-color: var(--bg-primary);
+  background-color: var(--bg-paper);
   color: var(--text-primary);
-  line-height: 1.65;
-  font-size: 15px;
+  line-height: 1.6;
+  font-size: 14.5px;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   overflow-x: hidden;
-  letter-spacing: -0.01em;
 }
 
 #root {
   min-height: 100vh;
   display: flex;
   flex-direction: column;
-  background-color: #ffffff;
+  background-color: var(--bg-paper);
 }
 
-/* Custom Minimalist Scrollbar */
+/* Custom Workspace Scrollbar */
 ::-webkit-scrollbar {
-  width: 5px;
-  height: 5px;
+  width: 6px;
+  height: 6px;
 }
 ::-webkit-scrollbar-track {
-  background: #ffffff;
+  background: var(--bg-paper);
 }
 ::-webkit-scrollbar-thumb {
-  background: #d1d1d1;
-  border-radius: 0;
+  background: #D4CDC2;
+  border-radius: var(--radius-sm);
 }
 ::-webkit-scrollbar-thumb:hover {
-  background: #000000;
+  background: #B5ACA0;
 }
 
-/* Editorial Selection */
+/* Text Selection */
 ::selection {
-  background: #000000;
-  color: #ffffff;
+  background: var(--accent-saffron-subtle);
+  color: var(--accent-saffron);
 }
 
 /* Typography Hierarchy */
 h1, h2, h3, h4, .font-judicial {
   font-family: var(--font-serif);
-  font-weight: 500;
-  letter-spacing: -0.02em;
+  font-weight: 600;
+  letter-spacing: -0.015em;
   color: var(--text-primary);
 }
 
 .mono {
   font-family: var(--font-mono);
   font-size: 0.88em;
-  letter-spacing: -0.02em;
 }
 
-/* Editorial Uppercase Tracking Helper */
-.editorial-label {
-  font-family: var(--font-sans);
-  font-size: 0.72rem;
-  letter-spacing: 0.16em;
-  text-transform: uppercase;
-  font-weight: 600;
-  color: var(--text-muted);
-}
-
-/* Minimalist Clean Panels (Replaces bubbly glassmorphism) */
-.glass-panel {
-  background: #ffffff;
-  border: 1px solid var(--border-hairline);
-  border-radius: 0;
-  box-shadow: none;
-  transition: border-color var(--transition-fast);
-}
-
-.glass-panel-glow {
-  background: #ffffff;
-  border: 1px solid var(--color-black);
-  box-shadow: var(--shadow-modal);
-  border-radius: 0;
-}
-
-/* Editorial Buttons */
-.btn-primary {
-  background: var(--color-black);
-  color: var(--color-white);
-  border: 1px solid var(--color-black);
-  padding: 12px 24px;
-  border-radius: 0;
-  font-family: var(--font-sans);
-  font-weight: 600;
-  font-size: 0.78rem;
-  letter-spacing: 0.12em;
-  text-transform: uppercase;
+/* Button & Link Reset */
+button {
+  font-family: inherit;
   cursor: pointer;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: 8px;
-  transition: all var(--transition-fast);
-  box-shadow: none;
-}
-
-.btn-primary:hover {
-  background: #222222;
-  border-color: #222222;
-  color: #ffffff;
-  transform: none;
-}
-
-.btn-secondary {
-  background: #ffffff;
-  color: var(--color-black);
-  border: 1px solid var(--border-hairline);
-  padding: 11px 22px;
-  border-radius: 0;
-  font-family: var(--font-sans);
-  font-weight: 600;
-  font-size: 0.78rem;
-  letter-spacing: 0.12em;
-  text-transform: uppercase;
-  cursor: pointer;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: 8px;
-  transition: all var(--transition-fast);
-}
-
-.btn-secondary:hover {
-  border-color: var(--color-black);
-  background: #f8f8f8;
-}
-
-.btn-outline-gold,
-.btn-outline-forest {
+  border: none;
   background: transparent;
-  color: var(--color-black);
-  border: 1px solid var(--color-black);
-  padding: 8px 18px;
-  border-radius: 0;
-  font-family: var(--font-sans);
-  font-size: 0.76rem;
-  font-weight: 600;
-  letter-spacing: 0.1em;
-  text-transform: uppercase;
-  cursor: pointer;
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  transition: all var(--transition-fast);
 }
 
-.btn-outline-gold:hover,
-.btn-outline-forest:hover {
-  background: var(--color-black);
-  color: var(--color-white);
+input, select, textarea {
+  font-family: inherit;
+  color: var(--text-primary);
 }
 
-/* Subtle, Restrained Badges */
-.badge-flag {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  padding: 3px 8px;
-  border-radius: 0;
-  font-family: var(--font-sans);
-  font-size: 0.7rem;
-  font-weight: 600;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-  background: transparent;
-  border: 1px solid var(--color-black);
-  color: var(--color-black);
+/* ==========================================================================
+   Skeleton Shimmer Utilities
+   ========================================================================== */
+@keyframes skeleton-shimmer {
+  0% {
+    background-position: -200% 0;
+  }
+  100% {
+    background-position: 200% 0;
+  }
 }
 
-.badge-flag.green {
-  border-color: #111111;
-  background: #f5f5f5;
-  color: #111111;
+.skeleton-shimmer {
+  background: linear-gradient(
+    90deg,
+    #ECE7DE 0%,
+    #F6F3ED 50%,
+    #ECE7DE 100%
+  );
+  background-size: 200% 100%;
+  animation: skeleton-shimmer 1.5s ease-in-out infinite;
+  border-radius: var(--radius-sm);
 }
 
-.badge-flag.yellow {
-  border-color: #767676;
-  background: #fafafa;
-  color: #444444;
+.skeleton-card {
+  background-color: var(--bg-surface);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-md);
+  padding: 20px 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
 }
 
-.badge-flag.red {
-  border-color: #000000;
-  background: #000000;
-  color: #ffffff;
+.skeleton-line {
+  height: 14px;
+  border-radius: var(--radius-sm);
 }
 
-.badge-fawn, .badge-sage, .badge-beige {
-  background: transparent;
-  color: var(--text-muted);
-  border: 1px solid var(--border-hairline);
-  padding: 2px 8px;
-  border-radius: 0;
-  font-size: 0.7rem;
-  font-weight: 600;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
+.skeleton-badge {
+  height: 22px;
+  width: 80px;
+  border-radius: var(--radius-full);
 }
 
-/* Keyframes */
-@keyframes fadeIn {
-  from { opacity: 0; }
-  to { opacity: 1; }
+.skeleton-title {
+  height: 22px;
+  width: 65%;
+  border-radius: var(--radius-sm);
 }
 
-.animate-fade-in {
-  animation: fadeIn 0.2s ease-out forwards;
+.skeleton-block {
+  height: 72px;
+  border-radius: var(--radius-sm);
 }

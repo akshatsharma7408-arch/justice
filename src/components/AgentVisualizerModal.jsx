@@ -1,5 +1,5 @@
 import React from 'react';
-import { X } from 'lucide-react';
+import { X, Check, Cpu, Terminal, Sparkles } from 'lucide-react';
 
 export default function AgentVisualizerModal({ isOpen, onClose, sessionState, isRunning }) {
   if (!isOpen) return null;
@@ -21,28 +21,35 @@ export default function AgentVisualizerModal({ isOpen, onClose, sessionState, is
   ];
 
   return (
-    <div className="modal-backdrop" onClick={onClose}>
-      <div className="modal-dialog-large" onClick={(e) => e.stopPropagation()}>
+    <div className="agent-modal-overlay" onClick={onClose}>
+      <div className="agent-modal-dialog" onClick={(e) => e.stopPropagation()}>
         {/* Modal Header */}
-        <div className="modal-header">
-          <div className="modal-header-left">
-            <span className="editorial-meta-label">AUTONOMOUS WORKFLOW</span>
+        <div className="agent-modal-header">
+          <div className="modal-header-text">
+            <span className="modal-kicker-tag mono">AUTONOMOUS WORKFLOW</span>
             <h2 className="modal-title font-judicial">Agent Execution Trace</h2>
-            <div className="modal-subtitle">LangGraph StateGraph DAG Lifecycle & Execution Telemetry</div>
+            <div className="modal-subtitle">
+              LangGraph StateGraph DAG Lifecycle & Real-Time Telemetry
+            </div>
           </div>
 
-          <div className="modal-header-right">
-            <div className="telemetry-badge-mono">
+          <div className="modal-header-actions">
+            <div className="telemetry-chip mono">
               <span>TOKENS: <strong>{tokensUsed.toLocaleString()}</strong></span>
             </div>
-            <button className="btn-modal-close" onClick={onClose} aria-label="Close Inspector">
-              <X size={20} />
+            <button 
+              type="button" 
+              className="modal-close-icon-btn" 
+              onClick={onClose} 
+              aria-label="Close Inspector"
+            >
+              <X size={18} />
             </button>
           </div>
         </div>
 
-        {/* Agent Pipeline Track - Clean Minimalist Horizontal Sequence */}
-        <div className="editorial-pipeline-track">
+        {/* Agent Pipeline Track */}
+        <div className="agent-pipeline-track">
           {agentNodes.map((node, idx) => {
             const isCompleted = idx < currentStepIndex;
             const isCurrent = idx === currentStepIndex;
@@ -50,14 +57,14 @@ export default function AgentVisualizerModal({ isOpen, onClose, sessionState, is
             return (
               <div 
                 key={idx} 
-                className={`pipeline-step-unit ${isCompleted ? 'completed' : ''} ${isCurrent ? 'active' : ''}`}
+                className={`pipeline-node-item ${isCompleted ? 'completed' : ''} ${isCurrent ? 'active' : ''}`}
               >
-                <div className="step-number-box">
-                  {isCompleted ? '✓' : `0${idx + 1}`}
+                <div className="node-number-bubble">
+                  {isCompleted ? <Check size={11} /> : `0${idx + 1}`}
                 </div>
-                <div className="step-info-block">
-                  <div className="step-name-text">{node.name}</div>
-                  <div className="step-role-text">{node.role}</div>
+                <div className="node-details">
+                  <div className="node-name-text">{node.name}</div>
+                  <div className="node-role-text">{node.role}</div>
                 </div>
               </div>
             );
@@ -66,41 +73,46 @@ export default function AgentVisualizerModal({ isOpen, onClose, sessionState, is
 
         {/* Current Active Step Banner */}
         {isRunning && currentStep && (
-          <div className="active-agent-editorial-banner">
-            <div className="active-agent-label-row">
-              <span className="status-running-mark">● ACTIVE NODE:</span>
+          <div className="active-agent-banner">
+            <div className="active-agent-header">
+              <span className="active-pulse-dot" />
               <strong className="active-agent-name">{currentStep.agent}</strong>
-              <span className="tool-pill-mono mono">[{currentStep.tool}]</span>
+              <span className="active-tool-badge mono">[{currentStep.tool}]</span>
             </div>
-            <blockquote className="agent-thought-quote">
+            <blockquote className="active-agent-quote font-judicial">
               "{currentStep.thought}"
             </blockquote>
           </div>
         )}
 
-        {/* Execution Log Stream */}
-        <div className="editorial-trace-terminal">
-          <div className="terminal-header-strip">
-            <span className="terminal-title-text">EXECUTION TRACE & STATE TRANSITIONS</span>
-            <span className="mono terminal-step-indicator">STEP {currentStepIndex + 1} OF {totalSteps}</span>
+        {/* Execution Log Stream (Terminal Surface) */}
+        <div className="agent-terminal-card">
+          <div className="terminal-header-bar">
+            <div className="terminal-title-group">
+              <Terminal size={14} />
+              <span className="terminal-title">STATE TRANSITIONS & EXECUTION LOG</span>
+            </div>
+            <span className="terminal-step-badge mono">
+              STEP {currentStepIndex + 1} OF {totalSteps}
+            </span>
           </div>
 
-          <div className="terminal-stream-body">
+          <div className="terminal-scroll-viewport">
             {trace.length === 0 ? (
-              <div className="terminal-empty-text">
+              <div className="terminal-empty-prompt">
                 Workflow ready. Launch "RUN TRACE" on any clause in the Document Analyzer to begin telemetry streaming.
               </div>
             ) : (
               trace.map((item, index) => (
-                <div key={index} className="trace-entry-row animate-fade-in">
-                  <div className="trace-meta-line">
-                    <span className="trace-ordinal">#{item.stepNumber}</span>
-                    <span className="trace-agent-label">{item.agent}</span>
-                    <span className="trace-tool-tag mono">[{item.tool}]</span>
-                    <span className="trace-tokens-stat">+{item.tokens} tokens</span>
-                    <span className="trace-time-stamp mono">{item.timestamp}</span>
+                <div key={index} className="trace-row-entry">
+                  <div className="trace-row-meta">
+                    <span className="trace-ord mono">#{item.stepNumber}</span>
+                    <span className="trace-agent">{item.agent}</span>
+                    <span className="trace-tool mono">[{item.tool}]</span>
+                    <span className="trace-tokens mono">+{item.tokens} tokens</span>
+                    <span className="trace-time mono">{item.timestamp}</span>
                   </div>
-                  <div className="trace-thought-content">
+                  <div className="trace-thought-text font-judicial">
                     &rarr; {item.thought}
                   </div>
                 </div>
@@ -110,15 +122,17 @@ export default function AgentVisualizerModal({ isOpen, onClose, sessionState, is
         </div>
 
         {/* Modal Footer */}
-        <div className="modal-footer">
-          <div className="framework-credits-text">
+        <div className="agent-modal-footer">
+          <div className="modal-credits-meta">
             <span>MODEL: <strong>GEMINI-3.8-FLASH</strong></span>
             <span className="meta-sep">&bull;</span>
-            <span>ORCHESTRATION: <strong>LANGGRAPH DAG (PERSISTENT CHECKPOINTS)</strong></span>
+            <span>ORCHESTRATION: <strong>LANGGRAPH DAG</strong></span>
             <span className="meta-sep">&bull;</span>
-            <span>VECTOR STORE: <strong>QDRANT HYBRID (INLEGALBERT)</strong></span>
+            <span>VECTOR: <strong>QDRANT (INLEGALBERT)</strong></span>
           </div>
-          <button className="btn-secondary" onClick={onClose}>CLOSE INSPECTOR</button>
+          <button type="button" className="btn-secondary" onClick={onClose}>
+            Close Inspector
+          </button>
         </div>
       </div>
     </div>

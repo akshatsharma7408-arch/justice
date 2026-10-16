@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { 
   FileText, Upload, ArrowRight, RefreshCw, Check, 
-  FileDiff, Play, ArrowUpRight, Cpu, ShieldAlert, Sparkles
+  FileDiff, Play, ArrowUpRight, Cpu, ShieldAlert, Sparkles, AlertTriangle
 } from 'lucide-react';
 import { CONTRACT_PRESETS } from '../data/legalCorpus';
 import { verifyClauseWithBackend, auditContractWithBackend } from '../config/gemini';
@@ -131,25 +131,30 @@ export default function DocumentAnalyzer({ onTriggerAgentAnalysis }) {
   };
 
   return (
-    <div className="module-container">
-      {/* Editorial Header Section */}
-      <div className="editorial-hero-section">
-        <div className="editorial-meta-label">COLLECTION 02 / CONTRACT AUDIT & REDLINE</div>
-        <h1 className="hero-editorial-title">Document Analyzer</h1>
-        <p className="hero-editorial-subtitle">
-          Statutory compliance engine and autonomous clause redliner connected end-to-end to Gemini 3.8 Flash. 
-          Audits agreements under Section 27 Indian Contract Act 1872, highlights void covenants, and provides balanced redlines.
+    <div className="workspace-module-pane">
+      {/* Module Workspace Header */}
+      <div className="workspace-module-header">
+        <div className="module-breadcrumbs">
+          <span className="crumb-root">WORKSPACE</span>
+          <span className="crumb-sep">/</span>
+          <span className="crumb-leaf">DOCUMENT ANALYZER</span>
+        </div>
+        <h1 className="module-heading font-judicial">Document Analyzer</h1>
+        <p className="module-description">
+          Autonomous contract compliance auditor and clause redliner powered by Gemini 3.8 Flash.
+          Evaluates restrictive covenants against Section 27 Indian Contract Act 1872 and generates binding, enforceable redlines.
         </p>
 
-        {/* Contract Selection & Upload Bar */}
-        <div className="editorial-selector-bar">
-          <div className="selector-group">
-            <span className="selector-label">SAMPLE AGREEMENT:</span>
-            <div className="selector-tabs">
+        {/* Agreement Selection & Upload Bar */}
+        <div className="analyzer-controls-bar">
+          <div className="preset-selector-group">
+            <span className="preset-selector-label">SAMPLE AGREEMENT:</span>
+            <div className="preset-buttons-row">
               {contractsData.map((c) => (
                 <button
                   key={c.id}
-                  className={`selector-tab-btn ${c.id === selectedPresetId ? 'active' : ''}`}
+                  type="button"
+                  className={`preset-tab-btn ${c.id === selectedPresetId ? 'active' : ''}`}
                   onClick={() => {
                     setSelectedPresetId(c.id);
                     setSelectedClauseId(c.clauses[0]?.id || 'cl-9-3');
@@ -161,52 +166,54 @@ export default function DocumentAnalyzer({ onTriggerAgentAnalysis }) {
             </div>
           </div>
 
-          <div className="upload-wrapper">
-            <label className="btn-secondary upload-label-btn">
+          <div className="analyzer-upload-btn-wrap">
+            <label className="btn-secondary upload-action-label">
               <Upload size={14} />
-              <span>{isUploading ? 'PARSING WITH FASTAPI...' : 'UPLOAD CONTRACT'}</span>
+              <span>{isUploading ? 'PARSING WITH FASTAPI...' : 'Upload Agreement'}</span>
               <input type="file" onChange={handleUploadFile} style={{ display: 'none' }} accept=".pdf,.docx,.txt" />
             </label>
           </div>
         </div>
 
         {uploadError && (
-          <div style={{ color: '#d32f2f', fontSize: '12px', marginTop: '6px' }}>
-            {uploadError}
+          <div className="analyzer-error-alert">
+            <AlertTriangle size={14} />
+            <span>{uploadError}</span>
           </div>
         )}
       </div>
 
-      {/* Main Split-Pane Workspace: Architectural High-Contrast Canvas */}
-      <div className="editorial-split-workspace">
+      {/* Main Split-Pane Workspace */}
+      <div className="workspace-split-panes">
         {/* LEFT PANE: Document Reading Canvas */}
-        <div className="editorial-document-column">
-          <div className="column-top-header">
+        <div className="split-pane-left">
+          <div className="pane-title-bar">
             <div>
-              <span className="editorial-meta-label">PRIMARY DRAFT TEXT &bull; FASTAPI AUDITED</span>
-              <h2 className="column-document-title">{activeContract.title}</h2>
+              <span className="pane-kicker">PRIMARY DRAFT TEXT</span>
+              <h2 className="pane-heading font-judicial">{activeContract.title}</h2>
             </div>
             <button
-              className={`btn-diff-mode ${diffMode ? 'active' : ''}`}
+              type="button"
+              className={`btn-diff-toggle ${diffMode ? 'active' : ''}`}
               onClick={() => setDiffMode(!diffMode)}
             >
               <FileDiff size={14} />
-              <span>{diffMode ? 'EXIT DIFF VIEW' : 'SHOW REDLINE DIFFS'}</span>
+              <span>{diffMode ? 'Exit Diff View' : 'Show Redline Diffs'}</span>
             </button>
           </div>
 
           {/* Document Content Sheet */}
-          <div className="editorial-document-sheet">
-            <div className="document-preamble">
-              <div className="preamble-stamp">CONFIDENTIAL DRAFT &bull; JURISDICTION: INDIA</div>
-              <h3 className="preamble-heading">CONSULTANCY & RESTRICTIVE COVENANTS AGREEMENT</h3>
-              <p className="preamble-text">
+          <div className="document-sheet-surface">
+            <div className="document-preamble-box">
+              <div className="preamble-badge mono">CONFIDENTIAL DRAFT &bull; JURISDICTION: INDIA</div>
+              <h3 className="preamble-title font-judicial">CONSULTANCY & RESTRICTIVE COVENANTS AGREEMENT</h3>
+              <p className="preamble-desc">
                 This Agreement is executed in the Republic of India. The parties agree to the terms, restrictive covenants, and statutory undertakings set forth below:
               </p>
             </div>
 
             {/* Clauses Stream */}
-            <div className="editorial-clauses-stream">
+            <div className="clauses-cards-stream">
               {activeContract.clauses.map((clause) => {
                 const isSelected = clause.id === selectedClauseId;
                 const isRedlined = !!appliedRedlines[clause.id];
@@ -216,53 +223,57 @@ export default function DocumentAnalyzer({ onTriggerAgentAnalysis }) {
                 return (
                   <article
                     key={clause.id}
-                    className={`editorial-clause-card ${isSelected ? 'selected' : ''}`}
+                    className={`clause-review-card ${isSelected ? 'selected' : ''}`}
                     onClick={() => setSelectedClauseId(clause.id)}
                   >
-                    <div className="clause-card-header">
-                      <div className="clause-identity">
-                        <span className="clause-ordinal">CLAUSE {clause.number}</span>
-                        <h4 className="clause-title-text">{clause.title}</h4>
+                    <div className="clause-header-row">
+                      <div className="clause-title-wrap">
+                        <span className="clause-badge mono">CLAUSE {clause.number}</span>
+                        <h4 className="clause-name font-judicial">{clause.title}</h4>
                       </div>
 
-                      <div className={`clause-status-annotation status-${risk.toLowerCase()}`}>
-                        <span>
-                          {risk === 'CRITICAL' && '✕ CRITICAL'}
-                          {risk === 'MODERATE' && '▲ MODERATE'}
-                          {risk === 'LOW' && '● COMPLIANT'}
+                      <div className={`status-pill status-${risk.toLowerCase()}`}>
+                        <span className="status-dot-indicator" />
+                        <span className="status-pill-text">
+                          {risk === 'CRITICAL' && 'CRITICAL RISK'}
+                          {risk === 'MODERATE' && 'MODERATE RISK'}
+                          {risk === 'LOW' && 'COMPLIANT'}
                         </span>
                       </div>
                     </div>
 
                     {/* Clause Body Text */}
-                    <div className="clause-prose-body">
+                    <div className="clause-text-area">
                       {diffMode && (cachedAudit?.balanced_redline || clause.redline) ? (
-                        <div className="editorial-diff-container">
-                          <div className="diff-strike-row">
-                            <span className="diff-indicator">-</span>
+                        <div className="clause-diff-view">
+                          <div className="diff-row-strike">
+                            <span className="diff-sign">-</span>
                             <span>{clause.text}</span>
                           </div>
-                          <div className="diff-add-row">
-                            <span className="diff-indicator">+</span>
+                          <div className="diff-row-add">
+                            <span className="diff-sign">+</span>
                             <span>{cachedAudit?.balanced_redline || clause.redline}</span>
                           </div>
                         </div>
                       ) : isRedlined ? (
-                        <div className="clause-redline-applied-view">
-                          <div className="redline-status-caption">ENFORCEABLE REDLINE APPLIED (SECTION 27 COMPLIANT):</div>
-                          <p className="redline-applied-body">{appliedRedlines[clause.id]}</p>
+                        <div className="clause-applied-box">
+                          <div className="applied-badge mono">
+                            <Check size={12} />
+                            <span>ENFORCEABLE REDLINE APPLIED (SECTION 27 COMPLIANT)</span>
+                          </div>
+                          <p className="applied-text font-judicial">{appliedRedlines[clause.id]}</p>
                         </div>
                       ) : (
-                        <p className="clause-original-body">{clause.text}</p>
+                        <p className="clause-original-text font-judicial">{clause.text}</p>
                       )}
                     </div>
 
-                    <div className="clause-card-footer-strip">
-                      <span className="inspect-state-text">
-                        {isSelected ? '● CURRENTLY INSPECTED IN CO-PILOT' : 'CLICK TO AUDIT →'}
+                    <div className="clause-footer-strip">
+                      <span className="clause-inspect-hint">
+                        {isSelected ? '● CURRENTLY AUDITED IN CO-PILOT' : 'CLICK TO AUDIT →'}
                       </span>
                       {(cachedAudit?.statutory_issue || clause.statutoryIssue) && (
-                        <span className="statutory-preview-tag mono">
+                        <span className="statutory-preview-chip mono">
                           {(cachedAudit?.statutory_issue || clause.statutoryIssue).split('(')[0]}
                         </span>
                       )}
@@ -274,14 +285,15 @@ export default function DocumentAnalyzer({ onTriggerAgentAnalysis }) {
           </div>
         </div>
 
-        {/* RIGHT PANE: Legal Co-Pilot & Editorial Auditor */}
-        <div className="editorial-copilot-column">
-          <div className="column-top-header copilot-header-bar">
+        {/* RIGHT PANE: Legal Co-Pilot & Clause Auditor */}
+        <div className="split-pane-right">
+          <div className="pane-title-bar copilot-bar">
             <div>
-              <span className="editorial-meta-label">INTELLIGENCE SUITE &bull; GEMINI 3.8 FLASH</span>
-              <h2 className="column-document-title">Clause Auditor & Redliner</h2>
+              <span className="pane-kicker">INTELLIGENCE SUITE &bull; GEMINI 3.8 FLASH</span>
+              <h2 className="pane-heading font-judicial">Clause Auditor & Redliner</h2>
             </div>
             <button
+              type="button"
               className="btn-primary btn-run-agent"
               onClick={() => onTriggerAgentAnalysis({
                 ...activeClause,
@@ -292,104 +304,135 @@ export default function DocumentAnalyzer({ onTriggerAgentAnalysis }) {
               }, activeContract.title)}
               title="Launch autonomous LangGraph execution"
             >
-              <Play size={12} />
+              <Play size={13} />
               <span>RUN TRACE</span>
             </button>
           </div>
 
-          <div className="copilot-scroll-body">
-            {/* Clause Overview */}
-            <div className="copilot-editorial-card">
-              <div className="copilot-card-meta">
-                <span className="editorial-meta-label">
-                  CLAUSE {activeClause?.number} AUDIT {isAuditingClause && ' (AUDITING...)'}
-                </span>
-                <span className={`clause-status-annotation status-${effectiveRiskLevel.toLowerCase()}`}>
-                  {effectiveRiskLevel} RISK
-                </span>
-              </div>
-              <h3 className="copilot-active-title">{activeClause?.title}</h3>
-
-              {effectiveStatutoryIssue ? (
-                <div className="editorial-alert-block warning">
-                  <div className="alert-caption">STATUTORY NON-COMPLIANCE DETECTED (SECTION 27 ICA)</div>
-                  <p className="alert-desc">{effectiveStatutoryIssue}</p>
+          <div className="copilot-scroll-container">
+            {/* SKELETON LOADING STATE FOR AUDIT */}
+            {isAuditingClause ? (
+              <div className="skeleton-cards-stack">
+                <div className="skeleton-card">
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                    <div className="skeleton-badge skeleton-shimmer" />
+                    <div className="skeleton-line skeleton-shimmer" style={{ width: '60px' }} />
+                  </div>
+                  <div className="skeleton-title skeleton-shimmer" />
+                  <div className="skeleton-block skeleton-shimmer" />
                 </div>
-              ) : (
-                <div className="editorial-alert-block safe">
-                  <div className="alert-caption">STATUTORY ASSESSMENT</div>
-                  <p className="alert-desc">Complies with prevailing Indian contractual provisions and judicial standards.</p>
+                <div className="skeleton-card">
+                  <div className="skeleton-line skeleton-shimmer" style={{ width: '40%' }} />
+                  <div className="skeleton-block skeleton-shimmer" />
                 </div>
-              )}
-
-              {/* Binding Legal Doctrine */}
-              {effectiveLegalDoctrine && (
-                <div style={{ marginTop: '12px', fontSize: '13px', lineHeight: '1.5', color: '#222' }}>
-                  <strong>LEGAL DOCTRINE:</strong> {effectiveLegalDoctrine}
-                </div>
-              )}
-            </div>
-
-            {/* LAYMAN TRANSLATION */}
-            <div className="copilot-editorial-card">
-              <div className="copilot-card-meta">
-                <span className="editorial-meta-label">LAYMAN TRANSLATION &bull; GRADE 8</span>
               </div>
-              <div className="layman-editorial-prose">
-                "{effectiveLayman}"
-              </div>
-              <div className="layman-practical-impact">
-                <strong>PRACTICAL SIGNIFICANCE:</strong> {effectiveImpact}
-              </div>
-            </div>
+            ) : (
+              <>
+                {/* Active Clause Overview Card */}
+                <div className="copilot-card">
+                  <div className="copilot-card-top">
+                    <span className="copilot-kicker mono">
+                      CLAUSE {activeClause?.number} AUDIT
+                    </span>
+                    <span className={`status-pill status-${effectiveRiskLevel.toLowerCase()}`}>
+                      <span className="status-dot-indicator" />
+                      <span className="status-pill-text">{effectiveRiskLevel} RISK</span>
+                    </span>
+                  </div>
 
-            {/* CROSS-REFERENCED AUTHORITIES */}
-            {effectivePrecedents && effectivePrecedents.length > 0 && (
-              <div className="copilot-editorial-card">
-                <div className="copilot-card-meta">
-                  <span className="editorial-meta-label">BINDING AUTHORITIES (ARTICLE 141)</span>
-                </div>
-                <div className="precedent-lineage-list">
-                  {effectivePrecedents.map((p, idx) => (
-                    <div key={idx} className="precedent-lineage-item">
-                      <span className="precedent-bullet">&bull;</span>
-                      <span className="precedent-text">{p}</span>
+                  <h3 className="copilot-clause-title font-judicial">{activeClause?.title}</h3>
+
+                  {effectiveStatutoryIssue ? (
+                    <div className="alert-box alert-warning">
+                      <div className="alert-title-line">
+                        <ShieldAlert size={14} />
+                        <span>STATUTORY NON-COMPLIANCE DETECTED (SECTION 27 ICA)</span>
+                      </div>
+                      <p className="alert-content">{effectiveStatutoryIssue}</p>
                     </div>
-                  ))}
-                </div>
-              </div>
-            )}
-
-            {/* ENFORCEABLE REDLINE */}
-            {effectiveRedline && (
-              <div className="copilot-editorial-card redline-section">
-                <div className="copilot-card-meta">
-                  <span className="editorial-meta-label">RECOMMENDED ENFORCEABLE REDLINE</span>
-                </div>
-                <div className="redline-proposal-box">
-                  "{effectiveRedline}"
-                </div>
-
-                <div className="redline-action-row">
-                  {appliedRedlines[activeClause?.id] ? (
-                    <button
-                      className="btn-secondary"
-                      onClick={() => handleResetRedline(activeClause?.id)}
-                    >
-                      <RefreshCw size={12} />
-                      <span>REVERT ORIGINAL</span>
-                    </button>
                   ) : (
-                    <button
-                      className="btn-primary"
-                      onClick={() => handleApplyRedline(activeClause?.id, effectiveRedline)}
-                    >
-                      <Check size={12} />
-                      <span>APPLY ENFORCEABLE REDLINE</span>
-                    </button>
+                    <div className="alert-box alert-safe">
+                      <div className="alert-title-line">
+                        <Check size={14} />
+                        <span>STATUTORY ASSESSMENT COMPLIANT</span>
+                      </div>
+                      <p className="alert-content">Complies with prevailing Indian contractual provisions and judicial standards.</p>
+                    </div>
+                  )}
+
+                  {effectiveLegalDoctrine && (
+                    <div className="doctrine-callout">
+                      <span className="doctrine-label">LEGAL DOCTRINE:</span>{' '}
+                      <span className="doctrine-text">{effectiveLegalDoctrine}</span>
+                    </div>
                   )}
                 </div>
-              </div>
+
+                {/* Layman Translation Card */}
+                <div className="copilot-card">
+                  <div className="copilot-card-top">
+                    <span className="copilot-kicker mono">LAYMAN TRANSLATION &bull; GRADE 8</span>
+                  </div>
+                  <div className="layman-quote font-judicial">
+                    "{effectiveLayman}"
+                  </div>
+                  <div className="layman-impact-box">
+                    <span className="impact-label">PRACTICAL SIGNIFICANCE:</span>{' '}
+                    <span className="impact-text">{effectiveImpact}</span>
+                  </div>
+                </div>
+
+                {/* Cross-Referenced Authorities Card */}
+                {effectivePrecedents && effectivePrecedents.length > 0 && (
+                  <div className="copilot-card">
+                    <div className="copilot-card-top">
+                      <span className="copilot-kicker mono">BINDING AUTHORITIES (ARTICLE 141)</span>
+                    </div>
+                    <div className="authorities-list">
+                      {effectivePrecedents.map((p, idx) => (
+                        <div key={idx} className="authority-row">
+                          <span className="authority-bullet">&bull;</span>
+                          <span className="authority-name">{p}</span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {/* Enforceable Redline Card */}
+                {effectiveRedline && (
+                  <div className="copilot-card redline-card">
+                    <div className="copilot-card-top">
+                      <span className="copilot-kicker mono">RECOMMENDED ENFORCEABLE REDLINE</span>
+                    </div>
+                    <div className="redline-proposal-box font-judicial">
+                      "{effectiveRedline}"
+                    </div>
+
+                    <div className="redline-btn-row">
+                      {appliedRedlines[activeClause?.id] ? (
+                        <button
+                          type="button"
+                          className="btn-secondary btn-revert"
+                          onClick={() => handleResetRedline(activeClause?.id)}
+                        >
+                          <RefreshCw size={13} />
+                          <span>Revert Original</span>
+                        </button>
+                      ) : (
+                        <button
+                          type="button"
+                          className="btn-primary btn-apply"
+                          onClick={() => handleApplyRedline(activeClause?.id, effectiveRedline)}
+                        >
+                          <Check size={13} />
+                          <span>Apply Enforceable Redline</span>
+                        </button>
+                      )}
+                    </div>
+                  </div>
+                )}
+              </>
             )}
           </div>
         </div>

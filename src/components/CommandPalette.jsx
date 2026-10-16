@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Search, CornerDownLeft, X } from 'lucide-react';
+import { Search, CornerDownLeft, X, Sparkles, Scale, FileText, SlidersHorizontal } from 'lucide-react';
 
 export default function CommandPalette({ isOpen, onClose, onNavigate }) {
   const [searchTerm, setSearchTerm] = useState('');
@@ -26,6 +26,7 @@ export default function CommandPalette({ isOpen, onClose, onNavigate }) {
       id: 'search-noncompete',
       title: "Query Section 27 non-compete enforceability",
       category: "Universal Search",
+      icon: Search,
       action: () => {
         onNavigate('search');
         onClose();
@@ -35,6 +36,7 @@ export default function CommandPalette({ isOpen, onClose, onNavigate }) {
       id: 'citator-percept',
       title: "Verify Shepard status: Percept D'Mark v. Zaheer Khan",
       category: "Smart Citator",
+      icon: Scale,
       action: () => {
         onNavigate('citator', false, 'sc-2006-percept');
         onClose();
@@ -44,6 +46,7 @@ export default function CommandPalette({ isOpen, onClose, onNavigate }) {
       id: 'citator-puttaswamy',
       title: "Inspect 9-Judge Bench overruling ADM Jabalpur (Puttaswamy)",
       category: "Smart Citator",
+      icon: Scale,
       action: () => {
         onNavigate('citator', false, 'sc-2017-puttaswamy');
         onClose();
@@ -53,6 +56,7 @@ export default function CommandPalette({ isOpen, onClose, onNavigate }) {
       id: 'analyzer-contract',
       title: "Audit Technology Consultant Agreement & Auto-Redline Clause 9.3",
       category: "Document Analyzer",
+      icon: FileText,
       action: () => {
         onNavigate('analyzer');
         onClose();
@@ -60,8 +64,9 @@ export default function CommandPalette({ isOpen, onClose, onNavigate }) {
     },
     {
       id: 'compare-manupatra',
-      title: "Inspect Legacy Manupatra vs. Justice Editorial UI Critique",
-      category: "Architectural Comparison",
+      title: "Inspect Legacy Manupatra vs. Justice Workspace UI Critique",
+      category: "Comparison",
+      icon: SlidersHorizontal,
       action: () => {
         onNavigate('comparison');
         onClose();
@@ -75,50 +80,64 @@ export default function CommandPalette({ isOpen, onClose, onNavigate }) {
   );
 
   return (
-    <div className="modal-backdrop" onClick={onClose}>
-      <div className="command-palette-box" onClick={(e) => e.stopPropagation()}>
-        <div className="command-input-row">
-          <Search size={18} className="command-icon-stark" />
+    <div className="palette-overlay" onClick={onClose}>
+      <div className="palette-dialog" onClick={(e) => e.stopPropagation()}>
+        <div className="palette-input-header">
+          <Search size={18} className="palette-search-icon" />
           <input
             type="text"
-            className="command-input"
+            className="palette-search-input"
             autoFocus
-            placeholder="TYPE COMMAND OR SEARCH QUERY (E.G. 'SECTION 27' OR 'CITATOR')..."
+            placeholder="Type a command or search query (e.g. 'Section 27' or 'Citator')..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
           />
-          <button className="btn-close-palette" onClick={onClose} aria-label="Close Command Palette">
-            <X size={18} />
+          <button 
+            type="button" 
+            className="palette-close-btn" 
+            onClick={onClose} 
+            aria-label="Close Command Palette"
+          >
+            <X size={16} />
           </button>
         </div>
 
-        <div className="command-results-list">
-          <div className="command-group-heading">SUGGESTED DISCOVERY & NAVIGATION</div>
+        <div className="palette-results-container">
+          <div className="palette-group-label">SUGGESTED DISCOVERY & NAVIGATION</div>
           {filtered.length === 0 ? (
-            <div className="command-no-results">
-              No matching actions found. Press <kbd>ENTER</kbd> to search legal corpus.
+            <div className="palette-empty-note">
+              No matching actions found. Press <kbd>ENTER</kbd> to query the legal corpus.
             </div>
           ) : (
-            filtered.map((item) => (
-              <div
-                key={item.id}
-                className="command-item"
-                onClick={item.action}
-              >
-                <div className="command-item-left">
-                  <span className="command-item-category">{item.category}</span>
-                  <div className="command-item-title">{item.title}</div>
+            filtered.map((item) => {
+              const IconComp = item.icon || Search;
+              return (
+                <div
+                  key={item.id}
+                  className="palette-item-card"
+                  onClick={item.action}
+                >
+                  <div className="palette-item-icon-box">
+                    <IconComp size={15} />
+                  </div>
+                  <div className="palette-item-body">
+                    <div className="palette-item-category mono">{item.category}</div>
+                    <div className="palette-item-title">{item.title}</div>
+                  </div>
+                  <CornerDownLeft size={13} className="palette-item-enter-icon" />
                 </div>
-                <CornerDownLeft size={13} className="command-item-arrow" />
-              </div>
-            ))
+              );
+            })
           )}
         </div>
 
-        <div className="command-palette-footer">
-          <span>NAVIGATE <kbd>&uarr;</kbd> <kbd>&darr;</kbd></span>
-          <span>SELECT <kbd>ENTER</kbd></span>
-          <span>CLOSE <kbd>ESC</kbd></span>
+        <div className="palette-dialog-footer">
+          <div className="palette-hint-group">
+            <span>NAVIGATE <kbd className="palette-kbd">&uarr;</kbd> <kbd className="palette-kbd">&darr;</kbd></span>
+            <span>SELECT <kbd className="palette-kbd">ENTER</kbd></span>
+            <span>DISMISS <kbd className="palette-kbd">ESC</kbd></span>
+          </div>
+          <span className="palette-engine-tag mono">JUSTICE OMNI-INTENT</span>
         </div>
       </div>
     </div>
