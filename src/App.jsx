@@ -1,11 +1,12 @@
 import React, { useState } from 'react';
-import { Search, Scale, FileText, SlidersHorizontal, Cpu } from 'lucide-react';
+import { Search, Scale, FileText, SlidersHorizontal, Cpu, BookOpen } from 'lucide-react';
 import Header from './components/Header';
 import Footer from './components/Footer';
 import UniversalSearch from './components/UniversalSearch';
 import SmartCitator from './components/SmartCitator';
 import DocumentAnalyzer from './components/DocumentAnalyzer';
 import ManupatraComparison from './components/ManupatraComparison';
+import LegalMaxims from './components/LegalMaxims';
 import AgentVisualizerModal from './components/AgentVisualizerModal';
 import CommandPalette from './components/CommandPalette';
 import { AgentExecutionSession } from './services/agentEngine';
@@ -150,6 +151,24 @@ export default function App() {
                   <span className="sidebar-nav-desc">Legacy System Critique</span>
                 </div>
               </button>
+
+              <button
+                type="button"
+                className={`sidebar-nav-item ${activeTab === 'maxims' ? 'active' : ''}`}
+                onClick={() => {
+                  setActiveTab('maxims');
+                  setIsMobileSidebarOpen(false);
+                }}
+              >
+                <div className="sidebar-nav-icon">
+                  <BookOpen size={16} />
+                </div>
+                <div className="sidebar-nav-text">
+                  <span className="sidebar-nav-title">Legal Maxims</span>
+                  <span className="sidebar-nav-desc">Latin Canons & Flashcards</span>
+                </div>
+                <span className="sidebar-module-tag">240+</span>
+              </button>
             </nav>
           </div>
 
@@ -199,6 +218,10 @@ export default function App() {
               <ManupatraComparison
                 onSwitchToWorkspace={() => setActiveTab('analyzer')}
               />
+            )}
+
+            {activeTab === 'maxims' && (
+              <LegalMaxims />
             )}
 
             {/* Bottom Status Footer */}

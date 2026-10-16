@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Search, CornerDownLeft, X, Sparkles, Scale, FileText, SlidersHorizontal } from 'lucide-react';
+import { Search, CornerDownLeft, X, Sparkles, Scale, FileText, SlidersHorizontal, BookOpen } from 'lucide-react';
 
 export default function CommandPalette({ isOpen, onClose, onNavigate }) {
   const [searchTerm, setSearchTerm] = useState('');
@@ -22,6 +22,66 @@ export default function CommandPalette({ isOpen, onClose, onNavigate }) {
   if (!isOpen) return null;
 
   const quickActions = [
+    {
+      id: 'maxims-module',
+      title: "Explore Latin Legal Maxims Compendium (240+ Canons & Flashcards)",
+      category: "Legal Maxims",
+      icon: BookOpen,
+      action: () => {
+        onNavigate('maxims');
+        onClose();
+      }
+    },
+    {
+      id: 'maxim-audi',
+      title: "Maxim: Audi alteram partem (Listen to the other side / Natural Justice)",
+      category: "Legal Maxims",
+      icon: BookOpen,
+      action: () => {
+        onNavigate('maxims');
+        onClose();
+      }
+    },
+    {
+      id: 'maxim-mens-rea',
+      title: "Maxim: Actus non facit reum nisi mens sit rea (Mental intent in crime)",
+      category: "Legal Maxims",
+      icon: BookOpen,
+      action: () => {
+        onNavigate('maxims');
+        onClose();
+      }
+    },
+    {
+      id: 'maxim-nemo-judex',
+      title: "Maxim: Nemo judex in causa sua (Rule against bias / Natural Justice)",
+      category: "Legal Maxims",
+      icon: BookOpen,
+      action: () => {
+        onNavigate('maxims');
+        onClose();
+      }
+    },
+    {
+      id: 'maxim-res-ipsa',
+      title: "Maxim: Res ipsa loquitur (The thing speaks for itself / Negligence)",
+      category: "Legal Maxims",
+      icon: BookOpen,
+      action: () => {
+        onNavigate('maxims');
+        onClose();
+      }
+    },
+    {
+      id: 'maxim-ubi-jus',
+      title: "Maxim: Ubi jus ibi remedium (Where there is a right, there is a remedy)",
+      category: "Legal Maxims",
+      icon: BookOpen,
+      action: () => {
+        onNavigate('maxims');
+        onClose();
+      }
+    },
     {
       id: 'search-noncompete',
       title: "Query Section 27 non-compete enforceability",

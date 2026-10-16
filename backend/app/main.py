@@ -11,7 +11,7 @@ import logging
 import time
 
 from app.config import settings
-from app.routers import search, citator, audit
+from app.routers import search, citator, audit, maxims
 from app.services.gemini_service import gemini_service
 from app.services.qdrant_service import qdrant_service
 from app.services.neo4j_service import neo4j_service
@@ -50,6 +50,7 @@ app.add_middleware(
 app.include_router(search.router)
 app.include_router(citator.router)
 app.include_router(audit.router)
+app.include_router(maxims.router)
 
 # 3. Diagnostic & Root Endpoints
 @app.get("/", tags=["Diagnostic"])

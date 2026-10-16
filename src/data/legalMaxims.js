@@ -1,0 +1,3425 @@
+// Auto-generated fallback corpus of 240+ Latin Legal Maxims
+export const LEGAL_MAXIMS = [
+  {
+    "id": "actus-non-facit-reum-nisi-mens-sit-rea",
+    "maxim": "Actus non facit reum nisi mens sit rea",
+    "meaning": "An act does not make a person guilty unless the mind is also guilty",
+    "explanation": "Fundamental canon of criminal jurisprudence establishing that physical conduct (actus reus) and mental culpability (mens rea) must concur to constitute a crime. Without a blameworthy mental state such as intention, knowledge, or gross negligence, penal liability cannot generally attach. Strict liability statutory offenses form the limited exception to this doctrine.",
+    "origin_note": "Originates from Edward Coke's Third Institute of the Laws of England (1641), tracing back to St. Augustine's sermons.",
+    "category": "Criminal",
+    "example": "A person inadvertently picks up an identical umbrella from a restaurant believing in good faith that it is their own; they lack criminal intent and cannot be convicted of theft.",
+    "related_maxims": [
+      "mens-rea",
+      "actus-reus",
+      "ignorantia-facti-excusat"
+    ],
+    "indian_case_refs": [
+      {
+        "case_name": "State of Maharashtra v. Mayer Hans George",
+        "citation": "AIR 1965 SC 722",
+        "source_url": "https://indiankanoon.org/doc/1826017/"
+      }
+    ]
+  },
+  {
+    "id": "audi-alteram-partem",
+    "maxim": "Audi alteram partem",
+    "meaning": "Listen to the other side / No person shall be condemned unheard",
+    "explanation": "A foundational tenet of natural justice requiring that before any judicial, quasi-judicial, or administrative order affecting rights is passed, the affected person must receive adequate notice and a fair opportunity to be heard. Breach of this maxim invalidates the decision as arbitrary and void under Article 14 of the Constitution. It forbids ex parte condemnations.",
+    "origin_note": "Classical Roman maxim famously cited in Seneca's tragedy Medea; codified in common law via Dr. Bentley's Case (1723).",
+    "category": "Constitutional",
+    "example": "An administrative authority cancels a contractor's commercial license without providing a show-cause notice or hearing their defense; the cancellation is set aside by the High Court.",
+    "related_maxims": [
+      "nemo-judex-in-causa-sua",
+      "lex-non-cogit-ad-impossibilia",
+      "sine-qua-non"
+    ],
+    "indian_case_refs": [
+      {
+        "case_name": "Maneka Gandhi v. Union of India",
+        "citation": "(1978) 1 SCC 248",
+        "source_url": "https://indiankanoon.org/doc/1766147/"
+      }
+    ]
+  },
+  {
+    "id": "nemo-judex-in-causa-sua",
+    "maxim": "Nemo judex in causa sua",
+    "meaning": "No one should be a judge in their own cause / Rule against bias",
+    "explanation": "The second core pillar of natural justice dictating that any adjudicator having personal, pecuniary, or official interest in the dispute is disqualified from hearing it. The rule ensures public confidence in the judicial process by demanding that justice must not only be done, but manifestly and undoubtedly be seen to be done. Any real likelihood or reasonable apprehension of bias vitiates the proceeding.",
+    "origin_note": "Articulated by Sir Edward Coke in Dr. Bonham's Case (1610) 8 Co Rep 114a.",
+    "category": "Constitutional",
+    "example": "A member of an interview selection board evaluates candidates for a government post while their own son is among the competing applicants; the entire selection panel list is quashed.",
+    "related_maxims": [
+      "audi-alteram-partem",
+      "bona-fide"
+    ],
+    "indian_case_refs": [
+      {
+        "case_name": "A.K. Kraipak v. Union of India",
+        "citation": "(1969) 2 SCC 262",
+        "source_url": "https://indiankanoon.org/doc/1655169/"
+      }
+    ]
+  },
+  {
+    "id": "res-ipsa-loquitur",
+    "maxim": "Res ipsa loquitur",
+    "meaning": "The thing speaks for itself",
+    "explanation": "A rule of evidence in the law of torts allowing an inference of negligence to be drawn from the very nature of an accident without direct proof of negligent acts. It applies when the instrumentality causing harm was under the exclusive control of the defendant, and the accident is of a kind that does not ordinarily occur without negligence. The burden of disproving negligence shifts to the defendant.",
+    "origin_note": "Formulated by Baron Pollock in Byrne v. Boadle (1863) involving a barrel of flour falling from a warehouse window.",
+    "category": "Tort",
+    "example": "A surgical clamp is left inside a patient's abdomen following an appendectomy; the presence of the instrument establishes a prima facie presumption of surgical negligence.",
+    "related_maxims": [
+      "prima-facie",
+      "damnum-sine-injuria",
+      "ubi-jus-ibi-remedium"
+    ],
+    "indian_case_refs": [
+      {
+        "case_name": "Municipal Corporation of Delhi v. Subhagwanti",
+        "citation": "AIR 1966 SC 1750",
+        "source_url": "https://indiankanoon.org/doc/434689/"
+      }
+    ]
+  },
+  {
+    "id": "ubi-jus-ibi-remedium",
+    "maxim": "Ubi jus ibi remedium",
+    "meaning": "Where there is a right, there is a remedy",
+    "explanation": "Core common law principle asserting that whenever the law confers a legal right upon a person, it simultaneously provides a legal mechanism to enforce that right and seek redress for its violation. A legal right without a remedy is illusory and void of consequence. This maxim underlies the writ jurisdiction under Articles 32 and 226 of the Constitution of India.",
+    "origin_note": "Famously expounded by Chief Justice Holt in Ashby v. White (1703) 2 Ld Raym 938.",
+    "category": "Constitutional",
+    "example": "A qualified voter is maliciously prevented by a returning officer from casting his vote, even though his preferred candidate wins; he can successfully sue for damages because his legal right was infringed.",
+    "related_maxims": [
+      "injuria-sine-damno",
+      "damnum-sine-injuria"
+    ],
+    "indian_case_refs": [
+      {
+        "case_name": "Sardar Amarjit Singh Kalra v. Pramod Gupta",
+        "citation": "(2003) 3 SCC 272",
+        "source_url": "https://indiankanoon.org/doc/1709400/"
+      }
+    ]
+  },
+  {
+    "id": "volenti-non-fit-injuria",
+    "maxim": "Volenti non fit injuria",
+    "meaning": "To a willing person, injury is not done / Consent excludes actionable wrong",
+    "explanation": "A complete defense in tort law establishing that no harm is done to someone who knowingly and voluntarily consents to run the risk of injury. The defendant must prove that the plaintiff not only had physical knowledge of the danger but voluntarily assented to encounter it. It does not apply to rescue cases or illegal agreements.",
+    "origin_note": "Roman law principle found in the Digest of Justinian (47.10.1.5).",
+    "category": "Tort",
+    "example": "A spectator attending a cricket stadium is struck by a ball hit over the boundary into the stands; having voluntarily assumed the ordinary risks of the sport, no tort claim against the batsman or stadium succeeds.",
+    "related_maxims": [
+      "ex-turpi-causa-non-oritur-actio",
+      "damnum-sine-injuria"
+    ],
+    "indian_case_refs": [
+      {
+        "case_name": "T.C. Balakrishnan v. T.R. Subramanian",
+        "citation": "AIR 1968 Ker 151",
+        "source_url": "https://indiankanoon.org/doc/195973/"
+      }
+    ]
+  },
+  {
+    "id": "caveat-emptor",
+    "maxim": "Caveat emptor",
+    "meaning": "Let the buyer beware",
+    "explanation": "A fundamental doctrine of commercial and sales law declaring that the buyer bears the responsibility of inspecting goods and satisfying themselves of their quality and fitness prior to purchase. In the absence of an express warranty, fraud, or latent defects not discoverable by ordinary diligence, the seller is not liable for open defects. Modern consumer protection laws and statutory implied conditions have significantly qualified this maxim.",
+    "origin_note": "Codified under early English common law and Section 16 of the Indian Sale of Goods Act, 1930.",
+    "category": "Contract",
+    "example": "A customer purchases a second-hand bicycle after inspecting it, noticing worn tires, but later tries to return it claiming the tires are aged; caveat emptor bars recovery unless the seller engaged in active misrepresentation.",
+    "related_maxims": [
+      "caveat-venditor",
+      "consensus-ad-idem",
+      "bona-fide"
+    ],
+    "indian_case_refs": []
+  },
+  {
+    "id": "caveat-venditor",
+    "maxim": "Caveat venditor",
+    "meaning": "Let the seller beware",
+    "explanation": "Modern equitable counterpart to caveat emptor placing affirmative obligations on the seller to disclose known latent defects, deliver merchantable goods, and refrain from unfair trade practices. It forms the intellectual cornerstone of modern statutory consumer protection regimes and implied condition frameworks.",
+    "origin_note": "Evolved in civil law traditions and expanded in late 20th-century consumer jurisprudence.",
+    "category": "Contract",
+    "example": "An automobile manufacturer knowingly sells vehicles with concealed braking software faults; the court holds the manufacturer liable under caveat venditor and statutory consumer protection rules.",
+    "related_maxims": [
+      "caveat-emptor",
+      "bona-fide",
+      "uberrimae-fidei"
+    ],
+    "indian_case_refs": []
+  },
+  {
+    "id": "ignorantia-juris-non-excusat",
+    "maxim": "Ignorantia juris non excusat",
+    "meaning": "Ignorance of the law excuses no one",
+    "explanation": "Every person is presumed to know the public law of the land, and lack of knowledge of a penal or civil statute cannot be pleaded as a defense to avoid liability. Permitting ignorance as a defense would encourage lawlessness and render administration of justice unworkable. It contrasts with ignorance of factual circumstances, which can negate criminal intent.",
+    "origin_note": "Digest of Justinian (22.6.9); reiterated by John Selden in Table Talk (1689).",
+    "category": "Criminal",
+    "example": "A traveler carrying prohibited wildlife trophies into India pleads that they were unaware of the provisions of the Wildlife Protection Act; the court rejects the plea and upholds the conviction.",
+    "related_maxims": [
+      "ignorantia-facti-excusat",
+      "actus-non-facit-reum-nisi-mens-sit-rea"
+    ],
+    "indian_case_refs": [
+      {
+        "case_name": "Motilal Padampat Sugar Mills v. State of U.P.",
+        "citation": "(1979) 2 SCC 409",
+        "source_url": "https://indiankanoon.org/doc/1790432/"
+      }
+    ]
+  },
+  {
+    "id": "ignorantia-facti-excusat",
+    "maxim": "Ignorantia facti excusat",
+    "meaning": "Ignorance of fact excuses",
+    "explanation": "A person who acts under a genuine, reasonable, and bona fide mistake of fact is not criminally or tortiously liable, provided the act would have been lawful had the facts been as they mistakenly believed. Section 76 and Section 79 of the Indian Penal Code codify this principle as general exceptions to criminal liability.",
+    "origin_note": "Roman Digest 22.6; codified into the Indian Penal Code 1860 by Lord Macaulay.",
+    "category": "Criminal",
+    "example": "A police officer, bound by law to apprehend a named fugitive, arrests an individual who bears an exact resemblance based on reliable warrants; the officer is protected under mistake of fact.",
+    "related_maxims": [
+      "ignorantia-juris-non-excusat",
+      "bona-fide",
+      "mens-rea"
+    ],
+    "indian_case_refs": [
+      {
+        "case_name": "Chirangi v. State of M.P.",
+        "citation": "1952 Cri LJ 1212",
+        "source_url": "https://indiankanoon.org/doc/1109968/"
+      }
+    ]
+  },
+  {
+    "id": "delegatus-non-potest-delegare",
+    "maxim": "Delegatus non potest delegare",
+    "meaning": "A delegate cannot further delegate",
+    "explanation": "A fundamental rule of administrative and constitutional law establishing that an authority to whom discretionary power has been entrusted cannot sub-delegate that authority to another body unless expressly or impliedly authorized by parent statute. Trust and legislative confidence reposed in the designated delegate cannot be unilaterally abdicated.",
+    "origin_note": "Instituted in English constitutional law by Lord Coke in 9 Co Rep 75.",
+    "category": "Administrative",
+    "example": "A municipal commissioner empowered by statute to revoke building permits delegates this quasi-judicial power to an unauthorized junior clerk; revocation orders signed by the clerk are ultra vires.",
+    "related_maxims": [
+      "ultra-vires",
+      "qui-facit-per-alium-facit-per-se"
+    ],
+    "indian_case_refs": [
+      {
+        "case_name": "Barium Chemicals Ltd. v. Company Law Board",
+        "citation": "AIR 1967 SC 295",
+        "source_url": "https://indiankanoon.org/doc/1628169/"
+      }
+    ]
+  },
+  {
+    "id": "salus-populi-suprema-lex-esto",
+    "maxim": "Salus populi suprema lex esto",
+    "meaning": "The health and welfare of the people is the supreme law",
+    "explanation": "A cardinal maxim of constitutional governance providing that the public interest and safety of the community take precedence over individual property or private interests during national emergencies, public health crises, and environmental protections. It provides legal justification for police powers and eminent domain.",
+    "origin_note": "Cicero's De Legibus (Book III, Part III, Sub. VIII); invoked by Francis Bacon.",
+    "category": "Constitutional",
+    "example": "During a severe industrial toxic gas leakage, the government orders the immediate shutdown and evacuation of a chemical plant without prior notice; the action is upheld under public welfare supremacy.",
+    "related_maxims": [
+      "de-minimis-non-curat-lex",
+      "lex-non-cogit-ad-impossibilia"
+    ],
+    "indian_case_refs": []
+  },
+  {
+    "id": "damnum-sine-injuria",
+    "maxim": "Damnum sine injuria",
+    "meaning": "Damage without legal injury",
+    "explanation": "Causing financial, material, or physical loss to another person without violating any recognized legal right is not actionable in tort law. Mere actual damage (damnum) gives rise to no cause of action unless accompanied by an infringement of a protected legal entitlement (injuria). Fair commercial competition exemplifies this doctrine.",
+    "origin_note": "Classic common law authority established in the Gloucester Grammar School Case (1410).",
+    "category": "Tort",
+    "example": "A merchant sets up a competing grocery store directly opposite an existing store, charging lower prices and causing the rival's revenue to drop by half; the rival has suffered damnum sine injuria and cannot sue.",
+    "related_maxims": [
+      "injuria-sine-damno",
+      "ubi-jus-ibi-remedium"
+    ],
+    "indian_case_refs": [
+      {
+        "case_name": "Chasemore v. Richards",
+        "citation": "(1859) 7 HLC 349",
+        "source_url": "https://indiankanoon.org/doc/1712030/"
+      }
+    ]
+  },
+  {
+    "id": "injuria-sine-damno",
+    "maxim": "Injuria sine damno",
+    "meaning": "Legal injury without actual damage",
+    "explanation": "An actionable infringement of an absolute private legal right gives rise to a valid claim in court even if the plaintiff suffered no financial, physical, or material loss. Torts such as trespass to land and assault are actionable per se because the law presumes damage from the sheer violation of the right.",
+    "origin_note": "Formulated by Chief Justice Holt in Ashby v. White (1703) 92 ER 126.",
+    "category": "Tort",
+    "example": "A person walks across someone's private lawn without permission, causing zero damage to the grass; the landowner is entitled to nominal damages for trespass to land under injuria sine damno.",
+    "related_maxims": [
+      "damnum-sine-injuria",
+      "ubi-jus-ibi-remedium"
+    ],
+    "indian_case_refs": [
+      {
+        "case_name": "Ashby v. White",
+        "citation": "(1703) 2 Ld Raym 938",
+        "source_url": "https://indiankanoon.org/doc/1684347/"
+      }
+    ]
+  },
+  {
+    "id": "nemo-debet-bis-vexari-pro-una-et-eadem-causa",
+    "maxim": "Nemo debet bis vexari pro una et eadem causa",
+    "meaning": "No one should be twice vexed for one and the same cause",
+    "explanation": "The constitutional and procedural rule prohibiting double jeopardy in criminal trials and res judicata in civil proceedings. Once a court of competent jurisdiction has tried and reached a final verdict on an issue, the defendant cannot be harassed again with fresh litigation for the exact same offense. Article 20(2) of the Indian Constitution enshrines this principle.",
+    "origin_note": "Roman civil doctrine rooted in the Digest of Justinian; codified in Coke's Institutes.",
+    "category": "Constitutional",
+    "example": "A person tried and acquitted of theft by a competent judicial magistrate cannot subsequently be recharged and tried before another magistrate on identical facts.",
+    "related_maxims": [
+      "res-judicata-pro-veritate-accipitur",
+      "stare-decisis-et-non-quieta-movere"
+    ],
+    "indian_case_refs": [
+      {
+        "case_name": "Maqbool Hussain v. State of Bombay",
+        "citation": "AIR 1953 SC 325",
+        "source_url": "https://indiankanoon.org/doc/1831411/"
+      }
+    ]
+  },
+  {
+    "id": "res-judicata-pro-veritate-accipitur",
+    "maxim": "Res judicata pro veritate accipitur",
+    "meaning": "A thing adjudicated is received as true",
+    "explanation": "Once a final judgment is rendered on the merits by a court of competent jurisdiction between the same parties, the matter is concluded and cannot be relitigated in subsequent proceedings. It prevents endless litigation, protects litigants from harassment, and preserves judicial finality. Codified under Section 11 of the Code of Civil Procedure, 1908.",
+    "origin_note": "Digest of Justinian 50.17.207; fundamental canon of Roman civil procedure.",
+    "category": "Procedure",
+    "example": "A plaintiff sues for title to ancestral property and loses after trial and appeal; years later, the plaintiff's heir files a new suit asserting identical claims against the same defendant. The suit is barred by res judicata.",
+    "related_maxims": [
+      "nemo-debet-bis-vexari-pro-una-et-eadem-causa",
+      "interest-reipublicae-ut-sit-finis-litium"
+    ],
+    "indian_case_refs": [
+      {
+        "case_name": "Daryao v. State of U.P.",
+        "citation": "AIR 1961 SC 1457",
+        "source_url": "https://indiankanoon.org/doc/1410852/"
+      }
+    ]
+  },
+  {
+    "id": "pacta-sunt-servanda",
+    "maxim": "Pacta sunt servanda",
+    "meaning": "Agreements must be kept",
+    "explanation": "A foundational doctrine of contract law and public international law asserting that agreements freely and lawfully entered into are legally binding and must be performed in good faith. Parties cannot unilaterally renounce their contractual obligations without legitimate legal grounds such as frustration or breach. Codified in Article 26 of the Vienna Convention on the Law of Treaties.",
+    "origin_note": "Canon law origin popularized by canonist jurist Cardinal Hostiensis in the 13th century.",
+    "category": "Contract",
+    "example": "A supplier enters into a one-year fixed price contract for steel delivery; when market prices surge, the supplier attempts to cancel deliveries. The court orders damages under pacta sunt servanda.",
+    "related_maxims": [
+      "consensus-ad-idem",
+      "bona-fide",
+      "quid-pro-quo"
+    ],
+    "indian_case_refs": []
+  },
+  {
+    "id": "consensus-ad-idem",
+    "maxim": "Consensus ad idem",
+    "meaning": "Meeting of the minds / Agreement on the same thing in the same sense",
+    "explanation": "Essential prerequisite for the formation of a legally valid contract under Section 13 of the Indian Contract Act, 1872. Both parties must understand and agree upon the essential terms and subject matter of the transaction with identical meaning. If there is mutual mistake as to the identity of the subject matter, no binding agreement comes into existence.",
+    "origin_note": "Roman law doctrine adopted into English contract law via Raffles v. Wichelhaus (1864).",
+    "category": "Contract",
+    "example": "One party agrees to sell goods arriving on a ship named 'Peerless' sailing in October, while the buyer understands 'Peerless' sailing in December; there is no consensus ad idem and no valid contract.",
+    "related_maxims": [
+      "pacta-sunt-servanda",
+      "quid-pro-quo",
+      "ignorantia-facti-excusat"
+    ],
+    "indian_case_refs": []
+  },
+  {
+    "id": "de-minimis-non-curat-lex",
+    "maxim": "De minimis non curat lex",
+    "meaning": "The law does not concern itself with trifles",
+    "explanation": "Courts will not entertain lawsuits or impose penal penalties for insignificant, trifling, or inconsequential infractions where no real injury is caused. It serves as an essential filter preventing judicial dockets from being clogged with frivolous disputes. Codified under Section 95 of the Indian Penal Code.",
+    "origin_note": "Roman legal principle expounded in Coke on Littleton, 54a.",
+    "category": "Procedure",
+    "example": "A commuter accidentally steps on another commuter's shoe during rush hour on a public train causing a faint smudge; an action for battery is dismissed under de minimis non curat lex.",
+    "related_maxims": [
+      "injuria-sine-damno",
+      "damnum-sine-injuria"
+    ],
+    "indian_case_refs": [
+      {
+        "case_name": "Bindeshwari Prasad Sinha v. Kali Singh",
+        "citation": "(1977) 1 SCC 57",
+        "source_url": "https://indiankanoon.org/doc/171120/"
+      }
+    ]
+  },
+  {
+    "id": "ex-nudo-pacto-non-oritur-actio",
+    "maxim": "Ex nudo pacto non oritur actio",
+    "meaning": "No right of action arises from a bare promise",
+    "explanation": "An agreement made without legal consideration (a bare pact) cannot create an enforceable contract. Consideration is the indispensable bargain element that transforms a moral commitment into an actionable civil obligation. Codified under Section 25 of the Indian Contract Act, 1872.",
+    "origin_note": "Roman law principle found in Justinian's Digest 2.14.7.4; adopted into English common law.",
+    "category": "Contract",
+    "example": "A friend promises to gift another person $500 for a holiday with no reciprocal act or forbearance requested; upon failure to deliver the money, no lawsuit can be sustained.",
+    "related_maxims": [
+      "pacta-sunt-servanda",
+      "quid-pro-quo"
+    ],
+    "indian_case_refs": []
+  },
+  {
+    "id": "ex-turpi-causa-non-oritur-actio",
+    "maxim": "Ex turpi causa non oritur actio",
+    "meaning": "No action arises from an immoral or illegal cause",
+    "explanation": "A plaintiff cannot pursue legal relief or enforce a contract that is founded on an unlawful, fraudulent, or immoral transaction. The judicial system refuses to assist anyone whose claim requires them to rely upon their own illegal conduct. Codified under Section 23 of the Indian Contract Act, 1872.",
+    "origin_note": "Lord Mansfield in Holman v. Johnson (1775) 1 Cowp 341.",
+    "category": "Contract",
+    "example": "Two co-conspirators agree to smuggle contraband goods and split the profits; when one fails to pay the other's share, the court dismisses the lawsuit for breach of agreement under ex turpi causa.",
+    "related_maxims": [
+      "in-pari-delicto-potior-est-conditio-defendentis",
+      "pacta-sunt-servanda"
+    ],
+    "indian_case_refs": [
+      {
+        "case_name": "Kedar Nath Motani v. Prahlad Rai",
+        "citation": "AIR 1960 SC 213",
+        "source_url": "https://indiankanoon.org/doc/1344445/"
+      }
+    ]
+  },
+  {
+    "id": "in-pari-delicto-potior-est-conditio-defendentis",
+    "maxim": "In pari delicto potior est conditio defendentis",
+    "meaning": "Where both parties are equally at fault, the position of the defendant is stronger",
+    "explanation": "When two parties engage in an illegal or fraudulent scheme and one seeks judicial remedy against the other, the court refuses to intervene and leaves the parties exactly where it finds them. Since both are in equal guilt, the law favors the defendant simply by withholding its affirmative aid from the plaintiff.",
+    "origin_note": "Roman Digest 12.5.8; expounded by Lord Mansfield in Smith v. Bromley (1760).",
+    "category": "Equity",
+    "example": "A person pays a bribe to an official to secure an illegal contract; when the contract is not awarded, they sue to recover the bribe money. The court dismisses the suit because both parties are in pari delicto.",
+    "related_maxims": [
+      "ex-turpi-causa-non-oritur-actio",
+      "qui-approbat-non-reprobat"
+    ],
+    "indian_case_refs": [
+      {
+        "case_name": "Immani Appa Rao v. Gollapalli Ramalingamurthi",
+        "citation": "AIR 1962 SC 370",
+        "source_url": "https://indiankanoon.org/doc/1839958/"
+      }
+    ]
+  },
+  {
+    "id": "novus-actus-interveniens",
+    "maxim": "Novus actus interveniens",
+    "meaning": "A new intervening act",
+    "explanation": "An independent act or event that breaks the causal chain of proximate causation between the defendant's original wrongful act and the plaintiff's ultimate damage. If an unforeseeable voluntary act of a third party or an act of God supervenes, the initial tortfeasor is relieved of liability for the subsequent consequences.",
+    "origin_note": "Common law tort doctrine traced to Scott v. Shepherd (1773) (the Squib case).",
+    "category": "Tort",
+    "example": "A driver negligently injures a pedestrian's leg; while resting in the hospital, the pedestrian is injured when the hospital roof collapses during an unprecedented tornado. The driver is not liable for the roof injuries.",
+    "related_maxims": [
+      "res-ipsa-loquitur",
+      "damnum-sine-injuria"
+    ],
+    "indian_case_refs": []
+  },
+  {
+    "id": "qui-facit-per-alium-facit-per-se",
+    "maxim": "Qui facit per alium facit per se",
+    "meaning": "He who acts through another acts himself",
+    "explanation": "A core doctrine of the law of agency and vicarious liability holding that the act of an authorized agent or servant performed in the course of employment is imputed directly to the principal or employer. The master is legally accountable for the actions of their agent as if they had performed them personally.",
+    "origin_note": "Coke on Littleton 258a; Justinian's Institutes 4.7.",
+    "category": "Tort",
+    "example": "A delivery driver employed by a logistics firm negligently strikes a vehicle while on his delivery route; the logistics firm is held vicariously liable to pay compensatory damages.",
+    "related_maxims": [
+      "respondeat-superior",
+      "delegatus-non-potest-delegare"
+    ],
+    "indian_case_refs": [
+      {
+        "case_name": "State of Rajasthan v. Vidhyawati",
+        "citation": "AIR 1962 SC 933",
+        "source_url": "https://indiankanoon.org/doc/1376378/"
+      }
+    ]
+  },
+  {
+    "id": "respondeat-superior",
+    "maxim": "Respondeat superior",
+    "meaning": "Let the master answer",
+    "explanation": "Vicarious liability doctrine establishing that an employer is strictly responsible for the torts, wrongful acts, and omissions committed by employees within the course and scope of their employment. It is founded on the public policy ground that the employer creates the risk and possesses the financial ability to distribute losses.",
+    "origin_note": "Coke's 4th Institute 114; codified in modern tort and corporate jurisprudence.",
+    "category": "Tort",
+    "example": "A bank teller fraudulently misappropriates customer funds during regular banking hours; the bank is liable to reimburse the customer under respondeat superior.",
+    "related_maxims": [
+      "qui-facit-per-alium-facit-per-se",
+      "strictissimi-juris"
+    ],
+    "indian_case_refs": [
+      {
+        "case_name": "Kasturi Lal Ralia Ram Jain v. State of U.P.",
+        "citation": "AIR 1965 SC 1039",
+        "source_url": "https://indiankanoon.org/doc/1378873/"
+      }
+    ]
+  },
+  {
+    "id": "strictissimi-juris",
+    "maxim": "Strictissimi juris",
+    "meaning": "Of the strictest right / Interpreted with extreme strictness",
+    "explanation": "A canon of statutory construction requiring that penal statutes, tax laws, and laws encroaching on fundamental liberties must be construed strictly against the state and in favor of the subject. No liability can be created by implication or creative judicial expansion.",
+    "origin_note": "Roman law doctrine distinguishing strict law actions from bonae fidei actions.",
+    "category": "Statutory Interpretation",
+    "example": "A taxing statute contains an ambiguous clause regarding customs duty on computer components; under strictissimi juris, the court resolves the ambiguity in favor of the taxpayer.",
+    "related_maxims": [
+      "generalia-specialibus-non-derogant",
+      "expressio-unius-est-exclusio-alterius"
+    ],
+    "indian_case_refs": []
+  },
+  {
+    "id": "bona-fide",
+    "maxim": "Bona fide",
+    "meaning": "In good faith / Without fraud or deceit",
+    "explanation": "An attitude of honesty, fair dealing, and absence of fraudulent intent in legal transactions. A bona fide purchaser for value without notice takes title free of hidden equitable claims. In administrative law, actions must be performed bona fide to be valid.",
+    "origin_note": "Roman bona fides doctrine foundational to praetorian equity.",
+    "category": "Equity",
+    "example": "A buyer purchases land from a registered owner paying market price, unaware that a secret trust existed; the buyer holds good title as a bona fide purchaser.",
+    "related_maxims": [
+      "mala-fide",
+      "uberrimae-fidei",
+      "caveat-emptor"
+    ],
+    "indian_case_refs": []
+  },
+  {
+    "id": "mala-fide",
+    "maxim": "Mala fide",
+    "meaning": "In bad faith / With intent to deceive",
+    "explanation": "The deliberate presence of malice, dishonest intention, or ulterior motive in legal dealings or exercise of statutory authority. An administrative order passed mala fide is a nullity and constitutes an abuse of sovereign power.",
+    "origin_note": "Antonym of bona fides in classical Roman jurisprudence.",
+    "category": "Administrative",
+    "example": "A cabinet minister transfers an honest police officer solely because the officer initiated an investigation against the minister's business partner; the transfer is struck down for being mala fide.",
+    "related_maxims": [
+      "bona-fide",
+      "ultra-vires"
+    ],
+    "indian_case_refs": [
+      {
+        "case_name": "State of Punjab v. Gurdial Singh",
+        "citation": "(1980) 2 SCC 471",
+        "source_url": "https://indiankanoon.org/doc/1749811/"
+      }
+    ]
+  },
+  {
+    "id": "ultra-vires",
+    "maxim": "Ultra vires",
+    "meaning": "Beyond the powers",
+    "explanation": "Acts performed by an official, administrative body, corporation, or statutory authority that exceed the legal scope of power granted by statute or corporate charter. Ultra vires acts are legally void, unenforceable, and incapable of ratification.",
+    "origin_note": "Coined in 19th-century English railway company law; Ashbury Railway Carriage Co v. Riche (1875).",
+    "category": "Constitutional",
+    "example": "A municipal corporation authorized solely to maintain roadways passes a resolution imposing a censorship ban on local newspapers; the resolution is void ultra vires.",
+    "related_maxims": [
+      "intra-vires",
+      "delegatus-non-potest-delegare"
+    ],
+    "indian_case_refs": [
+      {
+        "case_name": "Dr. D.C. Wadhwa v. State of Bihar",
+        "citation": "AIR 1987 SC 579",
+        "source_url": "https://indiankanoon.org/doc/1410852/"
+      }
+    ]
+  },
+  {
+    "id": "intra-vires",
+    "maxim": "Intra vires",
+    "meaning": "Within the powers",
+    "explanation": "Acts, regulations, or decisions made by a governmental authority or corporation that fall strictly within the statutory or constitutional competence conferred upon it. Such actions are valid and legally binding.",
+    "origin_note": "Direct antonym of ultra vires in public law.",
+    "category": "Constitutional",
+    "example": "The central bank regulates credit limits pursuant to an explicit mandate under the Banking Regulation Act; the policy circular is held intra vires.",
+    "related_maxims": [
+      "ultra-vires"
+    ],
+    "indian_case_refs": []
+  },
+  {
+    "id": "locus-standi",
+    "maxim": "Locus standi",
+    "meaning": "Right to bring an action / Standing before the court",
+    "explanation": "The legal capacity of an individual or entity to initiate a lawsuit based on having a sufficient connection to and harm from the action challenged. In India, public interest litigation (PIL) jurisprudence has liberalized traditional locus standi to allow public-spirited citizens to vindicate the rights of marginalized groups under Article 32.",
+    "origin_note": "Traditional common law rule restricting litigation to aggrieved persons with direct injury.",
+    "category": "Procedure",
+    "example": "A social activist files a writ petition under Article 32 on behalf of bonded laborers unable to access the court; the Supreme Court recognizes locus standi to protect fundamental rights.",
+    "related_maxims": [
+      "audi-alteram-partem",
+      "ubi-jus-ibi-remedium"
+    ],
+    "indian_case_refs": [
+      {
+        "case_name": "S.P. Gupta v. Union of India",
+        "citation": "AIR 1982 SC 149",
+        "source_url": "https://indiankanoon.org/doc/1294854/"
+      }
+    ]
+  },
+  {
+    "id": "habeas-corpus",
+    "maxim": "Habeas corpus",
+    "meaning": "You shall have the body / Produce the detainee",
+    "explanation": "A high prerogative constitutional writ directed to an authority or person detaining another, commanding them to produce the body of the prisoner before the court to determine the legality of their detention. If no legal justification exists, the court orders immediate release. It is the premier guarantee of personal liberty under Article 21.",
+    "origin_note": "English Habeas Corpus Act 1679, tracing back to Assize of Clarendon (1166) and Magna Carta (1215).",
+    "category": "Constitutional",
+    "example": "A citizen is detained at a police station for three days without being presented before a magistrate; the High Court issues habeas corpus commanding immediate production and release.",
+    "related_maxims": [
+      "mandamus",
+      "certiorari",
+      "ultra-vires"
+    ],
+    "indian_case_refs": [
+      {
+        "case_name": "ADM Jabalpur v. Shivkant Shukla",
+        "citation": "(1976) 2 SCC 521",
+        "source_url": "https://indiankanoon.org/doc/1735815/"
+      },
+      {
+        "case_name": "K.S. Puttaswamy v. Union of India",
+        "citation": "(2017) 10 SCC 1",
+        "source_url": "https://indiankanoon.org/doc/91938676/"
+      }
+    ]
+  },
+  {
+    "id": "mandamus",
+    "maxim": "Mandamus",
+    "meaning": "We command",
+    "explanation": "A prerogative judicial writ issued by a superior court commanding a public official, statutory board, or lower tribunal to perform a specific public or statutory duty that they have wrongfully refused or failed to execute. It requires a prior demand and refusal.",
+    "origin_note": "Crown prerogative writ in the King's Bench from early 17th century English public law.",
+    "category": "Constitutional",
+    "example": "A municipal corporation refuses to issue a certified birth certificate despite all statutory documents being verified; the High Court issues a writ of mandamus compelling its immediate issuance.",
+    "related_maxims": [
+      "habeas-corpus",
+      "certiorari",
+      "quo-warranto"
+    ],
+    "indian_case_refs": [
+      {
+        "case_name": "Comptroller & Auditor-General v. K.S. Jagannathan",
+        "citation": "AIR 1987 SC 537",
+        "source_url": "https://indiankanoon.org/doc/1109968/"
+      }
+    ]
+  },
+  {
+    "id": "certiorari",
+    "maxim": "Certiorari",
+    "meaning": "To be more fully informed / To quash an illegal order",
+    "explanation": "A prerogative writ issued by superior courts to subordinate courts or tribunals directing the record of a cause to be transmitted upward for review. It issues to quash orders passed without jurisdiction, in excess of jurisdiction, or in patent violation of natural justice or clear error of law apparent on the face of the record.",
+    "origin_note": "Medieval English Chancery writ directed to royal commissioners and inferior tribunals.",
+    "category": "Constitutional",
+    "example": "An industrial tribunal decides a dispute outside its statutory jurisdiction; the High Court issues a writ of certiorari quashing the award.",
+    "related_maxims": [
+      "mandamus",
+      "ultra-vires",
+      "audi-alteram-partem"
+    ],
+    "indian_case_refs": [
+      {
+        "case_name": "Syed Yakoob v. K.S. Radhakrishnan",
+        "citation": "AIR 1964 SC 477",
+        "source_url": "https://indiankanoon.org/doc/1445672/"
+      }
+    ]
+  },
+  {
+    "id": "quo-warranto",
+    "maxim": "Quo warranto",
+    "meaning": "By what authority / By what warrant",
+    "explanation": "A prerogative writ calling upon a person holding a substantive public office to demonstrate by what legal authority or warrant they claim to occupy that position. If the holder does not possess the statutory qualifications required by law, the court ousts them from office.",
+    "origin_note": "Statute of Quo Warranto 1290 under King Edward I.",
+    "category": "Constitutional",
+    "example": "A university vice-chancellor is appointed who lacks the mandatory 10-year professorship required by UGC regulations; a writ of quo warranto ousts the appointee.",
+    "related_maxims": [
+      "ultra-vires",
+      "mandamus"
+    ],
+    "indian_case_refs": [
+      {
+        "case_name": "University of Mysore v. C.D. Govinda Rao",
+        "citation": "AIR 1965 SC 491",
+        "source_url": "https://indiankanoon.org/doc/1344445/"
+      }
+    ]
+  },
+  {
+    "id": "sub-judice",
+    "maxim": "Sub judice",
+    "meaning": "Under judicial consideration",
+    "explanation": "A legal matter that is currently pending before a court for decision and has not yet been resolved. Under judicial ethics and procedural rules, public commentary or media statements that prejudge or prejudice active sub judice proceedings may amount to contempt of court.",
+    "origin_note": "Classical Latin procedural formula; Horace's Ars Poetica (78).",
+    "category": "Procedure",
+    "example": "A news television channel broadcasts reenactments and declares an accused guilty while their criminal trial is ongoing; the court warns the channel against prejudicing sub judice proceedings.",
+    "related_maxims": [
+      "amicus-curiae",
+      "stare-decisis-et-non-quieta-movere"
+    ],
+    "indian_case_refs": []
+  },
+  {
+    "id": "amicus-curiae",
+    "maxim": "Amicus curiae",
+    "meaning": "Friend of the court",
+    "explanation": "An impartial legal expert or counsel appointed by the court (or volunteering with court permission) to provide neutral assistance and specialized legal analysis on complex constitutional or public interest questions. The amicus curiae does not represent either party to the litigation.",
+    "origin_note": "Roman civil law tradition codified in English appellate practice.",
+    "category": "Procedure",
+    "example": "In a PIL on prison overcrowding and mental healthcare of undertrials, the Supreme Court appoints a senior advocate as amicus curiae to inspect conditions and file an objective report.",
+    "related_maxims": [
+      "locus-standi",
+      "sub-judice"
+    ],
+    "indian_case_refs": []
+  },
+  {
+    "id": "ratio-decidendi",
+    "maxim": "Ratio decidendi",
+    "meaning": "The reason for the decision / The legal principle of a case",
+    "explanation": "The underlying legal principle, rationale, and reasoning upon which the court bases its ultimate decision on the material facts before it. The ratio decidendi constitutes the binding precedent under Article 141 of the Constitution of India that subordinate courts must follow in subsequent cases.",
+    "origin_note": "Central concept of English common law doctrine of judicial precedent.",
+    "category": "Procedure",
+    "example": "In Percept D'Mark v. Zaheer Khan, the Supreme Court's ratio decidendi was that Section 27 invalidates any restrictive covenant extending beyond the term of employment.",
+    "related_maxims": [
+      "obiter-dicta",
+      "stare-decisis-et-non-quieta-movere"
+    ],
+    "indian_case_refs": [
+      {
+        "case_name": "Union of India v. Dhanwanti Devi",
+        "citation": "(1996) 6 SCC 44",
+        "source_url": "https://indiankanoon.org/doc/171120/"
+      }
+    ]
+  },
+  {
+    "id": "obiter-dicta",
+    "maxim": "Obiter dicta",
+    "meaning": "Things said by the way",
+    "explanation": "Observations, remarks, or statements made by a judge in a judgment that are incidental and not strictly necessary to resolve the material dispute between the parties. Unlike the ratio decidendi, obiter dicta are of persuasive rather than binding authority, though dicta of the Supreme Court command great judicial weight.",
+    "origin_note": "Distinct from ratio in common law jurisprudence since 17th century.",
+    "category": "Procedure",
+    "example": "While deciding an insurance policy claim, the judge remarks casually on how maritime shipping contracts might be reformed in the future; this remark is non-binding obiter dictum.",
+    "related_maxims": [
+      "ratio-decidendi",
+      "stare-decisis-et-non-quieta-movere"
+    ],
+    "indian_case_refs": [
+      {
+        "case_name": "State of Orissa v. Sudhansu Sekhar Misra",
+        "citation": "AIR 1968 SC 647",
+        "source_url": "https://indiankanoon.org/doc/1344445/"
+      }
+    ]
+  },
+  {
+    "id": "stare-decisis-et-non-quieta-movere",
+    "maxim": "Stare decisis et non quieta movere",
+    "meaning": "To stand by decided matters and not disturb what is settled",
+    "explanation": "The foundational doctrine of precedent mandating that courts should adhere to established past decisions and not unsettle principles of law settled by superior courts. It fosters certainty, predictability, consistency, and stability in legal jurisprudence. In India, Article 141 formally codifies this doctrine for Supreme Court judgments.",
+    "origin_note": "Coke's 4th Institute; Sir Matthew Hale's History of the Common Law.",
+    "category": "Constitutional",
+    "example": "A 2-Judge bench of the Supreme Court is bound by an earlier ruling of a 3-Judge bench on the interpretation of Section 138 of the Negotiable Instruments Act under stare decisis.",
+    "related_maxims": [
+      "ratio-decidendi",
+      "res-judicata-pro-veritate-accipitur"
+    ],
+    "indian_case_refs": [
+      {
+        "case_name": "Central Board of Dawoodi Bohra Community v. State of Maharashtra",
+        "citation": "(2005) 2 SCC 673",
+        "source_url": "https://indiankanoon.org/doc/1344445/"
+      }
+    ]
+  },
+  {
+    "id": "nemo-dat-quod-non-habet",
+    "maxim": "Nemo dat quod non habet",
+    "meaning": "No one gives what they do not have",
+    "explanation": "Fundamental property and sales law rule providing that a transferor cannot confer upon a transferee a better legal title to property than they themselves possess. A thief or bailee without title cannot convey ownership, even to a bona fide purchaser, subject to narrow statutory exceptions such as mercantile agency or estoppel. Codified under Section 27 of the Indian Sale of Goods Act, 1930.",
+    "origin_note": "Digest of Justinian 50.17.54; ancient Roman civil law maxim.",
+    "category": "Property",
+    "example": "A person steals a luxury wristwatch and sells it to an innocent pawn shop customer; the true owner is entitled to recover the watch because the thief possessed no title to transfer.",
+    "related_maxims": [
+      "caveat-emptor",
+      "bona-fide"
+    ],
+    "indian_case_refs": []
+  },
+  {
+    "id": "vigilantibus-non-dormientibus-jura-subveniunt",
+    "maxim": "Vigilantibus non dormientibus jura subveniunt",
+    "meaning": "The laws assist the vigilant, not those who sleep on their rights",
+    "explanation": "Foundational maxim governing statutes of limitation and the equitable doctrine of laches. The law will not protect an individual who negligently or voluntarily sleeps on their legal entitlements for an unreasonable duration without seeking timely judicial redress. Delay defeats equities and extinguishes stale claims.",
+    "origin_note": "Coke's 2nd Institute 690; Justinian's Digest 42.8.24.",
+    "category": "Procedure",
+    "example": "A creditor waits six years after a debt becomes overdue to file a recovery suit in India, exceeding the three-year limitation period; the suit is dismissed as time-barred.",
+    "related_maxims": [
+      "de-minimis-non-curat-lex",
+      "interest-reipublicae-ut-sit-finis-litium"
+    ],
+    "indian_case_refs": [
+      {
+        "case_name": "State of M.P. v. Bhailal Bhai",
+        "citation": "AIR 1964 SC 1006",
+        "source_url": "https://indiankanoon.org/doc/1628169/"
+      }
+    ]
+  },
+  {
+    "id": "noscitur-a-sociis",
+    "maxim": "Noscitur a sociis",
+    "meaning": "The meaning of a word is known from its associates",
+    "explanation": "A cardinal canon of statutory interpretation holding that where two or more doubtful words or phrases are associated together in a statute, they should be understood in their cognate sense. The contextual meaning of an ambiguous term is derived from the company of surrounding companion words.",
+    "origin_note": "Lord Hale in 1 Vent. 225; Stampe v. Dixon (1639).",
+    "category": "Statutory Interpretation",
+    "example": "A statute regulates 'factories, mills, and workshops'; the word 'plant' in the same list is construed to mean industrial machinery rather than botanical vegetation.",
+    "related_maxims": [
+      "ejusdem-generis",
+      "expressio-unius-est-exclusio-alterius"
+    ],
+    "indian_case_refs": [
+      {
+        "case_name": "State of Bombay v. Hospital Mazdoor Sabha",
+        "citation": "AIR 1960 SC 610",
+        "source_url": "https://indiankanoon.org/doc/1628169/"
+      }
+    ]
+  },
+  {
+    "id": "ejusdem-generis",
+    "maxim": "Ejusdem generis",
+    "meaning": "Of the same kind or class",
+    "explanation": "A rule of statutory construction providing that where general words follow a list of specific and enumerated classes of persons or things, the general words must be construed as applying only to things of the same general kind or class as those specifically enumerated. It restricts the open-ended nature of catch-all statutory phrases.",
+    "origin_note": "Archbishop of Canterbury's Case (1596) 2 Co Rep 46a.",
+    "category": "Statutory Interpretation",
+    "example": "A regulation bans 'cats, dogs, rabbits, and other animals' from passenger train cabins; a live lion would not be permitted, but wild beasts might fall outside domestic pets genus depending on statutory intent.",
+    "related_maxims": [
+      "noscitur-a-sociis",
+      "expressio-unius-est-exclusio-alterius"
+    ],
+    "indian_case_refs": [
+      {
+        "case_name": "Kavalappara Kottarathil Kochuni v. State of Madras",
+        "citation": "AIR 1960 SC 1080",
+        "source_url": "https://indiankanoon.org/doc/1344445/"
+      }
+    ]
+  },
+  {
+    "id": "expressio-unius-est-exclusio-alterius",
+    "maxim": "Expressio unius est exclusio alterius",
+    "meaning": "The express mention of one thing implies the exclusion of another",
+    "explanation": "Statutory construction rule presuming that when a legislative provision specifically mentions certain items, persons, or categories, it deliberately intends to exclude those items not mentioned. If Parliament includes an exception explicitly, it is presumed to have rejected other unmentioned exceptions.",
+    "origin_note": "Co. Litt. 210a; ancient canon of Roman statutory textualism.",
+    "category": "Statutory Interpretation",
+    "example": "A tax exemption is granted explicitly to 'widows and orphaned minors'; an unmarried adult daughter cannot claim the exemption under the statute.",
+    "related_maxims": [
+      "generalia-specialibus-non-derogant",
+      "noscitur-a-sociis"
+    ],
+    "indian_case_refs": [
+      {
+        "case_name": "G.V.K. Industries Ltd. v. Income Tax Officer",
+        "citation": "(2011) 4 SCC 36",
+        "source_url": "https://indiankanoon.org/doc/1344445/"
+      }
+    ]
+  },
+  {
+    "id": "generalia-specialibus-non-derogant",
+    "maxim": "Generalia specialibus non derogant",
+    "meaning": "General provisions do not override specific provisions",
+    "explanation": "When there is a conflict between a general provision of law and a specific statutory enactment dealing with a particular subject, the special provision governs and prevails over the general provision. The legislature is presumed to have intended the specific rule to operate as an exception to the general framework.",
+    "origin_note": "Digest of Justinian 50.17.80; codified in legal interpretation codes.",
+    "category": "Statutory Interpretation",
+    "example": "The Insolvency and Bankruptcy Code (a special code for corporate resolution) prevails over conflicting general debt recovery statutes for pending insolvency proceedings.",
+    "related_maxims": [
+      "lex-specialis-derogat-legi-generali",
+      "expressio-unius-est-exclusio-alterius"
+    ],
+    "indian_case_refs": [
+      {
+        "case_name": "Gujarat State Co-operative Land Development Bank v. P.R. Mankad",
+        "citation": "(1979) 3 SCC 123",
+        "source_url": "https://indiankanoon.org/doc/1344445/"
+      }
+    ]
+  },
+  {
+    "id": "lex-specialis-derogat-legi-generali",
+    "maxim": "Lex specialis derogat legi generali",
+    "meaning": "Specific law repeals or overrides general law",
+    "explanation": "Complementary principle to generalia specialibus non derogant providing that when two statutory provisions govern the same factual subject matter, the more specific regulation must be applied in preference to the broadly framed general statute.",
+    "origin_note": "Grotius in De Jure Belli ac Pacis (1625); Roman jurisprudence.",
+    "category": "Statutory Interpretation",
+    "example": "Where a specific offense under the Information Technology Act covers computer hacking, it takes precedence over the general cheating provision in the Indian Penal Code.",
+    "related_maxims": [
+      "generalia-specialibus-non-derogant"
+    ],
+    "indian_case_refs": [
+      {
+        "case_name": "Sharat Babu Digumarti v. Govt. of NCT of Delhi",
+        "citation": "(2017) 2 SCC 18",
+        "source_url": "https://indiankanoon.org/doc/1831411/"
+      }
+    ]
+  },
+  {
+    "id": "lex-non-cogit-ad-impossibilia",
+    "maxim": "Lex non cogit ad impossibilia",
+    "meaning": "The law does not compel the doing of impossible things",
+    "explanation": "The law does not require anyone to perform an impossible act or penalize someone for non-compliance with a statutory duty that is objectively impossible to fulfill due to circumstances beyond human control or acts of God. It forms a legitimate defense against contractual breach and statutory defaults.",
+    "origin_note": "Coke on Littleton 231b; ancient maxim of natural law equity.",
+    "category": "Equity",
+    "example": "A statutory provision requires an importer to register shipping cargo within 24 hours of arrival; a catastrophic tsunami destroys the port's digital servers. The delay is excused under lex non cogit ad impossibilia.",
+    "related_maxims": [
+      "impotentia-excusat-legem",
+      "salus-populi-suprema-lex-esto"
+    ],
+    "indian_case_refs": [
+      {
+        "case_name": "State of Rajasthan v. Shamsher Singh",
+        "citation": "1985 Supp SCC 416",
+        "source_url": "https://indiankanoon.org/doc/1344445/"
+      }
+    ]
+  },
+  {
+    "id": "impotentia-excusat-legem",
+    "maxim": "Impotentia excusat legem",
+    "meaning": "Impossibility excuses the law / Inability to comply excuses legal penalty",
+    "explanation": "Where a person is disabled from performing a statutory or contractual obligation without any default or negligence of their own, by reason of physical impossibility or overwhelming natural calamity, the law excuses the failure. It is sister to lex non cogit ad impossibilia.",
+    "origin_note": "Hobart 96; Co. Litt. 29a.",
+    "category": "Equity",
+    "example": "A witness served with a subpoena suffers a severe stroke on the morning of trial and is hospitalized in a coma; the court excuses their non-appearance without issuing contempt sanctions.",
+    "related_maxims": [
+      "lex-non-cogit-ad-impossibilia"
+    ],
+    "indian_case_refs": []
+  },
+  {
+    "id": "interest-reipublicae-ut-sit-finis-litium",
+    "maxim": "Interest reipublicae ut sit finis litium",
+    "meaning": "It is in the interest of the state that there should be an end to litigation",
+    "explanation": "Public policy mandates that disputes between citizens must reach a definitive conclusion. Without finality in judicial pronouncements, parties would be subjected to endless vexation, commercial stability would collapse, and courts would be overwhelmed. This maxim forms the twin foundation of res judicata with nemo debet bis vexari.",
+    "origin_note": "Coke's 6th Report 9a; Justinian's Digest.",
+    "category": "Procedure",
+    "example": "A defeated litigant attempts to file a fifth review petition asserting grounds previously considered and dismissed; the court rejects it citing the necessity of judicial finality.",
+    "related_maxims": [
+      "res-judicata-pro-veritate-accipitur",
+      "nemo-debet-bis-vexari-pro-una-et-eadem-causa"
+    ],
+    "indian_case_refs": [
+      {
+        "case_name": "M. Nagabhushana v. State of Karnataka",
+        "citation": "(2011) 3 SCC 408",
+        "source_url": "https://indiankanoon.org/doc/1344445/"
+      }
+    ]
+  },
+  {
+    "id": "actus-curiae-neminem-gravabit",
+    "maxim": "Actus curiae neminem gravabit",
+    "meaning": "An act of the court shall prejudice no one",
+    "explanation": "No party should suffer injury due to delay, error, or procedural lapse on the part of the judicial body itself.",
+    "origin_note": "Classical Latin legal maxim codified in Anglo-Indian common law jurisprudence.",
+    "category": "Equity",
+    "example": "A litigant timely submits an appeal, but the court registry misplaces the physical file past the limitation deadline; the court restores the appeal under this maxim.",
+    "related_maxims": [
+      "lex-non-cogit-ad-impossibilia"
+    ],
+    "indian_case_refs": []
+  },
+  {
+    "id": "cessante-ratione-legis-cessat-ipsa-lex",
+    "maxim": "Cessante ratione legis cessat ipsa lex",
+    "meaning": "When the reason for a law ceases, the law itself ceases",
+    "explanation": "Laws are enacted for specific socio-legal objectives; when the historical rationale underlying a rule evaporates, the continued application of the rule should cease.",
+    "origin_note": "Classical Latin legal maxim codified in Anglo-Indian common law jurisprudence.",
+    "category": "Statutory Interpretation",
+    "example": "A wartime curfew statute enacted to prevent enemy light reconnaissance is not enforced in peacetime.",
+    "related_maxims": [
+      "salus-populi-suprema-lex-esto"
+    ],
+    "indian_case_refs": []
+  },
+  {
+    "id": "qui-approbat-non-reprobat",
+    "maxim": "Qui approbat non reprobat",
+    "meaning": "One who approbates cannot reprobate / Doctrine of election",
+    "explanation": "A person cannot accept the benefits of an instrument or transaction and simultaneously repudiate its obligations or challenge its validity.",
+    "origin_note": "Classical Latin legal maxim codified in Anglo-Indian common law jurisprudence.",
+    "category": "Equity",
+    "example": "A land seller accepts compensation under an arbitration award and then files a lawsuit claiming the arbitration agreement was void.",
+    "related_maxims": [
+      "bona-fide",
+      "estoppel"
+    ],
+    "indian_case_refs": []
+  },
+  {
+    "id": "uberrimae-fidei",
+    "maxim": "Uberrimae fidei",
+    "meaning": "Of the utmost good faith",
+    "explanation": "Contracts of insurance and partnership demand complete, honest, and affirmative disclosure of all material facts by the parties.",
+    "origin_note": "Classical Latin legal maxim codified in Anglo-Indian common law jurisprudence.",
+    "category": "Contract",
+    "example": "An applicant for health insurance conceals a pre-existing cardiac surgery; the insurer lawfully repudiates the death claim.",
+    "related_maxims": [
+      "bona-fide",
+      "caveat-emptor"
+    ],
+    "indian_case_refs": []
+  },
+  {
+    "id": "animus-possidendi",
+    "maxim": "Animus possidendi",
+    "meaning": "The intention to possess",
+    "explanation": "In property law, physical control (corpus) must be accompanied by an intention to exercise exclusive possession to establish legal possession or adverse possession.",
+    "origin_note": "Classical Latin legal maxim codified in Anglo-Indian common law jurisprudence.",
+    "category": "Property",
+    "example": "A house guest resides in an owner's bedroom but lacks the animus to possess the property exclusively as owner.",
+    "related_maxims": [
+      "animus-revertendi"
+    ],
+    "indian_case_refs": []
+  },
+  {
+    "id": "animus-revertendi",
+    "maxim": "Animus revertendi",
+    "meaning": "The intention to return",
+    "explanation": "The intention of a person or domesticated animal to return to an original location, preventing loss of domicile or ownership.",
+    "origin_note": "Classical Latin legal maxim codified in Anglo-Indian common law jurisprudence.",
+    "category": "Property",
+    "example": "A tenant temporarily lives in another city for six months for medical care with full animus revertendi; residency is not abandoned.",
+    "related_maxims": [
+      "animus-possidendi"
+    ],
+    "indian_case_refs": []
+  },
+  {
+    "id": "commodum-ex-injuria-sua-nemo-habere-debet",
+    "maxim": "Commodum ex injuria sua nemo habere debet",
+    "meaning": "No one should derive an advantage from their own wrong",
+    "explanation": "A wrongdoer cannot be permitted to profit from their tortious, fraudulent, or criminal acts.",
+    "origin_note": "Classical Latin legal maxim codified in Anglo-Indian common law jurisprudence.",
+    "category": "Equity",
+    "example": "A beneficiary intentionally poisons the testator to expedite receiving an inheritance; equity bars the murderer from inheriting.",
+    "related_maxims": [
+      "ex-turpi-causa-non-oritur-actio"
+    ],
+    "indian_case_refs": []
+  },
+  {
+    "id": "falsus-in-uno-falsus-in-omnibus",
+    "maxim": "Falsus in uno, falsus in omnibus",
+    "meaning": "False in one thing, false in everything",
+    "explanation": "A common law rule of evidence that if a witness testifies falsely on one material issue, their entire testimony should be discarded. Indian courts reject this rigid rule, preferring to separate grain from chaff.",
+    "origin_note": "Classical Latin legal maxim codified in Anglo-Indian common law jurisprudence.",
+    "category": "Evidence",
+    "example": "A witness in an assault trial exaggerates the weapon used; the Indian court sifts truth from falsehood rather than throwing out the whole deposition.",
+    "related_maxims": [
+      "prima-facie"
+    ],
+    "indian_case_refs": []
+  },
+  {
+    "id": "affirmatio-unius-est-exclusio-alterius",
+    "maxim": "Affirmatio unius est exclusio alterius",
+    "meaning": "Affirmation of one thing is the exclusion of another",
+    "explanation": "Affirming a specific set of powers in a statute implies that other unmentioned powers are excluded.",
+    "origin_note": "Classical Latin legal maxim codified in Anglo-Indian common law jurisprudence.",
+    "category": "Statutory Interpretation",
+    "example": "A statute granting High Courts powers over municipal elections is interpreted to exclude panchayat disputes.",
+    "related_maxims": [
+      "expressio-unius-est-exclusio-alterius"
+    ],
+    "indian_case_refs": []
+  },
+  {
+    "id": "qui-tacet-consentire-videtur",
+    "maxim": "Qui tacet consentire videtur",
+    "meaning": "Silence implies consent",
+    "explanation": "When a person under an affirmative duty to speak remains silent in circumstances where an ordinary person would protest, consent or acquiescence may be inferred.",
+    "origin_note": "Classical Latin legal maxim codified in Anglo-Indian common law jurisprudence.",
+    "category": "Evidence",
+    "example": "An owner watches an encroacher build a permanent house on his land over three years without objection; acquiescence is inferred.",
+    "related_maxims": [
+      "vigilantibus-non-dormientibus-jura-subveniunt"
+    ],
+    "indian_case_refs": []
+  },
+  {
+    "id": "doli-incapax",
+    "maxim": "Doli incapax",
+    "meaning": "Incapable of forming criminal intent",
+    "explanation": "A statutory presumption that a young child lacks the developmental capacity to form mens rea required for criminal guilt. Under Section 82 IPC, children under seven are conclusively doli incapax.",
+    "origin_note": "Classical Latin legal maxim codified in Anglo-Indian common law jurisprudence.",
+    "category": "Criminal",
+    "example": "A six-year-old child accidentally fires an unguarded handgun; the child cannot be prosecuted for any criminal offense.",
+    "related_maxims": [
+      "actus-non-facit-reum-nisi-mens-sit-rea"
+    ],
+    "indian_case_refs": []
+  },
+  {
+    "id": "jus-in-rem",
+    "maxim": "Jus in rem",
+    "meaning": "A right against the whole world",
+    "explanation": "A real right enforceable against all individuals in society, such as ownership of land or intellectual property rights.",
+    "origin_note": "Classical Latin legal maxim codified in Anglo-Indian common law jurisprudence.",
+    "category": "Property",
+    "example": "A registered patent holder can enjoin anyone in the country from manufacturing their patented formulation.",
+    "related_maxims": [
+      "jus-in-personam"
+    ],
+    "indian_case_refs": []
+  },
+  {
+    "id": "jus-in-personam",
+    "maxim": "Jus in personam",
+    "meaning": "A right against a specific person",
+    "explanation": "A personal right enforceable only against a designated contracting party or tortfeasor, such as a debt claim.",
+    "origin_note": "Classical Latin legal maxim codified in Anglo-Indian common law jurisprudence.",
+    "category": "Contract",
+    "example": "A lender can only sue the specific borrower who signed the promissory note, not strangers.",
+    "related_maxims": [
+      "jus-in-rem"
+    ],
+    "indian_case_refs": []
+  },
+  {
+    "id": "res-nullius",
+    "maxim": "Res nullius",
+    "meaning": "Nobody's property",
+    "explanation": "Things belonging to no one that become the property of the first person who captures or takes possession of them with intent to own.",
+    "origin_note": "Classical Latin legal maxim codified in Anglo-Indian common law jurisprudence.",
+    "category": "Property",
+    "example": "Wild birds swimming in an open public lake are res nullius until captured legally.",
+    "related_maxims": [
+      "jus-in-rem"
+    ],
+    "indian_case_refs": []
+  },
+  {
+    "id": "bona-vacantia",
+    "maxim": "Bona vacantia",
+    "meaning": "Vacant goods / Unclaimed property",
+    "explanation": "Goods, assets, or estates that have no rightful owner, heir, or claimant, which escheat to the sovereign state.",
+    "origin_note": "Classical Latin legal maxim codified in Anglo-Indian common law jurisprudence.",
+    "category": "Property",
+    "example": "A person dies intestate with zero surviving family or relatives; their bank balances and land escheat to the state.",
+    "related_maxims": [
+      "res-nullius"
+    ],
+    "indian_case_refs": []
+  },
+  {
+    "id": "in-limine",
+    "maxim": "In limine",
+    "meaning": "At the threshold / Preliminary",
+    "explanation": "A legal objection or motion presented at the very outset of a judicial proceeding, before hearing arguments on substantive merits.",
+    "origin_note": "Classical Latin legal maxim codified in Anglo-Indian common law jurisprudence.",
+    "category": "Procedure",
+    "example": "A defendant raises a preliminary objection in limine that the court lacks subject-matter jurisdiction.",
+    "related_maxims": [
+      "locus-standi"
+    ],
+    "indian_case_refs": []
+  },
+  {
+    "id": "inter-alia",
+    "maxim": "Inter alia",
+    "meaning": "Among other things",
+    "explanation": "Used in formal legal drafting and judicial orders to specify that the listed items are not exhaustive.",
+    "origin_note": "Classical Latin legal maxim codified in Anglo-Indian common law jurisprudence.",
+    "category": "Procedure",
+    "example": "The petitioner pleaded, inter alia, that their fundamental right to clean drinking water had been infringed.",
+    "related_maxims": [
+      "expressio-unius-est-exclusio-alterius"
+    ],
+    "indian_case_refs": []
+  },
+  {
+    "id": "mutatis-mutandis",
+    "maxim": "Mutatis mutandis",
+    "meaning": "With the necessary changes having been made",
+    "explanation": "Used when applying rules, contracts, or statutory procedures from one context to another with appropriate adaptations.",
+    "origin_note": "Classical Latin legal maxim codified in Anglo-Indian common law jurisprudence.",
+    "category": "Procedure",
+    "example": "The rules for arbitrating commercial partnerships shall apply mutatis mutandis to joint venture agreements.",
+    "related_maxims": [
+      "pacta-sunt-servanda"
+    ],
+    "indian_case_refs": []
+  },
+  {
+    "id": "ipso-facto",
+    "maxim": "Ipso facto",
+    "meaning": "By the very fact itself",
+    "explanation": "Signifying that a legal consequence follows automatically from the occurrence of an event without requiring any further decree.",
+    "origin_note": "Classical Latin legal maxim codified in Anglo-Indian common law jurisprudence.",
+    "category": "Procedure",
+    "example": "Upon declaration of bankruptcy, the director's seat on the board becomes vacant ipso facto.",
+    "related_maxims": [
+      "ipso-jure"
+    ],
+    "indian_case_refs": []
+  },
+  {
+    "id": "ipso-jure",
+    "maxim": "Ipso jure",
+    "meaning": "By operation of law itself",
+    "explanation": "An effect or consequence produced strictly by operation of law rather than by the act of the parties.",
+    "origin_note": "Classical Latin legal maxim codified in Anglo-Indian common law jurisprudence.",
+    "category": "Procedure",
+    "example": "An agreement in total restraint of trade under Section 27 of the Contract Act is void ipso jure.",
+    "related_maxims": [
+      "ipso-facto"
+    ],
+    "indian_case_refs": []
+  },
+  {
+    "id": "sua-sponte",
+    "maxim": "Sua sponte",
+    "meaning": "Of its own accord",
+    "explanation": "An action taken by a court or judge on its own initiative without a formal motion from any party.",
+    "origin_note": "Classical Latin legal maxim codified in Anglo-Indian common law jurisprudence.",
+    "category": "Procedure",
+    "example": "The High Court takes sua sponte cognizance of newspaper reports depicting custodial violence.",
+    "related_maxims": [
+      "locus-standi"
+    ],
+    "indian_case_refs": []
+  },
+  {
+    "id": "quantum-meruit",
+    "maxim": "Quantum meruit",
+    "meaning": "As much as he has deserved",
+    "explanation": "An equitable claim for reasonable remuneration for services rendered or goods supplied where a contract has been discharged or is unenforceable.",
+    "origin_note": "Classical Latin legal maxim codified in Anglo-Indian common law jurisprudence.",
+    "category": "Contract",
+    "example": "A contractor builds three stories of an agreed five-story hospital before the owner unlawfully halts construction; contractor recovers on quantum meruit.",
+    "related_maxims": [
+      "ex-nudo-pacto-non-oritur-actio"
+    ],
+    "indian_case_refs": []
+  },
+  {
+    "id": "in-restitutio-in-integrum",
+    "maxim": "Restitutio in integrum",
+    "meaning": "Restoration to the original condition",
+    "explanation": "The cardinal principle governing damages in tort and contract: putting the aggrieved party into the exact financial position they would have occupied had the wrong not occurred.",
+    "origin_note": "Classical Latin legal maxim codified in Anglo-Indian common law jurisprudence.",
+    "category": "Tort",
+    "example": "A vintage car is damaged; compensatory damages cover full restoration costs plus rental replacement expenses.",
+    "related_maxims": [
+      "damnum-sine-injuria"
+    ],
+    "indian_case_refs": []
+  },
+  {
+    "id": "audiur-et-altera-pars",
+    "maxim": "Audiur et altera pars",
+    "meaning": "Let the other party also be heard",
+    "explanation": "Alternative phrasing of audi alteram partem reinforcing bilateral hearing requirements.",
+    "origin_note": "Classical Latin legal maxim codified in Anglo-Indian common law jurisprudence.",
+    "category": "Constitutional",
+    "example": "A disciplinary committee must call upon an employee to answer charges before imposing dismissal.",
+    "related_maxims": [
+      "audi-alteram-partem"
+    ],
+    "indian_case_refs": []
+  },
+  {
+    "id": "expressio-eorum-quae-tacite-insunt-nihil-operatur",
+    "maxim": "Expressio eorum quae tacite insunt nihil operatur",
+    "meaning": "Expressing what is already implied has no legal effect",
+    "explanation": "Including words in a statute or contract that merely express what the law already implies produces no legal change.",
+    "origin_note": "Classical Latin legal maxim codified in Anglo-Indian common law jurisprudence.",
+    "category": "Statutory Interpretation",
+    "example": "A contract clause stating that parties shall act reasonably adds nothing where implied good faith already applies.",
+    "related_maxims": [
+      "noscitur-a-sociis"
+    ],
+    "indian_case_refs": []
+  },
+  {
+    "id": "ad-valorem",
+    "maxim": "Ad valorem",
+    "meaning": "According to the value",
+    "explanation": "Court fees, stamp duty, or taxation assessed proportionally to the declared financial value of property or suit.",
+    "origin_note": "Classical Latin legal maxim codified in Anglo-Indian common law jurisprudence.",
+    "category": "Procedure",
+    "example": "Stamp duty of 5% ad valorem is paid on the purchase value of a residential apartment.",
+    "related_maxims": [
+      "strictissimi-juris"
+    ],
+    "indian_case_refs": []
+  },
+  {
+    "id": "corpus-delicti",
+    "maxim": "Corpus delicti",
+    "meaning": "The body of the crime / Substantial fact of crime",
+    "explanation": "The fundamental fact that a crime has actually been committed by someone before an accused person can be convicted.",
+    "origin_note": "Classical Latin legal maxim codified in Anglo-Indian common law jurisprudence.",
+    "category": "Criminal",
+    "example": "In a murder prosecution, the state must establish that the deceased died of foul play rather than natural causes.",
+    "related_maxims": [
+      "actus-reus",
+      "mens-rea"
+    ],
+    "indian_case_refs": []
+  },
+  {
+    "id": "habeas-corpus-ad-subjiciendum",
+    "maxim": "Habeas corpus ad subjiciendum",
+    "meaning": "Produce the body to submit to judgment",
+    "explanation": "The complete formal designation of the writ of habeas corpus used to test illegal executive custody.",
+    "origin_note": "Classical Latin legal maxim codified in Anglo-Indian common law jurisprudence.",
+    "category": "Constitutional",
+    "example": "A writ filed before the High Court under Article 226 for illegal detention by paramilitary personnel.",
+    "related_maxims": [
+      "habeas-corpus"
+    ],
+    "indian_case_refs": []
+  },
+  {
+    "id": "juris-et-de-jure",
+    "maxim": "Juris et de jure",
+    "meaning": "Of law and from law / Conclusive presumption",
+    "explanation": "An irrebuttable presumption of law that cannot be overcome by any counter-evidence whatsoever.",
+    "origin_note": "Classical Latin legal maxim codified in Anglo-Indian common law jurisprudence.",
+    "category": "Evidence",
+    "example": "A child under seven years old is conclusively presumed incapable of committing a criminal offense.",
+    "related_maxims": [
+      "prima-facie"
+    ],
+    "indian_case_refs": []
+  },
+  {
+    "id": "juris-tantum",
+    "maxim": "Juris tantum",
+    "meaning": "Presumption of law only / Rebuttable presumption",
+    "explanation": "A legal presumption that holds true until displaced or contradicted by competent rebuttal evidence.",
+    "origin_note": "Classical Latin legal maxim codified in Anglo-Indian common law jurisprudence.",
+    "category": "Evidence",
+    "example": "A registered postal notice returned with 'refused' creates a rebuttable presumption of service.",
+    "related_maxims": [
+      "juris-et-de-jure"
+    ],
+    "indian_case_refs": []
+  },
+  {
+    "id": "mala-in-se",
+    "maxim": "Mala in se",
+    "meaning": "Wrongs in themselves / Inherently evil",
+    "explanation": "Crimes that are intrinsically immoral and evil by universal consensus, such as murder, rape, and armed robbery.",
+    "origin_note": "Classical Latin legal maxim codified in Anglo-Indian common law jurisprudence.",
+    "category": "Criminal",
+    "example": "Murder is punishable worldwide because it is recognized as malum in se across civilizations.",
+    "related_maxims": [
+      "mala-prohibita"
+    ],
+    "indian_case_refs": []
+  },
+  {
+    "id": "mala-prohibita",
+    "maxim": "Mala prohibita",
+    "meaning": "Prohibited wrongs",
+    "explanation": "Acts that are criminal only because statute explicitly prohibits them for public order or revenue, not because of inherent moral turpitude.",
+    "origin_note": "Classical Latin legal maxim codified in Anglo-Indian common law jurisprudence.",
+    "category": "Criminal",
+    "example": "Driving without a valid pollution certificate is an offense malum prohibitum.",
+    "related_maxims": [
+      "mala-in-se"
+    ],
+    "indian_case_refs": []
+  },
+  {
+    "id": "nolle-prosequi",
+    "maxim": "Nolle prosequi",
+    "meaning": "Unwilling to prosecute",
+    "explanation": "A formal entry by the public prosecutor declaring that the state abandons or withdraws further proceedings against an accused.",
+    "origin_note": "Classical Latin legal maxim codified in Anglo-Indian common law jurisprudence.",
+    "category": "Criminal",
+    "example": "The public prosecutor moves under Section 321 CrPC to withdraw a case in the interest of communal harmony.",
+    "related_maxims": [
+      "nemo-debet-bis-vexari-pro-una-et-eadem-causa"
+    ],
+    "indian_case_refs": []
+  },
+  {
+    "id": "lis-pendens",
+    "maxim": "Lis pendens",
+    "meaning": "A pending lawsuit",
+    "explanation": "During the pendency of litigation regarding immovable property, neither party can alienate the property so as to affect the rights of the opponent. Codified under Section 52 Transfer of Property Act.",
+    "origin_note": "Classical Latin legal maxim codified in Anglo-Indian common law jurisprudence.",
+    "category": "Property",
+    "example": "While a suit for partition is ongoing, one brother sells his disputed plot; the purchaser takes subject to the court's final decree.",
+    "related_maxims": [
+      "res-judicata-pro-veritate-accipitur"
+    ],
+    "indian_case_refs": []
+  },
+  {
+    "id": "pendente-lite",
+    "maxim": "Pendente lite",
+    "meaning": "During the litigation",
+    "explanation": "Interim legal arrangements, injunctions, or maintenance granted while a lawsuit remains pending.",
+    "origin_note": "Classical Latin legal maxim codified in Anglo-Indian common law jurisprudence.",
+    "category": "Procedure",
+    "example": "A family court awards monthly interim maintenance pendente lite to a spouse during divorce proceedings.",
+    "related_maxims": [
+      "sub-judice"
+    ],
+    "indian_case_refs": []
+  },
+  {
+    "id": "post-mortem",
+    "maxim": "Post mortem",
+    "meaning": "After death",
+    "explanation": "Medical autopsy examination conducted on a deceased body to ascertain the exact cause and time of death in homicide inquiries.",
+    "origin_note": "Classical Latin legal maxim codified in Anglo-Indian common law jurisprudence.",
+    "category": "Evidence",
+    "example": "The post-mortem report reveals asphyxia due to strangulation, confirming foul play.",
+    "related_maxims": [
+      "corpus-delicti"
+    ],
+    "indian_case_refs": []
+  },
+  {
+    "id": "pro-bono-publico",
+    "maxim": "Pro bono publico",
+    "meaning": "For the public good",
+    "explanation": "Legal services rendered by lawyers voluntarily without compensation for impoverished citizens or public interest causes.",
+    "origin_note": "Classical Latin legal maxim codified in Anglo-Indian common law jurisprudence.",
+    "category": "Constitutional",
+    "example": "A senior counsel argues an environmental writ petition pro bono on behalf of forest-dwelling tribal communities.",
+    "related_maxims": [
+      "locus-standi"
+    ],
+    "indian_case_refs": []
+  },
+  {
+    "id": "prima-facie",
+    "maxim": "Prima facie",
+    "meaning": "At first face / Based on first impression",
+    "explanation": "Sufficient evidence that creates an initial presumption of fact which stands valid unless rebutted or disproved.",
+    "origin_note": "Classical Latin legal maxim codified in Anglo-Indian common law jurisprudence.",
+    "category": "Evidence",
+    "example": "Cheque dishonor memo from the bank establishes a prima facie case under Section 138 Negotiable Instruments Act.",
+    "related_maxims": [
+      "res-ipsa-loquitur"
+    ],
+    "indian_case_refs": []
+  },
+  {
+    "id": "quid-pro-quo",
+    "maxim": "Quid pro quo",
+    "meaning": "Something for something",
+    "explanation": "The mutual exchange of value or consideration between contracting parties; the core prerequisite for contract validity.",
+    "origin_note": "Classical Latin legal maxim codified in Anglo-Indian common law jurisprudence.",
+    "category": "Contract",
+    "example": "A homeowner pays money in exchange for a plumber's repair work, fulfilling quid pro quo.",
+    "related_maxims": [
+      "consensus-ad-idem",
+      "pacta-sunt-servanda"
+    ],
+    "indian_case_refs": []
+  },
+  {
+    "id": "sine-die",
+    "maxim": "Sine die",
+    "meaning": "Without a day / Indefinitely adjourned",
+    "explanation": "Adjournment of a court hearing or legislative session without fixing a future date for resumption.",
+    "origin_note": "Classical Latin legal maxim codified in Anglo-Indian common law jurisprudence.",
+    "category": "Procedure",
+    "example": "The trial of the suit was adjourned sine die awaiting the Supreme Court's constitutional bench ruling.",
+    "related_maxims": [
+      "sub-judice"
+    ],
+    "indian_case_refs": []
+  },
+  {
+    "id": "sine-qua-non",
+    "maxim": "Sine qua non",
+    "meaning": "An indispensable condition",
+    "explanation": "An essential requirement or element without which a legal status, contract, or result cannot occur.",
+    "origin_note": "Classical Latin legal maxim codified in Anglo-Indian common law jurisprudence.",
+    "category": "Contract",
+    "example": "Free consent is a sine qua non for any legally enforceable contract under Indian law.",
+    "related_maxims": [
+      "consensus-ad-idem"
+    ],
+    "indian_case_refs": []
+  },
+  {
+    "id": "status-quo",
+    "maxim": "Status quo",
+    "meaning": "The existing state of affairs",
+    "explanation": "An interim injunction ordering parties to preserve property or positions in their current condition until adjudication.",
+    "origin_note": "Classical Latin legal maxim codified in Anglo-Indian common law jurisprudence.",
+    "category": "Procedure",
+    "example": "The court orders parties to maintain status quo regarding possession of disputed agricultural land.",
+    "related_maxims": [
+      "lis-pendens"
+    ],
+    "indian_case_refs": []
+  },
+  {
+    "id": "strict-liability",
+    "maxim": "Sic utere tuo ut alienum non laedas",
+    "meaning": "Use your property so as not to injure another's",
+    "explanation": "Fundamental neighbor principle of property and tort law prohibiting a landowner from using their land in a manner that creates a nuisance or hazard for adjoining neighbors.",
+    "origin_note": "Classical Latin legal maxim codified in Anglo-Indian common law jurisprudence.",
+    "category": "Tort",
+    "example": "A factory owner releases noxious chemical effluents that poison the neighboring farmer's irrigation wells.",
+    "related_maxims": [
+      "ubi-jus-ibi-remedium",
+      "damnum-sine-injuria"
+    ],
+    "indian_case_refs": []
+  },
+  {
+    "id": "actus-legitimi-non-recipiunt-modum",
+    "maxim": "Actus legitimi non recipiunt modum",
+    "meaning": "Formal legal acts do not admit of condition",
+    "explanation": "Statutory formal acts, such as the solemnization of marriage or tenders in satisfaction of a debt, cannot be subjected to informal conditions.",
+    "origin_note": "Classical Latin legal maxim codified in Anglo-Indian common law jurisprudence.",
+    "category": "Procedure",
+    "example": "A debtor offers repayment to a bank on condition that the bank issues a written praise letter; tender is invalid.",
+    "related_maxims": [
+      "strictissimi-juris"
+    ],
+    "indian_case_refs": []
+  },
+  {
+    "id": "a-priori",
+    "maxim": "A priori",
+    "meaning": "From what goes before / From cause to effect",
+    "explanation": "Reasoning deduced from theoretical principles and established axioms rather than direct observation or sensory experience.",
+    "origin_note": "Classical Latin legal maxim codified in Anglo-Indian common law jurisprudence.",
+    "category": "Evidence",
+    "example": "Deducing liability based on strict constitutional rights prior to assessing physical damage.",
+    "related_maxims": [
+      "prima-facie"
+    ],
+    "indian_case_refs": []
+  },
+  {
+    "id": "a-posteriori",
+    "maxim": "A posteriori",
+    "meaning": "From what comes after / Empirical reasoning",
+    "explanation": "Reasoning derived from observed consequences, factual events, and empirical evidence.",
+    "origin_note": "Classical Latin legal maxim codified in Anglo-Indian common law jurisprudence.",
+    "category": "Evidence",
+    "example": "Inferring a defective bridge design after observing structural stress fractures across five piers.",
+    "related_maxims": [
+      "res-ipsa-loquitur"
+    ],
+    "indian_case_refs": []
+  },
+  {
+    "id": "argumentum-ad-hominem",
+    "maxim": "Argumentum ad hominem",
+    "meaning": "Argument directed to the person",
+    "explanation": "A fallacious trial tactic attacking the personal character of an opposing advocate or witness rather than the substance of the legal argument.",
+    "origin_note": "Classical Latin legal maxim codified in Anglo-Indian common law jurisprudence.",
+    "category": "Procedure",
+    "example": "An attorney criticizes the personal lifestyle of opposing counsel instead of addressing precedent authorities.",
+    "related_maxims": [
+      "audi-alteram-partem"
+    ],
+    "indian_case_refs": []
+  },
+  {
+    "id": "audi-partem-alteram",
+    "maxim": "Audi partem alteram",
+    "meaning": "Hear the other party",
+    "explanation": "Alternative ancient phrasing of audi alteram partem.",
+    "origin_note": "Classical Latin legal maxim codified in Anglo-Indian common law jurisprudence.",
+    "category": "Constitutional",
+    "example": "Before passing an adverse taxation reassessment, the assessing officer issues a 148 notice to hear the assessee.",
+    "related_maxims": [
+      "audi-alteram-partem"
+    ],
+    "indian_case_refs": []
+  },
+  {
+    "id": "benignior-sententia-in-verbis-generalibus-seu-dubiis-est-praeferenda",
+    "maxim": "Benignior sententia in verbis generalibus est praeferenda",
+    "meaning": "The more benign interpretation of ambiguous words is preferred",
+    "explanation": "Where statutory terms or criminal provisions are open to multiple constructions, courts adopt the interpretation favorable to liberty.",
+    "origin_note": "Classical Latin legal maxim codified in Anglo-Indian common law jurisprudence.",
+    "category": "Statutory Interpretation",
+    "example": "Choosing an interpretation that avoids mandatory capital punishment where statutory wording is equivocal.",
+    "related_maxims": [
+      "strictissimi-juris"
+    ],
+    "indian_case_refs": []
+  },
+  {
+    "id": "bindex-est-lex-loquens",
+    "maxim": "Judex est lex loquens",
+    "meaning": "A judge is the law speaking",
+    "explanation": "The judge is the living voice and organ of the law, sworn to interpret rather than legislate.",
+    "origin_note": "Classical Latin legal maxim codified in Anglo-Indian common law jurisprudence.",
+    "category": "Constitutional",
+    "example": "A constitutional judge articulates fundamental rights protections grounded in statutory and constitutional text.",
+    "related_maxims": [
+      "ratio-decidendi"
+    ],
+    "indian_case_refs": []
+  },
+  {
+    "id": "casus-omissus",
+    "maxim": "Casus omissus",
+    "meaning": "An omitted case / Gap in statute",
+    "explanation": "A situation or contingency not provided for by the legislature in a statute. Courts cannot supply a casus omissus under the guise of interpretation.",
+    "origin_note": "Classical Latin legal maxim codified in Anglo-Indian common law jurisprudence.",
+    "category": "Statutory Interpretation",
+    "example": "An omission in a penal section cannot be supplied by judicial creativity to punish a new category of fraud.",
+    "related_maxims": [
+      "strictissimi-juris"
+    ],
+    "indian_case_refs": []
+  },
+  {
+    "id": "clausula-rebus-sic-stantibus",
+    "maxim": "Clausula rebus sic stantibus",
+    "meaning": "Things remaining as they are",
+    "explanation": "Doctrine in treaty and contract law that obligations remain binding only so long as fundamental circumstances remain unchanged.",
+    "origin_note": "Classical Latin legal maxim codified in Anglo-Indian common law jurisprudence.",
+    "category": "Contract",
+    "example": "War destroys the commercial shipping route underlying an export treaty, discharging performance.",
+    "related_maxims": [
+      "pacta-sunt-servanda"
+    ],
+    "indian_case_refs": []
+  },
+  {
+    "id": "cognovit-actionem",
+    "maxim": "Cognovit actionem",
+    "meaning": "He has confessed the action",
+    "explanation": "A defendant's formal written confession of the plaintiff's claim, authorizing judgment by consent.",
+    "origin_note": "Classical Latin legal maxim codified in Anglo-Indian common law jurisprudence.",
+    "category": "Procedure",
+    "example": "A borrower acknowledges the outstanding bank balance in writing to avoid contested litigation costs.",
+    "related_maxims": [
+      "res-judicata-pro-veritate-accipitur"
+    ],
+    "indian_case_refs": []
+  },
+  {
+    "id": "compos-mentis",
+    "maxim": "Compos mentis",
+    "meaning": "Of sound mind",
+    "explanation": "Possessing sufficient mental competence and awareness to execute contracts, make wills, or stand trial.",
+    "origin_note": "Classical Latin legal maxim codified in Anglo-Indian common law jurisprudence.",
+    "category": "Criminal",
+    "example": "A testator executes a will in the presence of two doctors verifying that she is compos mentis.",
+    "related_maxims": [
+      "actus-non-facit-reum-nisi-mens-sit-rea"
+    ],
+    "indian_case_refs": []
+  },
+  {
+    "id": "non-compos-mentis",
+    "maxim": "Non compos mentis",
+    "meaning": "Not of sound mind",
+    "explanation": "Lacking mental capacity due to severe mental illness or insanity. Under Section 84 IPC, acts of a person non compos mentis are excused.",
+    "origin_note": "Classical Latin legal maxim codified in Anglo-Indian common law jurisprudence.",
+    "category": "Criminal",
+    "example": "A defendant suffering from acute psychosis during an assault is held non compos mentis and excused.",
+    "related_maxims": [
+      "compos-mentis"
+    ],
+    "indian_case_refs": []
+  },
+  {
+    "id": "contra-proferentem",
+    "maxim": "Contra proferentem",
+    "meaning": "Against the party who drafted the term",
+    "explanation": "Where an ambiguity exists in a contract or standard form policy, the clause is interpreted strictly against the party who drafted it.",
+    "origin_note": "Classical Latin legal maxim codified in Anglo-Indian common law jurisprudence.",
+    "category": "Contract",
+    "example": "An ambiguous exclusion clause in an insurance contract drafted by the insurer is resolved in favor of the policyholder.",
+    "related_maxims": [
+      "caveat-emptor"
+    ],
+    "indian_case_refs": []
+  },
+  {
+    "id": "cuius-est-solum-eius-est-usque-ad-coelum-et-ad-inferos",
+    "maxim": "Cuius est solum, eius est usque ad coelum et ad inferos",
+    "meaning": "Whoever owns the soil owns up to the heavens and down to the depths",
+    "explanation": "Traditional common law rule of real property ownership, heavily modified today by aviation statutes and subterranean mineral laws.",
+    "origin_note": "Classical Latin legal maxim codified in Anglo-Indian common law jurisprudence.",
+    "category": "Property",
+    "example": "An owner prevents a neighbor's crane arm from swinging across their airspace without an easement agreement.",
+    "related_maxims": [
+      "jus-in-rem"
+    ],
+    "indian_case_refs": []
+  },
+  {
+    "id": "culpa-lata-dolo-aequiparatur",
+    "maxim": "Culpa lata dolo aequiparatur",
+    "meaning": "Gross negligence is equivalent to fraud",
+    "explanation": "Extreme or reckless disregard for safety and duty of care is treated in law as tantamount to intentional wrongdoing.",
+    "origin_note": "Classical Latin legal maxim codified in Anglo-Indian common law jurisprudence.",
+    "category": "Tort",
+    "example": "A pharmaceutical lab releases unsterilized vaccines without performing mandatory purity tests.",
+    "related_maxims": [
+      "mens-rea"
+    ],
+    "indian_case_refs": []
+  },
+  {
+    "id": "custodia-legis",
+    "maxim": "Custodia legis",
+    "meaning": "In the custody of the law",
+    "explanation": "Property seized by judicial process, court receivers, or police that cannot be attached or interfered with by outside creditors.",
+    "origin_note": "Classical Latin legal maxim codified in Anglo-Indian common law jurisprudence.",
+    "category": "Procedure",
+    "example": "Gold seized in an ongoing customs investigation remains in custodia legis of the court.",
+    "related_maxims": [
+      "status-quo"
+    ],
+    "indian_case_refs": []
+  },
+  {
+    "id": "damnum-absque-injuria",
+    "maxim": "Damnum absque injuria",
+    "meaning": "Loss without legal wrong",
+    "explanation": "Alternative phrasing of damnum sine injuria confirming that material loss without legal violation yields no remedy.",
+    "origin_note": "Classical Latin legal maxim codified in Anglo-Indian common law jurisprudence.",
+    "category": "Tort",
+    "example": "A new bookstore opens on the same street reducing sales at the original store.",
+    "related_maxims": [
+      "damnum-sine-injuria"
+    ],
+    "indian_case_refs": []
+  },
+  {
+    "id": "dictum",
+    "maxim": "Dictum",
+    "meaning": "A statement or saying",
+    "explanation": "An expression of judicial opinion in a judgment; singular of dicta.",
+    "origin_note": "Classical Latin legal maxim codified in Anglo-Indian common law jurisprudence.",
+    "category": "Procedure",
+    "example": "The court noted as a helpful dictum that commercial arbitration rules should be revised.",
+    "related_maxims": [
+      "obiter-dicta"
+    ],
+    "indian_case_refs": []
+  },
+  {
+    "id": "dies-dominicus-non-est-juridicus",
+    "maxim": "Dies dominicus non est juridicus",
+    "meaning": "Sunday is not a day for judicial proceedings",
+    "explanation": "Traditional canon law rule establishing that court trials and process service should not occur on Sundays.",
+    "origin_note": "Classical Latin legal maxim codified in Anglo-Indian common law jurisprudence.",
+    "category": "Procedure",
+    "example": "Summons served on a holy holiday in violation of statutory court calendar rules is quashed.",
+    "related_maxims": [
+      "strictissimi-juris"
+    ],
+    "indian_case_refs": []
+  },
+  {
+    "id": "doli-incapax-rebuttable",
+    "maxim": "Malitia supplet aetatem",
+    "meaning": "Malice supplies age",
+    "explanation": "The presumption of innocence for children between 7 and 12 can be rebutted if the prosecution proves the child had attained maturity to understand the nature of the act.",
+    "origin_note": "Classical Latin legal maxim codified in Anglo-Indian common law jurisprudence.",
+    "category": "Criminal",
+    "example": "A 10-year-old conceals a weapon and demonstrates understanding of the fatality of their conduct.",
+    "related_maxims": [
+      "doli-incapax"
+    ],
+    "indian_case_refs": []
+  },
+  {
+    "id": "donatio-mortis-causa",
+    "maxim": "Donatio mortis causa",
+    "meaning": "Gift made in contemplation of death",
+    "explanation": "A gift of personal property made by a person expecting imminent death, which takes effect only if the donor actually dies of that illness. Codified under Section 191 Indian Succession Act.",
+    "origin_note": "Classical Latin legal maxim codified in Anglo-Indian common law jurisprudence.",
+    "category": "Property",
+    "example": "A critically ill patient hands over a gold watch to a nurse stating it is hers if he does not survive the surgery.",
+    "related_maxims": [
+      "bona-fide"
+    ],
+    "indian_case_refs": []
+  },
+  {
+    "id": "ei-incumbit-probatio-qui-dicit-non-qui-negat",
+    "maxim": "Ei incumbit probatio qui dicit, non qui negat",
+    "meaning": "The burden of proof lies on the one who asserts, not on the one who denies",
+    "explanation": "Fundamental rule of evidence codified in Section 101 of the Indian Evidence Act: he who asserts a fact must prove it.",
+    "origin_note": "Classical Latin legal maxim codified in Anglo-Indian common law jurisprudence.",
+    "category": "Evidence",
+    "example": "A plaintiff alleging fraud in an agreement must present affirmative evidence of the fraudulent conduct.",
+    "related_maxims": [
+      "prima-facie"
+    ],
+    "indian_case_refs": []
+  },
+  {
+    "id": "estoppel",
+    "maxim": "Estoppel by representation / Allegans contraria non est audiendus",
+    "meaning": "He who alleges contrary things is not to be heard",
+    "explanation": "A party who makes a representation of fact inducing another to alter their position cannot subsequently plead the contrary. Codified under Section 115 Indian Evidence Act.",
+    "origin_note": "Classical Latin legal maxim codified in Anglo-Indian common law jurisprudence.",
+    "category": "Evidence",
+    "example": "A landlord confirms in writing that rent is paid in full for the year, inducing a bank guarantee; he cannot later claim non-payment.",
+    "related_maxims": [
+      "bona-fide"
+    ],
+    "indian_case_refs": []
+  },
+  {
+    "id": "ex-gratia",
+    "maxim": "Ex gratia",
+    "meaning": "Out of kindness or favor / Without legal obligation",
+    "explanation": "A voluntary payment made by a government, company, or insurer without admitting legal liability or creating legal precedent.",
+    "origin_note": "Classical Latin legal maxim codified in Anglo-Indian common law jurisprudence.",
+    "category": "Contract",
+    "example": "An airline pays compensation ex gratia to delayed passengers affected by a volcanic ash cloud.",
+    "related_maxims": [
+      "ex-nudo-pacto-non-oritur-actio"
+    ],
+    "indian_case_refs": []
+  },
+  {
+    "id": "ex-officio",
+    "maxim": "Ex officio",
+    "meaning": "By virtue of holding an office",
+    "explanation": "Powers, memberships, or duties that automatically attach to an individual simply because they hold a specified primary public office.",
+    "origin_note": "Classical Latin legal maxim codified in Anglo-Indian common law jurisprudence.",
+    "category": "Administrative",
+    "example": "The Vice-President of India is the ex officio Chairman of the Rajya Sabha under Article 64.",
+    "related_maxims": [
+      "ultra-vires"
+    ],
+    "indian_case_refs": []
+  },
+  {
+    "id": "ex-parte",
+    "maxim": "Ex parte",
+    "meaning": "From one side only",
+    "explanation": "A proceeding, hearing, or order conducted or granted on the application of one party without the presence or notice of the opposing party.",
+    "origin_note": "Classical Latin legal maxim codified in Anglo-Indian common law jurisprudence.",
+    "category": "Procedure",
+    "example": "A court grants an urgent ex parte ad-interim injunction to halt deforestation before the weekend.",
+    "related_maxims": [
+      "audi-alteram-partem"
+    ],
+    "indian_case_refs": []
+  },
+  {
+    "id": "ex-post-facto",
+    "maxim": "Ex post facto",
+    "meaning": "From a thing done afterward / Retrospective law",
+    "explanation": "A law that criminalizes an action that was lawful when committed, or increases the penalty retrospectively. Barred by Article 20(1) of the Indian Constitution.",
+    "origin_note": "Classical Latin legal maxim codified in Anglo-Indian common law jurisprudence.",
+    "category": "Constitutional",
+    "example": "Parliament passes an act in 2026 making 2024 cryptocurrency transfers a criminal offense; it is void as an ex post facto law.",
+    "related_maxims": [
+      "salus-populi-suprema-lex-esto"
+    ],
+    "indian_case_refs": []
+  },
+  {
+    "id": "factum-valet-quod-fieri-non-debuit",
+    "maxim": "Factum valet quod fieri non debuit",
+    "meaning": "What ought not to be done is valid when done",
+    "explanation": "An irregularity in procedure does not necessarily nullify an act once it has been fully accomplished, provided essential legal prerequisites were met.",
+    "origin_note": "Classical Latin legal maxim codified in Anglo-Indian common law jurisprudence.",
+    "category": "Family",
+    "example": "A marriage performed without non-essential ritual formalities is upheld as valid once consummated.",
+    "related_maxims": [
+      "strictissimi-juris"
+    ],
+    "indian_case_refs": []
+  },
+  {
+    "id": "fraus-omnia-vitiat",
+    "maxim": "Fraus omnia vitiat",
+    "meaning": "Fraud vitiates everything",
+    "explanation": "A solemn judgment, contract, or administrative grant obtained through deliberate fraud is a complete nullity and can be challenged at any time.",
+    "origin_note": "Classical Latin legal maxim codified in Anglo-Indian common law jurisprudence.",
+    "category": "Equity",
+    "example": "A candidate gains civil service employment using a forged caste certificate; the appointment is revoked under fraus omnia vitiat.",
+    "related_maxims": [
+      "bona-fide",
+      "ex-turpi-causa-non-oritur-actio"
+    ],
+    "indian_case_refs": []
+  },
+  {
+    "id": "fructus-naturales",
+    "maxim": "Fructus naturales",
+    "meaning": "Natural fruits of the land",
+    "explanation": "Natural growth on land (perennial timber, soil, mineral deposits) treated as immovable real property until severed.",
+    "origin_note": "Classical Latin legal maxim codified in Anglo-Indian common law jurisprudence.",
+    "category": "Property",
+    "example": "Standing timber trees growing naturally on forest land are classified as immovable property.",
+    "related_maxims": [
+      "fructus-industriales"
+    ],
+    "indian_case_refs": []
+  },
+  {
+    "id": "fructus-industriales",
+    "maxim": "Fructus industriales",
+    "meaning": "Industrial fruits of the land",
+    "explanation": "Crops produced annually by the labor and cultivation of farmers (wheat, corn, vegetables), treated as personal goods.",
+    "origin_note": "Classical Latin legal maxim codified in Anglo-Indian common law jurisprudence.",
+    "category": "Property",
+    "example": "A harvest of ripe wheat ready for reaping is sold as movable goods.",
+    "related_maxims": [
+      "fructus-naturales"
+    ],
+    "indian_case_refs": []
+  },
+  {
+    "id": "guardian-ad-litem",
+    "maxim": "Guardian ad litem",
+    "meaning": "Guardian for the suit",
+    "explanation": "A qualified person appointed by the court to represent the legal interests of a minor or mentally incapacitated litigant in a lawsuit.",
+    "origin_note": "Classical Latin legal maxim codified in Anglo-Indian common law jurisprudence.",
+    "category": "Procedure",
+    "example": "The court appoints an uncle as guardian ad litem to protect a 5-year-old child's inheritance suit.",
+    "related_maxims": [
+      "doli-incapax"
+    ],
+    "indian_case_refs": []
+  },
+  {
+    "id": "in-camera",
+    "maxim": "In camera",
+    "meaning": "In private chambers / Closed court",
+    "explanation": "A hearing held in private without members of the press or general public present to protect state secrets, victims of sexual violence, or trade secrets.",
+    "origin_note": "Classical Latin legal maxim codified in Anglo-Indian common law jurisprudence.",
+    "category": "Procedure",
+    "example": "A matrimonial custody dispute involving intimate domestic evidence is conducted in camera.",
+    "related_maxims": [
+      "sub-judice"
+    ],
+    "indian_case_refs": []
+  },
+  {
+    "id": "in-forma-pauperis",
+    "maxim": "In forma pauperis",
+    "meaning": "In the character of an indigent person",
+    "explanation": "Permission granted to an indigent litigant to sue without paying required statutory court fees or filing costs. Codified in Order 33 CPC.",
+    "origin_note": "Classical Latin legal maxim codified in Anglo-Indian common law jurisprudence.",
+    "category": "Procedure",
+    "example": "An impoverished day laborer is permitted to sue a negligent corporation in forma pauperis.",
+    "related_maxims": [
+      "ubi-jus-ibi-remedium"
+    ],
+    "indian_case_refs": []
+  },
+  {
+    "id": "in-loco-parentis",
+    "maxim": "In loco parentis",
+    "meaning": "In the place of a parent",
+    "explanation": "Assuming the legal duties, care, and supervisory responsibilities of a parent toward a minor child without formal adoption.",
+    "origin_note": "Classical Latin legal maxim codified in Anglo-Indian common law jurisprudence.",
+    "category": "Family",
+    "example": "A boarding school housemaster stands in loco parentis over students under their residential supervision.",
+    "related_maxims": [
+      "doli-incapax"
+    ],
+    "indian_case_refs": []
+  },
+  {
+    "id": "in-personam",
+    "maxim": "In personam",
+    "meaning": "Directed toward a particular person",
+    "explanation": "A legal proceeding, judgment, or decree that binds only the specific individuals named as parties to the action.",
+    "origin_note": "Classical Latin legal maxim codified in Anglo-Indian common law jurisprudence.",
+    "category": "Procedure",
+    "example": "A decree ordering a defendant to perform a specific agreement to convey a house binds the defendant in personam.",
+    "related_maxims": [
+      "jus-in-personam",
+      "in-rem"
+    ],
+    "indian_case_refs": []
+  },
+  {
+    "id": "in-rem",
+    "maxim": "In rem",
+    "meaning": "Directed against a thing / Against the world",
+    "explanation": "A judicial proceeding or judgment determining the legal status of a thing or person, valid and binding against all persons worldwide.",
+    "origin_note": "Classical Latin legal maxim codified in Anglo-Indian common law jurisprudence.",
+    "category": "Procedure",
+    "example": "A decree of divorce or an admiralty arrest of a cargo ship operates in rem.",
+    "related_maxims": [
+      "in-personam",
+      "jus-in-rem"
+    ],
+    "indian_case_refs": []
+  },
+  {
+    "id": "in-situ",
+    "maxim": "In situ",
+    "meaning": "In its original position",
+    "explanation": "Inspecting evidence, property, or archaeological monuments in their undisturbed physical location.",
+    "origin_note": "Classical Latin legal maxim codified in Anglo-Indian common law jurisprudence.",
+    "category": "Evidence",
+    "example": "Forensic investigators photograph tire tread impressions in situ before moving any crime scene debris.",
+    "related_maxims": [
+      "prima-facie"
+    ],
+    "indian_case_refs": []
+  },
+  {
+    "id": "in-terrorem",
+    "maxim": "In terrorem",
+    "meaning": "In terror / To frighten or intimidate",
+    "explanation": "A contractual clause (such as an extravagant penalty) inserted purely to intimidate a party into performance rather than compensate loss. Section 74 Contract Act strikes down in terrorem clauses.",
+    "origin_note": "Classical Latin legal maxim codified in Anglo-Indian common law jurisprudence.",
+    "category": "Contract",
+    "example": "A loan agreement assessing a 1000% penalty on a single day's delay is struck down as an in terrorem forfeiture.",
+    "related_maxims": [
+      "pacta-sunt-servanda"
+    ],
+    "indian_case_refs": []
+  },
+  {
+    "id": "inter-vivos",
+    "maxim": "Inter vivos",
+    "meaning": "Between the living",
+    "explanation": "A gift, trust, or property transfer executed during the lifetime of the grantor, as opposed to a testamentary bequest.",
+    "origin_note": "Classical Latin legal maxim codified in Anglo-Indian common law jurisprudence.",
+    "category": "Property",
+    "example": "A father transfers title of his family home to his daughter via a registered inter vivos gift deed.",
+    "related_maxims": [
+      "donatio-mortis-causa"
+    ],
+    "indian_case_refs": []
+  },
+  {
+    "id": "intra-territorial",
+    "maxim": "Intra territorial",
+    "meaning": "Within the territorial boundaries",
+    "explanation": "The sovereign jurisdiction of laws and courts operating within national or provincial territory.",
+    "origin_note": "Classical Latin legal maxim codified in Anglo-Indian common law jurisprudence.",
+    "category": "Constitutional",
+    "example": "State legislation taxing motor vehicles operating intra territorial on state roads.",
+    "related_maxims": [
+      "ultra-vires"
+    ],
+    "indian_case_refs": []
+  },
+  {
+    "id": "jurisprudentia-est-divinarum-atque-humanarum-rerum-notitia",
+    "maxim": "Jurisprudentia est divinarum atque humanarum rerum notitia",
+    "meaning": "Jurisprudence is the knowledge of things divine and human",
+    "explanation": "Ulpian's celebrated definition of legal science as the science of the just and the unjust.",
+    "origin_note": "Classical Latin legal maxim codified in Anglo-Indian common law jurisprudence.",
+    "category": "Constitutional",
+    "example": "Jurisprudential study of justice and ethics in constitutional adjudication.",
+    "related_maxims": [
+      "salus-populi-suprema-lex-esto"
+    ],
+    "indian_case_refs": []
+  },
+  {
+    "id": "jus-cogens",
+    "maxim": "Jus cogens",
+    "meaning": "Compelling law / Peremptory norm",
+    "explanation": "A fundamental principle of international law accepted by the international community from which no derogation is permitted (e.g. bans on genocide, slavery, torture).",
+    "origin_note": "Classical Latin legal maxim codified in Anglo-Indian common law jurisprudence.",
+    "category": "Constitutional",
+    "example": "A bilateral treaty purporting to permit piracy is void ab initio for violating jus cogens.",
+    "related_maxims": [
+      "salus-populi-suprema-lex-esto"
+    ],
+    "indian_case_refs": []
+  },
+  {
+    "id": "jus-gentium",
+    "maxim": "Jus gentium",
+    "meaning": "The law of nations",
+    "explanation": "The body of common customary law observed by civilized nations in their dealings with one another.",
+    "origin_note": "Classical Latin legal maxim codified in Anglo-Indian common law jurisprudence.",
+    "category": "Constitutional",
+    "example": "Maritime freedom of navigation in international waters governed under jus gentium.",
+    "related_maxims": [
+      "jus-cogens"
+    ],
+    "indian_case_refs": []
+  },
+  {
+    "id": "jus-naturale",
+    "maxim": "Jus naturale",
+    "meaning": "Natural law",
+    "explanation": "Universal principles of justice, morality, and reason inherent in human nature, superior to human enactments.",
+    "origin_note": "Classical Latin legal maxim codified in Anglo-Indian common law jurisprudence.",
+    "category": "Constitutional",
+    "example": "Invoking human dignity and liberty as inalienable rights under natural law.",
+    "related_maxims": [
+      "audi-alteram-partem"
+    ],
+    "indian_case_refs": []
+  },
+  {
+    "id": "lex-domicilii",
+    "maxim": "Lex domicilii",
+    "meaning": "The law of the domicile",
+    "explanation": "The law of the jurisdiction where a person has their permanent home, governing personal capacity, succession, and marriage.",
+    "origin_note": "Classical Latin legal maxim codified in Anglo-Indian common law jurisprudence.",
+    "category": "Procedure",
+    "example": "Succession to movable property is governed by the lex domicilii of the deceased.",
+    "related_maxims": [
+      "lex-loci"
+    ],
+    "indian_case_refs": []
+  },
+  {
+    "id": "lex-fori",
+    "maxim": "Lex fori",
+    "meaning": "The law of the forum",
+    "explanation": "The procedural law of the court where a case is being heard and tried, which governs rules of evidence and limitation.",
+    "origin_note": "Classical Latin legal maxim codified in Anglo-Indian common law jurisprudence.",
+    "category": "Procedure",
+    "example": "An Indian court applies the Indian Limitation Act to an international contract dispute as the lex fori.",
+    "related_maxims": [
+      "lex-loci-delicti"
+    ],
+    "indian_case_refs": []
+  },
+  {
+    "id": "lex-loci",
+    "maxim": "Lex loci",
+    "meaning": "The law of the place",
+    "explanation": "The law of the country or state where an act was performed or transaction occurred.",
+    "origin_note": "Classical Latin legal maxim codified in Anglo-Indian common law jurisprudence.",
+    "category": "Procedure",
+    "example": "The formal validity of a marriage ceremony is governed by the lex loci celebrationis.",
+    "related_maxims": [
+      "lex-fori"
+    ],
+    "indian_case_refs": []
+  },
+  {
+    "id": "lex-loci-delicti",
+    "maxim": "Lex loci delicti",
+    "meaning": "The law of the place where the wrong was committed",
+    "explanation": "Private international law rule stating that the substantive law governing a tort claim is the law of the place where the tortious injury occurred.",
+    "origin_note": "Classical Latin legal maxim codified in Anglo-Indian common law jurisprudence.",
+    "category": "Tort",
+    "example": "An automobile accident in France between tourists is governed by French traffic law.",
+    "related_maxims": [
+      "lex-fori"
+    ],
+    "indian_case_refs": []
+  },
+  {
+    "id": "lex-scripta",
+    "maxim": "Lex scripta",
+    "meaning": "Written law / Statutory enactment",
+    "explanation": "Statutory law enacted by a legislative body, as contrasted with common law or unwritten custom.",
+    "origin_note": "Classical Latin legal maxim codified in Anglo-Indian common law jurisprudence.",
+    "category": "Constitutory",
+    "example": "The Indian Penal Code 1860 constitutes lex scripta.",
+    "related_maxims": [
+      "strictissimi-juris"
+    ],
+    "indian_case_refs": []
+  },
+  {
+    "id": "lis-alibi-pendens",
+    "maxim": "Lis alibi pendens",
+    "meaning": "A lawsuit pending elsewhere",
+    "explanation": "Plea that a parallel suit involving identical parties and cause of action is already pending in another court. Codified in Section 10 CPC.",
+    "origin_note": "Classical Latin legal maxim codified in Anglo-Indian common law jurisprudence.",
+    "category": "Procedure",
+    "example": "A commercial suit filed in Mumbai is stayed because an identical suit is already pending in Delhi.",
+    "related_maxims": [
+      "lis-pendens"
+    ],
+    "indian_case_refs": []
+  },
+  {
+    "id": "mea-culpa",
+    "maxim": "Mea culpa",
+    "meaning": "Through my fault / An acknowledgment of error",
+    "explanation": "A formal admission of guilt, liability, or error by an individual or authority.",
+    "origin_note": "Classical Latin legal maxim codified in Anglo-Indian common law jurisprudence.",
+    "category": "Criminal",
+    "example": "A defendant admits to speeding in traffic court to accept a reduced fine.",
+    "related_maxims": [
+      "bona-fide"
+    ],
+    "indian_case_refs": []
+  },
+  {
+    "id": "mens-rea",
+    "maxim": "Mens rea",
+    "meaning": "Guilty mind / Criminal intent",
+    "explanation": "The culpable state of mind (intention, knowledge, recklessness) required to constitute a crime alongside actus reus.",
+    "origin_note": "Classical Latin legal maxim codified in Anglo-Indian common law jurisprudence.",
+    "category": "Criminal",
+    "example": "An accused cannot be convicted of murder without proof of intention to cause death.",
+    "related_maxims": [
+      "actus-non-facit-reum-nisi-mens-sit-rea",
+      "actus-reus"
+    ],
+    "indian_case_refs": []
+  },
+  {
+    "id": "modus-operandi",
+    "maxim": "Modus operandi",
+    "meaning": "Method of operation",
+    "explanation": "The distinctive pattern, technique, or method of committing a crime associated with a particular criminal.",
+    "origin_note": "Classical Latin legal maxim codified in Anglo-Indian common law jurisprudence.",
+    "category": "Criminal",
+    "example": "A burglar who always enters through rooftop vents leaves a distinct modus operandi.",
+    "related_maxims": [
+      "corpus-delicti"
+    ],
+    "indian_case_refs": []
+  },
+  {
+    "id": "necessitas-inducit-privilegium-quoad-jura-privata",
+    "maxim": "Necessitas inducit privilegium quoad jura privata",
+    "meaning": "Necessity gives a privilege with respect to private rights",
+    "explanation": "An act that would otherwise be tortious is excused if done out of urgent necessity to prevent greater harm to life or property.",
+    "origin_note": "Classical Latin legal maxim codified in Anglo-Indian common law jurisprudence.",
+    "category": "Tort",
+    "example": "Firefighters pull down a burning wooden shed to prevent a fire from destroying an entire village.",
+    "related_maxims": [
+      "salus-populi-suprema-lex-esto"
+    ],
+    "indian_case_refs": []
+  },
+  {
+    "id": "nemo-est-supra-leges",
+    "maxim": "Nemo est supra leges",
+    "meaning": "No one is above the law",
+    "explanation": "The cardinal principle of the rule of law asserting that all persons, officials, and institutions are subject to the law of the land.",
+    "origin_note": "Classical Latin legal maxim codified in Anglo-Indian common law jurisprudence.",
+    "category": "Constitutional",
+    "example": "A prime minister or president is subject to criminal and constitutional law under the doctrine of equality.",
+    "related_maxims": [
+      "salus-populi-suprema-lex-esto"
+    ],
+    "indian_case_refs": []
+  },
+  {
+    "id": "nemo-tenetur-seipsum-accusare",
+    "maxim": "Nemo tenetur seipsum accusare",
+    "meaning": "No one is bound to accuse himself",
+    "explanation": "The right against self-incrimination protecting an accused person from being compelled to testify against themselves. Enshrined in Article 20(3) of the Indian Constitution.",
+    "origin_note": "Classical Latin legal maxim codified in Anglo-Indian common law jurisprudence.",
+    "category": "Constitutional",
+    "example": "Police cannot force a suspect under custodial interrogation to sign a self-incriminating confession.",
+    "related_maxims": [
+      "audi-alteram-partem"
+    ],
+    "indian_case_refs": []
+  },
+  {
+    "id": "non-est-factum",
+    "maxim": "Non est factum",
+    "meaning": "It is not my deed",
+    "explanation": "A defense in contract law allowing a person to avoid an agreement when they signed a document completely different in nature from what they believed.",
+    "origin_note": "Classical Latin legal maxim codified in Anglo-Indian common law jurisprudence.",
+    "category": "Contract",
+    "example": "An illiterate person signs a deed of sale having been told it was a petition for a school bus.",
+    "related_maxims": [
+      "consensus-ad-idem"
+    ],
+    "indian_case_refs": []
+  },
+  {
+    "id": "non-sequitur",
+    "maxim": "Non sequitur",
+    "meaning": "It does not follow",
+    "explanation": "An argument in which the conclusion does not logically follow from the premises.",
+    "origin_note": "Classical Latin legal maxim codified in Anglo-Indian common law jurisprudence.",
+    "category": "Procedure",
+    "example": "An advocate claims a defendant is guilty of murder because he was seen arguing with a stranger a week prior.",
+    "related_maxims": [
+      "prima-facie"
+    ],
+    "indian_case_refs": []
+  },
+  {
+    "id": "pari-passu",
+    "maxim": "Pari passu",
+    "meaning": "On equal footing / Proportionately",
+    "explanation": "Creditors or securities having equal rank without preference or priority over one another.",
+    "origin_note": "Classical Latin legal maxim codified in Anglo-Indian common law jurisprudence.",
+    "category": "Contract",
+    "example": "Unsecured financial creditors in corporate liquidation receive distribution pari passu.",
+    "related_maxims": [
+      "quid-pro-quo"
+    ],
+    "indian_case_refs": []
+  },
+  {
+    "id": "per-curiam",
+    "maxim": "Per curiam",
+    "meaning": "By the court as a whole",
+    "explanation": "An appellate judicial decision rendered unanimously or collectively by the bench without designating an individual author judge.",
+    "origin_note": "Classical Latin legal maxim codified in Anglo-Indian common law jurisprudence.",
+    "category": "Procedure",
+    "example": "The Supreme Court issues a per curiam order clarifying judicial election guidelines.",
+    "related_maxims": [
+      "ratio-decidendi"
+    ],
+    "indian_case_refs": []
+  },
+  {
+    "id": "per-incuriam",
+    "maxim": "Per incuriam",
+    "meaning": "Through lack of care / Inadvertence",
+    "explanation": "A judicial decision reached in ignorance or forgetfulness of a binding statutory provision or authoritative decision of a superior court. Decisions per incuriam carry no binding precedential force.",
+    "origin_note": "Classical Latin legal maxim codified in Anglo-Indian common law jurisprudence.",
+    "category": "Procedure",
+    "example": "A High Court ruling that overlooked an amendment to the Arbitration Act is declared per incuriam.",
+    "related_maxims": [
+      "stare-decisis-et-non-quieta-movere"
+    ],
+    "indian_case_refs": []
+  },
+  {
+    "id": "per-se",
+    "maxim": "Per se",
+    "meaning": "In itself / By itself",
+    "explanation": "An act that is actionable or illegal on its face without requiring independent proof of external circumstances or special damage.",
+    "origin_note": "Classical Latin legal maxim codified in Anglo-Indian common law jurisprudence.",
+    "category": "Tort",
+    "example": "Defamatory libel published in writing is actionable per se without proof of monetary damage.",
+    "related_maxims": [
+      "injuria-sine-damno"
+    ],
+    "indian_case_refs": []
+  },
+  {
+    "id": "plene-administravit",
+    "maxim": "Plene administravit",
+    "meaning": "He has fully administered",
+    "explanation": "A defense raised by an executor that they have fully and properly administered all estate assets and have none left in their hands.",
+    "origin_note": "Classical Latin legal maxim codified in Anglo-Indian common law jurisprudence.",
+    "category": "Property",
+    "example": "An executor proves that all estate funds were exhausted paying prioritized debts of the deceased.",
+    "related_maxims": [
+      "bona-vacantia"
+    ],
+    "indian_case_refs": []
+  },
+  {
+    "id": "post-facto",
+    "maxim": "Post facto",
+    "meaning": "After the fact",
+    "explanation": "An occurrence, ratification, or approval taking place after an event has already transpired.",
+    "origin_note": "Classical Latin legal maxim codified in Anglo-Indian common law jurisprudence.",
+    "category": "Procedure",
+    "example": "The board of directors grants post facto approval to a contract entered into by the managing director.",
+    "related_maxims": [
+      "ex-post-facto"
+    ],
+    "indian_case_refs": []
+  },
+  {
+    "id": "praesumptio-juris",
+    "maxim": "Praesumptio juris",
+    "meaning": "Presumption of law",
+    "explanation": "A legal assumption that the court is required to make upon proof of a primary fact, subject to rebuttal.",
+    "origin_note": "Classical Latin legal maxim codified in Anglo-Indian common law jurisprudence.",
+    "category": "Evidence",
+    "example": "A child born during lawful wedlock is presumed the legitimate child of the husband under Section 112 Evidence Act.",
+    "related_maxims": [
+      "juris-tantum"
+    ],
+    "indian_case_refs": []
+  },
+  {
+    "id": "pro-forma",
+    "maxim": "Pro forma",
+    "meaning": "As a matter of form",
+    "explanation": "An administrative or legal act done purely to satisfy technical requirements or establish courtesy.",
+    "origin_note": "Classical Latin legal maxim codified in Anglo-Indian common law jurisprudence.",
+    "category": "Procedure",
+    "example": "A commercial supplier issues a pro forma invoice to enable the buyer to obtain letters of credit.",
+    "related_maxims": [
+      "mutatis-mutandis"
+    ],
+    "indian_case_refs": []
+  },
+  {
+    "id": "pro-rata",
+    "maxim": "Pro rata",
+    "meaning": "In proportion",
+    "explanation": "Dividing, allocating, or assessing costs, benefits, or liabilities proportionally according to an established fraction.",
+    "origin_note": "Classical Latin legal maxim codified in Anglo-Indian common law jurisprudence.",
+    "category": "Contract",
+    "example": "Partners in a business split annual operating losses pro rata based on their initial capital shares.",
+    "related_maxims": [
+      "pari-passu"
+    ],
+    "indian_case_refs": []
+  },
+  {
+    "id": "pro-tanto",
+    "maxim": "Pro tanto",
+    "meaning": "For so much / To that extent",
+    "explanation": "Accepting partial performance or compensation in partial discharge of a larger legal obligation.",
+    "origin_note": "Classical Latin legal maxim codified in Anglo-Indian common law jurisprudence.",
+    "category": "Contract",
+    "example": "A creditor accepts partial payment of $20,000 against a $50,000 judgment debt pro tanto.",
+    "related_maxims": [
+      "pacta-sunt-servanda"
+    ],
+    "indian_case_refs": []
+  },
+  {
+    "id": "quae-accessio-sequitur-principale",
+    "maxim": "Accessorium non ducit sed sequitur suum principale",
+    "meaning": "The accessory follows the principal",
+    "explanation": "Incidental rights, easements, or accessories attached to primary property pass automatically upon the transfer of the principal asset.",
+    "origin_note": "Classical Latin legal maxim codified in Anglo-Indian common law jurisprudence.",
+    "category": "Property",
+    "example": "Sale of an agricultural plot automatically conveys irrigation easements running with the land.",
+    "related_maxims": [
+      "jus-in-rem"
+    ],
+    "indian_case_refs": []
+  },
+  {
+    "id": "quod-ab-initio-non-valet-in-tractu-temporis-non-convalescit",
+    "maxim": "Quod ab initio non valet in tractu temporis non convalescit",
+    "meaning": "What is void from the beginning cannot become valid by the passage of time",
+    "explanation": "A transaction that is void ab initio cannot be cured, ratified, or transformed into a legal right simply by lapse of years.",
+    "origin_note": "Classical Latin legal maxim codified in Anglo-Indian common law jurisprudence.",
+    "category": "Contract",
+    "example": "A contract with a minor is void ab initio and cannot be ratified when the minor attains majority.",
+    "related_maxims": [
+      "pacta-sunt-servanda"
+    ],
+    "indian_case_refs": []
+  },
+  {
+    "id": "quod-approbo-non-reprobo",
+    "maxim": "Quod approbo non reprobo",
+    "meaning": "What I approve I do not reject",
+    "explanation": "Sister expression of qui approbat non reprobat; enforcing consistency and the doctrine of election.",
+    "origin_note": "Classical Latin legal maxim codified in Anglo-Indian common law jurisprudence.",
+    "category": "Equity",
+    "example": "A beneficiary taking under a will cannot challenge other provisions in the same testament.",
+    "related_maxims": [
+      "qui-approbat-non-reprobat"
+    ],
+    "indian_case_refs": []
+  },
+  {
+    "id": "reductio-ad-absurdum",
+    "maxim": "Reductio ad absurdum",
+    "meaning": "Reduction to absurdity",
+    "explanation": "Disproving a proposed statutory interpretation or legal proposition by demonstrating that it inevitably leads to an absurd, contradictory, or impossible outcome.",
+    "origin_note": "Classical Latin legal maxim codified in Anglo-Indian common law jurisprudence.",
+    "category": "Statutory Interpretation",
+    "example": "Arguing that if an environmental ban covered all emissions, human breathing would be outlawed.",
+    "related_maxims": [
+      "de-minimis-non-curat-lex"
+    ],
+    "indian_case_refs": []
+  },
+  {
+    "id": "res-gestae",
+    "maxim": "Res gestae",
+    "meaning": "Things done / Transaction events",
+    "explanation": "Spontaneous statements, utterances, and contemporaneous acts that form part of the same transaction, admissible as exceptions to hearsay under Section 6 of the Indian Evidence Act.",
+    "origin_note": "Classical Latin legal maxim codified in Anglo-Indian common law jurisprudence.",
+    "category": "Evidence",
+    "example": "A bystander screams the registration number of a speeding getaway car immediately upon impact.",
+    "related_maxims": [
+      "prima-facie"
+    ],
+    "indian_case_refs": []
+  },
+  {
+    "id": "res-integra",
+    "maxim": "Res integra",
+    "meaning": "An untouched matter / Novel point of law",
+    "explanation": "A legal question or controversy that has not previously been decided by any authoritative precedent.",
+    "origin_note": "Classical Latin legal maxim codified in Anglo-Indian common law jurisprudence.",
+    "category": "Procedure",
+    "example": "The legal status of artificial intelligence copyright ownership is treated as res integra by the appellate court.",
+    "related_maxims": [
+      "stare-decisis-et-non-quieta-movere"
+    ],
+    "indian_case_refs": []
+  },
+  {
+    "id": "semper-praesumitur-pro-matrimonio",
+    "maxim": "Semper praesumitur pro matrimonio",
+    "meaning": "The presumption is always in favor of marriage",
+    "explanation": "Where a man and woman live together as husband and wife for a prolonged duration, the law presumes a lawful marriage unless conclusive rebuttal is produced.",
+    "origin_note": "Classical Latin legal maxim codified in Anglo-Indian common law jurisprudence.",
+    "category": "Family",
+    "example": "Long cohabitation creates a strong legal presumption of valid wedlock.",
+    "related_maxims": [
+      "juris-tantum"
+    ],
+    "indian_case_refs": []
+  },
+  {
+    "id": "sic-utere-tuo-ut-alienum-non-laedas",
+    "maxim": "Sic utere tuo ut alienum non laedas",
+    "meaning": "So use your own as not to injure another's property",
+    "explanation": "Fundamental canon of nuisance and strict liability demanding that private property must not be used to endanger or harm neighboring lands.",
+    "origin_note": "Classical Latin legal maxim codified in Anglo-Indian common law jurisprudence.",
+    "category": "Tort",
+    "example": "Storing massive quantities of toxic chemicals on land makes the owner liable if chemicals escape.",
+    "related_maxims": [
+      "damnum-sine-injuria"
+    ],
+    "indian_case_refs": []
+  },
+  {
+    "id": "sub-silentio",
+    "maxim": "Sub silentio",
+    "meaning": "Under silence / Without judicial discussion",
+    "explanation": "A decision where a legal point was passed upon without any express discussion, argument, or reasoning. Such rulings lack precedential authority on that unargued point.",
+    "origin_note": "Classical Latin legal maxim codified in Anglo-Indian common law jurisprudence.",
+    "category": "Procedure",
+    "example": "A judgment that decided an outcome without addressing the statute of limitations is said to have passed sub silentio on limitation.",
+    "related_maxims": [
+      "per-incuriam"
+    ],
+    "indian_case_refs": []
+  },
+  {
+    "id": "terra-nullius",
+    "maxim": "Terra nullius",
+    "meaning": "Nobody's land",
+    "explanation": "Land not formally claimed or under sovereignty of any recognized state.",
+    "origin_note": "Classical Latin legal maxim codified in Anglo-Indian common law jurisprudence.",
+    "category": "Property",
+    "example": "Historical doctrine applied to uncolonized territories.",
+    "related_maxims": [
+      "res-nullius"
+    ],
+    "indian_case_refs": []
+  },
+  {
+    "id": "testis-unus-testis-nullus",
+    "maxim": "Testis unus, testis nullus",
+    "meaning": "One witness is no witness",
+    "explanation": "Ancient canon law rule requiring corroboration; rejected by Section 134 Indian Evidence Act which declares no particular number of witnesses is required.",
+    "origin_note": "Classical Latin legal maxim codified in Anglo-Indian common law jurisprudence.",
+    "category": "Evidence",
+    "example": "In Indian criminal law, the credible testimony of a single solitary eyewitness is sufficient to convict.",
+    "related_maxims": [
+      "falsus-in-uno-falsus-in-omnibus"
+    ],
+    "indian_case_refs": []
+  },
+  {
+    "id": "totidem-verbis",
+    "maxim": "Totidem verbis",
+    "meaning": "In so many words / Verbatim",
+    "explanation": "Stating a legal rule or quote in the exact words used in a statute or judicial precedent.",
+    "origin_note": "Classical Latin legal maxim codified in Anglo-Indian common law jurisprudence.",
+    "category": "Procedure",
+    "example": "The court reiterated the constitutional holding totidem verbis.",
+    "related_maxims": [
+      "ratio-decidendi"
+    ],
+    "indian_case_refs": []
+  },
+  {
+    "id": "ubi-nulla-lex-ibi-nulla-transgressio",
+    "maxim": "Ubi nulla lex, ibi nulla transgressio",
+    "meaning": "Where there is no law, there is no transgression",
+    "explanation": "No act can be punished as a crime unless there was a preexisting written law prohibiting it at the time of commission.",
+    "origin_note": "Classical Latin legal maxim codified in Anglo-Indian common law jurisprudence.",
+    "category": "Criminal",
+    "example": "Conduct not classified as criminal by statute cannot be punished by judicial creation.",
+    "related_maxims": [
+      "salus-populi-suprema-lex-esto"
+    ],
+    "indian_case_refs": []
+  },
+  {
+    "id": "ultra-vires-hereditatis",
+    "maxim": "Ultra vires hereditatis",
+    "meaning": "Beyond the value of the inheritance",
+    "explanation": "An heir cannot be held personally liable for debts of the deceased beyond the value of estate assets inherited.",
+    "origin_note": "Classical Latin legal maxim codified in Anglo-Indian common law jurisprudence.",
+    "category": "Property",
+    "example": "An heir who inherits $10,000 cannot be compelled to pay $50,000 of the father's debts from his personal salary.",
+    "related_maxims": [
+      "plene-administravit"
+    ],
+    "indian_case_refs": []
+  },
+  {
+    "id": "usus-fructus",
+    "maxim": "Usus fructus",
+    "meaning": "The right to use and enjoy fruits",
+    "explanation": "The civil law right to use and derive profit or income from property belonging to another without altering its substance.",
+    "origin_note": "Classical Latin legal maxim codified in Anglo-Indian common law jurisprudence.",
+    "category": "Property",
+    "example": "A widow granted a life interest in agricultural land retains the right to harvest all crop income.",
+    "related_maxims": [
+      "jus-in-rem"
+    ],
+    "indian_case_refs": []
+  },
+  {
+    "id": "verba-chartarum-fortius-accipiuntur-contra-proferentem",
+    "maxim": "Verba chartarum fortius accipiuntur contra proferentem",
+    "meaning": "Words of a document are construed strictly against the author",
+    "explanation": "Formal formulation of the contra proferentem rule in contractual construction.",
+    "origin_note": "Classical Latin legal maxim codified in Anglo-Indian common law jurisprudence.",
+    "category": "Contract",
+    "example": "Draftsman of ambiguous commercial release cannot claim exclusion of liability.",
+    "related_maxims": [
+      "contra-proferentem"
+    ],
+    "indian_case_refs": []
+  },
+  {
+    "id": "vice-versa",
+    "maxim": "Vice versa",
+    "meaning": "The other way around",
+    "explanation": "With the order or relation reversed.",
+    "origin_note": "Classical Latin legal maxim codified in Anglo-Indian common law jurisprudence.",
+    "category": "Procedure",
+    "example": "Rights belonging to the lessor bind the lessee and vice versa.",
+    "related_maxims": [
+      "mutatis-mutandis"
+    ],
+    "indian_case_refs": []
+  },
+  {
+    "id": "vox-populi-vox-dei",
+    "maxim": "Vox populi, vox dei",
+    "meaning": "The voice of the people is the voice of God",
+    "explanation": "Maxims honoring popular democratic sovereignty; balanced against constitutional minority protections.",
+    "origin_note": "Classical Latin legal maxim codified in Anglo-Indian common law jurisprudence.",
+    "category": "Constitutional",
+    "example": "The democratic mandate expressed through nationwide general elections.",
+    "related_maxims": [
+      "salus-populi-suprema-lex-esto"
+    ],
+    "indian_case_refs": []
+  },
+  {
+    "id": "voluntas-reputabatur-pro-facto",
+    "maxim": "Voluntas reputabatur pro facto",
+    "meaning": "The intention was taken for the deed",
+    "explanation": "Ancient common law rule in high treason where conceiving the death of the king was punishable without external act; abolished in modern law requiring actus reus.",
+    "origin_note": "Classical Latin legal maxim codified in Anglo-Indian common law jurisprudence.",
+    "category": "Criminal",
+    "example": "Historical treason prosecutions where planning sufficed without execution.",
+    "related_maxims": [
+      "mens-rea"
+    ],
+    "indian_case_refs": []
+  },
+  {
+    "id": "jus-sanguinis",
+    "maxim": "Jus sanguinis",
+    "meaning": "Right of blood / Citizenship by descent",
+    "explanation": "Principle of nationality law where citizenship is determined by the nationality of one's parents rather than place of birth.",
+    "origin_note": "Classical Latin legal maxim codified in Anglo-Indian common law jurisprudence.",
+    "category": "Constitutional",
+    "example": "A child born abroad to Indian parents acquires Indian citizenship by descent under Section 4 Citizenship Act.",
+    "related_maxims": [
+      "jus-soli"
+    ],
+    "indian_case_refs": []
+  },
+  {
+    "id": "jus-soli",
+    "maxim": "Jus soli",
+    "meaning": "Right of the soil / Citizenship by birth place",
+    "explanation": "Principle where citizenship is acquired automatically by virtue of being born within the territorial borders of a state.",
+    "origin_note": "Classical Latin legal maxim codified in Anglo-Indian common law jurisprudence.",
+    "category": "Constitutional",
+    "example": "Birthplace citizenship as historically practiced.",
+    "related_maxims": [
+      "jus-sanguinis"
+    ],
+    "indian_case_refs": []
+  },
+  {
+    "id": "animus-nocendi",
+    "maxim": "Animus nocendi",
+    "meaning": "The intention to harm",
+    "explanation": "The subjective mental intention to cause physical, reputational, or property harm to another.",
+    "origin_note": "Classical Latin legal maxim codified in Anglo-Indian common law jurisprudence.",
+    "category": "Criminal",
+    "example": "Proving express malice and animus nocendi in a prosecution for criminal defamation.",
+    "related_maxims": [
+      "mens-rea"
+    ],
+    "indian_case_refs": []
+  },
+  {
+    "id": "animus-testandi",
+    "maxim": "Animus testandi",
+    "meaning": "The intention to make a will",
+    "explanation": "The legal intention of a person to execute a testamentary disposition effective upon death.",
+    "origin_note": "Classical Latin legal maxim codified in Anglo-Indian common law jurisprudence.",
+    "category": "Property",
+    "example": "Drafting casual diary notes without animus testandi does not constitute a valid holographic will.",
+    "related_maxims": [
+      "bona-fide"
+    ],
+    "indian_case_refs": []
+  },
+  {
+    "id": "argumentum-a-contrario",
+    "maxim": "Argumentum a contrario",
+    "meaning": "Argument from the contrary",
+    "explanation": "Reasoning that the opposite rule applies to cases not covered by a specific statute.",
+    "origin_note": "Classical Latin legal maxim codified in Anglo-Indian common law jurisprudence.",
+    "category": "Statutory Interpretation",
+    "example": "If an act permits Sunday trading for pharmacies, other businesses are excluded.",
+    "related_maxims": [
+      "expressio-unius-est-exclusio-alterius"
+    ],
+    "indian_case_refs": []
+  },
+  {
+    "id": "belli-legitimi",
+    "maxim": "Jus in bello",
+    "meaning": "The law of war / Rules of engagement",
+    "explanation": "International humanitarian law governing conduct during armed conflict (Geneva Conventions).",
+    "origin_note": "Classical Latin legal maxim codified in Anglo-Indian common law jurisprudence.",
+    "category": "Constitutional",
+    "example": "Banning attacks on hospitals and medical personnel during wartime.",
+    "related_maxims": [
+      "jus-cogens"
+    ],
+    "indian_case_refs": []
+  },
+  {
+    "id": "caveat-actor",
+    "maxim": "Caveat actor",
+    "meaning": "Let the doer beware",
+    "explanation": "Anyone undertaking a hazardous activity bears the responsibility for ensuring no preventable injury results to others.",
+    "origin_note": "Classical Latin legal maxim codified in Anglo-Indian common law jurisprudence.",
+    "category": "Tort",
+    "example": "An engineer detonating dynamite in mining must protect all adjoining properties.",
+    "related_maxims": [
+      "caveat-emptor"
+    ],
+    "indian_case_refs": []
+  },
+  {
+    "id": "cessante-causa-cessat-effectus",
+    "maxim": "Cessante causa cessat effectus",
+    "meaning": "When the cause ceases, the effect ceases",
+    "explanation": "When the underlying cause of an injunction, detention, or emergency terminates, the legal consequence dissolves.",
+    "origin_note": "Classical Latin legal maxim codified in Anglo-Indian common law jurisprudence.",
+    "category": "Procedure",
+    "example": "Lifting a preventive detention order once civil unrest has subsided.",
+    "related_maxims": [
+      "cessante-ratione-legis-cessat-ipsa-lex"
+    ],
+    "indian_case_refs": []
+  },
+  {
+    "id": "circuitus-est-evitandus",
+    "maxim": "Circuitus est evitandus",
+    "meaning": "Circuity of action is to be avoided",
+    "explanation": "Courts prefer consolidated, direct proceedings rather than multiple circuitous lawsuits on the same transaction.",
+    "origin_note": "Classical Latin legal maxim codified in Anglo-Indian common law jurisprudence.",
+    "category": "Procedure",
+    "example": "Allowing a third-party claim in the primary lawsuit to avoid duplicate litigation.",
+    "related_maxims": [
+      "interest-reipublicae-ut-sit-finis-litium"
+    ],
+    "indian_case_refs": []
+  },
+  {
+    "id": "cogitationis-poenam-nemo-patitur",
+    "maxim": "Cogitationis poenam nemo patitur",
+    "meaning": "No one suffers punishment for merely thinking",
+    "explanation": "Mere unacted thoughts, wishes, or mental intentions do not incur penal sanctions without an overt act or attempt.",
+    "origin_note": "Classical Latin legal maxim codified in Anglo-Indian common law jurisprudence.",
+    "category": "Criminal",
+    "example": "Imagining a bank robbery without taking any preparatory or overt step is not a criminal offense.",
+    "related_maxims": [
+      "actus-non-facit-reum-nisi-mens-sit-rea"
+    ],
+    "indian_case_refs": []
+  },
+  {
+    "id": "conditio-sine-qua-non",
+    "maxim": "Conditio sine qua non",
+    "meaning": "An indispensable condition precedent",
+    "explanation": "A mandatory prerequisite event that must happen before a contractual or statutory obligation arises.",
+    "origin_note": "Classical Latin legal maxim codified in Anglo-Indian common law jurisprudence.",
+    "category": "Contract",
+    "example": "Securing environmental clearance is a conditio sine qua non before commercial plant construction.",
+    "related_maxims": [
+      "sine-qua-non"
+    ],
+    "indian_case_refs": []
+  },
+  {
+    "id": "contra-legem",
+    "maxim": "Contra legem",
+    "meaning": "Against the law",
+    "explanation": "Actions, customs, or administrative rulings that directly contradict statutory or constitutional law and are thus invalid.",
+    "origin_note": "Classical Latin legal maxim codified in Anglo-Indian common law jurisprudence.",
+    "category": "Procedure",
+    "example": "An unwritten trade custom permitting usurious interest rates contrary to statute is void contra legem.",
+    "related_maxims": [
+      "ultra-vires"
+    ],
+    "indian_case_refs": []
+  },
+  {
+    "id": "damnum-patitur",
+    "maxim": "Damnum patitur",
+    "meaning": "Suffering damage",
+    "explanation": "Experiencing actual detriment or physical harm.",
+    "origin_note": "Classical Latin legal maxim codified in Anglo-Indian common law jurisprudence.",
+    "category": "Tort",
+    "example": "Establishing the physical injury suffered in a vehicular collision.",
+    "related_maxims": [
+      "damnum-sine-injuria"
+    ],
+    "indian_case_refs": []
+  },
+  {
+    "id": "de-facto",
+    "maxim": "De facto",
+    "meaning": "In fact / In reality",
+    "explanation": "State of affairs existing in practice, even if not formally or legally recognized by law.",
+    "origin_note": "Classical Latin legal maxim codified in Anglo-Indian common law jurisprudence.",
+    "category": "Constitutional",
+    "example": "A government authority exercising control over territory before constitutional recognition.",
+    "related_maxims": [
+      "de-jure"
+    ],
+    "indian_case_refs": []
+  },
+  {
+    "id": "de-jure",
+    "maxim": "De jure",
+    "meaning": "According to law / By right",
+    "explanation": "State of affairs that is officially and lawfully established, whether or not exercised in practice.",
+    "origin_note": "Classical Latin legal maxim codified in Anglo-Indian common law jurisprudence.",
+    "category": "Constitutional",
+    "example": "A democratically elected government recognized as the de jure sovereign.",
+    "related_maxims": [
+      "de-facto"
+    ],
+    "indian_case_refs": []
+  },
+  {
+    "id": "delictum",
+    "maxim": "Delictum",
+    "meaning": "A wrong / Tortious or criminal offense",
+    "explanation": "Civil wrongs or offenses giving rise to legal actions under civil or canon law.",
+    "origin_note": "Classical Latin legal maxim codified in Anglo-Indian common law jurisprudence.",
+    "category": "Tort",
+    "example": "A claim founded on delict for negligent destruction of property.",
+    "related_maxims": [
+      "damnum-sine-injuria"
+    ],
+    "indian_case_refs": []
+  },
+  {
+    "id": "ejusdem-nature",
+    "maxim": "Ejusdem nature",
+    "meaning": "Of the same nature",
+    "explanation": "Evidence or offenses sharing the same fundamental legal characteristics.",
+    "origin_note": "Classical Latin legal maxim codified in Anglo-Indian common law jurisprudence.",
+    "category": "Evidence",
+    "example": "Admissibility of similar fact evidence demonstrating consistent fraudulent design.",
+    "related_maxims": [
+      "ejusdem-generis"
+    ],
+    "indian_case_refs": []
+  },
+  {
+    "id": "et-cetera",
+    "maxim": "Et cetera",
+    "meaning": "And the rest / And so forth",
+    "explanation": "Common formula signifying other similar unlisted items of the same category.",
+    "origin_note": "Classical Latin legal maxim codified in Anglo-Indian common law jurisprudence.",
+    "category": "Procedure",
+    "example": "Listing procedural court documents: affidavits, petitions, et cetera.",
+    "related_maxims": [
+      "inter-alia"
+    ],
+    "indian_case_refs": []
+  },
+  {
+    "id": "ex-abundanti-cautela",
+    "maxim": "Ex abundanti cautela",
+    "meaning": "Out of abundant caution",
+    "explanation": "An action taken or clause inserted into a statute or contract to eliminate any conceivable ambiguity, even if strictly unnecessary.",
+    "origin_note": "Classical Latin legal maxim codified in Anglo-Indian common law jurisprudence.",
+    "category": "Procedure",
+    "example": "A draftsman specifies that public holidays include national memorial days ex abundanti cautela.",
+    "related_maxims": [
+      "expressio-eorum-quae-tacite-insunt-nihil-operatur"
+    ],
+    "indian_case_refs": []
+  },
+  {
+    "id": "ex-debito-justitiae",
+    "maxim": "Ex debito justitiae",
+    "meaning": "As a debt of justice / As a matter of right",
+    "explanation": "A remedy that the court is bound to grant as an entitlement of justice, rather than as an exercise of discretion.",
+    "origin_note": "Classical Latin legal maxim codified in Anglo-Indian common law jurisprudence.",
+    "category": "Procedure",
+    "example": "Setting aside an ex parte judgment obtained without service of summons ex debito justitiae.",
+    "related_maxims": [
+      "audi-alteram-partem"
+    ],
+    "indian_case_refs": []
+  },
+  {
+    "id": "ex-facie",
+    "maxim": "Ex facie",
+    "meaning": "On the face of it",
+    "explanation": "Something that is evident, apparent, and demonstrable from inspecting the document or record itself without external inquiry.",
+    "origin_note": "Classical Latin legal maxim codified in Anglo-Indian common law jurisprudence.",
+    "category": "Procedure",
+    "example": "An order signed by a person with zero statutory authority is invalid ex facie.",
+    "related_maxims": [
+      "prima-facie"
+    ],
+    "indian_case_refs": []
+  },
+  {
+    "id": "ex-parte-materna",
+    "maxim": "Ex parte materna",
+    "meaning": "On the mother's side",
+    "explanation": "Tracing kinship, lineage, or succession rights through the maternal lineage.",
+    "origin_note": "Classical Latin legal maxim codified in Anglo-Indian common law jurisprudence.",
+    "category": "Family",
+    "example": "Inheritance of ancestral maternal property.",
+    "related_maxims": [
+      "donatio-mortis-causa"
+    ],
+    "indian_case_refs": []
+  },
+  {
+    "id": "ex-parte-paterna",
+    "maxim": "Ex parte paterna",
+    "meaning": "On the father's side",
+    "explanation": "Tracing kinship or succession rights through the paternal lineage.",
+    "origin_note": "Classical Latin legal maxim codified in Anglo-Indian common law jurisprudence.",
+    "category": "Family",
+    "example": "Inheriting ancestral coparcenary rights under Hindu succession law.",
+    "related_maxims": [
+      "donatio-mortis-causa"
+    ],
+    "indian_case_refs": []
+  },
+  {
+    "id": "ignorantia-legis-neminem-excusat",
+    "maxim": "Ignorantia legis neminem excusat",
+    "meaning": "Ignorance of the law excuses nobody",
+    "explanation": "Latin variation of ignorantia juris non excusat affirming universal legal knowledge.",
+    "origin_note": "Classical Latin legal maxim codified in Anglo-Indian common law jurisprudence.",
+    "category": "Criminal",
+    "example": "Pleading ignorance of environmental emissions limits does not excuse fines.",
+    "related_maxims": [
+      "ignorantia-juris-non-excusat"
+    ],
+    "indian_case_refs": []
+  },
+  {
+    "id": "in-aequali-jure-melior-est-conditio-possidentis",
+    "maxim": "In aequali jure melior est conditio possidentis",
+    "meaning": "Where rights are equal, the position of the possessor is better",
+    "explanation": "When two claimants possess equally balanced legal arguments, the party currently in peaceful possession of the disputed property is preferred.",
+    "origin_note": "Classical Latin legal maxim codified in Anglo-Indian common law jurisprudence.",
+    "category": "Property",
+    "example": "Two buyers hold defective deeds to a vacant lot; the court protects the buyer currently residing on the land.",
+    "related_maxims": [
+      "animus-possidendi"
+    ],
+    "indian_case_refs": []
+  },
+  {
+    "id": "in-extenso",
+    "maxim": "In extenso",
+    "meaning": "At full length / In its entirety",
+    "explanation": "Quoting or reproducing an entire judicial judgment or statutory clause verbatim without abridgment.",
+    "origin_note": "Classical Latin legal maxim codified in Anglo-Indian common law jurisprudence.",
+    "category": "Procedure",
+    "example": "Counsel recites the five-judge bench holding in extenso.",
+    "related_maxims": [
+      "ratio-decidendi"
+    ],
+    "indian_case_refs": []
+  },
+  {
+    "id": "in-futuro",
+    "maxim": "In futuro",
+    "meaning": "At a future time / In the future",
+    "explanation": "Rights, debts, or contractual covenants that take effect or mature at a later date.",
+    "origin_note": "Classical Latin legal maxim codified in Anglo-Indian common law jurisprudence.",
+    "category": "Contract",
+    "example": "An agreement to lease premises that will be constructed next year operates in futuro.",
+    "related_maxims": [
+      "consensus-ad-idem"
+    ],
+    "indian_case_refs": []
+  },
+  {
+    "id": "in-omni-re-vincit-imitatio-veritatem",
+    "maxim": "In omni re vincit imitatio veritatem",
+    "meaning": "In everything imitation yields to truth",
+    "explanation": "In judicial fact-finding, counterfeit evidence, forged signatures, and fraudulent imitations must yield to established physical truth.",
+    "origin_note": "Classical Latin legal maxim codified in Anglo-Indian common law jurisprudence.",
+    "category": "Evidence",
+    "example": "Forensic handwriting analysis exposes a signature on a will as an imitation.",
+    "related_maxims": [
+      "fraus-omnia-vitiat"
+    ],
+    "indian_case_refs": []
+  },
+  {
+    "id": "in-tandem",
+    "maxim": "In tandem",
+    "meaning": "Alongside each other / In conjunction",
+    "explanation": "Proceedings, investigations, or trials conducted simultaneously.",
+    "origin_note": "Classical Latin legal maxim codified in Anglo-Indian common law jurisprudence.",
+    "category": "Procedure",
+    "example": "A civil suit for damages and a criminal trial for fraud proceeding in tandem.",
+    "related_maxims": [
+      "sub-judice"
+    ],
+    "indian_case_refs": []
+  },
+  {
+    "id": "inter-se",
+    "maxim": "Inter se",
+    "meaning": "Among themselves",
+    "explanation": "Legal relationships, property rights, or disputes between members of a designated group or class.",
+    "origin_note": "Classical Latin legal maxim codified in Anglo-Indian common law jurisprudence.",
+    "category": "Property",
+    "example": "Determining the inter se seniority among judicial officers appointed in the same recruitment batch.",
+    "related_maxims": [
+      "pari-passu"
+    ],
+    "indian_case_refs": []
+  },
+  {
+    "id": "judicium-semper-pro-veritate-accipitur",
+    "maxim": "Judicium semper pro veritate accipitur",
+    "meaning": "A judgment is always accepted as true",
+    "explanation": "Variation of res judicata protecting the integrity and finality of judicial decrees.",
+    "origin_note": "Classical Latin legal maxim codified in Anglo-Indian common law jurisprudence.",
+    "category": "Procedure",
+    "example": "A decree of divorce issued by a competent court is accepted as true.",
+    "related_maxims": [
+      "res-judicata-pro-veritate-accipitur"
+    ],
+    "indian_case_refs": []
+  },
+  {
+    "id": "jura-in-re-aliena",
+    "maxim": "Jura in re aliena",
+    "meaning": "Rights in the property of another",
+    "explanation": "Subordinate property rights held over someone else's property, such as easements, mortgages, and leases.",
+    "origin_note": "Classical Latin legal maxim codified in Anglo-Indian common law jurisprudence.",
+    "category": "Property",
+    "example": "A neighbor holds an easement of way across adjacent farmland.",
+    "related_maxims": [
+      "jus-in-rem"
+    ],
+    "indian_case_refs": []
+  },
+  {
+    "id": "jus-accrescendi",
+    "maxim": "Jus accrescendi",
+    "meaning": "The right of survivorship",
+    "explanation": "The property rule in joint tenancy where, upon the death of one joint tenant, their interest automatically passes to surviving joint tenants.",
+    "origin_note": "Classical Latin legal maxim codified in Anglo-Indian common law jurisprudence.",
+    "category": "Property",
+    "example": "Two brothers holding property as joint tenants with survivorship.",
+    "related_maxims": [
+      "jus-in-rem"
+    ],
+    "indian_case_refs": []
+  },
+  {
+    "id": "jus-disponendi",
+    "maxim": "Jus disponendi",
+    "meaning": "The right of disposing / Right to sell or transfer",
+    "explanation": "The fundamental owner's entitlement to sell, gift, encumber, or alienate their property at will.",
+    "origin_note": "Classical Latin legal maxim codified in Anglo-Indian common law jurisprudence.",
+    "category": "Property",
+    "example": "A restrictive agreement totally barring an owner from ever selling land is void under Section 10 Transfer of Property Act.",
+    "related_maxims": [
+      "jus-in-rem"
+    ],
+    "indian_case_refs": []
+  },
+  {
+    "id": "lex-fori-regit-processum",
+    "maxim": "Lex fori regit processum",
+    "meaning": "The law of the forum governs the procedure",
+    "explanation": "Procedural remedies, evidentiary rules, and court methods are governed by the local jurisdiction where the lawsuit is filed.",
+    "origin_note": "Classical Latin legal maxim codified in Anglo-Indian common law jurisprudence.",
+    "category": "Procedure",
+    "example": "An international dispute tried in London follows English civil procedure rules.",
+    "related_maxims": [
+      "lex-fori"
+    ],
+    "indian_case_refs": []
+  },
+  {
+    "id": "locus-criminis",
+    "maxim": "Locus criminis",
+    "meaning": "The place where the crime was committed",
+    "explanation": "The territorial venue determining which court or police station has local jurisdiction to investigate and try an offense under Section 177 CrPC.",
+    "origin_note": "Classical Latin legal maxim codified in Anglo-Indian common law jurisprudence.",
+    "category": "Criminal",
+    "example": "A robbery committed in Bengaluru is tried before the metropolitan magistrate in Bengaluru.",
+    "related_maxims": [
+      "corpus-delicti"
+    ],
+    "indian_case_refs": []
+  },
+  {
+    "id": "lucrum-cessans",
+    "maxim": "Lucrum cessans",
+    "meaning": "Lost profits / Ceasing gain",
+    "explanation": "Damages awarded for profits that the plaintiff was prevented from earning as a direct consequence of breach of contract.",
+    "origin_note": "Classical Latin legal maxim codified in Anglo-Indian common law jurisprudence.",
+    "category": "Contract",
+    "example": "A manufacturer fails to deliver packaging machinery, causing the factory to lose verified seasonal supply orders.",
+    "related_maxims": [
+      "in-restitutio-in-integrum"
+    ],
+    "indian_case_refs": []
+  },
+  {
+    "id": "non-bis-in-idem",
+    "maxim": "Non bis in idem",
+    "meaning": "Not twice for the same thing",
+    "explanation": "Continental civil law equivalent of nemo debet bis vexari prohibiting double jeopardy.",
+    "origin_note": "Classical Latin legal maxim codified in Anglo-Indian common law jurisprudence.",
+    "category": "Constitutional",
+    "example": "An individual cannot be punished twice by administrative tribunals for identical misconduct.",
+    "related_maxims": [
+      "nemo-debet-bis-vexari-pro-una-et-eadem-causa"
+    ],
+    "indian_case_refs": []
+  },
+  {
+    "id": "onus-probandi",
+    "maxim": "Onus probandi",
+    "meaning": "The burden of proof",
+    "explanation": "The legal responsibility of producing sufficient evidence to prove a contested factual proposition before the court.",
+    "origin_note": "Classical Latin legal maxim codified in Anglo-Indian common law jurisprudence.",
+    "category": "Evidence",
+    "example": "In a criminal prosecution, the onus probandi rests entirely upon the state to prove guilt beyond reasonable doubt.",
+    "related_maxims": [
+      "ei-incumbit-probatio-qui-dicit-non-qui-negat"
+    ],
+    "indian_case_refs": []
+  },
+  {
+    "id": "pari-delicto",
+    "maxim": "Pari delicto",
+    "meaning": "Equal fault",
+    "explanation": "Where both parties to a lawsuit are equally responsible for an unlawful transaction.",
+    "origin_note": "Classical Latin legal maxim codified in Anglo-Indian common law jurisprudence.",
+    "category": "Equity",
+    "example": "Parties entering an illegal price-fixing pact cannot sue each other when the scheme collapses.",
+    "related_maxims": [
+      "in-pari-delicto-potior-est-conditio-defendentis"
+    ],
+    "indian_case_refs": []
+  },
+  {
+    "id": "per-capita",
+    "maxim": "Per capita",
+    "meaning": "By the head / Individually",
+    "explanation": "A method of distributing an estate where each person in a class receives an equal individual share.",
+    "origin_note": "Classical Latin legal maxim codified in Anglo-Indian common law jurisprudence.",
+    "category": "Property",
+    "example": "An estate divided equally per capita among all four grandchildren.",
+    "related_maxims": [
+      "donatio-mortis-causa"
+    ],
+    "indian_case_refs": []
+  },
+  {
+    "id": "per-stirpes",
+    "maxim": "Per stirpes",
+    "meaning": "By the roots / By representation",
+    "explanation": "A distribution method where descendants take the share that their deceased ancestor would have received.",
+    "origin_note": "Classical Latin legal maxim codified in Anglo-Indian common law jurisprudence.",
+    "category": "Property",
+    "example": "An estate divided between surviving child and the two children of a deceased child.",
+    "related_maxims": [
+      "per-capita"
+    ],
+    "indian_case_refs": []
+  },
+  {
+    "id": "post-factum",
+    "maxim": "Post factum",
+    "meaning": "After the deed",
+    "explanation": "Events occurring following an agreement or dispute.",
+    "origin_note": "Classical Latin legal maxim codified in Anglo-Indian common law jurisprudence.",
+    "category": "Procedure",
+    "example": "Ratification of an agent's unauthorized contract post factum.",
+    "related_maxims": [
+      "ex-post-facto"
+    ],
+    "indian_case_refs": []
+  },
+  {
+    "id": "praesumptio-facti",
+    "maxim": "Praesumptio facti",
+    "meaning": "Presumption of fact",
+    "explanation": "Inferences of fact drawn by the court from circumstantial evidence based on natural human experience under Section 114 Evidence Act.",
+    "origin_note": "Classical Latin legal maxim codified in Anglo-Indian common law jurisprudence.",
+    "category": "Evidence",
+    "example": "A person in possession of stolen goods shortly after a burglary is presumed to be either the thief or receiver.",
+    "related_maxims": [
+      "prima-facie"
+    ],
+    "indian_case_refs": []
+  },
+  {
+    "id": "quid-fieri-debet",
+    "maxim": "Quid fieri debet",
+    "meaning": "What ought to be done",
+    "explanation": "The equitable duty to act in good conscience.",
+    "origin_note": "Classical Latin legal maxim codified in Anglo-Indian common law jurisprudence.",
+    "category": "Equity",
+    "example": "Compelling specific performance where monetary compensation is inadequate.",
+    "related_maxims": [
+      "bona-fide"
+    ],
+    "indian_case_refs": []
+  },
+  {
+    "id": "ratio-legis",
+    "maxim": "Ratio legis",
+    "meaning": "The reason or purpose of the law",
+    "explanation": "The policy justification and social objective behind an enacted statute, guiding purposive interpretation.",
+    "origin_note": "Classical Latin legal maxim codified in Anglo-Indian common law jurisprudence.",
+    "category": "Statutory Interpretation",
+    "example": "Interpreting maternity benefit statutes in light of the social protection ratio legis.",
+    "related_maxims": [
+      "cessante-ratione-legis-cessat-ipsa-lex"
+    ],
+    "indian_case_refs": []
+  },
+  {
+    "id": "restitutio-in-pristinum",
+    "maxim": "Restitutio in pristinum",
+    "meaning": "Restoration to original status",
+    "explanation": "Restoring property or rights to their former state prior to an illegal eviction or trespass.",
+    "origin_note": "Classical Latin legal maxim codified in Anglo-Indian common law jurisprudence.",
+    "category": "Tort",
+    "example": "An illegally evicted tenant is restored to physical possession by mandatory injunction.",
+    "related_maxims": [
+      "in-restitutio-in-integrum"
+    ],
+    "indian_case_refs": []
+  },
+  {
+    "id": "sententia-legis",
+    "maxim": "Sententia legis",
+    "meaning": "The intent or spirit of the law",
+    "explanation": "The true meaning and legislative purpose of a statute, which prevails over mechanical literalism.",
+    "origin_note": "Classical Latin legal maxim codified in Anglo-Indian common law jurisprudence.",
+    "category": "Statutory Interpretation",
+    "example": "Interpreting anti-corruption statutes to prevent loopholes contrary to the sententia legis.",
+    "related_maxims": [
+      "ratio-legis"
+    ],
+    "indian_case_refs": []
+  },
+  {
+    "id": "sine-animus-injuriandi",
+    "maxim": "Sine animo injuriandi",
+    "meaning": "Without intention to injure",
+    "explanation": "An act done without malicious intention or desire to cause harm.",
+    "origin_note": "Classical Latin legal maxim codified in Anglo-Indian common law jurisprudence.",
+    "category": "Tort",
+    "example": "A surgeon performing an emergency operation in good faith without intent to harm.",
+    "related_maxims": [
+      "mens-rea"
+    ],
+    "indian_case_refs": []
+  },
+  {
+    "id": "statu-quo-ante",
+    "maxim": "Status quo ante",
+    "meaning": "The state of things before",
+    "explanation": "Restoring the circumstances to the exact condition that existed prior to a controversial event or breach.",
+    "origin_note": "Classical Latin legal maxim codified in Anglo-Indian common law jurisprudence.",
+    "category": "Procedure",
+    "example": "A preliminary injunction restores the status quo ante existing before an unauthorized wall was constructed.",
+    "related_maxims": [
+      "status-quo"
+    ],
+    "indian_case_refs": []
+  },
+  {
+    "id": "strictu-sensu",
+    "maxim": "Strictu sensu",
+    "meaning": "In the strict sense",
+    "explanation": "Interpreting terms in their narrow, literal, and technical legal meaning.",
+    "origin_note": "Classical Latin legal maxim codified in Anglo-Indian common law jurisprudence.",
+    "category": "Statutory Interpretation",
+    "example": "Construing 'goods' strictu sensu under a sales tax statute.",
+    "related_maxims": [
+      "strictissimi-juris"
+    ],
+    "indian_case_refs": []
+  },
+  {
+    "id": "lato-sensu",
+    "maxim": "Lato sensu",
+    "meaning": "In a broad sense",
+    "explanation": "Interpreting terms expansively and liberally to advance statutory objectives.",
+    "origin_note": "Classical Latin legal maxim codified in Anglo-Indian common law jurisprudence.",
+    "category": "Statutory Interpretation",
+    "example": "Construing 'workman' lato sensu to cover temporary and contract laborers in welfare legislation.",
+    "related_maxims": [
+      "strictu-sensu"
+    ],
+    "indian_case_refs": []
+  },
+  {
+    "id": "terra-firma",
+    "maxim": "Terra firma",
+    "meaning": "Solid ground / Firm foundation",
+    "explanation": "Physical dry land as distinguished from sea or water; also metaphorical for unassailable legal arguments.",
+    "origin_note": "Classical Latin legal maxim codified in Anglo-Indian common law jurisprudence.",
+    "category": "Property",
+    "example": "Counsel's argument rests on the terra firma of landmark Supreme Court precedents.",
+    "related_maxims": [
+      "stare-decisis-et-non-quieta-movere"
+    ],
+    "indian_case_refs": []
+  },
+  {
+    "id": "uberrima-fides",
+    "maxim": "Uberrima fides",
+    "meaning": "Utmost good faith",
+    "explanation": "Latin variant of uberrimae fidei emphasizing absolute candor in marine and life insurance declarations.",
+    "origin_note": "Classical Latin legal maxim codified in Anglo-Indian common law jurisprudence.",
+    "category": "Contract",
+    "example": "Failure to disclose heart ailments voids life cover under uberrima fides.",
+    "related_maxims": [
+      "uberrimae-fidei"
+    ],
+    "indian_case_refs": []
+  },
+  {
+    "id": "ultra-vires-constitutionis",
+    "maxim": "Ultra vires constitutionis",
+    "meaning": "Beyond the powers of the Constitution",
+    "explanation": "A statute or executive action that violates the basic structure or provisions of the Constitution.",
+    "origin_note": "Classical Latin legal maxim codified in Anglo-Indian common law jurisprudence.",
+    "category": "Constitutional",
+    "example": "An amendment seeking to eliminate judicial review is void ultra vires constitutionis.",
+    "related_maxims": [
+      "ultra-vires"
+    ],
+    "indian_case_refs": []
+  },
+  {
+    "id": "usucapio",
+    "maxim": "Usucapio",
+    "meaning": "Acquisition of ownership by long possession",
+    "explanation": "The civil law precursor to adverse possession: acquiring legal title through open, continuous, and peaceful possession over statutory years.",
+    "origin_note": "Classical Latin legal maxim codified in Anglo-Indian common law jurisprudence.",
+    "category": "Property",
+    "example": "Possessing agricultural land openly for 12 years without owner objection yields title under adverse possession.",
+    "related_maxims": [
+      "animus-possidendi"
+    ],
+    "indian_case_refs": []
+  },
+  {
+    "id": "vacuum-domicilii",
+    "maxim": "Vacuum domicilii",
+    "meaning": "Uninhabited or vacant land",
+    "explanation": "Unoccupied land lacking lawful inhabitants.",
+    "origin_note": "Classical Latin legal maxim codified in Anglo-Indian common law jurisprudence.",
+    "category": "Property",
+    "example": "Historical property claims over abandoned wastelands.",
+    "related_maxims": [
+      "res-nullius"
+    ],
+    "indian_case_refs": []
+  },
+  {
+    "id": "valeat-quantum-valere-potest",
+    "maxim": "Valeat quantum valere potest",
+    "meaning": "Let it have effect as far as it can",
+    "explanation": "Doctrine of severability: saving the constitutional portions of a statute while striking down unconstitutional clauses under Article 13.",
+    "origin_note": "Classical Latin legal maxim codified in Anglo-Indian common law jurisprudence.",
+    "category": "Statutory Interpretation",
+    "example": "Severing an invalid penalty clause while preserving the remainder of an environmental regulatory statute.",
+    "related_maxims": [
+      "ratio-legis"
+    ],
+    "indian_case_refs": []
+  },
+  {
+    "id": "veritas-est-justitiae-mater",
+    "maxim": "Veritas est justitiae mater",
+    "meaning": "Truth is the mother of justice",
+    "explanation": "The paramount goal of judicial adjudication is the ascertainment of objective truth without bias or obfuscation.",
+    "origin_note": "Classical Latin legal maxim codified in Anglo-Indian common law jurisprudence.",
+    "category": "Constitutional",
+    "example": "Emphasizing judicial duty to discover material facts rather than rely on procedural technicalities.",
+    "related_maxims": [
+      "audi-alteram-partem"
+    ],
+    "indian_case_refs": []
+  },
+  {
+    "id": "voluntas-testatoris-pro-lege-habetur",
+    "maxim": "Voluntas testatoris pro lege habetur",
+    "meaning": "The will of the testator is treated as law",
+    "explanation": "In testamentary succession, courts give effect to the lawful intention of the deceased testator expressed in their will.",
+    "origin_note": "Classical Latin legal maxim codified in Anglo-Indian common law jurisprudence.",
+    "category": "Property",
+    "example": "Interpreting a testator's will to fulfill the distribution of family heirlooms as intended.",
+    "related_maxims": [
+      "animus-testandi"
+    ],
+    "indian_case_refs": []
+  }
+];

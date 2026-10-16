@@ -160,3 +160,60 @@ export async function getCitatorCaseWithBackend(caseId) {
   }
   return await res.json();
 }
+
+/**
+ * MODULE E: Legal Maxims
+ * GET /api/v1/maxims
+ */
+export async function fetchMaximsWithBackend(q = "", category = "ALL", letter = "", page = 1, limit = 50) {
+  const params = new URLSearchParams();
+  if (q && q.trim()) params.append('q', q.trim());
+  if (category && category !== 'ALL') params.append('category', category);
+  if (letter && letter !== 'ALL') params.append('letter', letter);
+  params.append('page', page);
+  params.append('limit', limit);
+
+  const res = await fetch(`${API_BASE}/maxims?${params.toString()}`, {
+    method: 'GET',
+    headers: { 'Accept': 'application/json' }
+  });
+  if (!res.ok) {
+    throw new Error(`Maxims query failed (HTTP ${res.status})`);
+  }
+  return await res.json();
+}
+
+/**
+ * GET /api/v1/maxims/random (Maxim of the Day)
+ */
+export async function fetchMaximOfTheDayWithBackend() {
+  const res = await fetch(`${API_BASE}/maxims/random`, {
+    method: 'GET',
+    headers: { 'Accept': 'application/json' }
+  });
+  if (!res.ok) {
+    throw new Error(`Maxim of the day fetch failed (HTTP ${res.status})`);
+  }
+  return await res.json();
+}
+
+/**
+ * POST /api/v1/maxims/explain
+ */
+export async function explainMaximWithBackend(maximOrId, factSituation = null) {
+  const payload = {
+    id: maximOrId,
+    maxim: maximOrId,
+    fact_situation: factSituation
+  };
+  const res = await fetch(`${API_BASE}/maxims/explain`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(payload)
+  });
+  if (!res.ok) {
+    throw new Error(`Maxim explanation failed (HTTP ${res.status})`);
+  }
+  return await res.json();
+}
+
