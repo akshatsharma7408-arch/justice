@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Command, Search, Cpu, Menu, X, ShieldCheck } from 'lucide-react';
+import { BACKEND_URL } from '../config/gemini.js';
 
 export default function Header({ 
   activeTab, 
@@ -22,7 +23,7 @@ export default function Header({
 
     const checkHealth = async () => {
       try {
-        const res = await fetch('http://127.0.0.1:8000/health', {
+        const res = await fetch(`${BACKEND_URL}/health`, {
           method: 'GET',
           signal: controller.signal,
           headers: { 'Accept': 'application/json' }
@@ -128,3 +129,4 @@ export default function Header({
     </header>
   );
 }
+
