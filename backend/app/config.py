@@ -8,12 +8,18 @@ from pathlib import Path
 from typing import List
 from dotenv import load_dotenv
 
-# Search for .env.local or .env in backend directory, or project root
+# Search for .env in backend directory, or project root
 CURRENT_DIR = Path(__file__).resolve().parent
-PROJECT_ROOT = CURRENT_DIR.parent.parent
+BACKEND_DIR = CURRENT_DIR.parent
+PROJECT_ROOT = BACKEND_DIR.parent
 
-# Load local environment overrides if present
-for env_file in [PROJECT_ROOT / ".env.local", PROJECT_ROOT / ".env", CURRENT_DIR.parent / ".env.local", CURRENT_DIR.parent / ".env"]:
+# Load environment overrides (prioritizing backend/.env)
+for env_file in [
+    BACKEND_DIR / ".env",
+    BACKEND_DIR / ".env.local",
+    PROJECT_ROOT / ".env.local",
+    PROJECT_ROOT / ".env"
+]:
     if env_file.exists():
         load_dotenv(dotenv_path=env_file, override=False)
 
@@ -29,6 +35,7 @@ class Settings:
         or ""
     ).strip()
     GEMINI_MODEL: str = "gemini-3.8-flash"
+    EMBEDDING_MODEL: str = os.getenv("EMBEDDING_MODEL", "gemini-embedding-001")
     GEMINI_TEMPERATURE: float = 0.2
     GEMINI_MAX_TOKENS: int = 2048
 

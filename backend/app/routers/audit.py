@@ -12,6 +12,7 @@ import io
 import re
 import logging
 
+from app.config import settings
 from app.services.gemini_service import gemini_service
 from app.services.statute_service import statute_service
 from app.services.audit_service import audit_service
@@ -26,6 +27,7 @@ class VerifyClauseRequest(BaseModel):
     clause_title: Optional[str] = Field("Restrictive Covenant", description="Optional clause title or identifier")
 
 class VerifyClauseResponse(BaseModel):
+    model_config = {"protected_namespaces": ()}
     status: str = Field(..., description="'NON_COMPLIANT' or 'COMPLIANT'")
     risk_level: str = Field(..., description="'CRITICAL', 'CRITICAL RISK', 'MODERATE', or 'LOW'")
     statute: str
@@ -43,6 +45,7 @@ class VerifyClauseResponse(BaseModel):
     governing_authorities: Optional[List[str]] = None
     precedents: Optional[List[str]] = None
     statutory_issue: Optional[str] = None
+    model_used: Optional[str] = None
 
 class AuditRequest(BaseModel):
     text: Optional[str] = Field(None, description="Raw contract text to audit")
@@ -265,7 +268,8 @@ async def verify_clause_endpoint(payload: VerifyClauseRequest):
                 "Percept D'Mark (India) (P) Ltd. v. Zaheer Khan & Anr. (2006) 4 SCC 227",
                 "Superintendence Company of India (P) Ltd. v. Krishan Murgai (1981) 2 SCC 246"
             ],
-            statutory_issue="Section 27, Indian Contract Act 1872 (Restraint of trade - Void ab initio)"
+            statutory_issue="Section 27, Indian Contract Act 1872 (Restraint of trade - Void ab initio)",
+            model_used=ai_audit.get("model_used", "deterministic_legal_fallback")
         )
     else:
         return VerifyClauseResponse(
@@ -287,7 +291,8 @@ async def verify_clause_endpoint(payload: VerifyClauseRequest):
             severity="CLEAN",
             governing_authorities=["Niranjan Shankar Golikari (1967) 2 SCR 378", "Section 27, Indian Contract Act, 1872"],
             precedents=["Niranjan Shankar Golikari v. Century Spg. & Mfg. Co. Ltd. (1967) 2 SCR 378"],
-            statutory_issue=None
+            statutory_issue=None,
+            model_used=ai_audit.get("model_used", "deterministic_legal_fallback")
         )
 
 @router.post("/contract", response_model=ContractAuditResponse)
@@ -377,5 +382,5 @@ async def synthesize_clause_endpoint(payload: SynthesizeClauseRequest):
     summary = await gemini_service.synthesize_legal_summary(payload.clause_text, payload.contract_title or "Agreement")
     return {
         "synthesis": summary,
-        "model": "gemini-3.8-flash"
+        "model": settings.GEMINI_MODEL
     }

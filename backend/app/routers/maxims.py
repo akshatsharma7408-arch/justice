@@ -159,9 +159,16 @@ async def explain_maxim(req: MaximExplainRequest):
     maxims = _load_maxims()
     target_entry = None
 
-    # 1. Match by ID
+    # 1. Match by ID (exact or partial slug)
     if req.id:
         target_entry = _MAXIMS_BY_ID.get(req.id)
+        if not target_entry:
+            clean_id = req.id.strip().lower()
+            for m in maxims:
+                m_id = m["id"].lower()
+                if m_id == clean_id or clean_id in m_id or m_id in clean_id:
+                    target_entry = m
+                    break
 
     # 2. Match by Latin query
     if not target_entry and req.maxim:
@@ -186,7 +193,8 @@ async def explain_maxim(req: MaximExplainRequest):
             "message": f"The legal maxim '{req.maxim or req.id}' is not in the verified legal maxims corpus. Under strict accuracy rules, explanations are only generated for verified maxims.",
             "query": req.maxim or req.id,
             "explanation": None,
-            "application_to_facts": None
+            "application_to_facts": None,
+            "model_used": "corpus_not_found"
         }
 
     # Generate grounded explanation using Gemini service if active
@@ -219,6 +227,7 @@ async def explain_maxim(req: MaximExplainRequest):
 
     explanation_text = stored_explanation
     application_text = None
+    used_gemini = False
 
     if gemini_service.is_active and gemini_service.client:
         try:
@@ -241,6 +250,7 @@ async def explain_maxim(req: MaximExplainRequest):
             )
             if response.text:
                 explanation_text = response.text.strip()
+                used_gemini = True
         except Exception as e:
             logger.warning(f"Gemini explanation for maxim {stored_maxim} failed: {e}. Using stored baseline.")
 
@@ -260,5 +270,15 @@ async def explain_maxim(req: MaximExplainRequest):
         "application_to_facts": application_text,
         "stored_example": stored_example,
         "indian_case_refs": stored_cases,
-        "related_maxims": target_entry.get("related_maxims", [])
+        "related_maxims": target_entry.get("related_maxims", []),
+        "model_used": settings.GEMINI_MODEL if used_gemini else "stored_corpus_baseline"
     }
+
+
+@router.post("/{maxim_id}/explain", response_model=Dict[str, Any])
+async def explain_maxim_path(maxim_id: str, req: Optional[MaximExplainRequest] = None):
+    """Path-based convenience endpoint for explaining a legal maxim by slug."""
+    payload = req or MaximExplainRequest(id=maxim_id)
+    if not payload.id:
+        payload.id = maxim_id
+    return await explain_maxim(payload)

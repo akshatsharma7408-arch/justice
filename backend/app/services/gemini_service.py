@@ -141,6 +141,7 @@ class GeminiService:
                         parsed["is_violation"] = True
                         parsed["binding_precedent"] = "Percept D'Mark (India) (P) Ltd. v. Zaheer Khan & Anr. (2006) 4 SCC 227 and Superintendence Company of India (P) Ltd. v. Krishan Murgai (1981) 2 SCC 246"
                         parsed["legal_doctrine"] = "Indian contract law treats post-employment non-compete covenants as void ab initio under Section 27, rejecting the English common law 'reasonableness' doctrine."
+                    parsed["model_used"] = self.model
                     return parsed
             except Exception as e:
                 logger.warning(f"Gemini 3.8 Flash structured verify_clause call encountered exception: {e}. Using deterministic legal fallback.")
@@ -151,6 +152,7 @@ class GeminiService:
                 "status": "NON-COMPLIANT",
                 "risk_level": "CRITICAL",
                 "is_violation": True,
+                "model_used": "deterministic_legal_fallback",
                 "statute": "The Indian Contract Act, 1872",
                 "section": "27",
                 "heading": "Agreement in restraint of trade, void",
@@ -179,6 +181,7 @@ class GeminiService:
                 "status": "COMPLIANT",
                 "risk_level": "LOW",
                 "is_violation": False,
+                "model_used": "deterministic_legal_fallback",
                 "statute": "The Indian Contract Act, 1872",
                 "section": "27",
                 "heading": "Standard In-Term Covenant / General Terms",
@@ -330,41 +333,12 @@ class GeminiService:
                 "detail": "No active GEMINI_API_KEY detected. Running in deterministic Indian law fallback mode."
             }
 
-        # Verify connectivity by generating a tiny response
-        try:
-            config = types.GenerateContentConfig(
-                max_output_tokens=10,
-                temperature=0.1
-            )
-            res = self.client.models.generate_content(
-                model=self.model,
-                contents="ping",
-                config=config
-            )
-            if res.text:
-                return {
-                    "status": "connected",
-                    "model": self.model,
-                    "sdk": "google-genai",
-                    "configured": True,
-                    "detail": f"Successfully verified connectivity to {self.model} using google-genai SDK."
-                }
-        except Exception as e:
-            logger.info(f"GenAI health ping test note: {e}")
-            return {
-                "status": "connected",
-                "model": self.model,
-                "sdk": "google-genai",
-                "configured": True,
-                "detail": f"google-genai Client active with key; transient upstream status: {str(e)[:100]}"
-            }
-
         return {
             "status": "connected",
             "model": self.model,
             "sdk": "google-genai",
             "configured": True,
-            "detail": f"google-genai Client active for {self.model}."
+            "detail": f"google-genai Client active targeting {self.model}."
         }
 
 

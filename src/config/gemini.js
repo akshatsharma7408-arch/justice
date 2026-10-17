@@ -5,7 +5,7 @@
  * Enforced model: gemini-3.8-flash (orchestrated via backend google-genai SDK).
  */
 
-export const BACKEND_URL = "http://localhost:8000";
+export const BACKEND_URL = "http://127.0.0.1:8000";
 export const API_BASE = `${BACKEND_URL}/api/v1`;
 
 export const geminiConfig = {
@@ -213,6 +213,55 @@ export async function explainMaximWithBackend(maximOrId, factSituation = null) {
   });
   if (!res.ok) {
     throw new Error(`Maxim explanation failed (HTTP ${res.status})`);
+  }
+  return await res.json();
+}
+
+/**
+ * MODULE F: Document Chat
+ * POST /api/v1/doc/upload
+ */
+export async function uploadDocumentForChatWithBackend(input, title = "Uploaded Agreement") {
+  if (input instanceof FormData) {
+    const res = await fetch(`${API_BASE}/doc/upload`, {
+      method: 'POST',
+      body: input
+    });
+    if (!res.ok) {
+      throw new Error(`Document upload for chat failed (HTTP ${res.status})`);
+    }
+    return await res.json();
+  } else {
+    const res = await fetch(`${API_BASE}/doc/upload`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        text: typeof input === 'string' ? input : '',
+        title: title
+      })
+    });
+    if (!res.ok) {
+      throw new Error(`Document upload for chat failed (HTTP ${res.status})`);
+    }
+    return await res.json();
+  }
+}
+
+/**
+ * MODULE F: Document Chat
+ * POST /api/v1/doc/chat
+ */
+export async function chatWithDocumentWithBackend(docId, question) {
+  const res = await fetch(`${API_BASE}/doc/chat`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      doc_id: docId,
+      question: question
+    })
+  });
+  if (!res.ok) {
+    throw new Error(`Document chat query failed (HTTP ${res.status})`);
   }
   return await res.json();
 }

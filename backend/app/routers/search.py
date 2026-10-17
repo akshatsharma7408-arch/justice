@@ -9,6 +9,7 @@ from pydantic import BaseModel, Field
 from typing import List, Dict, Any, Optional
 import logging
 
+from app.config import settings
 from app.services.gemini_service import gemini_service
 from app.services.qdrant_service import qdrant_service
 
@@ -51,7 +52,7 @@ async def search_precedents_post(payload: SearchRequest):
     return SearchResponse(
         query=payload.query,
         hyde_synthetic_ratio=hyde_ratio,
-        model_used="gemini-3.8-flash",
+        model_used=settings.GEMINI_MODEL,
         results_count=len(results),
         results=results
     )
