@@ -96,6 +96,16 @@ export default function Header({
 
         {/* Right: Backend Health Dot & Quick Traces */}
         <div className="topbar-right">
+          {/* Mobile-only search trigger (center omni bar is hidden on phones) */}
+          <button
+            type="button"
+            className="topbar-mobile-search"
+            onClick={onOpenCommandPalette}
+            aria-label="Open Search and Command Palette"
+          >
+            <Search size={17} />
+          </button>
+
           {/* Backend Health Dot */}
           <div 
             className={`backend-health-pill status-${backendHealth.status}`}
