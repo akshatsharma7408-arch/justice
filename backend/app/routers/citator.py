@@ -59,6 +59,7 @@ class CitatorCaseResponse(BaseModel):
     article141Evaluation: Article141Hierarchy
     graphNodes: List[GraphNode]
     graphEdges: List[GraphEdge]
+    dataSource: Optional[str] = None
     aiAnalysis: Optional[Dict[str, Any]] = None
 
 @router.get("/citator/{case_id}", response_model=CitatorCaseResponse)
@@ -100,6 +101,7 @@ async def get_citator_case_by_id(case_id: str, include_ai: bool = Query(True, de
         article141Evaluation=hierarchy,
         graphNodes=case_data.get("graphNodes", []),
         graphEdges=case_data.get("graphEdges", []),
+        dataSource=case_data.get("dataSource", "in_memory_fallback"),
         aiAnalysis=ai_analysis
     )
 
