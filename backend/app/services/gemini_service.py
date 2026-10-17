@@ -11,8 +11,9 @@ import logging
 from typing import Dict, Any, Optional, List
 from pydantic import BaseModel, Field
 
-from google import genai
 from google.genai import types
+
+from app.services.groq_client import GroqClient
 
 from app.config import settings
 
@@ -47,16 +48,16 @@ class CitatorAnalysisSchema(BaseModel):
 
 class GeminiService:
     def __init__(self):
-        self.api_key = os.environ.get("GEMINI_API_KEY") or settings.GEMINI_API_KEY
+        self.api_key = os.environ.get("GROQ_API_KEY") or settings.GEMINI_API_KEY
         self.model = settings.GEMINI_MODEL  # strictly "gemini-3.8-flash"
         self.is_active = settings.is_gemini_active
-        self._client: Optional[genai.Client] = None
+        self._client: Optional[GroqClient] = None
         self._init_client()
 
     def _init_client(self):
         if self.is_active and self.api_key:
             try:
-                self._client = genai.Client(api_key=self.api_key)
+                self._client = GroqClient(api_key=self.api_key)
                 logger.info(f"Initialized official google-genai Client targeting model '{self.model}'")
             except Exception as e:
                 logger.error(f"Failed to initialize google-genai Client: {e}")
@@ -66,7 +67,7 @@ class GeminiService:
             self._client = None
 
     @property
-    def client(self) -> Optional[genai.Client]:
+    def client(self) -> Optional[GroqClient]:
         if not self._client and self.is_active:
             self._init_client()
         return self._client
@@ -328,7 +329,7 @@ class GeminiService:
             return {
                 "status": "fallback_simulated",
                 "model": self.model,
-                "sdk": "google-genai",
+                "sdk": "groq-openai-compatible",
                 "configured": False,
                 "detail": "No active GEMINI_API_KEY detected. Running in deterministic Indian law fallback mode."
             }
@@ -336,10 +337,11 @@ class GeminiService:
         return {
             "status": "connected",
             "model": self.model,
-            "sdk": "google-genai",
+            "sdk": "groq-openai-compatible",
             "configured": True,
             "detail": f"google-genai Client active targeting {self.model}."
         }
 
 
 gemini_service = GeminiService()
+
