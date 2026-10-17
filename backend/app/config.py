@@ -30,11 +30,12 @@ class Settings:
 
     # Gemini AI Model Configuration (Strictly gemini-3.8-flash)
     GEMINI_API_KEY: str = (
-        os.getenv("GEMINI_API_KEY") 
+        os.getenv("GROQ_API_KEY")
+        or os.getenv("GEMINI_API_KEY") 
         or os.getenv("VITE_GEMINI_API_KEY") 
         or ""
     ).strip()
-    GEMINI_MODEL: str = "gemini-3.8-flash"
+    GEMINI_MODEL: str = "openai/gpt-oss-120b"  # served by Groq
     EMBEDDING_MODEL: str = os.getenv("EMBEDDING_MODEL", "gemini-embedding-001")
     GEMINI_TEMPERATURE: float = 0.2
     GEMINI_MAX_TOKENS: int = 2048
@@ -68,3 +69,4 @@ class Settings:
         )
 
 settings = Settings()
+
