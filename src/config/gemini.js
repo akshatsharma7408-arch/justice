@@ -5,7 +5,7 @@
  * Enforced model: gemini-3.8-flash (orchestrated via backend google-genai SDK).
  */
 
-export const BACKEND_URL = "http://127.0.0.1:8000";
+export const BACKEND_URL = import.meta.env.VITE_BACKEND_URL || "";
 export const API_BASE = `${BACKEND_URL}/api/v1`;
 
 export const geminiConfig = {

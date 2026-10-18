@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Command, Search, Cpu, Menu, X, ShieldCheck } from 'lucide-react';
+import { BACKEND_URL } from '../config/gemini.js';
 
 export default function Header({ 
   activeTab, 
@@ -22,7 +23,7 @@ export default function Header({
 
     const checkHealth = async () => {
       try {
-        const res = await fetch('http://127.0.0.1:8000/health', {
+        const res = await fetch(`${BACKEND_URL}/health`, {
           method: 'GET',
           signal: controller.signal,
           headers: { 'Accept': 'application/json' }
@@ -95,6 +96,16 @@ export default function Header({
 
         {/* Right: Backend Health Dot & Quick Traces */}
         <div className="topbar-right">
+          {/* Mobile-only search trigger (center omni bar is hidden on phones) */}
+          <button
+            type="button"
+            className="topbar-mobile-search"
+            onClick={onOpenCommandPalette}
+            aria-label="Open Search and Command Palette"
+          >
+            <Search size={17} />
+          </button>
+
           {/* Backend Health Dot */}
           <div 
             className={`backend-health-pill status-${backendHealth.status}`}
@@ -128,3 +139,4 @@ export default function Header({
     </header>
   );
 }
+

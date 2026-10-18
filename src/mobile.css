@@ -1,0 +1,347 @@
+/* ==========================================================================
+   MOBILE OVERRIDES (loaded after App.css)
+   Phone-first fixes: collapsing split grids that specificity kept side by
+   side, topbar crowding, clipped comparison mocks, tap targets, and
+   horizontal-scroll containment. Applies at tablet-and-below for the split
+   panes and phone width for the rest.
+   ========================================================================== */
+
+/* --------------------------------------------------------------------------
+   Tablet and below: every multi-column workspace grid becomes one column.
+   minmax(0, 1fr) + min-width:0 on children stops min-content blowout.
+   -------------------------------------------------------------------------- */
+@media (max-width: 1024px) {
+  .workspace-split-panes,
+  .workspace-split-panes.view-mode-both {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .copilot-columns-grid.both {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .modern-mini-canvas {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .workspace-split-panes > *,
+  .copilot-columns-grid > *,
+  .comparison-cards-grid > *,
+  .modern-mini-canvas > *,
+  .bench-matrix-grid > * {
+    min-width: 0;
+  }
+}
+
+/* --------------------------------------------------------------------------
+   Phone width
+   -------------------------------------------------------------------------- */
+@media (max-width: 768px) {
+  /* Global guard: nothing may push the page sideways. Scrollable strips
+     (matrix table, alphabet row, tab strips) scroll inside themselves. */
+  .workspace-app-shell {
+    overflow-x: clip;
+  }
+
+  img,
+  svg,
+  video,
+  table,
+  pre {
+    max-width: 100%;
+  }
+
+  /* --- Top bar: keep hamburger + brand + status dot + agent icon -------- */
+  .topbar-inner {
+    padding: 0 12px;
+    gap: 10px;
+  }
+
+  .topbar-left {
+    gap: 10px;
+    min-width: 0;
+    flex: 1 1 auto;
+  }
+
+  .topbar-brand {
+    min-width: 0;
+    overflow: hidden;
+  }
+
+  .brand-title-serif {
+    font-size: 1.05rem;
+  }
+
+  .topbar-right {
+    gap: 8px;
+    flex-shrink: 0;
+  }
+
+  .backend-health-pill {
+    padding: 4px 8px;
+  }
+
+  .health-label,
+  .health-model-badge {
+    display: none;
+  }
+
+  .topbar-agent-btn {
+    padding: 6px 8px;
+    min-height: 36px;
+  }
+
+  .topbar-agent-btn .agent-btn-text {
+    display: none;
+  }
+
+  .topbar-mobile-toggle {
+    min-width: 40px;
+    min-height: 40px;
+    justify-content: center;
+  }
+
+  /* --- Sidebar drawer ---------------------------------------------------- */
+  .workspace-sidebar {
+    width: min(300px, 85vw);
+    left: calc(-1 * min(300px, 85vw) - 8px);
+  }
+
+  .workspace-sidebar.mobile-open {
+    left: 0;
+  }
+
+  .sidebar-nav-item {
+    min-height: 48px;
+  }
+
+  /* --- Module pane rhythm ------------------------------------------------ */
+  .workspace-module-pane {
+    padding: 16px 14px 32px;
+  }
+
+  .module-heading {
+    font-size: 1.55rem;
+    line-height: 1.25;
+    word-wrap: break-word;
+  }
+
+  .module-description {
+    font-size: 0.92rem;
+  }
+
+  /* --- Document Analyzer -------------------------------------------------- */
+  .analyzer-controls-bar {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 10px;
+  }
+
+  .analyzer-controls-bar button,
+  .analyzer-upload-btn-wrap,
+  .analyzer-upload-btn-wrap button,
+  .upload-contract-btn,
+  .btn-run-agent {
+    width: 100%;
+    justify-content: center;
+    min-height: 44px;
+  }
+
+  .pane-title-bar {
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+
+  .copilot-bar-left {
+    flex-wrap: wrap;
+    min-width: 0;
+  }
+
+  .copilot-tabs-strip {
+    max-width: 100%;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .copilot-view-tab {
+    flex-shrink: 0;
+    min-height: 36px;
+  }
+
+  .clause-header-row {
+    flex-wrap: wrap;
+  }
+
+  .clause-name {
+    word-break: break-word;
+  }
+
+  .clause-original-text,
+  .clause-diff-view,
+  .bubble-body {
+    overflow-wrap: break-word;
+    word-break: break-word;
+  }
+
+  .docchat-input-bar {
+    gap: 6px;
+  }
+
+  .docchat-text-input {
+    min-width: 0;
+    font-size: 16px; /* stops iOS auto-zoom on focus */
+  }
+
+  .docchat-send-btn {
+    flex-shrink: 0;
+    min-height: 44px;
+  }
+
+  /* --- Comparison module: the legacy mock must shrink, not clip ---------- */
+  .comparison-side-card {
+    padding: 16px 14px;
+  }
+
+  .legacy-mock-header {
+    flex-wrap: wrap;
+    row-gap: 8px;
+  }
+
+  .legacy-brand-row {
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+
+  .legacy-user-badge {
+    display: none;
+  }
+
+  .legacy-nav-items {
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+
+  .legacy-search-box {
+    min-width: 0;
+  }
+
+  .legacy-form {
+    flex-wrap: wrap;
+  }
+
+  .legacy-form .legacy-text-input {
+    flex: 1 1 150px;
+    min-width: 0;
+    font-size: 16px;
+  }
+
+  .legacy-submit-btn {
+    min-height: 40px;
+  }
+
+  .modern-omni-header {
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+
+  .omni-query-preview {
+    min-width: 0;
+  }
+
+  .friction-item {
+    align-items: flex-start;
+  }
+
+  .friction-title,
+  .friction-desc,
+  .mini-case-name,
+  .mini-clause-text {
+    overflow-wrap: break-word;
+    word-break: break-word;
+    min-width: 0;
+  }
+
+  .table-responsive-wrapper {
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .comparison-matrix-table {
+    font-size: 0.82rem;
+  }
+
+  /* --- Legal Maxims ------------------------------------------------------- */
+  .alphabet-scroll-row {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    padding-bottom: 6px;
+  }
+
+  .alphabet-btn {
+    min-height: 32px;
+    flex-shrink: 0;
+  }
+
+  /* --- Command palette ----------------------------------------------------- */
+  .palette-overlay {
+    padding: 12px 10px;
+    align-items: flex-start;
+  }
+
+  .palette-dialog {
+    max-height: calc(100vh - 24px);
+    display: flex;
+    flex-direction: column;
+  }
+
+  .palette-results-container {
+    overflow-y: auto;
+  }
+
+  .palette-search-input {
+    font-size: 16px; /* stops iOS auto-zoom */
+  }
+
+  .palette-dialog-footer {
+    display: none; /* keyboard hints are noise on touch */
+  }
+
+  .palette-item-card {
+    min-height: 48px;
+  }
+
+  /* --- Agent visualizer modal --------------------------------------------- */
+  .agent-modal-overlay {
+    padding: 10px;
+  }
+
+  .agent-modal-dialog {
+    max-height: calc(100vh - 20px);
+  }
+
+  /* --- Footer --------------------------------------------------------------- */
+  .workspace-footer-inner {
+    gap: 12px;
+  }
+}
+
+/* Mobile-only search trigger in the top bar. Hidden above phone width;
+   the @media block above shows it where the center omni bar is hidden. */
+.topbar-mobile-search {
+  display: none;
+}
+
+@media (max-width: 768px) {
+  .topbar-mobile-search {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 6px 8px;
+    min-height: 36px;
+    min-width: 36px;
+    border-radius: var(--radius-md);
+    color: var(--text-primary);
+    background-color: var(--bg-paper);
+    border: 1px solid var(--border-color);
+    cursor: pointer;
+  }
+}
