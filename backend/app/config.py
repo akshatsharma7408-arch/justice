@@ -28,17 +28,27 @@ class Settings:
     VERSION: str = "1.0.0"
     API_V1_PREFIX: str = "/api/v1"
 
-    # Gemini AI Model Configuration (Strictly gemini-3.8-flash)
-    GEMINI_API_KEY: str = (
+    # LLM Engine Configuration (Default: Groq with openai/gpt-oss-120b & spillover)
+    LLM_API_KEY: str = (
         os.getenv("GROQ_API_KEY")
+        or os.getenv("LLM_API_KEY")
         or os.getenv("GEMINI_API_KEY") 
         or os.getenv("VITE_GEMINI_API_KEY") 
         or ""
     ).strip()
-    GEMINI_MODEL: str = "openai/gpt-oss-120b"  # served by Groq
+    LLM_MODEL: str = os.getenv("LLM_MODEL", "openai/gpt-oss-120b")
+    LLM_PROVIDER: str = os.getenv("LLM_PROVIDER", "groq")
+    LLM_TEMPERATURE: float = 0.2
+    LLM_MAX_TOKENS: int = 4096
+    LLM_TIMEOUT: float = float(os.getenv("LLM_TIMEOUT", "15.0"))
+
+    # Backward compatibility aliases for existing services
+    GEMINI_API_KEY: str = LLM_API_KEY
+    GEMINI_MODEL: str = LLM_MODEL
+    GEMINI_TEMPERATURE: float = LLM_TEMPERATURE
+    GEMINI_MAX_TOKENS: int = LLM_MAX_TOKENS
+
     EMBEDDING_MODEL: str = os.getenv("EMBEDDING_MODEL", "gemini-embedding-001")
-    GEMINI_TEMPERATURE: float = 0.2
-    GEMINI_MAX_TOKENS: int = 2048
 
     # Qdrant Vector Database
     QDRANT_URL: str = os.getenv("QDRANT_URL", "http://localhost:6333")
@@ -59,14 +69,18 @@ class Settings:
     ]
 
     @property
-    def is_gemini_active(self) -> bool:
-        k = self.GEMINI_API_KEY.lower()
+    def is_llm_active(self) -> bool:
+        k = self.LLM_API_KEY.lower()
         return bool(
             k 
-            and "your_actual_gemini_api_key" not in k 
+            and "your_actual_" not in k 
             and not k.startswith("your_") 
             and k != "placeholder"
         )
+
+    @property
+    def is_gemini_active(self) -> bool:
+        return self.is_llm_active
 
 settings = Settings()
 

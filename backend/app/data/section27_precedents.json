@@ -183,6 +183,42 @@
       "judges": ["A.N. Ray, C.J.I.", "H.R. Khanna, J. (dissenting)", "M.H. Beg, J.", "Y.V. Chandrachud, J.", "P.N. Bhagwati, J."],
       "keywords": ["adm jabalpur", "habeas corpus", "emergency", "overruled", "article 21"],
       "source": {"name": "Indian Kanoon (free)", "url": "https://indiankanoon.org/doc/1735815/", "accessed": "2026-10-17"}
+    },
+    {
+      "id": "sc-2005-dawoodibohra",
+      "title": "Central Board of Dawoodi Bohra Community v. State of Maharashtra",
+      "citation": "(2005) 2 SCC 673",
+      "altCitations": ["AIR 2005 SC 752"],
+      "court": "Supreme Court of India",
+      "benchType": "Constitution Bench",
+      "benchSize": 5,
+      "decisionYear": 2005,
+      "decisionDate": "2004-12-17",
+      "status": "GREEN",
+      "statusLabel": "GOOD LAW (5-JUDGE CONSTITUTION BENCH)",
+      "statutes": ["Article 141, Constitution of India", "Article 145(3), Constitution of India"],
+      "ratioSummary": "The law laid down by a larger Bench of the Supreme Court is binding on any subsequent Bench of lesser or co-equal strength. A co-equal Bench doubting the correctness of an earlier Bench cannot overrule it, but must refer the matter to the Chief Justice for constitution of a larger Bench.",
+      "judges": ["N. Santosh Hegde, J.", "S.N. Variava, J.", "B.P. Singh, J.", "H.K. Sema, J.", "S.B. Sinha, J."],
+      "keywords": ["dawoodi bohra", "article 141", "bench hierarchy", "coordinate bench", "judicial discipline", "reference to larger bench"],
+      "source": {"name": "Indian Kanoon (free)", "url": "https://indiankanoon.org/doc/1709420/", "accessed": "2026-10-18"}
+    },
+    {
+      "id": "sc-2015-kailashnath",
+      "title": "Kailash Nath Associates v. Delhi Development Authority",
+      "citation": "(2015) 4 SCC 136",
+      "altCitations": ["AIR 2015 SC 1851"],
+      "court": "Supreme Court of India",
+      "benchType": "Division Bench",
+      "benchSize": 2,
+      "decisionYear": 2015,
+      "decisionDate": "2015-01-09",
+      "status": "GREEN",
+      "statusLabel": "GOOD LAW (ARTICLE 141 BINDING)",
+      "statutes": ["Section 74, Indian Contract Act 1872", "Section 73, Indian Contract Act 1872"],
+      "ratioSummary": "Section 74 of the Contract Act awards only reasonable compensation not exceeding the penalty or sum named. Where damage or loss is capable of proof, it must be proved; forfeiture of earnest money or stipulated damages cannot occur in the absence of legal injury or proven loss.",
+      "judges": ["Ranjan Gogoi, J.", "R.F. Nariman, J."],
+      "keywords": ["kailash nath", "section 74", "liquidated damages", "penalty", "earnest money forfeiture", "reasonable compensation"],
+      "source": {"name": "Indian Kanoon (free)", "url": "https://indiankanoon.org/doc/195540306/", "accessed": "2026-10-18"}
     }
   ]
 }

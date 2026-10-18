@@ -250,6 +250,62 @@ ARTICLE_141_GRAPH_DATA: Dict[str, Dict[str, Any]] = {
         "graphEdges": [
             {"source": "sc-2017-puttaswamy", "target": "sc-1976-admjabalpur", "relationship": "OVERRULES"}
         ]
+    },
+    "sc-2005-dawoodibohra": {
+        "id": "sc-2005-dawoodibohra",
+        "title": "Central Board of Dawoodi Bohra Community v. State of Maharashtra",
+        "citation": "(2005) 2 SCC 673",
+        "court": "Supreme Court of India",
+        "benchType": "Constitution Bench",
+        "benchSize": 5,
+        "decisionYear": 2005,
+        "status": "GREEN",
+        "statusLabel": "GOOD LAW (5-JUDGE CONSTITUTION BENCH)",
+        "citationCount": 115,
+        "statusDescription": (
+            "Foundational Article 141 precedent on judicial discipline and bench hierarchy. "
+            "A Bench of lesser strength cannot doubt or reconsider a larger Bench ruling; coordinate "
+            "benches doubting an earlier ruling must refer to the Chief Justice for a larger bench."
+        ),
+        "overruledCases": [],
+        "treatmentHistory": [
+            {
+                "case": "National Insurance Co. Ltd. v. Pranay Sethi",
+                "year": 2017,
+                "court": "Supreme Court of India",
+                "treatment": "FOLLOWS",
+                "note": "Reaffirmed Dawoodi Bohra rules on coordinate bench discipline and references."
+            }
+        ],
+        "graphNodes": [
+            {"id": "sc-2005-dawoodibohra", "label": "Dawoodi Bohra (2005)", "type": "TARGET", "bench": 5},
+            {"id": "sc-2017-pranay", "label": "Pranay Sethi (2017)", "type": "FOLLOWS", "bench": 5}
+        ],
+        "graphEdges": [
+            {"source": "sc-2017-pranay", "target": "sc-2005-dawoodibohra", "relationship": "FOLLOWS"}
+        ]
+    },
+    "sc-2015-kailashnath": {
+        "id": "sc-2015-kailashnath",
+        "title": "Kailash Nath Associates v. Delhi Development Authority",
+        "citation": "(2015) 4 SCC 136",
+        "court": "Supreme Court of India",
+        "benchType": "Division Bench",
+        "benchSize": 2,
+        "decisionYear": 2015,
+        "status": "GREEN",
+        "statusLabel": "GOOD LAW (ARTICLE 141 BINDING)",
+        "citationCount": 89,
+        "statusDescription": (
+            "Authoritative precedent on Section 74 Contract Act damages. Reasonable compensation "
+            "cannot exceed the penalty stipulated; earnest money cannot be forfeited without legal injury or proven loss."
+        ),
+        "overruledCases": [],
+        "treatmentHistory": [],
+        "graphNodes": [
+            {"id": "sc-2015-kailashnath", "label": "Kailash Nath (2015)", "type": "TARGET", "bench": 2}
+        ],
+        "graphEdges": []
     }
 }
 

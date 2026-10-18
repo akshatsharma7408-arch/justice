@@ -10,7 +10,7 @@ from typing import List, Dict, Any, Optional
 import logging
 
 from app.services.neo4j_service import neo4j_service
-from app.services.gemini_service import gemini_service
+from app.services.llm_service import llm_service
 
 logger = logging.getLogger("justice.router.citator")
 router = APIRouter(prefix="/api/v1", tags=["Smart Citator & Article 141 Hierarchy"])
@@ -83,7 +83,7 @@ async def get_citator_case_by_id(case_id: str, include_ai: bool = Query(True, de
 
     ai_analysis = None
     if include_ai:
-        ai_analysis = await gemini_service.generate_citator_analysis(case_data)
+        ai_analysis = await llm_service.generate_citator_analysis(case_data)
 
     return CitatorCaseResponse(
         id=case_data["id"],

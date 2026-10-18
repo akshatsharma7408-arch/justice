@@ -18,7 +18,7 @@ from typing import Dict, Any, List, Optional
 from fastapi import APIRouter, HTTPException, Query
 from pydantic import BaseModel, Field
 
-from app.services.gemini_service import gemini_service
+from app.services.llm_service import llm_service
 from app.config import settings
 
 logger = logging.getLogger("justice.maxims")
@@ -111,6 +111,7 @@ async def list_maxims(
 
 
 @router.get("/random", response_model=Dict[str, Any])
+@router.get("/of-the-day", response_model=Dict[str, Any])
 async def get_random_maxim_of_the_day(
     target_date: Optional[str] = Query(None, description="Specific date YYYY-MM-DD for stable lookups")
 ):
@@ -227,9 +228,10 @@ async def explain_maxim(req: MaximExplainRequest):
 
     explanation_text = stored_explanation
     application_text = None
-    used_gemini = False
+    used_llm = False
+    model_name = settings.LLM_MODEL
 
-    if gemini_service.is_active and gemini_service.client:
+    if llm_service.is_active and llm_service.client:
         try:
             from google.genai import types
             prompt = (
@@ -243,16 +245,16 @@ async def explain_maxim(req: MaximExplainRequest):
                 temperature=0.2,
                 max_output_tokens=500
             )
-            response = gemini_service.client.models.generate_content(
-                model=settings.GEMINI_MODEL,
+            response = llm_service.client.models.generate_content(
+                model=model_name,
                 contents=prompt,
                 config=config
             )
             if response.text:
                 explanation_text = response.text.strip()
-                used_gemini = True
+                used_llm = True
         except Exception as e:
-            logger.warning(f"Gemini explanation for maxim {stored_maxim} failed: {e}. Using stored baseline.")
+            logger.warning(f"LLM explanation for maxim {stored_maxim} failed: {e}. Using stored baseline.")
 
     if req.fact_situation:
         application_text = (
@@ -271,7 +273,7 @@ async def explain_maxim(req: MaximExplainRequest):
         "stored_example": stored_example,
         "indian_case_refs": stored_cases,
         "related_maxims": target_entry.get("related_maxims", []),
-        "model_used": settings.GEMINI_MODEL if used_gemini else "stored_corpus_baseline"
+        "model_used": model_name if used_llm else "stored_corpus_baseline"
     }
 
 

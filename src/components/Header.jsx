@@ -12,7 +12,7 @@ export default function Header({
 }) {
   const [backendHealth, setBackendHealth] = useState({
     status: 'checking', // 'healthy', 'offline', 'checking'
-    model: 'gemini-3.8-flash',
+    model: 'openai/gpt-oss-120b',
     systemMode: null
   });
 
@@ -33,7 +33,7 @@ export default function Header({
           const data = await res.json();
           setBackendHealth({
             status: 'healthy',
-            model: data.enforced_model || 'gemini-3.8-flash',
+            model: data.enforced_model || 'openai/gpt-oss-120b',
             systemMode: data.system_mode || 'ONLINE'
           });
         } else {

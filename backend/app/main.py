@@ -20,7 +20,7 @@ from pathlib import Path
 
 from app.config import settings
 from app.routers import search, citator, audit, maxims, docchat
-from app.services.gemini_service import gemini_service
+from app.services.llm_service import llm_service
 from app.services.qdrant_service import qdrant_service
 from app.services.neo4j_service import neo4j_service
 from app.services.statute_service import statute_service
@@ -93,26 +93,28 @@ async def health_check():
     """
     GET /health
     Diagnostic health endpoint reporting the live connectivity state of:
-    - Gemini AI Service (gemini-3.8-flash)
+    - LLM Service (Groq with openai/gpt-oss-120b & spillover)
     - SQLite Embedded Bare Acts Database
     - Qdrant Vector Database
     - Neo4j Knowledge Graph (Article 141 Lineage)
     """
-    gemini_health = await gemini_service.check_health()
+    llm_health = await llm_service.check_health()
     statute_health = statute_service.check_health()
     qdrant_health = qdrant_service.check_health()
     neo4j_health = neo4j_service.check_health()
 
     # Determine aggregated operational health
     is_operational = True
-    active_mode = "ONLINE" if (gemini_health.get("configured") and qdrant_health.get("status") == "connected") else "HYBRID_FALLBACK"
+    active_mode = "ONLINE" if (llm_health.get("configured") and qdrant_health.get("status") == "connected") else "HYBRID_FALLBACK"
 
     return {
         "status": "HEALTHY" if is_operational else "DEGRADED",
         "system_mode": active_mode,
-        "enforced_model": settings.GEMINI_MODEL,
+        "enforced_model": settings.LLM_MODEL,
+        "llm_provider": settings.LLM_PROVIDER,
         "services": {
-            "gemini": gemini_health,
+            "llm": llm_health,
+            "gemini": llm_health,  # backward compatibility alias
             "statutes_sqlite": statute_health,
             "qdrant": qdrant_health,
             "neo4j": neo4j_health
@@ -148,8 +150,8 @@ else:
 async def on_startup():
     logger.info("=================================================================")
     logger.info("   JUSTICE Legal AI Backend — Initializing Production Engine    ")
-    logger.info(f"   Model Target: {settings.GEMINI_MODEL}")
-    logger.info(f"   Gemini Status: {'Configured' if settings.is_gemini_active else 'Simulated Fallback Mode'}")
+    logger.info(f"   Model Target: {settings.LLM_MODEL} (Provider: {settings.LLM_PROVIDER})")
+    logger.info(f"   LLM Status: {'Configured' if settings.is_llm_active else 'Deterministic Fallback Mode'}")
     logger.info(f"   Site Password Gate: {'ENABLED' if SITE_PASSWORD else 'disabled (local dev mode)'}")
     logger.info(f"   Frontend Dist: {'serving ' + str(FRONTEND_DIST) if FRONTEND_DIST.exists() else 'not found (API only)'}")
     logger.info(f"   Allowed CORS Origins: {settings.CORS_ORIGINS}")

@@ -188,14 +188,20 @@ export default function LegalMaxims() {
       if (res && res.explanation) {
         setAiExplanations(prev => ({
           ...prev,
-          [maximItem.id]: res.explanation
+          [maximItem.id]: {
+            explanation: res.explanation,
+            model_used: res.model_used || 'openai/gpt-oss-120b'
+          }
         }));
       }
     } catch (err) {
       console.warn("[LegalMaxims] AI explanation failed:", err.message);
       setAiExplanations(prev => ({
         ...prev,
-        [maximItem.id]: `${maximItem.explanation} (Principle applied grounded in verified legal authorities.)`
+        [maximItem.id]: {
+          explanation: `${maximItem.explanation} (Principle applied grounded in verified legal authorities.)`,
+          model_used: 'stored_corpus_baseline'
+        }
       }));
     } finally {
       setExplainingId(null);
@@ -470,12 +476,12 @@ export default function LegalMaxims() {
                           )}
                         </div>
 
-                        {/* Grounded Gemini AI Explanation Bar */}
+                        {/* Grounded Legal AI Explanation Bar */}
                         <div className="maxim-ai-interactive-panel">
                           <div className="ai-panel-header">
                             <div className="ai-title-group">
                               <Sparkles size={14} className="sparkle-icon" />
-                              <span className="ai-title">GEMINI 3.8 FLASH GROUNDED SYNTHESIS</span>
+                              <span className="ai-title">AI-GROUNDED LEGAL SYNTHESIS</span>
                             </div>
                             <button
                               type="button"
@@ -483,7 +489,7 @@ export default function LegalMaxims() {
                               onClick={() => handleRequestAiExplanation(item)}
                               disabled={isExplaining}
                             >
-                              <span>{isExplaining ? 'Synthesizing...' : 'Explain with Gemini AI'}</span>
+                              <span>{isExplaining ? 'Synthesizing...' : 'Explain with Legal AI'}</span>
                             </button>
                           </div>
 
@@ -499,8 +505,17 @@ export default function LegalMaxims() {
 
                           {aiExplanation && (
                             <div className="ai-explanation-box">
-                              <div className="ai-box-badge mono">GROUNDED EXPLANATION</div>
-                              <p className="ai-box-text">{aiExplanation}</p>
+                              <div className="ai-box-badge mono" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '8px' }}>
+                                <span>GROUNDED EXPLANATION</span>
+                                {aiExplanation?.model_used && (
+                                  <span className={`ai-model-tag mono ${aiExplanation.model_used.includes('baseline') || aiExplanation.model_used.includes('fallback') ? 'is-fallback' : 'is-neural'}`} title={`Model: ${aiExplanation.model_used}`}>
+                                    [{aiExplanation.model_used.includes('baseline') ? 'CORPUS BASELINE' : aiExplanation.model_used}]
+                                  </span>
+                                )}
+                              </div>
+                              <p className="ai-box-text">
+                                {typeof aiExplanation === 'string' ? aiExplanation : aiExplanation.explanation}
+                              </p>
                             </div>
                           )}
                         </div>

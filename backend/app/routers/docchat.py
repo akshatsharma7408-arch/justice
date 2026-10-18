@@ -19,7 +19,7 @@ import numpy as np
 from google.genai import types
 
 from app.config import settings
-from app.services.gemini_service import gemini_service
+from app.services.llm_service import llm_service
 from app.routers.audit import (
     extract_text_from_pdf, 
     extract_text_from_docx, 
@@ -155,7 +155,7 @@ def embed_texts(texts: List[str]) -> List[List[float]]:
     if not texts:
         return []
 
-    client = gemini_service.client
+    client = llm_service.client
     if client and not is_gemini_in_cooldown():
         try:
             batch_size = 20
@@ -245,32 +245,50 @@ async def upload_document_endpoint(
 
     content_type = request.headers.get("content-type", "")
 
-    # Handle multipart / file uploads
-    if "multipart/form-data" in content_type:
-        form = await request.form()
-        uploaded_file = form.get("file")
-        form_text = form.get("text")
-        form_title = form.get("title")
+    # Priority 1: FastAPI injected form/file parameters
+    if file and hasattr(file, "filename") and file.filename:
+        filename = file.filename.lower()
+        doc_title = file.filename
+        contents = await file.read()
+        if filename.endswith(".pdf"):
+            extracted_text = extract_text_from_pdf(contents)
+        elif filename.endswith(".docx"):
+            extracted_text = extract_text_from_docx(contents)
+        else:
+            try:
+                extracted_text = contents.decode("utf-8")
+            except UnicodeDecodeError:
+                extracted_text = contents.decode("latin-1")
+    elif text and isinstance(text, str) and text.strip():
+        extracted_text = text.strip()
+    elif "multipart/form-data" in content_type:
+        try:
+            form = await request.form()
+            uploaded_file = form.get("file")
+            form_text = form.get("text")
+            form_title = form.get("title")
 
-        if form_title and isinstance(form_title, str) and form_title.strip():
-            doc_title = form_title.strip()
+            if form_title and isinstance(form_title, str) and form_title.strip():
+                doc_title = form_title.strip()
 
-        if uploaded_file and hasattr(uploaded_file, "filename") and uploaded_file.filename:
-            filename = uploaded_file.filename.lower()
-            doc_title = uploaded_file.filename
-            contents = await uploaded_file.read()
+            if uploaded_file and hasattr(uploaded_file, "filename") and uploaded_file.filename:
+                filename = uploaded_file.filename.lower()
+                doc_title = uploaded_file.filename
+                contents = await uploaded_file.read()
 
-            if filename.endswith(".pdf"):
-                extracted_text = extract_text_from_pdf(contents)
-            elif filename.endswith(".docx"):
-                extracted_text = extract_text_from_docx(contents)
-            else:
-                try:
-                    extracted_text = contents.decode("utf-8")
-                except UnicodeDecodeError:
-                    extracted_text = contents.decode("latin-1")
-        elif form_text and isinstance(form_text, str):
-            extracted_text = form_text
+                if filename.endswith(".pdf"):
+                    extracted_text = extract_text_from_pdf(contents)
+                elif filename.endswith(".docx"):
+                    extracted_text = extract_text_from_docx(contents)
+                else:
+                    try:
+                        extracted_text = contents.decode("utf-8")
+                    except UnicodeDecodeError:
+                        extracted_text = contents.decode("latin-1")
+            elif form_text and isinstance(form_text, str):
+                extracted_text = form_text
+        except Exception as e:
+            logger.warning(f"Error reading multipart form: {e}")
 
     elif "application/json" in content_type:
         try:
@@ -280,12 +298,12 @@ async def upload_document_endpoint(
         except Exception as e:
             raise HTTPException(status_code=400, detail=f"Invalid JSON payload: {e}")
     else:
-        raw_body = await request.body()
-        if raw_body:
-            try:
-                extracted_text = raw_body.decode("utf-8")
-            except Exception:
-                extracted_text = ""
+        try:
+            raw_body = await request.body()
+            if raw_body:
+                extracted_text = raw_body.decode("utf-8", errors="ignore")
+        except Exception:
+            extracted_text = ""
 
     if not extracted_text or not extracted_text.strip():
         raise HTTPException(
@@ -408,13 +426,13 @@ async def chat_with_document_endpoint(payload: DocChatRequest):
         f"Answer the question strictly following the grounding rules. Return valid structured JSON."
     )
 
-    client = gemini_service.client
+    client = llm_service.client
     if client and not is_gemini_in_cooldown():
         try:
             config = types.GenerateContentConfig(
                 system_instruction=system_instruction,
                 temperature=0.1,  # Strict factual determinism
-                max_output_tokens=settings.GEMINI_MAX_TOKENS,
+                max_output_tokens=settings.LLM_MAX_TOKENS,
                 response_mime_type="application/json",
                 response_schema=DocChatSchema
             )
@@ -423,11 +441,11 @@ async def chat_with_document_endpoint(payload: DocChatRequest):
             response = await asyncio.wait_for(
                 asyncio.to_thread(
                     client.models.generate_content,
-                    model=settings.GEMINI_MODEL,
+                    model=settings.LLM_MODEL,
                     contents=prompt,
                     config=config
                 ),
-                timeout=5.0
+                timeout=settings.LLM_TIMEOUT
             )
             
             if response and response.text:
@@ -450,7 +468,8 @@ async def chat_with_document_endpoint(payload: DocChatRequest):
                 if is_not_found or not ans:
                     return DocChatResponse(
                         answer="not found in this document",
-                        citations=[]
+                        citations=[],
+                        model_used=settings.LLM_MODEL
                     )
 
                 citations = []
@@ -465,12 +484,12 @@ async def chat_with_document_endpoint(payload: DocChatRequest):
                 return DocChatResponse(
                     answer=ans,
                     citations=citations,
-                    model_used=settings.GEMINI_MODEL
+                    model_used=settings.LLM_MODEL
                 )
         except Exception as e:
             if "429" in str(e) or "RESOURCE_EXHAUSTED" in str(e):
                 trigger_gemini_cooldown(120.0)
-            logger.info(f"Gemini docchat call note: {e}. Executing deterministic grounded fallback.")
+            logger.info(f"LLM docchat call note: {e}. Executing deterministic grounded fallback.")
 
     # --- Deterministic Grounded Fallback ---
     # Top chunk from hybrid retrieval
@@ -486,14 +505,15 @@ async def chat_with_document_endpoint(payload: DocChatRequest):
     }
     substantive_q_words = [w for w in re.findall(r'\b[a-z0-9]{3,}\b', question.lower()) if w not in boilerplate_words]
 
-    has_substantive_match = any(
-        w in best_chunk.text.lower() or w in best_chunk.heading.lower() 
-        for w in substantive_q_words
-    ) if (best_chunk and substantive_q_words) else False
+    chunk_tokens = set(re.findall(r'\b[a-z0-9]{3,}\b', f"{best_chunk.heading} {best_chunk.text}".lower())) if best_chunk else set()
+    has_substantive_match = any(w in chunk_tokens for w in substantive_q_words) if (best_chunk and substantive_q_words) else False
 
     if best_chunk and has_substantive_match and best_score >= 0.20:
         sentences = [s.strip() for s in re.split(r'(?<=[.!?])\s+', best_chunk.text) if s.strip()]
-        matched_sentences = [s for s in sentences if any(w in s.lower() for w in substantive_q_words)]
+        matched_sentences = [
+            s for s in sentences 
+            if any(re.search(rf'\b{re.escape(w)}\b', s, re.IGNORECASE) for w in substantive_q_words)
+        ]
         quote = matched_sentences[0] if matched_sentences else best_chunk.text
 
         return DocChatResponse(

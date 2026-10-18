@@ -16,6 +16,8 @@ Westlaw) are never scraped.
 | Gujarat Bottling Co. Ltd. v. The Coca Cola Co. | (1995) 5 SCC 545; AIR 1995 SC 2372 | S.C. Agrawal, S. Saghir Ahmad JJ. | 1995-08-04 | https://indiankanoon.org/doc/104935066/ |
 | Justice K.S. Puttaswamy (Retd.) v. Union of India | (2017) 10 SCC 1 | 9-judge Constitution Bench | 2017-08-24 | https://indiankanoon.org/doc/91938676/ |
 | ADM Jabalpur v. Shivkant Shukla | (1976) 2 SCC 521 | 5-judge Constitution Bench | 1976-04-28 | https://indiankanoon.org/doc/1735815/ |
+| Central Board of Dawoodi Bohra Community v. State of Maharashtra | (2005) 2 SCC 673 | 5-judge Constitution Bench | 2004-12-17 | https://indiankanoon.org/doc/1709420/ |
+| Kailash Nath Associates v. Delhi Development Authority | (2015) 4 SCC 136 | Ranjan Gogoi, R.F. Nariman JJ. | 2015-01-09 | https://indiankanoon.org/doc/195540306/ |
 
 ## Delhi High Court
 

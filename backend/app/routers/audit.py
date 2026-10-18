@@ -12,8 +12,7 @@ import io
 import re
 import logging
 
-from app.config import settings
-from app.services.gemini_service import gemini_service
+from app.services.llm_service import llm_service
 from app.services.statute_service import statute_service
 from app.services.audit_service import audit_service
 
@@ -148,8 +147,8 @@ async def process_contract_text(text: str, title: str) -> ContractAuditResponse:
         
         if is_viol:
             void_count += 1
-            # Generate layman explanation & balanced redline via gemini-3.8-flash or legal fallback
-            synthesis = await gemini_service.generate_layman_and_redline(
+            # Generate layman explanation & balanced redline via LLM or legal fallback
+            synthesis = await llm_service.generate_layman_and_redline(
                 clause_text=c["text"], 
                 title=c["title"]
             )
@@ -219,8 +218,8 @@ async def verify_clause_endpoint(payload: VerifyClauseRequest):
     body = s27.get("body") if s27 else "Every agreement by which any one is restrained from exercising a lawful profession, trade or business of any kind, is to that extent void."
     statute_name = s27.get("act_title") if s27 else "The Indian Contract Act, 1872"
 
-    # 2. Invoke Gemini 3.8 Flash structured verification
-    ai_audit = await gemini_service.verify_clause_ai(
+    # 2. Invoke LLM structured verification
+    ai_audit = await llm_service.verify_clause_ai(
         clause_text=payload.clause_text,
         clause_title=payload.clause_title or "Restrictive Covenant"
     )
@@ -311,32 +310,50 @@ async def audit_contract_endpoint(
     extracted_text = ""
     doc_title = title or "Commercial Contract"
 
-    # Handle multipart / file uploads
-    if "multipart/form-data" in content_type:
-        form = await request.form()
-        uploaded_file = form.get("file")
-        form_text = form.get("text")
-        form_title = form.get("title")
+    # Priority 1: FastAPI injected form/file parameters
+    if file and hasattr(file, "filename") and file.filename:
+        filename = file.filename.lower()
+        doc_title = file.filename
+        contents = await file.read()
+        if filename.endswith(".pdf"):
+            extracted_text = extract_text_from_pdf(contents)
+        elif filename.endswith(".docx"):
+            extracted_text = extract_text_from_docx(contents)
+        else:
+            try:
+                extracted_text = contents.decode("utf-8")
+            except UnicodeDecodeError:
+                extracted_text = contents.decode("latin-1")
+    elif text and isinstance(text, str) and text.strip():
+        extracted_text = text.strip()
+    elif "multipart/form-data" in content_type:
+        try:
+            form = await request.form()
+            uploaded_file = form.get("file")
+            form_text = form.get("text")
+            form_title = form.get("title")
 
-        if form_title and isinstance(form_title, str):
-            doc_title = form_title
+            if form_title and isinstance(form_title, str):
+                doc_title = form_title
 
-        if uploaded_file and hasattr(uploaded_file, "filename") and uploaded_file.filename:
-            filename = uploaded_file.filename.lower()
-            doc_title = uploaded_file.filename
-            contents = await uploaded_file.read()
+            if uploaded_file and hasattr(uploaded_file, "filename") and uploaded_file.filename:
+                filename = uploaded_file.filename.lower()
+                doc_title = uploaded_file.filename
+                contents = await uploaded_file.read()
 
-            if filename.endswith(".pdf"):
-                extracted_text = extract_text_from_pdf(contents)
-            elif filename.endswith(".docx"):
-                extracted_text = extract_text_from_docx(contents)
-            else:
-                try:
-                    extracted_text = contents.decode("utf-8")
-                except UnicodeDecodeError:
-                    extracted_text = contents.decode("latin-1")
-        elif form_text and isinstance(form_text, str):
-            extracted_text = form_text
+                if filename.endswith(".pdf"):
+                    extracted_text = extract_text_from_pdf(contents)
+                elif filename.endswith(".docx"):
+                    extracted_text = extract_text_from_docx(contents)
+                else:
+                    try:
+                        extracted_text = contents.decode("utf-8")
+                    except UnicodeDecodeError:
+                        extracted_text = contents.decode("latin-1")
+            elif form_text and isinstance(form_text, str):
+                extracted_text = form_text
+        except Exception as e:
+            logger.warning(f"Error reading multipart form in audit: {e}")
 
     # Handle standard JSON body
     elif "application/json" in content_type:
@@ -348,12 +365,12 @@ async def audit_contract_endpoint(
             raise HTTPException(status_code=400, detail=f"Invalid JSON payload: {e}")
     else:
         # Fallback reading raw body
-        raw_body = await request.body()
-        if raw_body:
-            try:
-                extracted_text = raw_body.decode("utf-8")
-            except Exception:
-                extracted_text = ""
+        try:
+            raw_body = await request.body()
+            if raw_body:
+                extracted_text = raw_body.decode("utf-8", errors="ignore")
+        except Exception:
+            extracted_text = ""
 
     if not extracted_text or not extracted_text.strip():
         # Provide sample non-compete text for interactive experimentation
@@ -377,10 +394,11 @@ class SynthesizeClauseRequest(BaseModel):
 async def synthesize_clause_endpoint(payload: SynthesizeClauseRequest):
     """
     POST /api/v1/audit/synthesize
-    Generates real-time neural legal synthesis via Gemini 3.8 Flash for agent trace cards.
+    Generates real-time neural legal synthesis via LLM for agent trace cards.
     """
-    summary = await gemini_service.synthesize_legal_summary(payload.clause_text, payload.contract_title or "Agreement")
+    from app.config import settings
+    summary = await llm_service.synthesize_legal_summary(payload.clause_text, payload.contract_title or "Agreement")
     return {
         "synthesis": summary,
-        "model": settings.GEMINI_MODEL
+        "model": settings.LLM_MODEL
     }

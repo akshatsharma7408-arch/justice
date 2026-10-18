@@ -4357,3 +4357,102 @@
     align-items: flex-start;
   }
 }
+
+/* Model and Fallback Status Badges */
+.bubble-model-pill {
+  font-size: 0.65rem;
+  font-weight: 600;
+  padding: 1px 6px;
+  border-radius: var(--radius-sm, 4px);
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  display: inline-flex;
+  align-items: center;
+}
+
+.bubble-model-pill.is-neural {
+  background: rgba(194, 91, 44, 0.12);
+  color: var(--accent-saffron, #c25b2c);
+  border: 1px solid rgba(194, 91, 44, 0.28);
+}
+
+.bubble-model-pill.is-fallback {
+  background: rgba(120, 110, 100, 0.12);
+  color: var(--text-secondary, #6b635b);
+  border: 1px solid rgba(120, 110, 100, 0.25);
+}
+
+.model-tag-pill {
+  font-size: 0.64rem;
+  font-weight: 600;
+  padding: 2px 7px;
+  border-radius: var(--radius-sm, 4px);
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.model-tag-pill.is-neural {
+  background: rgba(194, 91, 44, 0.1);
+  color: var(--accent-saffron, #c25b2c);
+  border: 1px solid rgba(194, 91, 44, 0.25);
+}
+
+.model-tag-pill.is-fallback {
+  background: rgba(120, 110, 100, 0.1);
+  color: var(--text-secondary, #6b635b);
+  border: 1px solid rgba(120, 110, 100, 0.22);
+}
+
+.retrieval-mode-badge {
+  font-size: 0.66rem;
+  font-weight: 600;
+  padding: 2px 6px;
+  border-radius: var(--radius-sm, 4px);
+  letter-spacing: 0.03em;
+}
+
+.retrieval-mode-badge.is-vector {
+  background: rgba(46, 125, 50, 0.1);
+  color: #2e7d32;
+  border: 1px solid rgba(46, 125, 50, 0.25);
+}
+
+.retrieval-mode-badge.is-fallback {
+  background: rgba(140, 110, 50, 0.1);
+  color: #8c6e32;
+  border: 1px solid rgba(140, 110, 50, 0.25);
+}
+
+.graph-source-badge {
+  font-size: 0.68rem;
+  font-weight: 600;
+  padding: 3px 8px;
+  border-radius: var(--radius-sm, 4px);
+  letter-spacing: 0.04em;
+}
+
+.graph-source-badge.is-live {
+  background: rgba(46, 125, 50, 0.1);
+  color: #2e7d32;
+  border: 1px solid rgba(46, 125, 50, 0.25);
+}
+
+.graph-source-badge.is-fallback {
+  background: rgba(120, 110, 100, 0.1);
+  color: var(--text-secondary, #6b635b);
+  border: 1px solid rgba(120, 110, 100, 0.25);
+}
+
+.ai-model-tag {
+  font-size: 0.65rem;
+  font-weight: 600;
+  letter-spacing: 0.03em;
+}
+
+.ai-model-tag.is-neural {
+  color: var(--accent-saffron, #c25b2c);
+}
+
+.ai-model-tag.is-fallback {
+  color: var(--text-muted, #8a8279);
+}

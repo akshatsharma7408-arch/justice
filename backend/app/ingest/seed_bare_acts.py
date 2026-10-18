@@ -46,6 +46,26 @@ BARE_ACTS_DATA = [
 STATUTORY_PROVISIONS_DATA = [
     # ---------------- Indian Contract Act, 1872 ----------------
     {
+        "id": "contract-1872-sec-23",
+        "act_id": "contract-act-1872",
+        "section_number": "23",
+        "heading": "What considerations and objects are lawful, and what not",
+        "body": (
+            "The consideration or object of an agreement is lawful, unless—\n"
+            "it is forbidden by law; or\n"
+            "is of such a nature that, if permitted, it would defeat the provisions of any law; or\n"
+            "is fraudulent; or\n"
+            "involves or implies injury to the person or property of another; or\n"
+            "the Court regards it as immoral, or opposed to public policy.\n\n"
+            "In each of these cases, the consideration or object of an agreement is said to be unlawful. "
+            "Every agreement of which the object or consideration is unlawful is void."
+        ),
+        "explanation": (
+            "Foundational statutory limit on contract freedom under Indian law. Contracts contrary to statutory mandates "
+            "or public policy are void ab initio and cannot be cured by estoppel or party consent."
+        )
+    },
+    {
         "id": "contract-1872-sec-27",
         "act_id": "contract-act-1872",
         "section_number": "27",
@@ -80,6 +100,23 @@ STATUTORY_PROVISIONS_DATA = [
         "explanation": (
             "Agreements that extinguish rights or curtail statutory limitation periods are void. "
             "Arbitration agreements are expressly protected under Exceptions 1 and 2."
+        )
+    },
+    {
+        "id": "contract-1872-sec-73",
+        "act_id": "contract-act-1872",
+        "section_number": "73",
+        "heading": "Compensation for loss or damage caused by breach of contract",
+        "body": (
+            "When a contract has been broken, the party who suffers by such breach is entitled to receive, "
+            "from the party who has broken the contract, compensation for any loss or damage caused to him thereby, "
+            "which naturally arose in the usual course of things from such breach, or which the parties knew, "
+            "when they made the contract, to be likely to result from the breach of it.\n\n"
+            "Such compensation is not to be given for any remote and indirect loss or damage sustained by reason of the breach."
+        ),
+        "explanation": (
+            "Codifies the common law rule of Hadley v. Baxendale. Only direct, proximate, and foreseeable damages "
+            "are compensable; speculative, punitive, or remote damages are barred."
         )
     },
     {
@@ -141,6 +178,23 @@ STATUTORY_PROVISIONS_DATA = [
             "(such as contracts for personal services or post-service non-compete agreements)."
         )
     },
+    {
+        "id": "specific-relief-1963-sec-42",
+        "act_id": "specific-relief-act-1963",
+        "section_number": "42",
+        "heading": "Injunction to perform negative agreement",
+        "body": (
+            "Notwithstanding anything contained in clause (e) of section 41, where a contract comprises an affirmative agreement "
+            "to do a certain act, coupled with a negative agreement, express or implied, not to do a certain act, the circumstance "
+            "that the court is unable to compel specific performance of the affirmative agreement shall not preclude it from granting "
+            "an injunction to perform the negative agreement:\n\n"
+            "Provided that the plaintiff has not failed to perform the contract so far as it is binding on him."
+        ),
+        "explanation": (
+            "Statutory basis for enforcing during-employment exclusive covenants under Niranjan Shankar Golikari (1967). "
+            "However, Section 42 cannot be used to circumvent Section 27 to enforce post-employment restraints (Percept D'Mark)."
+        )
+    },
 
     # ---------------- Arbitration and Conciliation Act, 1996 ----------------
     {
@@ -177,6 +231,39 @@ STATUTORY_PROVISIONS_DATA = [
         "explanation": (
             "Empowers the civil court to grant urgent pre-arbitral or interim protection. Once the arbitral tribunal is formed, "
             "Section 17 applications take precedence unless special circumstances render the tribunal remedy inefficacious."
+        )
+    },
+    {
+        "id": "arbitration-1996-sec-11",
+        "act_id": "arbitration-act-1996",
+        "section_number": "11",
+        "heading": "Appointment of arbitrators",
+        "body": (
+            "A person of any nationality may be an arbitrator, unless otherwise agreed by the parties...\n"
+            "The Supreme Court or, as the case may be, the High Court or any person or institution designated by such Court, "
+            "in an application under this section, shall examine whether there is an arbitration agreement, "
+            "and nothing more."
+        ),
+        "explanation": (
+            "Governs judicial appointment of arbitrators. Under Vidya Drolia (2021) and SBI General Insurance (2024), "
+            "the referral court's examination is strictly confined to the prima facie existence of the arbitration agreement."
+        )
+    },
+    {
+        "id": "arbitration-1996-sec-34",
+        "act_id": "arbitration-act-1996",
+        "section_number": "34",
+        "heading": "Application for setting aside arbitral award",
+        "body": (
+            "Recourse to a Court against an arbitral award may be made only by an application for setting aside such award in accordance with sub-section (2) and sub-section (3)...\n"
+            "An arbitral award may be set aside by the Court only if—\n"
+            "(b) the Court finds that—\n"
+            "(i) the subject-matter of the dispute is not capable of settlement by arbitration under the law for the time being in force, or\n"
+            "(ii) the arbitral award is in conflict with the public policy of India."
+        ),
+        "explanation": (
+            "Defines the narrow, non-merit grounds for setting aside arbitral awards in India. Under Associate Builders (2015) "
+            "and Ssangyong Engineering (2019), courts cannot review the merits of the dispute or re-appreciate evidence."
         )
     }
 ]

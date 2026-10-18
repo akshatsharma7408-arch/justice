@@ -8,7 +8,7 @@ import re
 import logging
 from typing import Dict, Any, List, Optional
 from app.services.statute_service import statute_service
-from app.services.gemini_service import gemini_service
+from app.services.llm_service import llm_service
 
 logger = logging.getLogger("justice.audit_service")
 
@@ -287,10 +287,10 @@ class AuditService:
         """
         result = self.evaluate_clause_heuristics(clause_text, clause_title)
 
-        # If it's a Section 27 violation, optionally enhance via Gemini if available
+        # If it's a Section 27 violation, optionally enhance via LLM if available
         if result["is_violation"] and result["section"] == "27":
             try:
-                synthesis = await gemini_service.generate_layman_and_redline(
+                synthesis = await llm_service.generate_layman_and_redline(
                     clause_text=clause_text,
                     title=clause_title or "Restrictive Covenant"
                 )
@@ -301,7 +301,7 @@ class AuditService:
                 if synthesis.get("redline"):
                     result["balanced_redline"] = synthesis["redline"]
             except Exception as e:
-                logger.warning(f"Gemini enrichment skipped or failed: {e}")
+                logger.warning(f"LLM enrichment skipped or failed: {e}")
 
         return result
 

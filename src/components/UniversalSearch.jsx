@@ -12,6 +12,7 @@ export default function UniversalSearch({ onSelectCaseForCitator }) {
     "Under Indian jurisprudence governing the Indian Contract Act, 1872, the doctrine of restraint of trade (Section 27) applies strictly to all covenants operating post-termination. The Supreme Court of India does not import the English law test of 'reasonableness' for covenants operating after cessation of employment; such covenants are void in toto pursuant to Percept D'Mark v. Zaheer Khan (2006) and Superintendence Co. v. Krishan Murgai (1981)."
   );
   const [results, setResults] = useState(LANDMARK_PRECEDENTS);
+  const [modelUsed, setModelUsed] = useState('openai/gpt-oss-120b');
   const [isSearching, setIsSearching] = useState(false);
 
   const sampleQueries = [
@@ -29,6 +30,9 @@ export default function UniversalSearch({ onSelectCaseForCitator }) {
       const resp = await searchPrecedentsWithBackend(searchQuery, court, bench, true, 10);
       if (resp && resp.results) {
         setResults(resp.results);
+      }
+      if (resp && resp.model_used) {
+        setModelUsed(resp.model_used);
       }
       if (resp && resp.hyde_synthetic_ratio) {
         setHydeRatio(resp.hyde_synthetic_ratio);
@@ -89,7 +93,7 @@ export default function UniversalSearch({ onSelectCaseForCitator }) {
         <h1 className="module-heading font-judicial">Universal Search</h1>
         <p className="module-description">
           Natural language jurisprudence retrieval across Indian Supreme Court and High Court precedents.
-          Synthesized with Gemini 3.8 Flash HyDE reasoning and dual-encoder InLegalBERT embeddings.
+          Synthesized with neural HyDE reasoning and dense-sparse hybrid retrieval.
         </p>
 
         {/* Clean Workspace Search Bar */}
@@ -134,7 +138,7 @@ export default function UniversalSearch({ onSelectCaseForCitator }) {
           <div className="callout-header">
             <div className="callout-title-wrap">
               <Sparkles size={14} className="callout-icon" />
-              <span className="callout-title">GEMINI 3.8 FLASH HYDE RATIO DECIDENDI</span>
+              <span className="callout-title">HYDE RATIO DECIDENDI &bull; NEURAL REASONING</span>
             </div>
             <button 
               type="button" 
@@ -148,9 +152,7 @@ export default function UniversalSearch({ onSelectCaseForCitator }) {
             "{hydeRatio}"
           </blockquote>
           <div className="callout-footer-meta">
-            <span className="meta-tag">Model: <strong>gemini-3.8-flash</strong></span>
-            <span className="meta-sep">&bull;</span>
-            <span className="meta-tag">Encoder: <strong>InLegalBERT (768-dim)</strong></span>
+            <span className="meta-tag">Model: <strong>{modelUsed}</strong></span>
             <span className="meta-sep">&bull;</span>
             <span className="meta-tag">Retrieval: <strong>HyDE Dense + BM25 Lexical</strong></span>
           </div>
@@ -241,6 +243,16 @@ export default function UniversalSearch({ onSelectCaseForCitator }) {
                       <span className="meta-dot">&bull;</span>
                       <span className="relevance-score-badge mono">
                         Match {Math.round(precedent.relevance_score * 100)}%
+                      </span>
+                    </>
+                  )}
+
+                  {/* Retrieval Mode Badge (Vector vs Local Index Fallback) */}
+                  {precedent.retrieval_mode && (
+                    <>
+                      <span className="meta-dot">&bull;</span>
+                      <span className={`retrieval-mode-badge mono ${precedent.retrieval_mode.includes('fallback') ? 'is-fallback' : 'is-vector'}`}>
+                        {precedent.retrieval_mode.includes('fallback') ? 'LOCAL INDEX' : 'QDRANT VECTOR'}
                       </span>
                     </>
                   )}

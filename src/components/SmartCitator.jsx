@@ -132,13 +132,17 @@ export default function SmartCitator({ initialCaseId }) {
         </div>
       )}
 
-      {/* Gemini 3.8 Flash Constitutional Standing Synthesis Callout */}
+      {/* Neural Constitutional Standing Synthesis Callout */}
       {aiAnalysis && (
         <div className="workspace-callout-card citator-ai-callout">
           <div className="callout-header">
             <div className="callout-title-wrap">
               <Sparkles size={14} className="callout-icon" />
-              <span className="callout-title">GEMINI 3.8 FLASH CONSTITUTIONAL STANDING SYNTHESIS</span>
+              <span className="callout-title">
+                {aiAnalysis.model_used && !aiAnalysis.model_used.includes('fallback')
+                  ? `NEURAL CONSTITUTIONAL STANDING SYNTHESIS [${aiAnalysis.model_used}]`
+                  : 'CONSTITUTIONAL STANDING SYNTHESIS (STATUTORY BASELINE)'}
+              </span>
             </div>
             <span className="meta-tag mono">ARTICLE 141 DAG</span>
           </div>
@@ -298,6 +302,11 @@ export default function SmartCitator({ initialCaseId }) {
               <span className="panel-kicker">TOPOLOGICAL CITATION DAG</span>
               <h3 className="panel-title font-judicial">Precedent Citation Topology</h3>
             </div>
+            {currentCase.dataSource && (
+              <span className={`graph-source-badge mono ${currentCase.dataSource === 'neo4j' ? 'is-live' : 'is-fallback'}`}>
+                {currentCase.dataSource === 'neo4j' ? 'GRAPH: NEO4J LIVE' : 'GRAPH: IN-MEMORY ARTICLE 141 DAG'}
+              </span>
+            )}
           </div>
 
           <div className="citator-graph-card">

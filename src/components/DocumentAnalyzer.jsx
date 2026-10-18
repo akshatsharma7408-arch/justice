@@ -266,6 +266,7 @@ export default function DocumentAnalyzer({ onTriggerAgentAnalysis }) {
         sender: 'assistant',
         text: res.answer,
         citations: res.citations || [],
+        model_used: res.model_used || 'openai/gpt-oss-120b',
         timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
       };
 
@@ -305,6 +306,7 @@ export default function DocumentAnalyzer({ onTriggerAgentAnalysis }) {
                 quoted_text: quote
               }
             ],
+            model_used: 'deterministic_grounded_fallback',
             timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
           }
         ]);
@@ -316,6 +318,7 @@ export default function DocumentAnalyzer({ onTriggerAgentAnalysis }) {
             sender: 'assistant',
             text: "not found in this document",
             citations: [],
+            model_used: 'deterministic_grounded_fallback',
             timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
           }
         ]);
@@ -581,10 +584,17 @@ export default function DocumentAnalyzer({ onTriggerAgentAnalysis }) {
                           <span className="copilot-kicker mono">
                             CLAUSE {activeClause?.number} AUDIT
                           </span>
-                          <span className={`status-pill status-${effectiveRiskLevel.toLowerCase()}`}>
-                            <span className="status-dot-indicator" />
-                            <span className="status-pill-text">{effectiveRiskLevel} RISK</span>
-                          </span>
+                          <div className="copilot-card-badges" style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                            {activeAudit?.model_used && (
+                              <span className={`model-tag-pill mono ${activeAudit.model_used.includes('fallback') ? 'is-fallback' : 'is-neural'}`} title={`Audit engine: ${activeAudit.model_used}`}>
+                                {activeAudit.model_used.includes('fallback') ? 'STATUTORY BASELINE' : activeAudit.model_used}
+                              </span>
+                            )}
+                            <span className={`status-pill status-${effectiveRiskLevel.toLowerCase()}`}>
+                              <span className="status-dot-indicator" />
+                              <span className="status-pill-text">{effectiveRiskLevel} RISK</span>
+                            </span>
+                          </div>
                         </div>
 
                         <h3 className="copilot-clause-title font-judicial">{activeClause?.title}</h3>
@@ -730,9 +740,16 @@ export default function DocumentAnalyzer({ onTriggerAgentAnalysis }) {
                       >
                         <div className={`docchat-bubble ${isAssistant ? 'assistant-bubble' : 'user-bubble'}`}>
                           <div className="bubble-header-row">
-                            <span className="bubble-sender mono">
-                              {isAssistant ? 'JUSTICE CO-PILOT' : 'YOU'}
-                            </span>
+                            <div className="bubble-sender-group" style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                              <span className="bubble-sender mono">
+                                {isAssistant ? 'JUSTICE CO-PILOT' : 'YOU'}
+                              </span>
+                              {isAssistant && msg.model_used && (
+                                <span className={`bubble-model-pill mono ${msg.model_used.includes('fallback') ? 'is-fallback' : 'is-neural'}`} title={`Engine: ${msg.model_used}`}>
+                                  {msg.model_used.includes('fallback') ? 'GROUNDED FALLBACK' : msg.model_used}
+                                </span>
+                              )}
+                            </div>
                             <span className="bubble-time mono">{msg.timestamp}</span>
                           </div>
 

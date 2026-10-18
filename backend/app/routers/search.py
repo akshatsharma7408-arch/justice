@@ -10,7 +10,7 @@ from typing import List, Dict, Any, Optional
 import logging
 
 from app.config import settings
-from app.services.gemini_service import gemini_service
+from app.services.llm_service import llm_service
 from app.services.qdrant_service import qdrant_service
 
 logger = logging.getLogger("justice.router.search")
@@ -20,7 +20,7 @@ class SearchRequest(BaseModel):
     query: str = Field(..., description="Legal query or statutory issue (e.g., 'Section 27 non-compete enforceability')")
     court: Optional[str] = Field("ALL", description="Court filter: 'ALL', 'Supreme Court of India', 'Delhi High Court'")
     bench_type: Optional[str] = Field("ALL", description="Bench filter: 'ALL', 'CONSTITUTION', 'DIVISION'")
-    enable_hyde: bool = Field(True, description="Whether to synthesize hypothetical ratio decidendi using gemini-3.8-flash")
+    enable_hyde: bool = Field(True, description="Whether to synthesize hypothetical ratio decidendi using neural LLM")
     limit: int = Field(5, ge=1, le=50, description="Maximum number of precedents to return")
 
 class SearchResponse(BaseModel):
@@ -35,11 +35,11 @@ class SearchResponse(BaseModel):
 async def search_precedents_post(payload: SearchRequest):
     """
     POST /api/v1/search
-    Synthesizes judicial holding via HyDE on gemini-3.8-flash, then conducts dense/sparse retrieval.
+    Synthesizes judicial holding via HyDE on neural LLM, then conducts dense/sparse retrieval.
     """
     hyde_ratio = None
     if payload.enable_hyde:
-        hyde_ratio = await gemini_service.generate_hyde_ratio(payload.query)
+        hyde_ratio = await llm_service.generate_hyde_ratio(payload.query)
 
     search_query = f"{payload.query} {hyde_ratio}" if hyde_ratio else payload.query
     results = qdrant_service.search_precedents(
@@ -52,25 +52,28 @@ async def search_precedents_post(payload: SearchRequest):
     return SearchResponse(
         query=payload.query,
         hyde_synthetic_ratio=hyde_ratio,
-        model_used=settings.GEMINI_MODEL,
+        model_used=settings.LLM_MODEL,
         results_count=len(results),
         results=results
     )
 
 @router.get("/search", response_model=SearchResponse)
 async def search_precedents_get(
-    q: str = Query(..., description="Search query string"),
+    q: Optional[str] = Query(None, description="Search query string"),
+    query: Optional[str] = Query(None, description="Alternative query param name"),
     court: str = Query("ALL", description="Court filter"),
     bench: str = Query("ALL", description="Bench filter"),
-    enable_hyde: bool = Query(True, description="Enable HyDE with gemini-3.8-flash"),
+    enable_hyde: bool = Query(True, description="Enable HyDE with neural LLM"),
     limit: int = Query(5, ge=1, le=50, description="Results limit")
 ):
     """
     GET /api/v1/search
     Convenience query-param endpoint for browser and quick REST querying.
+    Accepts either ?q= or ?query=.
     """
+    search_text = q or query or "Section 27 non-compete"
     req = SearchRequest(
-        query=q,
+        query=search_text,
         court=court,
         bench_type=bench,
         enable_hyde=enable_hyde,
