@@ -16,6 +16,7 @@ from google.genai import types
 
 from app.services.groq_client import GroqClient
 from app.config import settings
+from app.services.answer_tiers import needs_specific_source, format_tier2_response, NOT_FOUND_SPECIFIC_MSG
 
 logger = logging.getLogger("justice.llm")
 
@@ -44,6 +45,12 @@ class CitatorAnalysisSchema(BaseModel):
     overruling_risk: str = Field(description="Risk assessment of reconsideration or overruling")
     article_141_doctrine: str = Field(description="Detailed judicial doctrine summary")
     executive_summary: str = Field(description="2-3 sentence executive synthesis")
+    citations: List[str] = Field(default_factory=list, description="Explicit citations to retrieved source records")
+
+class SearchSynthesisSchema(BaseModel):
+    answer: str = Field(description="Answer strictly grounded in the provided retrieved precedents. If not found or outside the retrieved sources, must be 'I couldn't find this in the available sources'.")
+    ratio_decidendi: str = Field(description="Synthetic holding or 'I couldn't find this in the available sources'")
+    citations: List[str] = Field(description="List of cited precedent titles and citations from the retrieved sources")
 
 
 class LLMService:
@@ -271,11 +278,28 @@ class LLMService:
     async def generate_citator_analysis(self, case_data: Dict[str, Any]) -> Dict[str, Any]:
         """
         Generates deep neural Shepardization and Article 141 constitutional standing
-        analysis for a given precedent.
+        analysis for a given precedent, strictly grounded in the retrieved case record.
         """
+        if not case_data:
+            return {
+                "constitutional_standing": "Not Found",
+                "bench_strength_assessment": "I couldn't find this in the available sources",
+                "overruling_risk": "Unknown",
+                "article_141_doctrine": "I couldn't find this in the available sources",
+                "executive_summary": "I couldn't find this in the available sources",
+                "citations": [],
+                "model_used": "retrieval_empty_skip"
+            }
+
+        source_ref = f"{case_data.get('title', 'Precedent')} ({case_data.get('citation', '')})".strip()
         system_instruction = (
             "You are a constitutional scholar and Supreme Court citator specialist. "
-            "Evaluate Indian Supreme Court precedent standing under Article 141 and Dawoodi Bohra bench rules."
+            "Evaluate Indian Supreme Court precedent standing strictly and solely based on the retrieved precedent record and documented treatment history below. "
+            "CRITICAL ACCURACY RULES: "
+            "1. Base every statement ONLY on the provided retrieved record. "
+            "2. Cite the source precedent for each claim. "
+            "3. If the case data does not contain sufficient details for a specific field, state: 'I couldn't find this in the available sources'. "
+            "4. Do not invent any outside authorities, citations, or ungrounded treatment."
         )
 
         prompt = (
@@ -288,7 +312,7 @@ class LLMService:
             f"Treatment History: {json.dumps(case_data.get('treatmentHistory', []))}\n"
             f"Ratio Summary: {case_data.get('statusDescription', '')}\n\n"
             f"Analyze the binding nature under Article 141, Dawoodi Bohra coordinate bench limits, "
-            f"and overruling risks in structured JSON."
+            f"and overruling risks in structured JSON. Include explicit citations pointing to this precedent."
         )
 
         if self.client:
@@ -307,6 +331,8 @@ class LLMService:
                 )
                 if response.text:
                     parsed = json.loads(response.text)
+                    if not parsed.get("citations"):
+                        parsed["citations"] = [source_ref]
                     parsed["model_used"] = self.model
                     return parsed
             except Exception as e:
@@ -318,8 +344,198 @@ class LLMService:
             "overruling_risk": "Low. The core ratio decidendi has been consistently followed across Indian High Courts.",
             "article_141_doctrine": case_data.get("statusDescription", ""),
             "executive_summary": f"{case_data.get('title')} ({case_data.get('decisionYear')}) represents authoritative precedent governing its statutory domain in India.",
+            "citations": [source_ref],
             "model_used": "deterministic_legal_fallback"
         }
+
+    async def generate_tier2_explanation(self, query: str) -> str:
+        """
+        Generates a Tier 2 general conceptual explanation for a legal concept
+        not verified in the local database.
+        Strictly satisfies:
+        1. Starts with 'General explanation, not verified against a legal database: '
+        2. Does NOT name any case, citation, section number, or article.
+        3. Ends with 'Check a primary source before relying on this.'
+        """
+        system_instruction = (
+            "You are a distinguished legal educator. The user is asking about an abstract legal concept or doctrine "
+            "that is NOT present in the local verified legal database. "
+            "Provide a concise, neutral 2 to 3 sentence explanation of the abstract legal concept. "
+            "CRITICAL MANDATORY RESTRICTIONS: "
+            "1. You MUST start your response with: 'General explanation, not verified against a legal database: ' "
+            "2. You MUST NOT name or cite ANY case, court, judge, citation, section number, or article number under any circumstances. "
+            "3. Explain only the abstract conceptual meaning of the legal doctrine or term. "
+            "4. You MUST end your response with: 'Check a primary source before relying on this.'"
+        )
+        prompt = (
+            f"Explain the abstract legal concept involved in this query:\n\n"
+            f"QUERY: {query}\n\n"
+            f"Remember: Do NOT include any case name, citation, section number, or article number. "
+            f"Start with 'General explanation, not verified against a legal database: ' "
+            f"and end with 'Check a primary source before relying on this.'"
+        )
+
+        if self.client:
+            try:
+                config = types.GenerateContentConfig(
+                    system_instruction=system_instruction,
+                    temperature=0.2,
+                    max_output_tokens=300
+                )
+                response = self.client.models.generate_content(
+                    model=self.model,
+                    contents=prompt,
+                    config=config
+                )
+                if response and response.text:
+                    return format_tier2_response(response.text)
+            except Exception as e:
+                logger.warning("Tier 2 LLM generation failed: %s. Using deterministic concept synthesis.", e)
+
+        # Deterministic conceptual fallback
+        concept = query.strip("? .")
+        return format_tier2_response(
+            f"The legal concept '{concept}' generally refers to an established common law principle governing legal relations, duties, and remedies between parties."
+        )
+
+    async def synthesize_search_answer(self, query: str, retrieved_cases: List[Dict[str, Any]]) -> Dict[str, Any]:
+        """
+        Synthesizes an AI answer for universal search using the Two-Tier framework:
+        - Tier 1: Grounded solely in verified retrieved precedents with full citations.
+        - Tier 2: Concise general conceptual explanation if not found in verified sources.
+        - Specific query not found: "I couldn't find a verified source for this"
+        """
+        # If no cases were retrieved, determine whether it's a specific ask or general concept
+        if not retrieved_cases:
+            if needs_specific_source(query):
+                return {
+                    "answer": NOT_FOUND_SPECIFIC_MSG,
+                    "ratio_decidendi": NOT_FOUND_SPECIFIC_MSG,
+                    "citations": [],
+                    "results": [],
+                    "model_used": "tier1_verified_source_not_found"
+                }
+            else:
+                tier2_ans = await self.generate_tier2_explanation(query)
+                return {
+                    "answer": tier2_ans,
+                    "ratio_decidendi": tier2_ans,
+                    "citations": [],
+                    "results": [],
+                    "model_used": "tier2_general_explanation"
+                }
+
+        cases_context = []
+        for idx, c in enumerate(retrieved_cases[:5]):
+            cases_context.append(
+                f"[{idx + 1}] Title: {c.get('title')}\n"
+                f"    Citation: {c.get('citation')} ({c.get('decisionYear', '')})\n"
+                f"    Court: {c.get('court', '')} | Bench: {c.get('benchType', '')} ({c.get('benchSize', '')} judges)\n"
+                f"    Statutes: {', '.join(c.get('statutes', []))}\n"
+                f"    Ratio Summary: {c.get('ratioSummary', '')}\n"
+            )
+        context_str = "\n".join(cases_context)
+
+        system_instruction = (
+            "You are an Indian legal research analyst operating under strict Tier 1 grounding rules. "
+            "Answer the query strictly and solely based on the retrieved precedents provided below. "
+            "CRITICAL ACCURACY RULES: "
+            "1. Every single claim in your answer MUST cite the source precedent from the retrieved list (Title and Citation). "
+            "2. If the retrieved precedents do not address or answer the query, your answer and ratio_decidendi MUST BE EXACTLY: "
+            "'NOT_FOUND_IN_RETRIEVED_SOURCES', and citations must be an empty list []. "
+            "3. Never make up cases, statutes, or outside legal facts."
+        )
+
+        prompt = (
+            f"USER QUERY: {query}\n\n"
+            f"RETRIEVED PRECEDENTS:\n"
+            f"{context_str}\n\n"
+            f"Synthesize an answer and judicial ratio strictly grounded in these retrieved precedents. "
+            f"Return valid structured JSON matching the schema."
+        )
+
+        if self.client:
+            try:
+                config = types.GenerateContentConfig(
+                    system_instruction=system_instruction,
+                    temperature=0.1,
+                    max_output_tokens=768,
+                    response_mime_type="application/json",
+                    response_schema=SearchSynthesisSchema
+                )
+                response = self.client.models.generate_content(
+                    model=self.model,
+                    contents=prompt,
+                    config=config
+                )
+                if response.text:
+                    parsed = json.loads(response.text)
+                    ans = parsed.get("answer", "").strip()
+                    cits = parsed.get("citations", [])
+                    lower_ans = ans.lower()
+                    is_not_found = (
+                        "not_found" in lower_ans
+                        or "couldn't find" in lower_ans
+                        or "not found" in lower_ans
+                        or "does not contain" in lower_ans
+                        or not ans
+                        or not cits
+                    )
+                    if is_not_found:
+                        # Precedents did not answer the question
+                        if needs_specific_source(query):
+                            return {
+                                "answer": NOT_FOUND_SPECIFIC_MSG,
+                                "ratio_decidendi": NOT_FOUND_SPECIFIC_MSG,
+                                "citations": [],
+                                "results": [],
+                                "model_used": "tier1_verified_source_not_found"
+                            }
+                        else:
+                            tier2_ans = await self.generate_tier2_explanation(query)
+                            return {
+                                "answer": tier2_ans,
+                                "ratio_decidendi": tier2_ans,
+                                "citations": [],
+                                "results": [],
+                                "model_used": "tier2_general_explanation"
+                            }
+
+                    parsed["model_used"] = self.model
+                    parsed["results"] = retrieved_cases
+                    return parsed
+            except Exception as e:
+                logger.warning("Search answer synthesis failed: %s. Using deterministic fallback.", e)
+
+        # Deterministic fallback
+        top = retrieved_cases[0]
+        if top.get("relevance_score", 0) >= 0.35:
+            top_src = f"{top.get('title')} ({top.get('citation')})"
+            return {
+                "answer": f"According to {top_src}: {top.get('ratioSummary', '')}",
+                "ratio_decidendi": top.get("ratioSummary", ""),
+                "citations": [top_src],
+                "results": retrieved_cases,
+                "model_used": "deterministic_corpus_retrieval"
+            }
+        else:
+            if needs_specific_source(query):
+                return {
+                    "answer": NOT_FOUND_SPECIFIC_MSG,
+                    "ratio_decidendi": NOT_FOUND_SPECIFIC_MSG,
+                    "citations": [],
+                    "results": [],
+                    "model_used": "tier1_verified_source_not_found"
+                }
+            else:
+                tier2_ans = await self.generate_tier2_explanation(query)
+                return {
+                    "answer": tier2_ans,
+                    "ratio_decidendi": tier2_ans,
+                    "citations": [],
+                    "results": [],
+                    "model_used": "tier2_general_explanation"
+                }
 
     async def synthesize_legal_summary(self, clause_text: str, contract_title: str) -> str:
         """Concise legal synthesis for agent trace visualizer."""

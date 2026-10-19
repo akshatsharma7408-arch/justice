@@ -187,24 +187,26 @@ async def explain_maxim(req: MaximExplainRequest):
                     target_entry = m
                     break
 
-    # Accuracy constraint: if not in data, say so rather than making it up
+    # Accuracy constraint: if not in data, skip model and return standard not found message
     if not target_entry:
         return {
             "found": False,
-            "message": f"The legal maxim '{req.maxim or req.id}' is not in the verified legal maxims corpus. Under strict accuracy rules, explanations are only generated for verified maxims.",
+            "message": "I couldn't find a verified source for this",
+            "explanation": "I couldn't find a verified source for this",
             "query": req.maxim or req.id,
-            "explanation": None,
+            "citations": [],
             "application_to_facts": None,
-            "model_used": "corpus_not_found"
+            "model_used": "retrieval_empty_skip"
         }
 
-    # Generate grounded explanation using Gemini service if active
+    # Generate grounded explanation using LLM service if active
     stored_maxim = target_entry["maxim"]
     stored_meaning = target_entry["meaning"]
     stored_explanation = target_entry["explanation"]
     stored_example = target_entry.get("example", "")
     stored_category = target_entry.get("category", "")
     stored_cases = target_entry.get("indian_case_refs", [])
+    source_citation = f"{stored_maxim} ({stored_meaning})"
 
     prompt_context = (
         f"Grounded Maxim: {stored_maxim}\n"
@@ -220,10 +222,12 @@ async def explain_maxim(req: MaximExplainRequest):
 
     system_instruction = (
         "You are a distinguished legal educator explaining Latin legal maxims to Indian law students and lawyers. "
-        "Explain the maxim in calm, simple, and precise terms. "
-        "CRITICAL RULE: You must ground your answer strictly in the provided verified maxim details. "
-        "Do not invent fictitious case citations or ungrounded principles. "
-        "If a fact situation is provided, analyze how this specific maxim applies to those facts."
+        "Explain the maxim in calm, simple, and precise terms strictly and solely based on the retrieved verified maxim details provided below. "
+        "CRITICAL RULES: "
+        "1. Every claim MUST be grounded strictly in the provided verified maxim details. "
+        "2. Cite the source maxim and meaning for each explanation. "
+        "3. If the question or fact situation cannot be answered from the retrieved maxim, say: 'I couldn't find this in the available sources'. "
+        "4. Do not invent fictitious case citations or ungrounded principles."
     )
 
     explanation_text = stored_explanation
@@ -237,7 +241,7 @@ async def explain_maxim(req: MaximExplainRequest):
             prompt = (
                 f"{prompt_context}\n\n"
                 f"Please provide:\n"
-                f"1. A simple 2-sentence explanation of this maxim for law students.\n"
+                f"1. A simple 2-sentence explanation of this maxim for law students, citing {source_citation}.\n"
                 f"2. {'How this maxim applies to the user fact situation.' if req.fact_situation else 'A 1-sentence key takeaway.'}"
             )
             config = types.GenerateContentConfig(
@@ -251,7 +255,12 @@ async def explain_maxim(req: MaximExplainRequest):
                 config=config
             )
             if response.text:
-                explanation_text = response.text.strip()
+                resp_clean = response.text.strip()
+                lower_resp = resp_clean.lower()
+                if "couldn't find" in lower_resp or "not found" in lower_resp:
+                    explanation_text = "I couldn't find this in the available sources"
+                else:
+                    explanation_text = resp_clean
                 used_llm = True
         except Exception as e:
             logger.warning(f"LLM explanation for maxim {stored_maxim} failed: {e}. Using stored baseline.")
@@ -272,9 +281,11 @@ async def explain_maxim(req: MaximExplainRequest):
         "application_to_facts": application_text,
         "stored_example": stored_example,
         "indian_case_refs": stored_cases,
+        "citations": [source_citation],
         "related_maxims": target_entry.get("related_maxims", []),
         "model_used": model_name if used_llm else "stored_corpus_baseline"
     }
+
 
 
 @router.post("/{maxim_id}/explain", response_model=Dict[str, Any])

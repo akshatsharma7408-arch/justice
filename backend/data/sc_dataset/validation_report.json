@@ -1,0 +1,466 @@
+{
+  "retrieval_queries": [
+    {
+      "index": 1,
+      "query": "non-compete after employment ends",
+      "top3": [
+        {
+          "title": "Niranjan Shankar Golikari v. The Century Spinning & Mfg. Co. Ltd.",
+          "citation": "AIR 1967 SC 1098",
+          "score": 0.8,
+          "mode": "local_index+12_precedents+local_semantic_onnx"
+        },
+        {
+          "title": "Percept D'Mark (India) (P) Ltd. v. Zaheer Khan",
+          "citation": "(2006) 4 SCC 227",
+          "score": 0.7,
+          "mode": "local_index+12_precedents+local_semantic_onnx"
+        },
+        {
+          "title": "Superintendence Company of India (P) Ltd. v. Krishan Murgai",
+          "citation": "(1981) 2 SCC 246",
+          "score": 0.7,
+          "mode": "local_index+12_precedents+local_semantic_onnx"
+        }
+      ],
+      "passed": true
+    },
+    {
+      "index": 2,
+      "query": "liquidated damages penalty under Section 74",
+      "top3": [
+        {
+          "title": "Kailash Nath Associates v. Delhi Development Authority",
+          "citation": "(2015) 4 SCC 136",
+          "score": 0.9,
+          "mode": "local_index+12_precedents+local_semantic_onnx"
+        },
+        {
+          "title": "M/S. KAILASH NATH ASSOCIATES versus DELHI DEVELOPMENT AUTHORITY & ANR.",
+          "citation": "[2015] 1 S.C.R. 627",
+          "score": 0.9,
+          "mode": "local_index+sc_judgments+local_semantic_onnx"
+        },
+        {
+          "title": "MAYA DEVI versus LALTA PRASAD",
+          "citation": "[2014] 2 S.C.R. 1129",
+          "score": 0.74,
+          "mode": "local_index+sc_judgments+local_semantic_onnx"
+        }
+      ],
+      "passed": true
+    },
+    {
+      "index": 3,
+      "query": "restraint of trade Section 27 Contract Act",
+      "top3": [
+        {
+          "title": "Percept D'Mark (India) (P) Ltd. v. Zaheer Khan",
+          "citation": "(2006) 4 SCC 227",
+          "score": 0.99,
+          "mode": "local_index+12_precedents+local_semantic_onnx"
+        },
+        {
+          "title": "Superintendence Company of India (P) Ltd. v. Krishan Murgai",
+          "citation": "(1981) 2 SCC 246",
+          "score": 0.99,
+          "mode": "local_index+12_precedents+local_semantic_onnx"
+        },
+        {
+          "title": "Niranjan Shankar Golikari v. The Century Spinning & Mfg. Co. Ltd.",
+          "citation": "AIR 1967 SC 1098",
+          "score": 0.99,
+          "mode": "local_index+12_precedents+local_semantic_onnx"
+        }
+      ],
+      "passed": true
+    },
+    {
+      "index": 4,
+      "query": "frustration of contract impossibility of performance Section 56",
+      "top3": [
+        {
+          "title": "NATIONAL AGRICULTURAL COOPERATIVE MARKETING FEDERATION OF INDIA versus ALIMENTA S.A.",
+          "citation": "[2020] 7 S.C.R. 789",
+          "score": 0.9,
+          "mode": "local_index+sc_judgments+local_semantic_onnx"
+        },
+        {
+          "title": "Percept D'Mark (India) (P) Ltd. v. Zaheer Khan",
+          "citation": "(2006) 4 SCC 227",
+          "score": 0.7,
+          "mode": "local_index+12_precedents+local_semantic_onnx"
+        },
+        {
+          "title": "Superintendence Company of India (P) Ltd. v. Krishan Murgai",
+          "citation": "(1981) 2 SCC 246",
+          "score": 0.7,
+          "mode": "local_index+12_precedents+local_semantic_onnx"
+        }
+      ],
+      "passed": true
+    },
+    {
+      "index": 5,
+      "query": "specific performance of contract discretionary relief",
+      "top3": [
+        {
+          "title": "SURINDER KAUR (D) THR. LR. JASINDERJIT SINGH (D) THR. LRS. versus BAHADUR SINGH (D) THR. LRS.",
+          "citation": "[2019] 12 S.C.R. 137",
+          "score": 0.9,
+          "mode": "local_index+sc_judgments+local_semantic_onnx"
+        },
+        {
+          "title": "Superintendence Company of India (P) Ltd. v. Krishan Murgai",
+          "citation": "(1981) 2 SCC 246",
+          "score": 0.8,
+          "mode": "local_index+12_precedents+local_semantic_onnx"
+        },
+        {
+          "title": "Niranjan Shankar Golikari v. The Century Spinning & Mfg. Co. Ltd.",
+          "citation": "AIR 1967 SC 1098",
+          "score": 0.8,
+          "mode": "local_index+12_precedents+local_semantic_onnx"
+        }
+      ],
+      "passed": true
+    },
+    {
+      "index": 6,
+      "query": "binding nature of Supreme Court precedents under Article 141",
+      "top3": [
+        {
+          "title": "Central Board of Dawoodi Bohra Community v. State of Maharashtra",
+          "citation": "(2005) 2 SCC 673",
+          "score": 0.99,
+          "mode": "local_index+12_precedents+local_semantic_onnx"
+        },
+        {
+          "title": "FAZLUNBI versus K. KHADER V ALI AND ANR.",
+          "citation": "[1980] 3 S.C.R. 1127",
+          "score": 0.9,
+          "mode": "local_index+sc_judgments+local_semantic_onnx"
+        },
+        {
+          "title": "Percept D'Mark (India) (P) Ltd. v. Zaheer Khan",
+          "citation": "(2006) 4 SCC 227",
+          "score": 0.7,
+          "mode": "local_index+12_precedents+local_semantic_onnx"
+        }
+      ],
+      "passed": true
+    },
+    {
+      "index": 7,
+      "query": "bank guarantee encashment fraud or irretrievable injustice",
+      "top3": [
+        {
+          "title": "LARSEN AND TOUBRO LTD. versus MAHARASHTRA STATE ELECTRICITY BOARD AND ORS.",
+          "citation": "[1995] SUPP. 3 S.C.R. 615",
+          "score": 0.95,
+          "mode": "local_index+sc_judgments+local_semantic_onnx"
+        },
+        {
+          "title": "HIMADRI CHEMICALS INDUSTRIES LTD. versus COAL TAR REFINING COMPANY",
+          "citation": "[2007] 8 S.C.R. 869",
+          "score": 0.95,
+          "mode": "local_index+sc_judgments+local_semantic_onnx"
+        },
+        {
+          "title": "VINITEC ELECTRONICS PRIVATE LTD. versus HCL INFOSYSTEMS LTD.",
+          "citation": "[2007] 11 S.C.R. 897",
+          "score": 0.95,
+          "mode": "local_index+sc_judgments+local_semantic_onnx"
+        }
+      ],
+      "passed": true
+    },
+    {
+      "index": 8,
+      "query": "tender conditions government contracts arbitrary action",
+      "top3": [
+        {
+          "title": "M/S. MICHIGAN RUBBER (INDIA) LTD. versus THE STATE OF KARNATAKA & ORS.",
+          "citation": "[2012] 8 S.C.R. 128",
+          "score": 0.95,
+          "mode": "local_index+sc_judgments+local_semantic_onnx"
+        },
+        {
+          "title": "UFLEX LTD. versus GOVERNMENT OF TAMIL NADU & ORS.",
+          "citation": "[2021] 7 S.C.R. 571",
+          "score": 0.9,
+          "mode": "local_index+sc_judgments+local_semantic_onnx"
+        },
+        {
+          "title": "Percept D'Mark (India) (P) Ltd. v. Zaheer Khan",
+          "citation": "(2006) 4 SCC 227",
+          "score": 0.5,
+          "mode": "local_index+12_precedents+local_semantic_onnx"
+        }
+      ],
+      "passed": true
+    },
+    {
+      "index": 9,
+      "query": "time is of the essence in contract",
+      "top3": [
+        {
+          "title": "BALASAHEB DAYANDEO NAIK (DEAD) THROUGH LRS & ORS. versus APPASAHEB DATTATRAYA PAWAR",
+          "citation": "[2008] 1 S.C.R. 1169",
+          "score": 0.82,
+          "mode": "local_index+sc_judgments+local_semantic_onnx"
+        },
+        {
+          "title": "Percept D'Mark (India) (P) Ltd. v. Zaheer Khan",
+          "citation": "(2006) 4 SCC 227",
+          "score": 0.7,
+          "mode": "local_index+12_precedents+local_semantic_onnx"
+        },
+        {
+          "title": "Superintendence Company of India (P) Ltd. v. Krishan Murgai",
+          "citation": "(1981) 2 SCC 246",
+          "score": 0.7,
+          "mode": "local_index+12_precedents+local_semantic_onnx"
+        }
+      ],
+      "passed": true
+    },
+    {
+      "index": 10,
+      "query": "in-term restrictive covenants during active employment",
+      "top3": [
+        {
+          "title": "VIJAYA BANK & ANR. versus PRASHANT B NARNAWARE",
+          "citation": "[2025] 6 S.C.R. 240",
+          "score": 0.82,
+          "mode": "local_index+sc_judgments+local_semantic_onnx"
+        },
+        {
+          "title": "Percept D'Mark (India) (P) Ltd. v. Zaheer Khan",
+          "citation": "(2006) 4 SCC 227",
+          "score": 0.8,
+          "mode": "local_index+12_precedents+local_semantic_onnx"
+        },
+        {
+          "title": "Superintendence Company of India (P) Ltd. v. Krishan Murgai",
+          "citation": "(1981) 2 SCC 246",
+          "score": 0.7,
+          "mode": "local_index+12_precedents+local_semantic_onnx"
+        }
+      ],
+      "passed": true
+    }
+  ],
+  "tier_tests": [
+    {
+      "id": "T1-1",
+      "category": "Tier 1: Section 27 Non-Compete",
+      "query": "Are post-employment non-compete covenants valid in India under Section 27?",
+      "passed": true,
+      "answer_preview": "Post\u2011employment non\u2011compete covenants that operate after the termination of the employment contract are void under Secti...",
+      "results_count": 3,
+      "citations": [
+        "Percept D'Mark (India) (P) Ltd. v. Zaheer Khan (2006) 4 SCC 227",
+        "Gujarat Bottling Co. Ltd. v. The Coca Cola Co. (1995) 5 SCC 545",
+        "Desiccant Rotors International Pvt. Ltd. v. Bappaditya Sarkar & Anr, Delhi High Court, 14 July 2009"
+      ]
+    },
+    {
+      "id": "T1-2",
+      "category": "Tier 1: Section 74 Liquidated Damages",
+      "query": "What did the Supreme Court hold in Kailash Nath Associates v. DDA regarding liquidated damages?",
+      "passed": true,
+      "answer_preview": "The Supreme Court held that under Section 74 of the Indian Contract Act, a liquidated damages clause cannot be treated a...",
+      "results_count": 3,
+      "citations": [
+        "Kailash Nath Associates v. Delhi Development Authority (2015) 4 SCC 136"
+      ]
+    },
+    {
+      "id": "T1-3",
+      "category": "Tier 1: Section 56 Frustration in SC Dataset",
+      "query": "What was held regarding frustration of contract in Satyabrata Ghose v. Mugneeram Bangur?",
+      "passed": true,
+      "answer_preview": "The Supreme Court held that issues of frustration of a contract are to be dealt with under Section 32 of the Indian Cont...",
+      "results_count": 3,
+      "citations": [
+        "SATYABRATA GROSE versus MUGNEERAM BANGUR & CO., AND ANOTHER. [1954] 1 S.C.R. 310 (1954)"
+      ]
+    },
+    {
+      "id": "T1-4",
+      "category": "Tier 1: In-Term Restraint",
+      "query": "Is a negative covenant during active employment enforceable under Niranjan Shankar Golikari?",
+      "passed": true,
+      "answer_preview": "Yes. Under the principle laid down in Niranjan Shankar Golikari v. The Century Spinning & Mfg. Co. Ltd., a negative cove...",
+      "results_count": 3,
+      "citations": [
+        "Niranjan Shankar Golikari v. The Century Spinning & Mfg. Co. Ltd., AIR 1967 SC 1098"
+      ]
+    },
+    {
+      "id": "T2-1",
+      "category": "Tier 2: General Concept (Proximate Cause)",
+      "query": "What is the doctrine of proximate cause in maritime collision?",
+      "passed": true,
+      "answer_preview": "General explanation, not verified against a legal database: The doctrine of proximate cause in a maritime collision refe...",
+      "results_count": 0,
+      "citations": []
+    },
+    {
+      "id": "T2-2",
+      "category": "Tier 2: General Concept (Negotiorum Gestio)",
+      "query": "Explain the Roman law doctrine of negotiorum gestio",
+      "passed": true,
+      "answer_preview": "General explanation, not verified against a legal database: The Roman law doctrine of negotiorum gestio refers to a situ...",
+      "results_count": 0,
+      "citations": []
+    },
+    {
+      "id": "OUT-1",
+      "category": "Outside Corpus: Basic Structure",
+      "query": "In which case did the Supreme Court establish the basic structure doctrine?",
+      "passed": true,
+      "answer_preview": "I couldn't find a verified source for this",
+      "results_count": 0,
+      "citations": []
+    },
+    {
+      "id": "OUT-2",
+      "category": "Outside Corpus: Mohori Bibee Minor Agreement",
+      "query": "What was decided in Mohori Bibee v. Dharmodas Ghose regarding minors?",
+      "passed": true,
+      "answer_preview": "I couldn't find a verified source for this",
+      "results_count": 0,
+      "citations": []
+    },
+    {
+      "id": "OUT-3",
+      "category": "Outside Corpus: Section 420 Penal Code",
+      "query": "What are the essential elements of Section 420 of the Penal Code?",
+      "passed": true,
+      "answer_preview": "I couldn't find a verified source for this",
+      "results_count": 0,
+      "citations": []
+    },
+    {
+      "id": "OUT-4",
+      "category": "Outside Corpus: Hallucinated Case Name",
+      "query": "Tell me the ratio in Fake Precedent Ltd. v. Fictitious Corporation regarding Section 27",
+      "passed": true,
+      "answer_preview": "I couldn't find a verified source for this",
+      "results_count": 0,
+      "citations": []
+    }
+  ],
+  "citation_checks": [
+    {
+      "query": "Percept D'Mark (India) (P) Ltd. v. Zaheer Khan",
+      "expected_verified": true,
+      "actual_verified": true,
+      "source": "12_precedents",
+      "passed": true
+    },
+    {
+      "query": "Superintendence Company of India (P) Ltd. v. Krishan Murgai",
+      "expected_verified": true,
+      "actual_verified": true,
+      "source": "12_precedents",
+      "passed": true
+    },
+    {
+      "query": "Niranjan Shankar Golikari v. The Century Spinning & Mfg. Co. Ltd.",
+      "expected_verified": true,
+      "actual_verified": true,
+      "source": "12_precedents",
+      "passed": true
+    },
+    {
+      "query": "Gujarat Bottling Co. Ltd. v. The Coca Cola Co.",
+      "expected_verified": true,
+      "actual_verified": true,
+      "source": "12_precedents",
+      "passed": true
+    },
+    {
+      "query": "Kailash Nath Associates v. Delhi Development Authority",
+      "expected_verified": true,
+      "actual_verified": true,
+      "source": "12_precedents",
+      "passed": true
+    },
+    {
+      "query": "Central Board of Dawoodi Bohra Community v. State of Maharashtra",
+      "expected_verified": true,
+      "actual_verified": true,
+      "source": "12_precedents",
+      "passed": true
+    },
+    {
+      "query": "ADM Jabalpur v. Shivkant Shukla",
+      "expected_verified": true,
+      "actual_verified": true,
+      "source": "12_precedents",
+      "passed": true
+    },
+    {
+      "query": "Justice K.S. Puttaswamy (Retd.) v. Union of India",
+      "expected_verified": true,
+      "actual_verified": true,
+      "source": "12_precedents",
+      "passed": true
+    },
+    {
+      "query": "Satyabrata Ghose v. Mugneeram Bangur & Co.",
+      "expected_verified": true,
+      "actual_verified": true,
+      "source": "sc_judgments",
+      "passed": true
+    },
+    {
+      "query": "Ganga Saran v. Ram Charan Ram Gopal",
+      "expected_verified": true,
+      "actual_verified": true,
+      "source": "sc_judgments",
+      "passed": true
+    },
+    {
+      "query": "HPA International v. Bhagwandas Fateh Chand",
+      "expected_verified": true,
+      "actual_verified": true,
+      "source": "sc_judgments",
+      "passed": true
+    },
+    {
+      "query": "Industrial Finance Corporation of India v. Cannanore Spinning",
+      "expected_verified": true,
+      "actual_verified": true,
+      "source": "sc_judgments",
+      "passed": true
+    },
+    {
+      "query": "Kesavananda Bharati v. State of Kerala",
+      "expected_verified": false,
+      "actual_verified": false,
+      "source": null,
+      "passed": true
+    },
+    {
+      "query": "Mohori Bibee v. Dharmodas Ghose",
+      "expected_verified": false,
+      "actual_verified": false,
+      "source": null,
+      "passed": true
+    },
+    {
+      "query": "Fictitious Law Firm v. Dummy Corporation",
+      "expected_verified": false,
+      "actual_verified": false,
+      "source": null,
+      "passed": true
+    }
+  ],
+  "all_retrieval_passed": true,
+  "all_tiers_passed": true,
+  "all_citations_passed": true
+}

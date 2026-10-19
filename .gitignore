@@ -63,3 +63,10 @@ htmlcov/
 *.sw?
 .DS_Store
 Thumbs.db
+
+# Scraped Supreme Court Ingestion Data
+backend/data/sc_dataset/pdfs/
+backend/data/sc_dataset/metadata/*.parquet
+backend/data/sc_dataset/chunks/chunks.json
+backend/data/sc_dataset/embeddings/*.parquet
+

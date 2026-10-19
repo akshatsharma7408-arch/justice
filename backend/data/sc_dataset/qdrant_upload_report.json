@@ -1,0 +1,9 @@
+{
+  "status": "waiting_for_credentials",
+  "qdrant_url_configured": false,
+  "qdrant_api_key_configured": false,
+  "collection": "sc_judgments",
+  "total_chunks_available": 17737,
+  "points_upserted": 0,
+  "detail": "QDRANT_URL and/or QDRANT_API_KEY not found in .env. All 17737 chunks and 384-dim vectors are cached on disk and ready for immediate upload. Set QDRANT_URL and QDRANT_API_KEY in .env and rerun step 6."
+}

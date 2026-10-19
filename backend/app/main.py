@@ -24,6 +24,7 @@ from app.services.llm_service import llm_service
 from app.services.qdrant_service import qdrant_service
 from app.services.neo4j_service import neo4j_service
 from app.services.statute_service import statute_service
+from app.services.embedding_service import embedding_service
 
 # Setup unified logging
 logging.basicConfig(
@@ -102,6 +103,7 @@ async def health_check():
     statute_health = statute_service.check_health()
     qdrant_health = qdrant_service.check_health()
     neo4j_health = neo4j_service.check_health()
+    embedding_health = embedding_service.describe()
 
     # Determine aggregated operational health
     is_operational = True
@@ -112,7 +114,9 @@ async def health_check():
         "system_mode": active_mode,
         "enforced_model": settings.LLM_MODEL,
         "llm_provider": settings.LLM_PROVIDER,
+        "embeddings": embedding_health,
         "services": {
+            "embeddings": embedding_health,
             "llm": llm_health,
             "gemini": llm_health,  # backward compatibility alias
             "statutes_sqlite": statute_health,
@@ -152,6 +156,7 @@ async def on_startup():
     logger.info("   JUSTICE Legal AI Backend — Initializing Production Engine    ")
     logger.info(f"   Model Target: {settings.LLM_MODEL} (Provider: {settings.LLM_PROVIDER})")
     logger.info(f"   LLM Status: {'Configured' if settings.is_llm_active else 'Deterministic Fallback Mode'}")
+    logger.info(f"   Embeddings: {embedding_service.mode} ({embedding_service.describe().get('engine')}, dim={embedding_service.dimension})")
     logger.info(f"   Site Password Gate: {'ENABLED' if SITE_PASSWORD else 'disabled (local dev mode)'}")
     logger.info(f"   Frontend Dist: {'serving ' + str(FRONTEND_DIST) if FRONTEND_DIST.exists() else 'not found (API only)'}")
     logger.info(f"   Allowed CORS Origins: {settings.CORS_ORIGINS}")

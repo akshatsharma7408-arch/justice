@@ -61,19 +61,30 @@ class CitatorCaseResponse(BaseModel):
     graphEdges: List[GraphEdge]
     dataSource: Optional[str] = None
     aiAnalysis: Optional[Dict[str, Any]] = None
+    citations: Optional[List[str]] = None
+
+@router.get("/citator/verify-citation", response_model=Dict[str, Any])
+async def verify_citation_endpoint(q: str = Query(..., description="Citation or case name to verify")):
+    """
+    GET /api/v1/citator/verify-citation?q={citation_or_case_name}
+    Verifies whether a case citation or party name exists in the verified precedent collection
+    (12 Section 27 landmark precedents or 960 Supreme Court of India judgments).
+    """
+    from app.services.qdrant_service import qdrant_service
+    return qdrant_service.verify_citation(q)
 
 @router.get("/citator/{case_id}", response_model=CitatorCaseResponse)
-async def get_citator_case_by_id(case_id: str, include_ai: bool = Query(True, description="Synthesize Gemini 3.8 Flash Article 141 analysis")):
+async def get_citator_case_by_id(case_id: str, include_ai: bool = Query(True, description="Synthesize Article 141 analysis")):
     """
     GET /api/v1/citator/{case_id}
     Retrieves full Article 141 precedent treatment tree, overruling risks,
-    DAG graph lineage, and Gemini 3.8 Flash constitutional synthesis.
+    DAG graph lineage, and grounded constitutional synthesis.
     """
     case_data = neo4j_service.get_citator_case(case_id)
     if not case_data:
         raise HTTPException(
             status_code=404,
-            detail=f"Precedent '{case_id}' not found in Article 141 citation database."
+            detail="I couldn't find a verified source for this"
         )
 
     hierarchy = neo4j_service.evaluate_article_141_hierarchy(
@@ -82,8 +93,12 @@ async def get_citator_case_by_id(case_id: str, include_ai: bool = Query(True, de
     )
 
     ai_analysis = None
+    source_citation = f"{case_data.get('title')} ({case_data.get('citation')})"
+    citations_list = [source_citation]
     if include_ai:
         ai_analysis = await llm_service.generate_citator_analysis(case_data)
+        if ai_analysis and ai_analysis.get("citations"):
+            citations_list = ai_analysis["citations"]
 
     return CitatorCaseResponse(
         id=case_data["id"],
@@ -102,7 +117,8 @@ async def get_citator_case_by_id(case_id: str, include_ai: bool = Query(True, de
         graphNodes=case_data.get("graphNodes", []),
         graphEdges=case_data.get("graphEdges", []),
         dataSource=case_data.get("dataSource", "in_memory_fallback"),
-        aiAnalysis=ai_analysis
+        aiAnalysis=ai_analysis,
+        citations=citations_list
     )
 
 @router.get("/citator", response_model=List[Dict[str, Any]])

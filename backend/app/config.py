@@ -48,7 +48,7 @@ class Settings:
     GEMINI_TEMPERATURE: float = LLM_TEMPERATURE
     GEMINI_MAX_TOKENS: int = LLM_MAX_TOKENS
 
-    EMBEDDING_MODEL: str = os.getenv("EMBEDDING_MODEL", "gemini-embedding-001")
+    EMBEDDING_MODEL: str = os.getenv("EMBEDDING_MODEL", "all-MiniLM-L6-v2")
 
     # Qdrant Vector Database
     QDRANT_URL: str = os.getenv("QDRANT_URL", "http://localhost:6333")

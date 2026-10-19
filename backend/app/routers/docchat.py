@@ -20,6 +20,12 @@ from google.genai import types
 
 from app.config import settings
 from app.services.llm_service import llm_service
+from app.services.answer_tiers import (
+    needs_specific_source,
+    is_document_specific_query,
+    format_tier2_response,
+    NOT_FOUND_SPECIFIC_MSG
+)
 from app.routers.audit import (
     extract_text_from_pdf, 
     extract_text_from_docx, 
@@ -54,7 +60,7 @@ class DocChatResponse(BaseModel):
     model_used: Optional[str] = None
 
 class DocChatSchema(BaseModel):
-    answer: str = Field(description="Strictly grounded answer quoting exact clauses. If the document does not cover the question, this MUST be 'not found in this document'.")
+    answer: str = Field(description="Strictly grounded answer quoting exact clauses. If the document does not cover the question, this MUST be 'I couldn't find this in the available sources'.")
     citations: List[Citation] = Field(description="Verbatim citations supporting each statement in the answer. Empty list if not found.")
 
 # --- Document Storage & Chunks ---
@@ -150,43 +156,15 @@ def generate_fallback_embedding(text: str, dim: int = 128) -> List[float]:
         vec = [x / norm for x in vec]
     return vec
 
+from app.services.embedding_service import embedding_service
+
 def embed_texts(texts: List[str]) -> List[List[float]]:
-    """Embeds a list of strings using Google GenAI SDK (settings.EMBEDDING_MODEL)."""
-    if not texts:
-        return []
-
-    client = llm_service.client
-    if client and not is_gemini_in_cooldown():
-        try:
-            batch_size = 20
-            all_embeddings: List[List[float]] = []
-            for i in range(0, len(texts), batch_size):
-                batch = texts[i:i + batch_size]
-                res = client.models.embed_content(
-                    model=settings.EMBEDDING_MODEL,
-                    contents=batch
-                )
-                if res and res.embeddings:
-                    for emb in res.embeddings:
-                        all_embeddings.append(list(emb.values))
-                else:
-                    raise ValueError("No embeddings returned by API")
-
-            if len(all_embeddings) == len(texts):
-                return all_embeddings
-        except Exception as e:
-            if "429" in str(e) or "RESOURCE_EXHAUSTED" in str(e):
-                trigger_gemini_cooldown(120.0)
-            logger.info(f"Embeddings fallback engaged: {e}")
-
-
-    # Fallback to local pseudo-embeddings
-    return [generate_fallback_embedding(t) for t in texts]
+    """Embeds a list of strings using local semantic embeddings (all-MiniLM-L6-v2, 384-dim)."""
+    return embedding_service.embed_texts(texts)
 
 def embed_single_text(text: str) -> List[float]:
-    """Embeds a single query string."""
-    results = embed_texts([text])
-    return results[0] if results else generate_fallback_embedding(text)
+    """Embeds a single query string using local semantic embeddings."""
+    return embedding_service.embed_query(text)
 
 def cosine_similarity(v1: List[float], v2: List[float]) -> float:
     """Calculates cosine similarity between two vectors."""
@@ -399,6 +377,35 @@ async def chat_with_document_endpoint(payload: DocChatRequest):
     top_chunks = [item[0] for item in top_chunks_with_scores]
     max_score = top_chunks_with_scores[0][1] if top_chunks_with_scores else 0.0
 
+    boilerplate_words = {
+        "what", "when", "where", "which", "who", "whom", "how", "why", "this", "that", "there", 
+        "have", "does", "with", "from", "your", "under", "about", "tell", "show", "give", 
+        "please", "find", "explain", "describe", "company", "employer", "employee", "consultant", 
+        "client", "party", "parties", "agreement", "contract", "herein", "hereof", "thereof", 
+        "shall", "will", "would", "could", "should", "the", "and", "for", "any", "all", "terms", 
+        "clause", "section", "document", "provision", "stipulation", "is", "are", "was", "were"
+    }
+    substantive_q_words = [w for w in re.findall(r'\b[a-z0-9]{3,}\b', question.lower()) if w not in boilerplate_words]
+    doc_tokens = set(re.findall(r'\b[a-z0-9]{3,}\b', doc.raw_text.lower()))
+    has_substantive_in_doc = any(w in doc_tokens for w in substantive_q_words) if substantive_q_words else False
+
+    # CRITICAL: If retrieval returns nothing relevant, apply Two-Tier logic!
+    if not has_substantive_in_doc or not top_chunks or max_score < 0.15:
+        logger.info(f"DocChat: No relevant excerpts found in document for '{question}'.")
+        if needs_specific_source(question) or is_document_specific_query(question):
+            return DocChatResponse(
+                answer=NOT_FOUND_SPECIFIC_MSG,
+                citations=[],
+                model_used="tier1_source_not_found"
+            )
+        else:
+            tier2_ans = await llm_service.generate_tier2_explanation(question)
+            return DocChatResponse(
+                answer=tier2_ans,
+                citations=[],
+                model_used="tier2_general_explanation"
+            )
+
     # 3. Format context excerpts
     context_blocks = []
     for c in top_chunks:
@@ -413,7 +420,7 @@ async def chat_with_document_endpoint(payload: DocChatRequest):
         "CRITICAL GROUNDING AND ACCURACY RULES: "
         "1. Every single claim or statement in your answer MUST be grounded in the text and quote the exact clause it came from. "
         "2. If the question cannot be answered from the provided excerpts, or if the document does not mention or cover the topic, "
-        "you MUST set the answer field to EXACTLY 'not found in this document', set citations to an empty list [], and NEVER use outside legal knowledge or external facts. "
+        "you MUST set the answer field to EXACTLY 'I couldn't find this in the available sources', set citations to an empty list [], and NEVER use outside legal knowledge or external facts. "
         "3. Do NOT make inferences, invent provisions, or assume standard industry terms if not explicitly stated in the document excerpts. "
         "4. Your citations must contain the exact 'clause_number', 'heading', and verbatim 'quoted_text' from the document."
     )
@@ -454,23 +461,32 @@ async def chat_with_document_endpoint(payload: DocChatRequest):
                 ans = data.get("answer", "").strip()
                 raw_cits = data.get("citations", [])
 
-                # Enforce strict "not found in this document" guardrail
+                # Enforce strict "I couldn't find this in the available sources" guardrail
                 lower_ans = ans.lower()
                 is_not_found = (
-                    "not found in this document" in lower_ans
-                    or lower_ans.startswith("not found")
+                    "couldn't find" in lower_ans
+                    or "could not find" in lower_ans
+                    or "not found" in lower_ans
                     or "does not contain" in lower_ans
-                    or "not mentioned in the document" in lower_ans
-                    or "not specified in the provided" in lower_ans
+                    or "not mentioned" in lower_ans
+                    or "not specified" in lower_ans
                     or "no mention" in lower_ans
                 )
 
-                if is_not_found or not ans:
-                    return DocChatResponse(
-                        answer="not found in this document",
-                        citations=[],
-                        model_used=settings.LLM_MODEL
-                    )
+                if is_not_found or not ans or not raw_cits:
+                    if needs_specific_source(question) or is_document_specific_query(question):
+                        return DocChatResponse(
+                            answer=NOT_FOUND_SPECIFIC_MSG,
+                            citations=[],
+                            model_used="tier1_source_not_found"
+                        )
+                    else:
+                        tier2_ans = await llm_service.generate_tier2_explanation(question)
+                        return DocChatResponse(
+                            answer=tier2_ans,
+                            citations=[],
+                            model_used="tier2_general_explanation"
+                        )
 
                 citations = []
                 for c in raw_cits:
@@ -494,17 +510,6 @@ async def chat_with_document_endpoint(payload: DocChatRequest):
     # --- Deterministic Grounded Fallback ---
     # Top chunk from hybrid retrieval
     best_chunk, best_score = top_chunks_with_scores[0] if top_chunks_with_scores else (None, 0.0)
-    
-    boilerplate_words = {
-        "what", "when", "where", "which", "who", "whom", "how", "why", "this", "that", "there", 
-        "have", "does", "with", "from", "your", "under", "about", "tell", "show", "give", 
-        "please", "find", "explain", "describe", "company", "employer", "employee", "consultant", 
-        "client", "party", "parties", "agreement", "contract", "herein", "hereof", "thereof", 
-        "shall", "will", "would", "could", "should", "the", "and", "for", "any", "all", "terms", 
-        "clause", "section", "document", "provision", "stipulation"
-    }
-    substantive_q_words = [w for w in re.findall(r'\b[a-z0-9]{3,}\b', question.lower()) if w not in boilerplate_words]
-
     chunk_tokens = set(re.findall(r'\b[a-z0-9]{3,}\b', f"{best_chunk.heading} {best_chunk.text}".lower())) if best_chunk else set()
     has_substantive_match = any(w in chunk_tokens for w in substantive_q_words) if (best_chunk and substantive_q_words) else False
 
@@ -528,10 +533,19 @@ async def chat_with_document_endpoint(payload: DocChatRequest):
             model_used="deterministic_grounded_fallback"
         )
 
-    return DocChatResponse(
-        answer="not found in this document",
-        citations=[],
-        model_used="deterministic_grounded_fallback"
-    )
+    if needs_specific_source(question) or is_document_specific_query(question):
+        return DocChatResponse(
+            answer=NOT_FOUND_SPECIFIC_MSG,
+            citations=[],
+            model_used="tier1_source_not_found"
+        )
+    else:
+        tier2_ans = await llm_service.generate_tier2_explanation(question)
+        return DocChatResponse(
+            answer=tier2_ans,
+            citations=[],
+            model_used="tier2_general_explanation"
+        )
+
 
 

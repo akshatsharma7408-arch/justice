@@ -4,7 +4,7 @@ Indexes the verified Section 27 / Article 141 precedent corpus
 (backend/app/data/section27_precedents.json) into Qdrant.
 
 - Creates the collection (cosine distance) if missing; embedding dimension is
-  chosen by the active embedding mode (Gemini 768 / local fallback 384).
+  chosen by the active local embedding mode (all-MiniLM-L6-v2, 384-dim).
 - Idempotent: point ids are stable UUID5 hashes of the case id, so re-running
   never duplicates.
 - All payload metadata (citation, court, bench, status, source URL) is stored

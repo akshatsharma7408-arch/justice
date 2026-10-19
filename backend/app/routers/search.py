@@ -1,7 +1,8 @@
 """
 JUSTICE Legal AI Backend — Search Router (/api/v1/search)
-Executes dual-encoder HyDE (Hypothetical Document Embeddings) synthesis and hybrid vector search
-grounded in Indian Supreme Court jurisprudence.
+Executes grounded precedent retrieval over verified Indian Supreme Court & High Court jurisprudence.
+Strict Grounding: answers strictly from retrieved precedents, cites sources for every claim,
+and returns 'I couldn't find this in the available sources' directly if retrieval returns nothing.
 """
 
 from fastapi import APIRouter, Query
@@ -20,13 +21,15 @@ class SearchRequest(BaseModel):
     query: str = Field(..., description="Legal query or statutory issue (e.g., 'Section 27 non-compete enforceability')")
     court: Optional[str] = Field("ALL", description="Court filter: 'ALL', 'Supreme Court of India', 'Delhi High Court'")
     bench_type: Optional[str] = Field("ALL", description="Bench filter: 'ALL', 'CONSTITUTION', 'DIVISION'")
-    enable_hyde: bool = Field(True, description="Whether to synthesize hypothetical ratio decidendi using neural LLM")
+    enable_hyde: bool = Field(True, description="Whether to synthesize judicial ratio from retrieved precedents")
     limit: int = Field(5, ge=1, le=50, description="Maximum number of precedents to return")
 
 class SearchResponse(BaseModel):
     model_config = {"protected_namespaces": ()}
     query: str
     hyde_synthetic_ratio: Optional[str] = None
+    ai_answer: Optional[str] = None
+    citations: Optional[List[str]] = None
     model_used: str
     results_count: int
     results: List[Dict[str, Any]]
@@ -35,26 +38,29 @@ class SearchResponse(BaseModel):
 async def search_precedents_post(payload: SearchRequest):
     """
     POST /api/v1/search
-    Synthesizes judicial holding via HyDE on neural LLM, then conducts dense/sparse retrieval.
+    Conducts dense/sparse retrieval over the verified precedent corpus.
+    If retrieval returns nothing, skips the model and answers 'I couldn't find this in the available sources'.
+    Otherwise synthesizes judicial holding strictly from retrieved precedents with source citations.
     """
-    hyde_ratio = None
-    if payload.enable_hyde:
-        hyde_ratio = await llm_service.generate_hyde_ratio(payload.query)
-
-    search_query = f"{payload.query} {hyde_ratio}" if hyde_ratio else payload.query
     results = qdrant_service.search_precedents(
-        query=search_query,
+        query=payload.query,
         court_filter=payload.court or "ALL",
         bench_filter=payload.bench_type or "ALL",
         limit=payload.limit
     )
 
+    # Synthesize AI answer using the Two-Tier framework
+    synthesis = await llm_service.synthesize_search_answer(payload.query, results)
+    tier1_results = synthesis.get("results", [])
+
     return SearchResponse(
         query=payload.query,
-        hyde_synthetic_ratio=hyde_ratio,
-        model_used=settings.LLM_MODEL,
-        results_count=len(results),
-        results=results
+        hyde_synthetic_ratio=synthesis.get("ratio_decidendi") or synthesis.get("answer"),
+        ai_answer=synthesis.get("answer"),
+        citations=synthesis.get("citations", []),
+        model_used=synthesis.get("model_used", settings.LLM_MODEL),
+        results_count=len(tier1_results),
+        results=tier1_results
     )
 
 @router.get("/search", response_model=SearchResponse)
@@ -68,8 +74,7 @@ async def search_precedents_get(
 ):
     """
     GET /api/v1/search
-    Convenience query-param endpoint for browser and quick REST querying.
-    Accepts either ?q= or ?query=.
+    Convenience query-param endpoint for browser and REST querying.
     """
     search_text = q or query or "Section 27 non-compete"
     req = SearchRequest(
