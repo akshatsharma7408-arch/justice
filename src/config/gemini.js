@@ -270,3 +270,57 @@ export async function chatWithDocumentWithBackend(docId, question) {
   return await res.json();
 }
 
+/**
+ * MODULE G: Case Chat
+ * POST /api/v1/case-chat
+ */
+export async function sendCaseChatMessage({ caseId, question, messages = [] }) {
+  const res = await fetch(`${API_BASE}/case-chat`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      case_id: caseId,
+      question: question,
+      messages: messages.map(m => ({ role: m.role, content: m.content }))
+    })
+  });
+  if (!res.ok) {
+    const errorData = await res.json().catch(() => ({}));
+    throw new Error(errorData.detail || `Case chat failed (HTTP ${res.status})`);
+  }
+  return await res.json();
+}
+
+/**
+ * MODULE G: Explain Selected Text
+ * POST /api/v1/explain-selection
+ */
+export async function explainSelectedText({ selectedText, context = null, caseId = null }) {
+  const res = await fetch(`${API_BASE}/explain-selection`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      selected_text: selectedText,
+      context: context,
+      case_id: caseId
+    })
+  });
+  if (!res.ok) {
+    const errorData = await res.json().catch(() => ({}));
+    throw new Error(errorData.detail || `Explain selection failed (HTTP ${res.status})`);
+  }
+  return await res.json();
+}
+
+/**
+ * MODULE G: Case Text Paragraphs
+ * GET /api/v1/case-text/{case_id}
+ */
+export async function fetchCaseText(caseId) {
+  const res = await fetch(`${API_BASE}/case-text/${encodeURIComponent(caseId)}`);
+  if (!res.ok) {
+    throw new Error(`Fetch case text failed (HTTP ${res.status})`);
+  }
+  return await res.json();
+}
+

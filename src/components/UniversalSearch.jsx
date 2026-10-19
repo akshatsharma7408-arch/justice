@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Search, ArrowRight, ArrowUpRight, Sparkles, SlidersHorizontal, Scale } from 'lucide-react';
+import { Search, ArrowRight, ArrowUpRight, Sparkles, SlidersHorizontal, Scale, MessageSquare, ChevronDown, ChevronUp } from 'lucide-react';
 import { LANDMARK_PRECEDENTS } from '../data/legalCorpus';
 import { searchPrecedentsWithBackend } from '../config/gemini';
 import { renderWithBadges } from '../utils/badgeFormatter';
@@ -13,7 +13,7 @@ const ROTATING_PLACEHOLDERS = [
   "Are non-compete clauses valid after I quit my job?"
 ];
 
-export default function UniversalSearch({ onSelectCaseForCitator }) {
+export default function UniversalSearch({ onSelectCaseForCitator, onOpenCaseChat }) {
   const [query, setQuery] = useState('');
   const [placeholderIndex, setPlaceholderIndex] = useState(0);
   const [placeholderFade, setPlaceholderFade] = useState(false);
@@ -23,6 +23,7 @@ export default function UniversalSearch({ onSelectCaseForCitator }) {
   const [hydeRatio, setHydeRatio] = useState('');
   const [results, setResults] = useState([]);
   const [hasSearched, setHasSearched] = useState(false);
+  const [expandedCaseId, setExpandedCaseId] = useState(null);
   const [modelUsed, setModelUsed] = useState('openai/gpt-oss-120b');
   const [isSearching, setIsSearching] = useState(false);
 
@@ -348,7 +349,33 @@ export default function UniversalSearch({ onSelectCaseForCitator }) {
                 <p className="ratio-text font-judicial">"{precedent.ratioSummary}"</p>
               </div>
 
-              {/* Card Footer: Coram & Action */}
+              {/* Optional Expanded Judgment Section */}
+              {expandedCaseId === precedent.id && (
+                <div className="card-expanded-judgment-drawer animate-fade-in">
+                  <div className="expanded-judgment-header">
+                    <span className="expanded-kicker mono">RECORDED JUDGMENT EXCERPTS</span>
+                    <span className="active-chat-pill">
+                      <Sparkles size={12} />
+                      <span>Case Chat Active</span>
+                    </span>
+                  </div>
+
+                  <div className="expanded-paragraphs-stack">
+                    <div id="chunk-0" className="expanded-para-item">
+                      <div className="para-index-line mono">Paragraph 1 (Holding & Ratio)</div>
+                      <p className="para-content font-judicial">{precedent.ratioSummary}</p>
+                    </div>
+                    {precedent.text && precedent.text !== precedent.ratioSummary && (
+                      <div id="chunk-1" className="expanded-para-item">
+                        <div className="para-index-line mono">Paragraph 2 (Court Analysis)</div>
+                        <p className="para-content font-judicial">{precedent.text}</p>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              )}
+
+              {/* Card Footer: Coram & Actions */}
               <div className="card-footer-row">
                 <div className="coram-details">
                   <span className="coram-label">Coram:</span>
@@ -358,14 +385,34 @@ export default function UniversalSearch({ onSelectCaseForCitator }) {
                   </span>
                 </div>
 
-                <button
-                  type="button"
-                  className="btn-card-action"
-                  onClick={() => onSelectCaseForCitator(precedent)}
-                >
-                  <span>Verify in Smart Citator</span>
-                  <ArrowUpRight size={14} />
-                </button>
+                <div className="card-actions-cluster">
+                  <button
+                    type="button"
+                    className={`btn-card-chat-action ${expandedCaseId === precedent.id ? 'active' : ''}`}
+                    onClick={() => {
+                      const nextId = expandedCaseId === precedent.id ? null : precedent.id;
+                      setExpandedCaseId(nextId);
+                      if (onOpenCaseChat) {
+                        onOpenCaseChat(nextId ? precedent : null);
+                      }
+                    }}
+                    title="Open Case Chat scoped to this precedent"
+                    aria-label="Ask about this case in Case Chat"
+                  >
+                    <MessageSquare size={13} />
+                    <span>{expandedCaseId === precedent.id ? 'Close Chat' : 'Ask about this case'}</span>
+                    {expandedCaseId === precedent.id ? <ChevronUp size={13} /> : <ChevronDown size={13} />}
+                  </button>
+
+                  <button
+                    type="button"
+                    className="btn-card-action"
+                    onClick={() => onSelectCaseForCitator(precedent)}
+                  >
+                    <span>Verify in Smart Citator</span>
+                    <ArrowUpRight size={14} />
+                  </button>
+                </div>
               </div>
             </article>
           ))

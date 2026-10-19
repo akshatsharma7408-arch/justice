@@ -9,6 +9,9 @@ import ManupatraComparison from './components/ManupatraComparison';
 import LegalMaxims from './components/LegalMaxims';
 import AgentVisualizerModal from './components/AgentVisualizerModal';
 import CommandPalette from './components/CommandPalette';
+import CaseChatPanel from './components/CaseChatPanel';
+import ExplainSelectionModal from './components/ExplainSelectionModal';
+import TextSelectionToolbar from './components/TextSelectionToolbar';
 import { AgentExecutionSession } from './services/agentEngine';
 
 export default function App() {
@@ -19,6 +22,77 @@ export default function App() {
   const [agentSessionState, setAgentSessionState] = useState(null);
   const [isAgentRunning, setIsAgentRunning] = useState(false);
   const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false);
+
+  // Active case for Case Chat scoping
+  const [activeCase, setActiveCase] = useState({
+    id: 'sc-2006-percept',
+    title: "Percept D'Mark (India) (P) Ltd. v. Zaheer Khan",
+    citation: "(2006) 4 SCC 227"
+  });
+
+  // Persist Case Chat panel collapsed state in localStorage
+  const [isCaseChatOpen, setIsCaseChatOpen] = useState(() => {
+    try {
+      return localStorage.getItem('justice_case_chat_open') !== 'false';
+    } catch {
+      return true;
+    }
+  });
+
+  const [caseChatExternalPrompt, setCaseChatExternalPrompt] = useState(null);
+
+  // Global Explain Selection state
+  const [isExplainModalOpen, setIsExplainModalOpen] = useState(false);
+  const [standaloneExplainText, setStandaloneExplainText] = useState('');
+  const [standaloneExplainContext, setStandaloneExplainContext] = useState(null);
+
+  const handleToggleCaseChat = () => {
+    setIsCaseChatOpen(prev => {
+      const next = !prev;
+      try {
+        localStorage.setItem('justice_case_chat_open', String(next));
+      } catch (e) {}
+      return next;
+    });
+  };
+
+  const handleTriggerGlobalExplain = (selectedText) => {
+    // If a case is open (citator tab or active case in search), route to Case Chat
+    if (activeTab === 'citator' || (activeTab === 'search' && activeCase)) {
+      setIsCaseChatOpen(true);
+      try {
+        localStorage.setItem('justice_case_chat_open', 'true');
+      } catch (e) {}
+      setCaseChatExternalPrompt(`Explain this in simple words: ${selectedText}`);
+      return;
+    }
+
+    // In Document Analyzer, pass document context
+    if (activeTab === 'analyzer') {
+      setStandaloneExplainText(selectedText);
+      setStandaloneExplainContext("Contract & Clause Audit Context");
+      setIsExplainModalOpen(true);
+      return;
+    }
+
+    // Otherwise open standalone popup
+    setStandaloneExplainText(selectedText);
+    setStandaloneExplainContext(null);
+    setIsExplainModalOpen(true);
+  };
+
+  const handleOpenCaseChatFromSearch = (precedent) => {
+    if (!precedent) return;
+    setActiveCase({
+      id: precedent.id,
+      title: precedent.title,
+      citation: precedent.citation
+    });
+    setIsCaseChatOpen(true);
+    try {
+      localStorage.setItem('justice_case_chat_open', 'true');
+    } catch (e) {}
+  };
 
   // Jump from search to citator
   const handleSelectCaseForCitator = (precedent) => {
@@ -195,41 +269,60 @@ export default function App() {
         </aside>
 
         {/* Center Workspace Scroll Pane */}
-        <div className="workspace-main-area">
-          <main className="workspace-main-scroll">
-            {activeTab === 'search' && (
-              <UniversalSearch onSelectCaseForCitator={handleSelectCaseForCitator} />
-            )}
+        <div className={`workspace-main-area ${(activeTab === 'citator' || (activeTab === 'search' && activeCase)) ? 'has-case-chat' : ''}`}>
+          <div className="workspace-main-content-flow">
+            <main className="workspace-main-scroll">
+              {activeTab === 'search' && (
+                <UniversalSearch 
+                  onSelectCaseForCitator={handleSelectCaseForCitator}
+                  onOpenCaseChat={handleOpenCaseChatFromSearch}
+                />
+              )}
 
-            {activeTab === 'citator' && (
-              <SmartCitator
-                key={selectedCitatorCaseId}
-                initialCaseId={selectedCitatorCaseId}
+              {activeTab === 'citator' && (
+                <SmartCitator
+                  key={selectedCitatorCaseId}
+                  initialCaseId={selectedCitatorCaseId}
+                  onActiveCaseChange={setActiveCase}
+                />
+              )}
+
+              {activeTab === 'analyzer' && (
+                <DocumentAnalyzer
+                  onTriggerAgentAnalysis={handleTriggerAgentAnalysis}
+                />
+              )}
+
+              {activeTab === 'comparison' && (
+                <ManupatraComparison
+                  onSwitchToWorkspace={() => setActiveTab('analyzer')}
+                />
+              )}
+
+              {activeTab === 'maxims' && (
+                <LegalMaxims />
+              )}
+
+              {/* Bottom Status Footer */}
+              <Footer
+                onOpenComparison={() => setActiveTab('comparison')}
+                onOpenAgentModal={() => setIsAgentModalOpen(true)}
+              />
+            </main>
+
+            {/* Case Chat Panel alongside open case */}
+            {(activeTab === 'citator' || (activeTab === 'search' && activeCase)) && (
+              <CaseChatPanel
+                caseId={activeCase?.id || selectedCitatorCaseId}
+                caseTitle={activeCase?.title}
+                caseCitation={activeCase?.citation}
+                isOpen={isCaseChatOpen}
+                onToggle={handleToggleCaseChat}
+                externalPrompt={caseChatExternalPrompt}
+                onClearExternalPrompt={() => setCaseChatExternalPrompt(null)}
               />
             )}
-
-            {activeTab === 'analyzer' && (
-              <DocumentAnalyzer
-                onTriggerAgentAnalysis={handleTriggerAgentAnalysis}
-              />
-            )}
-
-            {activeTab === 'comparison' && (
-              <ManupatraComparison
-                onSwitchToWorkspace={() => setActiveTab('analyzer')}
-              />
-            )}
-
-            {activeTab === 'maxims' && (
-              <LegalMaxims />
-            )}
-
-            {/* Bottom Status Footer */}
-            <Footer
-              onOpenComparison={() => setActiveTab('comparison')}
-              onOpenAgentModal={() => setIsAgentModalOpen(true)}
-            />
-          </main>
+          </div>
         </div>
       </div>
 
@@ -246,6 +339,19 @@ export default function App() {
         isOpen={isCommandPaletteOpen}
         onClose={() => setIsCommandPaletteOpen(false)}
         onNavigate={handleCommandNavigate}
+      />
+
+      {/* Global Text Selection Toolbar (Floats near selection 3-1500 chars, Ctrl+E) */}
+      <TextSelectionToolbar
+        onTriggerExplain={handleTriggerGlobalExplain}
+      />
+
+      {/* Standalone Explain Selection Modal / Bottom Sheet */}
+      <ExplainSelectionModal
+        isOpen={isExplainModalOpen}
+        onClose={() => setIsExplainModalOpen(false)}
+        selectedText={standaloneExplainText}
+        context={standaloneExplainContext}
       />
     </div>
   );

@@ -1,13 +1,14 @@
 import React, { useState, useEffect } from 'react';
-import { ArrowUpRight, Sparkles, Scale, ShieldCheck, GitFork, Network } from 'lucide-react';
+import { ArrowUpRight, Sparkles, Scale, ShieldCheck, GitFork, Network, BookOpen } from 'lucide-react';
 import { LANDMARK_PRECEDENTS } from '../data/legalCorpus';
-import { getCitatorCaseWithBackend } from '../config/gemini';
+import { getCitatorCaseWithBackend, fetchCaseText } from '../config/gemini';
 import { renderWithBadges } from '../utils/badgeFormatter';
 
-export default function SmartCitator({ initialCaseId }) {
+export default function SmartCitator({ initialCaseId, onActiveCaseChange }) {
   const [selectedCaseId, setSelectedCaseId] = useState(initialCaseId || 'sc-2006-percept');
-  const [activeTab, setActiveTab] = useState('treatment'); // 'treatment', 'bench-eval', 'graph'
+  const [activeTab, setActiveTab] = useState('treatment'); // 'treatment', 'bench-eval', 'graph', 'judgment'
   const [liveCase, setLiveCase] = useState(null);
+  const [paragraphs, setParagraphs] = useState([]);
   const [isLoading, setIsLoading] = useState(false);
 
   // Fallback case from corpus
@@ -30,12 +31,52 @@ export default function SmartCitator({ initialCaseId }) {
         if (isMounted) setIsLoading(false);
       });
 
+    // Also fetch judgment paragraphs for paragraph-level citing & jumping
+    fetchCaseText(selectedCaseId)
+      .then(data => {
+        if (isMounted) setParagraphs(data?.paragraphs || []);
+      })
+      .catch(err => {
+        console.warn("[SmartCitator] fetchCaseText error:", err);
+      });
+
     return () => {
       isMounted = false;
     };
   }, [selectedCaseId]);
 
   const currentCase = liveCase || fallbackCase;
+
+  // Sync active case to parent App for Case Chat scoping
+  useEffect(() => {
+    if (onActiveCaseChange && currentCase) {
+      onActiveCaseChange({
+        id: currentCase.id || selectedCaseId,
+        title: currentCase.title,
+        citation: currentCase.citation
+      });
+    }
+  }, [currentCase, selectedCaseId, onActiveCaseChange]);
+
+  // Listen to jump-to-paragraph events from Case Chat
+  useEffect(() => {
+    const handleJump = (e) => {
+      const targetId = e.detail?.paragraphId;
+      if (targetId) {
+        setActiveTab('judgment');
+        setTimeout(() => {
+          const el = document.getElementById(targetId);
+          if (el) {
+            el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            el.classList.add('paragraph-highlight-pulse');
+            setTimeout(() => el.classList.remove('paragraph-highlight-pulse'), 2500);
+          }
+        }, 120);
+      }
+    };
+    window.addEventListener('justice:scroll-to-paragraph', handleJump);
+    return () => window.removeEventListener('justice:scroll-to-paragraph', handleJump);
+  }, []);
   const aiAnalysis = currentCase?.aiAnalysis;
   const rules = currentCase?.article141Evaluation?.rules || [
     { level: "Division Bench (2 Judges)", jurisdiction: "Bindingly bound. Lacks jurisdiction to overrule or modify this ratio.", status: "BOUND" },
@@ -210,6 +251,14 @@ export default function SmartCitator({ initialCaseId }) {
         >
           <span>CITATION DAG GRAPH</span>
         </button>
+
+        <button
+          type="button"
+          className={`citator-tab-btn ${activeTab === 'judgment' ? 'active' : ''}`}
+          onClick={() => setActiveTab('judgment')}
+        >
+          <span>RECORDED JUDGMENT TEXT</span>
+        </button>
       </div>
 
       {/* TAB 1: Subsequent Judicial Treatment */}
@@ -370,6 +419,44 @@ export default function SmartCitator({ initialCaseId }) {
               <span className="legend-item"><span className="legend-dot amber" /> Distinguished on Facts</span>
               <span className="legend-item"><span className="legend-dot red" /> Overruled / Void</span>
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* TAB 4: Primary Judgment Paragraphs */}
+      {activeTab === 'judgment' && (
+        <div className="citator-panel-card">
+          <div className="panel-header-row">
+            <div>
+              <span className="panel-kicker">VERIFIED PRIMARY SOURCE TEXT</span>
+              <h3 className="panel-title font-judicial">Recorded Judgment Text & Paragraphs</h3>
+              <p className="panel-desc">
+                Authentic recorded text of {currentCase.title} ({currentCase.citation}).
+                Click "Based on: Paragraph X" in Case Chat to jump directly to any paragraph.
+              </p>
+            </div>
+          </div>
+
+          <div className="judgment-paragraphs-list">
+            {paragraphs.length === 0 ? (
+              <div className="treatment-empty-note">
+                Loading verified judgment paragraphs...
+              </div>
+            ) : (
+              paragraphs.map((p) => (
+                <article 
+                  key={p.id} 
+                  id={p.id} 
+                  className="judgment-paragraph-card"
+                >
+                  <div className="para-header-line">
+                    <span className="para-badge mono">Paragraph {p.paragraph_number}</span>
+                    <span className="para-anchor-link mono">#{p.id}</span>
+                  </div>
+                  <p className="para-text-content font-judicial">{p.text}</p>
+                </article>
+              ))
+            )}
           </div>
         </div>
       )}
