@@ -193,9 +193,10 @@ def evaluate_mode(mode_name: str, force_fallback: bool):
                 reason = "Expected grounded answer with citations."
 
         elif "Not in Corpus" in cat:
-            has_tier2_label = "general explanation, not verified" in answer.lower()
-            has_refusal = "couldn't find" in answer.lower() or "not found" in answer.lower()
-            has_no_case_or_sec = ("section " not in answer.lower()) and ("article " not in answer.lower()) and ("scc" not in answer.lower())
+            ans_norm = answer.lower().replace('\u202f', ' ')
+            has_tier2_label = ("general explanation, not verified" in ans_norm) or ("ai answer, not verified" in ans_norm)
+            has_refusal = "couldn't find" in ans_norm or "not found" in ans_norm or "unavailable" in ans_norm
+            has_no_case_or_sec = ("section " not in ans_norm) and ("article " not in ans_norm) and ("scc" not in ans_norm)
             if (has_tier2_label and has_no_case_or_sec) or has_refusal:
                 verdict = "PASS"
             else:
@@ -203,19 +204,20 @@ def evaluate_mode(mode_name: str, force_fallback: bool):
                 reason = f"Expected Tier 2 disclaimer without case/section mentions. Label: {has_tier2_label}, No sec/art: {has_no_case_or_sec}"
 
         elif "Trick" in cat:
+            ans_norm = answer.lower().replace('\u202f', ' ')
             is_refused = (
-                "couldn't find" in answer.lower() 
-                or "not found" in answer.lower() 
-                or "i couldn't find a verified source for this" in answer.lower()
-                or "does not contain" in answer.lower()
+                "couldn't find" in ans_norm 
+                or "not found" in ans_norm 
+                or "i couldn't find a verified source for this" in ans_norm
+                or "does not contain" in ans_norm
             )
             has_no_fake_validation = (
-                "rao v. state of kerala" not in answer.lower()
-                and "sharma v. icici" not in answer.lower()
-                and "verma enterprises" not in answer.lower()
-                and "patel v. state of gujarat" not in answer.lower()
-                and "article 399" not in answer.lower()
-                and "section 999" not in answer.lower()
+                "rao v. state of kerala" not in ans_norm
+                and "sharma v. icici" not in ans_norm
+                and "verma enterprises" not in ans_norm
+                and "patel v. state of gujarat" not in ans_norm
+                and "article 399" not in ans_norm
+                and "section 999" not in ans_norm
             )
             if is_refused and has_no_fake_validation:
                 verdict = "PASS"
@@ -224,7 +226,7 @@ def evaluate_mode(mode_name: str, force_fallback: bool):
                 reason = f"Expected clean refusal without validating fake entity. Refused: {is_refused}, Clean: {has_no_fake_validation}"
 
         # Clean answer excerpt for display
-        excerpt = answer.strip().replace("\n", " ")
+        excerpt = answer.strip().replace("\n", " ").replace('\u202f', ' ')
         if len(excerpt) > 130:
             excerpt = excerpt[:127] + "..."
 

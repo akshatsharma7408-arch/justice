@@ -16,8 +16,9 @@ from typing import Optional, List, Dict, Any
 logger = logging.getLogger("justice.tiers")
 
 NOT_FOUND_SPECIFIC_MSG = "I couldn't find a verified source for this"
-TIER2_START_LABEL = "General explanation, not verified against a legal database: "
-TIER2_END_LABEL = "Check a primary source before relying on this."
+TIER2_START_LABEL = "AI answer, not verified against a legal database."
+TIER2_END_LABEL = "This is general information, not legal advice. Check a primary source or a lawyer before relying on it."
+TIER2_UNAVAILABLE_MSG = "The AI service is currently unavailable to generate an explanation for this topic. Please try again shortly."
 
 
 def needs_specific_source(query: str) -> bool:
@@ -100,18 +101,29 @@ def sanitize_tier2_text(text: str) -> str:
 
 def format_tier2_response(explanation: str) -> str:
     """
-    Formats a general conceptual legal explanation to strictly start with
-    'General explanation, not verified against a legal database: ' and end with
-    'Check a primary source before relying on this.'
+    Formats a general conceptual or practical legal explanation to strictly start with
+    'AI answer, not verified against a legal database.' and end with
+    'This is general information, not legal advice. Check a primary source or a lawyer before relying on it.'
     """
-    # Strip any preexisting prefixes/suffixes
     raw = explanation.strip()
-    raw = re.sub(r'^general explanation[,\s\-:]*(?:not verified against a legal database)?[:\s\-]*', '', raw, flags=re.IGNORECASE).strip()
-    raw = re.sub(r'check a primary source before relying on this\.?$', '', raw, flags=re.IGNORECASE).strip()
+
+    # Strip any preexisting legacy or current start labels
+    raw = re.sub(
+        r'^(?:AI answer|General explanation)[,\s\-:]*(?:not verified against a legal database)?[:\s\-\.]*',
+        '',
+        raw,
+        flags=re.IGNORECASE
+    ).strip()
+
+    # Strip any preexisting legacy or current end labels
+    raw = re.sub(
+        r'(?:This is general information, not legal advice\.?\s*Check a primary source or a lawyer before relying on it\.?|Check a primary source before relying on this\.?)$',
+        '',
+        raw,
+        flags=re.IGNORECASE
+    ).strip()
 
     # Sanitize any accidental cases, sections, or articles
-    sanitized = sanitize_tier2_text(raw)
-    if not sanitized.endswith('.'):
-        sanitized += '.'
+    sanitized = sanitize_tier2_text(raw).strip()
 
-    return f"{TIER2_START_LABEL}{sanitized} {TIER2_END_LABEL}"
+    return f"{TIER2_START_LABEL}\n\n{sanitized}\n\n{TIER2_END_LABEL}"

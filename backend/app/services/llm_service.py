@@ -550,63 +550,70 @@ class LLMService:
 
     async def generate_tier2_explanation(self, query: str, force_fallback: bool = False) -> str:
         """
-        Generates a Tier 2 general conceptual explanation for a legal concept
-        not verified in the local database.
+        Generates a Tier 2 general practical and conceptual explanation for a query
+        not covered by our verified database.
         Strictly satisfies:
-        1. Starts with 'General explanation, not verified against a legal database: '
-        2. Does NOT name any case, citation, section number, or article.
-        3. Ends with 'Check a primary source before relying on this.'
+        Rule (1): Starts with 'AI answer, not verified against a legal database.'
+        Rule (2): 4 to 8 sentences or short bullets in plain English explaining practical rights,
+                  concrete steps, what to do, and mentioning the general area of law.
+        Rule (3): Strictly never names any specific case, citation, section number, or article number.
+        Rule (4): Ends with 'This is general information, not legal advice. Check a primary source or a lawyer before relying on it.'
+        Rule (5): If the model call fails, shows a short clear message that the AI is unavailable
+                  instead of generic filler.
         """
+        if force_fallback or not self.client:
+            return format_tier2_response(
+                "The AI service is currently unavailable to generate an explanation for this topic. Please try again shortly."
+            )
+
         system_instruction = (
-            "You are a distinguished legal educator. The user is asking about an abstract legal concept or doctrine "
-            "that is NOT present in the local verified legal database. "
-            "Provide a concise, neutral 2 to 3 sentence explanation of the abstract legal concept. "
-            "CRITICAL MANDATORY RESTRICTIONS: "
-            "1. You MUST start your response with: 'General explanation, not verified against a legal database: ' "
-            "2. You MUST NOT name or cite ANY case, court, judge, citation, section number, or article number under any circumstances. "
-            "3. Explain only the abstract conceptual meaning of the legal doctrine or term. "
-            "4. You MUST end your response with: 'Check a primary source before relying on this.'"
+            "You are a helpful, practical legal information assistant. "
+            "When answering questions not covered by verified database precedents, provide a real, useful, practical legal answer of 4 to 8 sentences or short bullet points in plain English. "
+            "Do NOT use generic filler sentences such as 'refers to an established principle governing rights, obligations, and remedies'. "
+            "CRITICAL MANDATORY RULES:\n"
+            "1. You MUST start your response directly with the exact label: 'AI answer, not verified against a legal database.'\n"
+            "2. Explain practical rights, concrete steps, and what the person should actually do in simple words.\n"
+            "3. Explicitly mention which general area of law applies in general terms (for example, 'traffic and criminal procedure laws in India', 'contract and equity principles in India', or 'tenancy and rent control laws in India').\n"
+            "4. STRICT PROHIBITION: NEVER name or cite any specific case, court, judge, citation (such as SCC, AIR, SCR), section number (such as Section 27), or article number (such as Article 21). Keep all statutory and legal references strictly generalized (e.g. 'under motor vehicle regulations', 'under tenancy laws', 'under general contract principles').\n"
+            "5. You MUST end your response directly with the exact text: 'This is general information, not legal advice. Check a primary source or a lawyer before relying on it.'"
         )
+
         prompt = (
-            f"Explain the abstract legal concept involved in this query:\n\n"
-            f"QUERY: {query}\n\n"
-            f"Remember: Do NOT include any case name, citation, section number, or article number. "
-            f"Start with 'General explanation, not verified against a legal database: ' "
-            f"and end with 'Check a primary source before relying on this.'"
+            f"Provide practical rights, actionable steps, and general legal framework for this question:\n\n"
+            f"USER QUESTION: {query}\n\n"
+            f"Remember:\n"
+            f"- 4 to 8 sentences or short bullet points in plain English.\n"
+            f"- Explain practical rights, what to do, and practical next steps.\n"
+            f"- Mention the general area of law in general terms (e.g. 'traffic and criminal procedure laws in India').\n"
+            f"- STRICTLY NO specific case names, citations, section numbers, or article numbers.\n"
+            f"- Start with 'AI answer, not verified against a legal database.'\n"
+            f"- End with 'This is general information, not legal advice. Check a primary source or a lawyer before relying on it.'"
         )
 
-        if self.client and not force_fallback:
-            for attempt in range(1, 3):
-                try:
-                    config = types.GenerateContentConfig(
-                        system_instruction=system_instruction,
-                        temperature=0.2,
-                        max_output_tokens=300
-                    )
-                    response = self.client.models.generate_content(
-                        model=self.model,
-                        contents=prompt,
-                        config=config
-                    )
-                    if response and response.text:
-                        return format_tier2_response(response.text)
-                except Exception as e:
-                    if attempt == 1:
-                        logger.warning("Tier 2 LLM generation attempt 1 failed: %s. Retrying once...", e)
-                        await asyncio.sleep(0.5)
-                    else:
-                        logger.warning("Tier 2 LLM generation attempt 2 failed: %s. Using deterministic concept synthesis.", e)
+        for attempt in range(1, 3):
+            try:
+                config = types.GenerateContentConfig(
+                    system_instruction=system_instruction,
+                    temperature=0.2,
+                    max_output_tokens=700
+                )
+                response = self.client.models.generate_content(
+                    model=self.model,
+                    contents=prompt,
+                    config=config
+                )
+                if response and response.text:
+                    return format_tier2_response(response.text)
+            except Exception as e:
+                if attempt == 1:
+                    logger.warning("Tier 2 LLM generation attempt 1 failed: %s. Retrying once...", e)
+                    await asyncio.sleep(0.5)
+                else:
+                    logger.warning("Tier 2 LLM generation attempt 2 failed: %s. Returning unavailable message.", e)
 
-        # Deterministic conceptual fallback
-        concept = query.strip("? .")
-        clean_concept = re.sub(
-            r'^(?:explain|what is|summarise|summarize|describe|discuss)\s+(?:the\s+)?(?:roman law\s+)?(?:doctrine\s+of\s+|rule\s+of\s+|principle\s+of\s+)?',
-            '',
-            concept,
-            flags=re.IGNORECASE
-        ).strip()
+        # Rule (5): If the model call fails, show a short clear message that the AI is unavailable instead of generic filler.
         return format_tier2_response(
-            f"The legal concept '{clean_concept}' generally refers to an established principle governing rights, obligations, and remedies between parties in jurisprudence."
+            "The AI service is currently unavailable to generate an explanation for this topic. Please try again shortly."
         )
 
     async def synthesize_search_answer(
@@ -656,6 +663,18 @@ class LLMService:
                     "model_used": "tier2_general_explanation"
                 }
 
+        # Rule (3): If the query is a general concept or rights question with no specific case,
+        # citation, section, or article requested, return Tier 2 general explanation:
+        if not is_specific_ask:
+            tier2_ans = await self.generate_tier2_explanation(query, force_fallback=force_fallback)
+            return {
+                "answer": tier2_ans,
+                "ratio_decidendi": tier2_ans,
+                "citations": [],
+                "results": [],
+                "model_used": "tier2_general_explanation"
+            }
+
         # Rule (2): If the query explicitly asks for a specific case name that does not exist in our retrieved corpus,
         # return "I couldn't find a verified source for this"
         if entities["case_names"]:
@@ -696,9 +715,10 @@ class LLMService:
             "Answer the query strictly and solely based on the retrieved precedents provided below. "
             "CRITICAL ACCURACY RULES: "
             "1. Every single claim in your answer MUST cite the source precedent from the retrieved list (Title and Citation). "
-            "2. If the retrieved precedents do not address or answer the query, your answer and ratio_decidendi MUST BE EXACTLY: "
+            "2. If the retrieved precedents do not directly address or provide a complete verified legal answer to the query, your answer and ratio_decidendi MUST BE EXACTLY: "
             "'NOT_FOUND_IN_RETRIEVED_SOURCES', and citations must be an empty list []. "
-            "3. Never make up cases, statutes, or outside legal facts."
+            "3. For general conceptual or citizen rights questions (such as 'what is promissory estoppel', 'can my landlord evict me without notice', or roadside police stops) that are not specifically resolved by the core holding of the retrieved precedents, do NOT synthesize from outside knowledge; return 'NOT_FOUND_IN_RETRIEVED_SOURCES' so that the system provides the required general explanation. "
+            "4. Never make up cases, statutes, or outside legal facts."
         )
 
         prompt = (

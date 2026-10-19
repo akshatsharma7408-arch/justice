@@ -58,12 +58,12 @@ STANDALONE_CIT_PATTERN = re.compile(
 )
 
 SECTION_PATTERN = re.compile(
-    r'\b(Sections?|Secs?\.?|S\.)[ \t]*(\d+[A-Za-z]*(?:\([0-9a-zA-Z]+\))*)\b',
+    r'\b(Sections?|Secs?\.?|S\.)[\s\u202f]*(\d+[A-Za-z]*(?:\([0-9a-zA-Z]+\))*)\b',
     re.IGNORECASE
 )
 
 ARTICLE_PATTERN = re.compile(
-    r'\b(Articles?|Arts?\.?)[ \t]*(\d+[A-Za-z]*(?:\([0-9a-zA-Z]+\))*)\b',
+    r'\b(Articles?|Arts?\.?)[ \s\u202f]*(\d+[A-Za-z]*(?:\([0-9a-zA-Z]+\))*)\b',
     re.IGNORECASE
 )
 
