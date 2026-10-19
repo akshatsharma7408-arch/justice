@@ -91,8 +91,11 @@ def run_12_tests():
         print(f"  Top 3 Cases:")
         for c in top_cases[:3]:
             print(f"    - {c.get('title')} ({c.get('citation')}) [score: {c.get('score', 0):.3f}]")
-        excerpt = ai_ans.replace('\n', ' ')[:140]
-        print(f"  Answer: {excerpt}...\n")
+        excerpt = ai_ans.replace('\n', ' ').replace('\u202f', ' ').replace('\u00a0', ' ')[:140]
+        try:
+            print(f"  Answer: {excerpt}...\n")
+        except UnicodeEncodeError:
+            print(f"  Answer: {excerpt.encode('ascii', errors='replace').decode('ascii')}...\n")
 
     out_file = BACKEND_DIR / "tests" / "citizen_rights_12_results.json"
     with open(out_file, "w", encoding="utf-8") as f:
