@@ -42,18 +42,18 @@ VERIFIED_ARTICLES = {
 PREPOSITIONS = {"in", "see", "under", "per", "re", "as"}
 
 # Pre-compiled regex patterns
-PARTY_WORD = r"[A-Za-z0-9&'\.\(\)\-]+"
-PARTY_A = rf"[A-Z][A-Za-z0-9&'\.\(\)\-]*(?:[ \t]+{PARTY_WORD}){{0,5}}"
-PARTY_B = rf"[A-Z][A-Za-z0-9&'\.\(\)\-]*(?:[ \t]+{PARTY_WORD}){{0,5}}"
+PARTY_WORD = r"(?:[A-Za-z0-9&'\.\-]+|\((?![\[\s]*[12]\d{3}\b)[^\)]+\)|\[(?![\[\s]*[12]\d{3}\b)[^\]]+\])"
+PARTY_A = rf"[A-Z][A-Za-z0-9&'\.\-]*(?:[ \t]+{PARTY_WORD}){{0,12}}"
+PARTY_B = rf"[A-Z][A-Za-z0-9&'\.\-]*(?:[ \t]+{PARTY_WORD}){{0,12}}"
 
 CASE_PATTERN = re.compile(
     rf'\b({PARTY_A}[ \t]+(?:v\.|vs\.?|versus)[ \t]+{PARTY_B})'
-    r'(?:[ \t]*,?[ \t]*(\(?\[?\d{4}\)?\]?[ \t]*\d*[ \t]*(?:SCC|AIR|SCR|SCALE|CompCas|ILR|PTC|DLT|INSC|S\.C\.R\.)[^\n,;\.]*))?',
+    r'(?:[ \t]*,?[ \t]*(\(?\[?\b[12]\d{3}\)?\]?[ \t]*\d*[ \t]*(?:SCC|AIR|SCR|SCALE|CompCas|ILR|PTC|DLT|INSC|S\.C\.R\.)[^\n,;\.]*))?',
     re.IGNORECASE
 )
 
 STANDALONE_CIT_PATTERN = re.compile(
-    r'(\(?\[?\b\d{4}\)?\]?[ \t]*\d*[ \t]*(?:SCC|AIR|SCR|SCALE|CompCas|ILR|PTC|DLT|INSC|S\.C\.R\.)[ \t]*\d+[A-Za-z0-9\s]*)',
+    r'(\(?\[?\b[12]\d{3}\)?\]?[ \t]*\d*[ \t]*(?:SCC|AIR|SCR|SCALE|CompCas|ILR|PTC|DLT|INSC|S\.C\.R\.)[ \t]*\d+[A-Za-z0-9\s]*)',
     re.IGNORECASE
 )
 

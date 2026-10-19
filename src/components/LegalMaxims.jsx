@@ -89,7 +89,7 @@ export default function LegalMaxims() {
         }
       })
       .catch(err => {
-        console.warn("[LegalMaxims] Backend maxims fetch failed, using local corpus fallback:", err.message);
+        console.error("[LegalMaxims] Backend maxims fetch failed, using local corpus fallback:", err);
         if (isMounted) setMaximsList(LEGAL_MAXIMS);
       })
       .finally(() => {

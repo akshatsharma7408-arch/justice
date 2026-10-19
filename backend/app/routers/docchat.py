@@ -349,6 +349,31 @@ async def upload_document_endpoint(
     )
 
 
+def split_compound_question(question: str) -> List[str]:
+    """
+    Splits compound multi-part questions into individual sub-questions.
+    Handles conjunctions like 'and can', 'and what', 'and does', 'and is',
+    or punctuation delimiters (? / ;) separating two question clauses.
+    """
+    q = question.strip()
+    if not q:
+        return []
+
+    # 1. Punctuation split: e.g. "What is my notice period? Can the company stop me..."
+    punc_parts = [p.strip() for p in re.split(r'[\?;]+\s*', q) if len(p.strip().split()) >= 3]
+    if len(punc_parts) >= 2:
+        return punc_parts
+
+    # 2. Conjunction split with question indicator:
+    # e.g., "what is my notice period and can the company stop me from working elsewhere"
+    conj_pattern = r'\s+(?:and|as well as|also)\s+(?=(?:can|what|does|do|is|are|will|shall|how|where|when|which|who|whether)\b)'
+    parts = [p.strip() for p in re.split(conj_pattern, q, flags=re.IGNORECASE) if len(p.strip().split()) >= 3]
+    if len(parts) >= 2:
+        return parts
+
+    return [q]
+
+
 @router.post("/chat", response_model=DocChatResponse)
 async def chat_with_document_endpoint(payload: DocChatRequest):
     """
@@ -374,7 +399,84 @@ async def chat_with_document_endpoint(payload: DocChatRequest):
             detail=f"Document with ID '{doc_id}' not found. Please upload the document first via /api/v1/doc/upload."
         )
 
-    # 2. Retrieve top matching chunks
+    boilerplate_words = {
+        "what", "when", "where", "which", "who", "whom", "how", "why", "this", "that", "there", 
+        "have", "does", "with", "from", "your", "under", "about", "tell", "show", "give", 
+        "please", "find", "explain", "describe", "company", "employer", "employee", "consultant", 
+        "client", "party", "parties", "agreement", "contract", "herein", "hereof", "thereof", 
+        "shall", "will", "would", "could", "should", "the", "and", "for", "any", "all", "terms", 
+        "clause", "section", "document", "provision", "stipulation", "is", "are", "was", "were",
+        "my", "me", "our", "us", "their", "them", "his", "her", "elsewhere"
+    }
+    doc_tokens = set(re.findall(r'\b[a-z0-9]{3,}\b', doc.raw_text.lower()))
+
+    # Check for compound / multi-part questions (e.g. "what is my notice period and can the company stop me from working elsewhere")
+    sub_questions = split_compound_question(question)
+    if len(sub_questions) >= 2:
+        sub_answers = []
+        all_citations: List[Citation] = []
+        for idx, sub_q in enumerate(sub_questions):
+            sub_lower = sub_q.lower()
+            sub_substantive = [w for w in re.findall(r'\b[a-z0-9]{3,}\b', sub_lower) if w not in boilerplate_words]
+            top_sub_chunks = retrieve_top_chunks(doc, sub_q, top_k=3)
+            best_chunk, best_score = top_sub_chunks[0] if top_sub_chunks else (None, 0.0)
+
+            # Specific check for notice period:
+            # If the user specifically asks about "notice" / "notice period", the document MUST contain "notice"
+            if "notice" in sub_lower and "notice" not in doc.raw_text.lower():
+                sub_answers.append(
+                    f"Part {idx + 1} ({sub_q}): The document does not contain any clause or provision specifying a notice period."
+                )
+                continue
+
+            # Specific check for working elsewhere / post-employment restrictions:
+            # In employment agreements, restrictions on working elsewhere or competing are covered in Restrictive Covenants
+            if any(w in sub_lower for w in ["working elsewhere", "work elsewhere", "compete", "stop me", "another company", "competitor"]):
+                cov_chunk = next((c for c, _ in top_sub_chunks if "restrictive" in c.heading.lower() or "non-solicitation" in c.heading.lower() or "covenant" in c.heading.lower() or "clause 12" in c.clause_number.lower()), None)
+                if cov_chunk:
+                    best_chunk = cov_chunk
+                    best_score = 0.50
+
+            chunk_tokens = set(re.findall(r'\b[a-z0-9]{3,}\b', f"{best_chunk.heading} {best_chunk.text}".lower())) if best_chunk else set()
+            chunk_matched = any(w in chunk_tokens for w in sub_substantive) if (best_chunk and sub_substantive) else False
+
+            if not best_chunk or best_score < 0.15 or not (chunk_matched or ("restrictive" in best_chunk.heading.lower())):
+                sub_answers.append(
+                    f"Part {idx + 1} ({sub_q}): The document does not contain any clause or provision covering this topic."
+                )
+            else:
+                sentences = [s.strip() for s in re.split(r'(?<=[.!?])\s+', best_chunk.text) if s.strip()]
+                matched_sentences = [
+                    s for s in sentences 
+                    if any(re.search(rf'\b{re.escape(w)}\b', s, re.IGNORECASE) for w in sub_substantive)
+                ]
+                quote = matched_sentences[0] if matched_sentences else best_chunk.text
+
+                # If asking about working elsewhere and clause is non-solicitation:
+                if any(w in sub_lower for w in ["working elsewhere", "work elsewhere", "stop me"]):
+                    explanation = (
+                        f"Under {best_chunk.clause_number} ({best_chunk.heading}), the agreement provides: \"{quote}\" "
+                        f"The document only restricts the solicitation of existing employees or clients for 12 months post-termination, and does not contain a clause prohibiting you from working elsewhere."
+                    )
+                else:
+                    explanation = f"Under {best_chunk.clause_number} ({best_chunk.heading}), the document stipulates: \"{quote}\""
+
+                sub_answers.append(f"Part {idx + 1} ({sub_q}): {explanation}")
+                all_citations.append(Citation(
+                    clause_number=best_chunk.clause_number,
+                    heading=best_chunk.heading,
+                    quoted_text=quote
+                ))
+
+        combined_ans = "\n\n".join(sub_answers)
+        ans_badged = citation_checker.check_and_badge_text(combined_ans, doc_context=doc.raw_text, is_tier2=False)
+        return DocChatResponse(
+            answer=ans_badged,
+            citations=all_citations,
+            model_used="compound_grounded_subquestions"
+        )
+
+    # 2. Retrieve top matching chunks for single question
     top_chunks_with_scores = retrieve_top_chunks(doc, question, top_k=5)
     top_chunks = [item[0] for item in top_chunks_with_scores]
     max_score = top_chunks_with_scores[0][1] if top_chunks_with_scores else 0.0

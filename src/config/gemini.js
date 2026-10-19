@@ -178,7 +178,9 @@ export async function fetchMaximsWithBackend(q = "", category = "ALL", letter = 
     headers: { 'Accept': 'application/json' }
   });
   if (!res.ok) {
-    throw new Error(`Maxims query failed (HTTP ${res.status})`);
+    const errorDetail = await res.text().catch(() => '');
+    console.error(`[fetchMaximsWithBackend] HTTP ${res.status} error from ${res.url}:`, errorDetail);
+    throw new Error(`Maxims query failed (HTTP ${res.status}): ${errorDetail}`);
   }
   return await res.json();
 }
@@ -192,7 +194,9 @@ export async function fetchMaximOfTheDayWithBackend() {
     headers: { 'Accept': 'application/json' }
   });
   if (!res.ok) {
-    throw new Error(`Maxim of the day fetch failed (HTTP ${res.status})`);
+    const errorDetail = await res.text().catch(() => '');
+    console.error(`[fetchMaximOfTheDayWithBackend] HTTP ${res.status} error from ${res.url}:`, errorDetail);
+    throw new Error(`Maxim of the day fetch failed (HTTP ${res.status}): ${errorDetail}`);
   }
   return await res.json();
 }

@@ -60,7 +60,7 @@ async def list_maxims(
     category: Optional[str] = Query(None, description="Filter by legal category (e.g. Constitutional, Criminal, Contract)"),
     letter: Optional[str] = Query(None, description="Single starting letter of Latin maxim (A-Z)"),
     page: int = Query(1, ge=1, description="Page number"),
-    limit: int = Query(25, ge=1, le=250, description="Items per page")
+    limit: int = Query(25, ge=1, le=1000, description="Items per page")
 ):
     """
     Search and filter Latin Legal Maxims with pagination, category filter, and A-Z indexing.

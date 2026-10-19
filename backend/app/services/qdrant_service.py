@@ -150,8 +150,8 @@ def classify_query_topic(query: str) -> Optional[str]:
 
 
 def extract_substantive_terms(query: str) -> List[str]:
-    """Extracts substantive content words from query, excluding generic stopwords."""
-    tokens = re.findall(r"[a-zA-Z0-9]{3,}", query.lower())
+    """Extracts substantive content words and section numbers from query, excluding generic stopwords."""
+    tokens = re.findall(r"[a-zA-Z]{3,}|\b\d+\b", query.lower())
     return [t for t in tokens if t not in SEARCH_STOPWORDS]
 
 
@@ -325,8 +325,56 @@ class QdrantService:
 
         # 2. Re-rank candidates combining vector score, topic match, and key-term overlap
         candidates = []
+
+        # (a) First evaluate verified landmark precedents from self.corpus (e.g. Kailash Nath, Percept D'Mark, Puttaswamy)
+        corpus_vecs = self._get_corpus_vectors()
+        norm_v = math.sqrt(sum(q * q for q in vector)) or 1.0
+        for case_item, c_vec in zip(self.corpus, corpus_vecs):
+            c_copy = dict(case_item)
+            if not self._matches_filters(c_copy, court_filter, bench_filter):
+                continue
+
+            dot = sum(q * c for q, c in zip(vector, c_vec))
+            norm_c = math.sqrt(sum(c * c for c in c_vec)) or 1.0
+            cos_sim = dot / (norm_v * norm_c)
+
+            c_title = c_copy.get("title", "")
+            c_text = f"{c_title} {c_copy.get('citation', '')} {c_copy.get('ratioSummary', '')} {' '.join(c_copy.get('statutes', []))} {' '.join(c_copy.get('keywords', []))}".lower()
+            t_matches = sum(1 for t in substantive_terms if t in c_title.lower())
+            tx_matches = sum(1 for t in substantive_terms if t in c_text)
+            t_ratio = (tx_matches / max(len(substantive_terms), 1)) if substantive_terms else 1.0
+            t_boost = min(0.35, t_matches * 0.15 + t_ratio * 0.15)
+            c_keywords = [k.lower() for k in c_copy.get("keywords", [])]
+            kw_matches = sum(1 for k in c_keywords if k in query.lower())
+            landmark_boost = min(0.35, kw_matches * 0.15)
+            c_comb_score = cos_sim + t_boost + landmark_boost + 0.15
+
+            if (cos_sim >= 0.45) or (cos_sim >= 0.35 and (len(substantive_terms) == 0 or tx_matches > 0)):
+                c_copy["relevance_score"] = round(float(c_comb_score), 3)
+                c_copy["raw_vector_score"] = round(float(cos_sim), 3)
+                c_copy["retrieval_mode"] = f"qdrant+verified_precedents+{embedding_service.mode}"
+                candidates.append(c_copy)
+
+        # (b) Evaluate Qdrant cloud hits
         for hit in unique_hits:
             case = dict(hit.payload or {})
+
+            # Populate standard case fields BEFORE _matches_filters so court/bench filters don't drop valid SC cases
+            if not case.get("title") and case.get("case_name"):
+                case["title"] = case.get("case_name")
+            if not case.get("decisionYear") and case.get("year"):
+                case["decisionYear"] = case.get("year")
+            if not case.get("ratioSummary") and case.get("text"):
+                case["ratioSummary"] = case["text"][:450] + ("..." if len(case["text"]) > 450 else "")
+            if not case.get("court"):
+                case["court"] = "Supreme Court of India"
+            if not case.get("benchType"):
+                case["benchType"] = "Supreme Court Bench"
+            if not case.get("benchSize"):
+                case["benchSize"] = 2
+            if not case.get("statutes"):
+                case["statutes"] = ["Constitution of India", "Supreme Court of India Jurisprudence"]
+
             if not self._matches_filters(case, court_filter, bench_filter):
                 continue
 
@@ -377,22 +425,6 @@ class QdrantService:
                 if not (has_bike and has_stop):
                     continue
 
-            # Populate standard case fields
-            if not case.get("title") and case.get("case_name"):
-                case["title"] = case.get("case_name")
-            if not case.get("decisionYear") and case.get("year"):
-                case["decisionYear"] = case.get("year")
-            if not case.get("ratioSummary") and case.get("text"):
-                case["ratioSummary"] = case["text"][:450] + ("..." if len(case["text"]) > 450 else "")
-            if not case.get("court"):
-                case["court"] = "Supreme Court of India"
-            if not case.get("benchType"):
-                case["benchType"] = "Supreme Court Bench"
-            if not case.get("benchSize"):
-                case["benchSize"] = 2
-            if not case.get("statutes"):
-                case["statutes"] = ["Constitution of India", "Supreme Court of India Jurisprudence"]
-
             case["relevance_score"] = round(float(combined_score), 3)
             case["raw_vector_score"] = round(float(v_score), 3)
             case["retrieval_mode"] = f"qdrant+{target_collection}+{embedding_service.mode}"
@@ -401,16 +433,24 @@ class QdrantService:
         # Re-rank by combined score descending
         candidates.sort(key=lambda x: x["relevance_score"], reverse=True)
 
-        # Deduplicate cases by title and cap at most 3 cases
+        # Deduplicate cases by title and party overlap, capping at most 3 cases
         results: List[Dict[str, Any]] = []
         seen_cases = set()
+        seen_parties = []
         max_to_return = min(limit, 3)
         for c in candidates:
             title_key = (c.get("title") or "").strip().lower()
             if title_key and title_key in seen_cases:
                 continue
+            party_tokens = set(re.findall(r'[a-z]{4,}', title_key)) - {
+                "versus", "state", "union", "india", "court", "limited", "authority", "corporation", "company"
+            }
+            if party_tokens and any(len(party_tokens & prev) >= 2 for prev in seen_parties):
+                continue
             if title_key:
                 seen_cases.add(title_key)
+                if party_tokens:
+                    seen_parties.append(party_tokens)
             results.append(c)
             if len(results) >= max_to_return:
                 break
@@ -530,8 +570,35 @@ class QdrantService:
         for c in self.corpus:
             title = c.get("title", "").lower()
             cit = c.get("citation", "").lower()
-            alt_cits = [ac.lower() for ac in c.get("alternateCitations", [])]
-            if (q in title or title in q) or (q in cit or cit in q) or any(q in ac for ac in alt_cits):
+            alt_cits = [ac.lower() for ac in (c.get("altCitations") or c.get("alternateCitations") or [])]
+            if (q in title or title in q) or (q in cit or cit in q) or any(q in ac or ac in q for ac in alt_cits):
+                return {
+                    "verified": True,
+                    "title": c.get("title"),
+                    "citation": c.get("citation"),
+                    "court": c.get("court"),
+                    "year": c.get("decisionYear"),
+                    "source_collection": "12_precedents",
+                    "badge": "verified"
+                }
+
+            # Distinct landmark keywords (e.g. Golikari, Puttaswamy, Kailash Nath, Percept D'Mark, Dawoodi Bohra)
+            c_keywords = [k.lower() for k in c.get("keywords", [])]
+            if any(k in q for k in c_keywords):
+                return {
+                    "verified": True,
+                    "title": c.get("title"),
+                    "citation": c.get("citation"),
+                    "court": c.get("court"),
+                    "year": c.get("decisionYear"),
+                    "source_collection": "12_precedents",
+                    "badge": "verified"
+                }
+
+            # Normalized title check (ignoring "the", punctuation, spacing)
+            norm_q = re.sub(r'[^a-z0-9]', '', re.sub(r'\bthe\b', '', q))
+            norm_title = re.sub(r'[^a-z0-9]', '', re.sub(r'\bthe\b', '', title))
+            if norm_q and (norm_q in norm_title or norm_title in norm_q):
                 return {
                     "verified": True,
                     "title": c.get("title"),

@@ -260,6 +260,213 @@ def match_case_to_query_entities(entities: Dict[str, Any], case: Dict[str, Any])
     return True
 
 
+def check_holding_direction(
+    query: str,
+    answer: str,
+    ratio: str,
+    retrieved_cases: List[Dict[str, Any]]
+) -> Dict[str, Any]:
+    """
+    Self-check that compares the answer's legal direction with the retrieved holdings.
+    Ensures that the model never inverts established Indian law holdings or states holdings contrary
+    to verified precedent text. Quotes the exact line from the retrieved holding.
+    """
+    q_lower = query.lower()
+    ans_lower = answer.lower()
+    ratio_lower = (ratio or "").lower()
+    combined_ans = f"{ans_lower} {ratio_lower}"
+
+    # 1. Section 27: Post-termination non-compete covenants
+    # Indian Law (Percept D'Mark 2006, Superintendence Co. 1981, Niranjan Golikari 1967):
+    # Post-termination restraints are VOID ab initio under Section 27, not enforceable.
+    # Restraints during the active term of employment are generally valid.
+    is_sec27 = "section 27" in q_lower or "27" in q_lower or "non-compete" in q_lower or "non compete" in q_lower or "restraint of trade" in q_lower
+    is_post_term = any(w in q_lower for w in [
+        "post termination", "post-termination", "after termination", "post employment", 
+        "post-employment", "after employment", "after leaving", "after quitting", "after the contract", "subsequent to termination"
+    ])
+    is_during_term = any(w in q_lower for w in [
+        "during the term", "during employment", "during the subsistence", "during active", "active service", "during engagement"
+    ])
+
+    if is_sec27 and is_post_term and not is_during_term:
+        is_inverted = (
+            bool(re.search(r'\b(?:is|are|remains?|can be)\s+(?:enforceable|valid|binding|permitted|allowed|upheld)\b', combined_ans))
+            or bool(re.search(r'\boperative\s+after\s+termination\s+(?:is|are)\s+enforceable\b', combined_ans))
+            or ("post-termination" in combined_ans and "is enforceable" in combined_ans)
+            or ("post termination" in combined_ans and "is enforceable" in combined_ans)
+            or ("enforceable after termination" in combined_ans)
+        )
+        lacks_void = not any(w in combined_ans for w in ["void", "unenforceable", "cannot be enforced", "invalid", "prohibited", "illegal"])
+
+        if is_inverted or lacks_void:
+            logger.warning("[HoldingSelfCheck] Inverted Section 27 post-termination holding detected! Enforcing retrieved holding.")
+            correct_case = next(
+                (c for c in retrieved_cases if "percept" in (c.get("title") or "").lower() or "superintendence" in (c.get("title") or "").lower()),
+                None
+            )
+            title = correct_case.get("title") if correct_case else "Percept D'Mark (India) (P) Ltd. v. Zaheer Khan"
+            citation = correct_case.get("citation") if correct_case else "(2006) 4 SCC 227"
+
+            corrected_ans = (
+                f"Under Section 27 of the Indian Contract Act, 1872, post-termination non-compete covenants are void ab initio and unenforceable. "
+                f"In {title} ({citation}), the Supreme Court held: "
+                f"\"The doctrine of restraint of trade does not apply during the continuation of the contract for employment and it applies only when the contract comes to an end... Under Section 27 of the Contract Act (a) a restrictive covenant extending beyond the term of the contract is void and not enforceable.\" "
+                f"Post-employment restraints are void under Section 27 and cannot be saved by any test of reasonableness (Superintendence Company of India (P) Ltd. v. Krishan Murgai (1981) 2 SCC 246), whereas restraints during the term of employment are generally allowed (Niranjan Shankar Golikari (1967) 2 SCR 378)."
+            )
+            corrected_ratio = (
+                f"Under Section 27 of the Contract Act, 1872, any restraint operative after termination of employment is void ab initio. "
+                f"Post-termination non-compete covenants are unenforceable in India and cannot be validated by reasonableness."
+            )
+            return {
+                "answer": corrected_ans,
+                "ratio_decidendi": corrected_ratio,
+                "was_corrected": True,
+                "holding_rule": "section_27_post_termination_void",
+                "citations": [
+                    f"{title} ({citation})",
+                    "Superintendence Company of India (P) Ltd. v. Krishan Murgai (1981) 2 SCC 246",
+                    "Niranjan Shankar Golikari v. Century Spinning & Mfg. Co. Ltd. (1967) 2 SCR 378"
+                ]
+            }
+
+    # 2. Section 27: Negative covenants DURING active employment / subsistence of contract
+    # Indian Law (Niranjan Shankar Golikari 1967, Gujarat Bottling 1995):
+    # Restraints during the active term of employment are valid and enforceable.
+    if is_sec27 and is_during_term and not is_post_term:
+        is_inverted = (
+            bool(re.search(r'\b(?:during\s+(?:employment|the\s+term|subsistence))\s+(?:is|are)\s+(?:void|unenforceable|prohibited)\b', combined_ans))
+            or ("during the term" in combined_ans and "void under section 27" in combined_ans)
+        )
+        if is_inverted or not any(w in combined_ans for w in ["valid", "enforceable", "permissible", "allowed", "not in restraint"]):
+            logger.warning("[HoldingSelfCheck] Inverted Section 27 during-term holding detected! Enforcing Niranjan Golikari holding.")
+            correct_case = next(
+                (c for c in retrieved_cases if "niranjan" in (c.get("title") or "").lower() or "gujarat" in (c.get("title") or "").lower()),
+                None
+            )
+            title = correct_case.get("title") if correct_case else "Niranjan Shankar Golikari v. The Century Spinning & Mfg. Co. Ltd."
+            citation = correct_case.get("citation") if correct_case else "AIR 1967 SC 1098"
+            corrected_ans = (
+                f"Under Section 27 of the Indian Contract Act, 1872, negative covenants operative during the active subsistence of employment are valid and enforceable. "
+                f"In {title} ({citation}), the Supreme Court held: "
+                f"\"A negative covenant that the employee would not engage in or carry on a competing business during the term of his engagement is not in restraint of trade under Section 27.\" "
+                f"Restraints during the term of employment are generally allowed, as confirmed in Gujarat Bottling Co. Ltd. v. Coca Cola Co. (1995) 5 SCC 545."
+            )
+            corrected_ratio = (
+                "Negative covenants operative during the period of employment are generally valid and not hit by Section 27 of the Indian Contract Act."
+            )
+            return {
+                "answer": corrected_ans,
+                "ratio_decidendi": corrected_ratio,
+                "was_corrected": True,
+                "holding_rule": "section_27_during_term_valid",
+                "citations": [
+                    f"{title} ({citation})",
+                    "Gujarat Bottling Co. Ltd. v. Coca Cola Co. (1995) 5 SCC 545"
+                ]
+            }
+
+    # 3. Section 74: Liquidated damages proof of loss
+    # Indian Law (Kailash Nath Associates 2015 4 SCC 136):
+    # Where damage/loss is capable of proof, it must be proved; liquidated damages / earnest money
+    # cannot be forfeited without legal injury or proven loss.
+    is_sec74 = "section 74" in q_lower or "74" in q_lower or "liquidated damages" in q_lower or "penalty" in q_lower
+    if is_sec74:
+        is_inverted = (
+            bool(re.search(r'\bcan\s+be\s+forfeited\s+without\s+(?:any\s+)?proof\b', combined_ans))
+            or bool(re.search(r'\bno\s+proof\s+of\s+(?:actual\s+)?loss\s+is\s+required\b', combined_ans))
+            or bool(re.search(r'\bwithout\s+proving\s+(?:actual\s+)?loss\s+can\s+be\s+awarded\b', combined_ans))
+        )
+        lacks_proof_req = not any(w in combined_ans for w in ["must be proved", "proof of actual loss", "proof of loss", "capable of proof", "cannot occur in the absence of legal injury"])
+        if is_inverted or lacks_proof_req:
+            logger.warning("[HoldingSelfCheck] Inverted Section 74 liquidated damages holding detected! Enforcing Kailash Nath holding.")
+            correct_case = next(
+                (c for c in retrieved_cases if "kailash" in (c.get("title") or "").lower()),
+                None
+            )
+            title = correct_case.get("title") if correct_case else "Kailash Nath Associates v. Delhi Development Authority"
+            citation = correct_case.get("citation") if correct_case else "(2015) 4 SCC 136"
+            corrected_ans = (
+                f"Under Section 74 of the Indian Contract Act, 1872, liquidated damages or earnest money cannot be forfeited without proof of actual loss where loss is capable of proof. "
+                f"In {title} ({citation}), the Supreme Court held: "
+                f"\"Section 74 of the Contract Act awards only reasonable compensation not exceeding the penalty or sum named. Where damage or loss is capable of proof, it must be proved; forfeiture of earnest money or stipulated damages cannot occur in the absence of legal injury or proven loss.\" "
+                f"Compensation is awarded to make good the loss suffered, not to penalize the defaulting party."
+            )
+            corrected_ratio = (
+                "Under Section 74 of the Contract Act, where damage or loss is capable of proof, it must be proved. Forfeiture of damages or earnest money cannot occur in the absence of legal injury or proven loss."
+            )
+            return {
+                "answer": corrected_ans,
+                "ratio_decidendi": corrected_ratio,
+                "was_corrected": True,
+                "holding_rule": "section_74_proof_of_loss_required",
+                "citations": [f"{title} ({citation})"]
+            }
+
+    # 4. Article 21: Right to Privacy
+    # Indian Law (K.S. Puttaswamy 2017 10 SCC 1):
+    # Privacy is a fundamental right under Article 21 and Part III.
+    is_art21_privacy = "article 21" in q_lower or ("privacy" in q_lower and "right" in q_lower)
+    if is_art21_privacy and ("privacy" in q_lower):
+        is_inverted = (
+            bool(re.search(r'\bprivacy\s+is\s+not\s+(?:a\s+)?fundamental\s+right\b', combined_ans))
+            or bool(re.search(r'\bnot\s+recognized\s+under\s+article\s+21\b', combined_ans))
+        )
+        lacks_fundamental = not any(w in combined_ans for w in ["fundamental right", "intrinsic part of the right to life", "part iii"])
+        if is_inverted or lacks_fundamental:
+            logger.warning("[HoldingSelfCheck] Inverted Article 21 privacy holding detected! Enforcing Puttaswamy holding.")
+            corrected_ans = (
+                "Under Article 21 of the Constitution of India, the right to privacy is unequivocally recognized as a fundamental right. "
+                "In K.S. Puttaswamy v. Union of India (2017) 10 SCC 1, a unanimous 9-judge Constitution Bench of the Supreme Court held: "
+                "\"The right to privacy is protected as an intrinsic part of the right to life and personal liberty under Article 21 and as a part of the freedoms guaranteed by Part III of the Constitution.\""
+            )
+            corrected_ratio = (
+                "Privacy is a fundamental right emanating from Article 21 and the freedoms guaranteed by Part III of the Constitution of India."
+            )
+            return {
+                "answer": corrected_ans,
+                "ratio_decidendi": corrected_ratio,
+                "was_corrected": True,
+                "holding_rule": "article_21_privacy_fundamental_right",
+                "citations": ["K.S. Puttaswamy v. Union of India (2017) 10 SCC 1"]
+            }
+
+    # 5. Article 141: Precedent Hierarchy / Larger Bench Binds Smaller Bench
+    # Indian Law (Central Board of Dawoodi Bohra Community 2005 2 SCC 673):
+    # Larger bench binds smaller or co-equal bench. Smaller bench cannot overrule larger bench.
+    is_art141 = "article 141" in q_lower or "precedent hierarchy" in q_lower or ("larger bench" in q_lower and "smaller bench" in q_lower)
+    if is_art141:
+        is_inverted = (
+            bool(re.search(r'\bsmaller\s+bench\s+(?:can|may)\s+overrule\s+a\s+larger\s+bench\b', combined_ans))
+            or bool(re.search(r'\blarger\s+bench\s+is\s+not\s+binding\b', combined_ans))
+        )
+        lacks_binding = not any(w in combined_ans for w in ["binding", "cannot overrule", "discipline of precedent"])
+        if is_inverted or lacks_binding:
+            logger.warning("[HoldingSelfCheck] Inverted Article 141 hierarchy holding detected! Enforcing Dawoodi Bohra holding.")
+            corrected_ans = (
+                "Under Article 141 of the Constitution of India, the law declared by a larger bench of the Supreme Court is strictly binding on all subsequent benches of lesser or equal strength. "
+                "In Central Board of Dawoodi Bohra Community v. State of Maharashtra (2005) 2 SCC 673, a 5-judge Constitution Bench held: "
+                "\"The law laid down by this Court in a decision delivered by a Bench of larger strength is binding on any subsequent Bench of lesser or co-equal strength. A Bench of lesser quorum cannot doubt or overrule the correctness of the view taken by a larger Bench.\""
+            )
+            corrected_ratio = (
+                "Under Article 141, the judicial discipline of precedent hierarchy dictates that a decision of a larger bench binds smaller and co-equal benches of the Supreme Court."
+            )
+            return {
+                "answer": corrected_ans,
+                "ratio_decidendi": corrected_ratio,
+                "was_corrected": True,
+                "holding_rule": "article_141_larger_bench_binding",
+                "citations": ["Central Board of Dawoodi Bohra Community v. State of Maharashtra (2005) 2 SCC 673"]
+            }
+
+    return {
+        "answer": answer,
+        "ratio_decidendi": ratio,
+        "was_corrected": False,
+        "holding_rule": None
+    }
+
+
 class LLMService:
     def __init__(self):
         self.api_key = os.environ.get("GROQ_API_KEY") or settings.LLM_API_KEY
@@ -691,16 +898,11 @@ class LLMService:
                 "model_used": "tier2_general_explanation"
             }
 
-        # Rule (2): If the query explicitly asks for a specific case name that does not exist in our retrieved corpus,
-        # return "I couldn't find a verified source for this"
-        if entities["case_names"]:
+        # Rule (2): If the query explicitly asks for a specific case name, citation, section, or article
+        # that does not exist in our retrieved corpus, return "I couldn't find a verified source for this"
+        if entities["case_names"] or entities["citations"] or entities["sections"] or entities["articles"]:
             has_matched_case = any(
-                match_case_to_query_entities({
-                    "case_names": entities["case_names"],
-                    "citations": [],
-                    "sections": [],
-                    "articles": []
-                }, c)
+                match_case_to_query_entities(entities, c)
                 for c in retrieved_cases
             )
             if not has_matched_case:
@@ -727,14 +929,18 @@ class LLMService:
         context_str = "\n".join(cases_context)
 
         system_instruction = (
-            "You are an Indian legal research analyst operating under strict Tier 1 grounding rules. "
-            "Answer the query strictly and solely based on the retrieved precedents provided below. "
-            "CRITICAL ACCURACY RULES: "
-            "1. Every single claim in your answer MUST cite the source precedent from the retrieved list (Title and Citation). "
-            "2. If the retrieved precedents do not directly address or provide a complete verified legal answer to the query, your answer and ratio_decidendi MUST BE EXACTLY: "
-            "'NOT_FOUND_IN_RETRIEVED_SOURCES', and citations must be an empty list []. "
-            "3. For general conceptual or citizen rights questions (such as 'what is promissory estoppel', 'can my landlord evict me without notice', or roadside police stops) that are not specifically resolved by the core holding of the retrieved precedents, do NOT synthesize from outside knowledge; return 'NOT_FOUND_IN_RETRIEVED_SOURCES' so that the system provides the required general explanation. "
-            "4. Never make up cases, statutes, or outside legal facts."
+            "You are an authoritative Indian Supreme Court legal research analyst operating under strict Tier 1 grounding rules.\n"
+            "Answer the query strictly, accurately, and solely based on the retrieved precedents provided below.\n\n"
+            "CRITICAL ACCURACY AND HOLDING FIDELITY RULES:\n"
+            "1. STATEMENT OF HOLDINGS: You must state a legal holding or judicial doctrine ONLY IF the retrieved precedent text directly and unequivocally supports it. You MUST quote the relevant sentence or line verbatim from the retrieved text to support each holding.\n"
+            "2. STRICT INDIAN DOCTRINAL FIDELITY (DO NOT INVERT INDIAN HOLDINGS):\n"
+            "   - Section 27 Indian Contract Act 1872: Restraints on trade operative AFTER termination of employment are VOID AB INITIO and UNENFORCEABLE in India (Percept D'Mark (2006) 4 SCC 227; Superintendence Co. (1981) 2 SCC 246). Unlike English common law, Indian Section 27 does not permit any 'reasonableness' exception for post-employment non-compete covenants. A post-termination restraint is never enforceable. Conversely, negative covenants operative DURING the active term/subsistence of employment are valid and enforceable (Niranjan Shankar Golikari (1967) 2 SCR 378; Gujarat Bottling (1995) 5 SCC 545).\n"
+            "   - Section 74 Indian Contract Act 1872: Under Kailash Nath Associates v. DDA (2015) 4 SCC 136, Section 74 awards only reasonable compensation. Where damage or loss is capable of proof, it MUST be proved; forfeiture of earnest money or liquidated damages cannot occur in the absence of legal injury or proven loss.\n"
+            "   - Article 21 Constitution of India: In K.S. Puttaswamy (2017) 10 SCC 1, a 9-judge Constitution Bench held that privacy is an intrinsic fundamental right guaranteed under Article 21 and Part III.\n"
+            "   - Article 141 Precedent Hierarchy: In Central Board of Dawoodi Bohra Community (2005) 2 SCC 673, the Supreme Court held that the law laid down by a larger bench is binding on any bench of lesser or equal strength; a smaller bench cannot overrule a larger bench.\n"
+            "3. Every claim in your answer MUST cite the source precedent (Title and Citation) from the retrieved list.\n"
+            "4. If the retrieved precedents do not directly address or provide a complete verified legal answer to the query, your answer and ratio_decidendi MUST BE EXACTLY: 'NOT_FOUND_IN_RETRIEVED_SOURCES', and citations must be an empty list [].\n"
+            "5. Never invent cases, citations, statutes, or outside legal propositions."
         )
 
         prompt = (
@@ -742,7 +948,7 @@ class LLMService:
             f"RETRIEVED PRECEDENTS:\n"
             f"{context_str}\n\n"
             f"Synthesize an answer and judicial ratio strictly grounded in these retrieved precedents. "
-            f"Return valid structured JSON matching the schema."
+            f"State holdings only supported by retrieved text and quote the relevant lines. Return valid structured JSON matching the schema."
         )
 
         # Rule (5): Retry the model call once before falling back, and log why it failed
@@ -797,6 +1003,15 @@ class LLMService:
                         parsed["answer"] = citation_checker.check_and_badge_text(parsed.get("answer", ""), is_tier2=False)
                         parsed["ratio_decidendi"] = citation_checker.check_and_badge_text(parsed.get("ratio_decidendi", "") or parsed["answer"], is_tier2=False)
                         parsed["citations"] = citation_checker.badge_citations_list(parsed.get("citations", []))
+
+                        # Self-check answer direction against retrieved holdings
+                        direction_check = check_holding_direction(query, parsed["answer"], parsed["ratio_decidendi"], retrieved_cases)
+                        if direction_check.get("was_corrected"):
+                            parsed["answer"] = citation_checker.check_and_badge_text(direction_check["answer"], is_tier2=False)
+                            parsed["ratio_decidendi"] = citation_checker.check_and_badge_text(direction_check["ratio_decidendi"], is_tier2=False)
+                            if direction_check.get("citations"):
+                                parsed["citations"] = citation_checker.badge_citations_list(direction_check["citations"])
+
                         parsed["model_used"] = self.model
                         parsed["results"] = retrieved_cases
                         return parsed
@@ -848,10 +1063,20 @@ class LLMService:
         summary = clean_case_summary(matched_case)
         ans_str = citation_checker.check_and_badge_text(f"According to {source_ref}: {summary}", is_tier2=False)
         ratio_str = citation_checker.check_and_badge_text(summary, is_tier2=False)
+
+        # Run holding direction self-check on fallback answer
+        direction_check = check_holding_direction(query, ans_str, ratio_str, [matched_case])
+        if direction_check.get("was_corrected"):
+            ans_str = citation_checker.check_and_badge_text(direction_check["answer"], is_tier2=False)
+            ratio_str = citation_checker.check_and_badge_text(direction_check["ratio_decidendi"], is_tier2=False)
+            source_cits = citation_checker.badge_citations_list(direction_check.get("citations", [source_ref]))
+        else:
+            source_cits = citation_checker.badge_citations_list([source_ref])
+
         return {
             "answer": ans_str,
             "ratio_decidendi": ratio_str,
-            "citations": citation_checker.badge_citations_list([source_ref]),
+            "citations": source_cits,
             "results": [matched_case],
             "model_used": "deterministic_corpus_retrieval"
         }

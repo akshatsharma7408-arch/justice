@@ -5,11 +5,11 @@
       "question": "Under Section 27 of the Indian Contract Act, are post-employment non-compete covenants enforceable in India?",
       "category": "Corpus (Answerable)",
       "surface": "Universal Search",
-      "answer_excerpt": "According to VIJAYA BANK & ANR. versus PRASHANT B NARNAWARE ([2025] 6 S.C.R. 240): trade or business has to be tested on the to...",
-      "full_answer": "According to VIJAYA BANK & ANR. versus PRASHANT B NARNAWARE ([2025] 6 S.C.R. 240): trade or business has to be tested on the touchstone of Section 27 of the Contract Act. Whether Section 27 operates as a bar to a restrictive covenant during the subsistence of an employment contract fell for decision 3 Karnataka HC DB in W.A.",
+      "answer_excerpt": "According to Stellar Information Technology Pvt. Ltd. v. Rakesh Kumar & Ors (Delhi High Court, 29 August 2016): An employer can...",
+      "full_answer": "According to Stellar Information Technology Pvt. Ltd. v. Rakesh Kumar & Ors (Delhi High Court, 29 August 2016): An employer cannot dress up a non-compete as a confidentiality clause to restrain a former employee's trade; post-employment restraints remain void under Section 27. Obligations survive only insofar as they protect specific confidential information rather than bar competition...",
       "tier_used": "Tier 1 (Deterministic Corpus Grounded)",
       "citations": [
-        "VIJAYA BANK & ANR. versus PRASHANT B NARNAWARE ([2025] 6 S.C.R. 240)"
+        "Stellar Information Technology Pvt. Ltd. v. Rakesh Kumar & Ors (Delhi High Court, 29 August 2016)"
       ],
       "model_used": "deterministic_corpus_retrieval",
       "verdict": "PASS",
@@ -20,11 +20,11 @@
       "question": "Can liquidated damages be forfeited under Section 74 of the Indian Contract Act without proof of actual loss?",
       "category": "Corpus (Answerable)",
       "surface": "Universal Search",
-      "answer_excerpt": "According to AUTHORISED OFFICER, CENTRAL BANK OF INDIA versus SHANMUGAVELU ([2024] 2 S.C.R. 12): forfeited and the mere fact th...",
-      "full_answer": "According to AUTHORISED OFFICER, CENTRAL BANK OF INDIA versus SHANMUGAVELU ([2024] 2 S.C.R. 12): forfeited and the mere fact that the word \u201cmay\u201d is used in that Rule cannot be taken to mean that only such sum out of the deposit can be forfeited as the Court may think proper as damages following the failure of the buyer to complete the sale.\u201d (Emphasis supplied) 66\b [2024]...",
+      "answer_excerpt": "According to Kailash Nath Associates v. Delhi Development Authority ((2015) 4 SCC 136): Section 74 of the Contract Act awards o...",
+      "full_answer": "According to Kailash Nath Associates v. Delhi Development Authority ((2015) 4 SCC 136): Section 74 of the Contract Act awards only reasonable compensation not exceeding the penalty or sum named. Where damage or loss is capable of proof, it must be proved; forfeiture of earnest money or stipulated damages cannot occur in the absence of legal injury or proven loss.",
       "tier_used": "Tier 1 (Deterministic Corpus Grounded)",
       "citations": [
-        "AUTHORISED OFFICER, CENTRAL BANK OF INDIA versus SHANMUGAVELU ([2024] 2 S.C.R. 12)"
+        "Kailash Nath Associates v. Delhi Development Authority ((2015) 4 SCC 136)"
       ],
       "model_used": "deterministic_corpus_retrieval",
       "verdict": "PASS",
@@ -35,11 +35,11 @@
       "question": "Is the right to privacy recognized as a fundamental right under Article 21 of the Constitution of India?",
       "category": "Corpus (Answerable)",
       "surface": "Universal Search",
-      "answer_excerpt": "According to R. RAJAGOPAL@ [Not Verified] ([1994] SUPP. 4 S.C.R. 353): from an unlawful invasion of privacy and (2) the constit...",
-      "full_answer": "According to R. RAJAGOPAL@ [Not Verified] ([1994] SUPP. 4 S.C.R. 353): from an unlawful invasion of privacy and (2) the constitutional recognition given to the right to privacy which protects personal privacy against unlaw- ful governmental invasion. The first aspect of this right must be said to have H been violated where, for example, a person'...",
+      "answer_excerpt": "According to Justice K.S. Puttaswamy (Retd.) v. Union of India ((2017) 10 SCC 1): The right to privacy is a fundamental right i...",
+      "full_answer": "According to Justice K.S. Puttaswamy (Retd.) v. Union of India ((2017) 10 SCC 1): The right to privacy is a fundamental right intrinsic to Article 21 and Part III of the Constitution. The nine-judge expressly overruled M.P.",
       "tier_used": "Tier 1 (Deterministic Corpus Grounded)",
       "citations": [
-        "R. RAJAGOPAL@ [Not Verified] ([1994] SUPP. 4 S.C.R. 353)"
+        "Justice K.S. Puttaswamy (Retd.) v. Union of India ((2017) 10 SCC 1)"
       ],
       "model_used": "deterministic_corpus_retrieval",
       "verdict": "PASS",
@@ -212,13 +212,15 @@
       "question": "Under Section 27 of the Indian Contract Act, are post-employment non-compete covenants enforceable in India?",
       "category": "Corpus (Answerable)",
       "surface": "Universal Search",
-      "answer_excerpt": "According to VIJAYA BANK & ANR. versus PRASHANT B NARNAWARE ([2025] 6 S.C.R. 240): trade or business has to be tested on the to...",
-      "full_answer": "According to VIJAYA BANK & ANR. versus PRASHANT B NARNAWARE ([2025] 6 S.C.R. 240): trade or business has to be tested on the touchstone of Section 27 of the Contract Act. Whether Section 27 operates as a bar to a restrictive covenant during the subsistence of an employment contract fell for decision 3 Karnataka HC DB in W.A.",
-      "tier_used": "Tier 1 (Deterministic Corpus Grounded)",
+      "answer_excerpt": "Under Section 27 of the Indian Contract Act, post\u2011employment non\u2011compete covenants are void and unenforceable in India.",
+      "full_answer": "Under Section 27 of the Indian Contract Act, post\u2011employment non\u2011compete covenants are void and unenforceable in India.",
+      "tier_used": "Tier 1 (Corpus Grounded)",
       "citations": [
-        "VIJAYA BANK & ANR. versus PRASHANT B NARNAWARE ([2025] 6 S.C.R. 240)"
+        "Percept D'Mark (India) (P) Ltd. v. Zaheer Khan (2006) 4 SCC 227",
+        "Stellar Information Technology Pvt. Ltd. v. Rakesh Kumar & Ors, Delhi High Court, 29 August 2016",
+        "Desiccant Rotors International Pvt. Ltd. v. Bappaditya Sarkar & Anr, Delhi High Court, 14 July 2009"
       ],
-      "model_used": "deterministic_corpus_retrieval",
+      "model_used": "openai/gpt-oss-120b",
       "verdict": "PASS",
       "reason": ""
     },
@@ -227,13 +229,14 @@
       "question": "Can liquidated damages be forfeited under Section 74 of the Indian Contract Act without proof of actual loss?",
       "category": "Corpus (Answerable)",
       "surface": "Universal Search",
-      "answer_excerpt": "According to AUTHORISED OFFICER, CENTRAL BANK OF INDIA versus SHANMUGAVELU ([2024] 2 S.C.R. 12): forfeited and the mere fact th...",
-      "full_answer": "According to AUTHORISED OFFICER, CENTRAL BANK OF INDIA versus SHANMUGAVELU ([2024] 2 S.C.R. 12): forfeited and the mere fact that the word \u201cmay\u201d is used in that Rule cannot be taken to mean that only such sum out of the deposit can be forfeited as the Court may think proper as damages following the failure of the buyer to complete the sale.\u201d (Emphasis supplied) 66\b [2024]...",
-      "tier_used": "Tier 1 (Deterministic Corpus Grounded)",
+      "answer_excerpt": "No. Under Section 74 of the Indian Contract Act, liquidated damages (or any forfeiture) cannot be awarded unless the plaintiff ...",
+      "full_answer": "No. Under Section 74 of the Indian Contract Act, liquidated damages (or any forfeiture) cannot be awarded unless the plaintiff proves a legal injury or actual loss. A forfeiture of earnest money or stipulated damages is not permissible in the absence of such proof.",
+      "tier_used": "Tier 1 (Corpus Grounded)",
       "citations": [
-        "AUTHORISED OFFICER, CENTRAL BANK OF INDIA versus SHANMUGAVELU ([2024] 2 S.C.R. 12)"
+        "Kailash Nath Associates v. Delhi Development Authority (2015) 4 SCC 136",
+        "AUTHORISED OFFICER, CENTRAL BANK OF INDIA versus SHANMUGAVELU [2024] 2 S.C.R. 12"
       ],
-      "model_used": "deterministic_corpus_retrieval",
+      "model_used": "openai/gpt-oss-120b",
       "verdict": "PASS",
       "reason": ""
     },
@@ -242,13 +245,13 @@
       "question": "Is the right to privacy recognized as a fundamental right under Article 21 of the Constitution of India?",
       "category": "Corpus (Answerable)",
       "surface": "Universal Search",
-      "answer_excerpt": "According to R. RAJAGOPAL@ [Not Verified] ([1994] SUPP. 4 S.C.R. 353): from an unlawful invasion of privacy and (2) the constit...",
-      "full_answer": "According to R. RAJAGOPAL@ [Not Verified] ([1994] SUPP. 4 S.C.R. 353): from an unlawful invasion of privacy and (2) the constitutional recognition given to the right to privacy which protects personal privacy against unlaw- ful governmental invasion. The first aspect of this right must be said to have H been violated where, for example, a person'...",
-      "tier_used": "Tier 1 (Deterministic Corpus Grounded)",
+      "answer_excerpt": "Yes, the right to privacy is recognized as a fundamental right under Article 21 of the Constitution of India.",
+      "full_answer": "Yes, the right to privacy is recognized as a fundamental right under Article 21 of the Constitution of India.",
+      "tier_used": "Tier 1 (Corpus Grounded)",
       "citations": [
-        "R. RAJAGOPAL@ [Not Verified] ([1994] SUPP. 4 S.C.R. 353)"
+        "Justice K.S. Puttaswamy (Retd.) v. Union of India (2017) 10 SCC 1"
       ],
-      "model_used": "deterministic_corpus_retrieval",
+      "model_used": "openai/gpt-oss-120b",
       "verdict": "PASS",
       "reason": ""
     },
@@ -257,13 +260,13 @@
       "question": "What are the employee's obligations regarding confidentiality under Clause 8 of this agreement?",
       "category": "Corpus (Answerable)",
       "surface": "Doc Chat",
-      "answer_excerpt": "Under Clause 8 (Clause 8. Confidentiality & Non-Disclosure: The Employee shall strictly preserve), the document stipulates: \"Co...",
-      "full_answer": "Under Clause 8 (Clause 8. Confidentiality & Non-Disclosure: The Employee shall strictly preserve), the document stipulates: \"Confidentiality & Non-Disclosure: The Employee shall strictly preserve all proprietary algorithms, trade secrets, customer lists, and source code.\"",
-      "tier_used": "Tier 1 (Deterministic Corpus Grounded)",
+      "answer_excerpt": "Under Clause 8, the Employee must strictly preserve all proprietary algorithms, trade secrets, customer lists, and source code,...",
+      "full_answer": "Under Clause 8, the Employee must strictly preserve all proprietary algorithms, trade secrets, customer lists, and source code, and must not disclose any proprietary data to third parties during employment or after termination.",
+      "tier_used": "Tier 1 (Corpus Grounded)",
       "citations": [
-        "Clause 8: Clause 8. Confidentiality & Non-Disclosure: The Employee shall strictly preserve"
+        "Clause 8: Confidentiality & Non-Disclosure"
       ],
-      "model_used": "deterministic_grounded_fallback",
+      "model_used": "openai/gpt-oss-120b",
       "verdict": "PASS",
       "reason": ""
     },
@@ -272,13 +275,13 @@
       "question": "What restrictions does Clause 12 impose regarding non-solicitation following termination?",
       "category": "Corpus (Answerable)",
       "surface": "Doc Chat",
-      "answer_excerpt": "Under Clause 12 (Clause 12. Restrictive Covenants & Non-Solicitation: Following termination of em), the document stipulates: \"R...",
-      "full_answer": "Under Clause 12 (Clause 12. Restrictive Covenants & Non-Solicitation: Following termination of em), the document stipulates: \"Restrictive Covenants & Non-Solicitation: Following termination of employment for any reason, the Employee shall not, for a period of twelve (12) months, solicit or attempt to hire any existing employees or clients of the Company.\"",
-      "tier_used": "Tier 1 (Deterministic Corpus Grounded)",
+      "answer_excerpt": "Clause 12 prohibits the Employee, for twelve (12) months after termination of employment for any reason, from soliciting or att...",
+      "full_answer": "Clause 12 prohibits the Employee, for twelve (12) months after termination of employment for any reason, from soliciting or attempting to hire any existing employees or clients of the Company.",
+      "tier_used": "Tier 1 (Corpus Grounded)",
       "citations": [
-        "Clause 12: Clause 12. Restrictive Covenants & Non-Solicitation: Following termination of em"
+        "Clause 12: Restrictive Covenants & Non-Solicitation"
       ],
-      "model_used": "deterministic_grounded_fallback",
+      "model_used": "openai/gpt-oss-120b",
       "verdict": "PASS",
       "reason": ""
     },
@@ -288,7 +291,7 @@
       "category": "Not in Corpus (General Concept)",
       "surface": "Universal Search",
       "answer_excerpt": "AI answer, not verified against a legal database.  The doctrine of **negotiorum gestio** belongs to the general area of **civil...",
-      "full_answer": "AI answer, not verified against a legal database.\n\nThe doctrine of **negotiorum gestio** belongs to the general area of **civil law relating to obligations and restitution**. \n- It gives a person who voluntarily manages another\u2019s affairs without authority the right to claim reimbursement for necessary expenses incurred. \n- The manager (gestor) must act in good faith, only cover expenses that were reasonable and necessary, and cannot claim a profit or compensation for the benefit received. \n- The owner of the property or affairs can either ratify the manager\u2019s actions, thereby obligating themselves to pay the costs, or reject them, in which case the manager may have a claim for restitution of what was spent. \n- If you have acted as a gestor, keep detailed records of all expenses and communications, and promptly notify the owner of the actions taken and the amounts incurred. \n- If you are the owner and someone has acted on your behalf without permission, assess whether the actions were beneficial and necessary; if so, you may be required to reimburse the gestor, otherwise you can dispute the claim. \n- For any dispute, consider sending a formal written notice outlining the facts and your position, and if needed, seek mediation or legal counsel to resolve the restitution claim.\n\nThis is general information, not legal advice. Check a primary source or a lawyer before relying on it.",
+      "full_answer": "AI answer, not verified against a legal database.\n\nThe doctrine of **negotiorum gestio** belongs to the general area of **civil law relating to obligations and unjust enrichment**. \n- It gives a person who voluntarily manages another\u2019s affairs without authority a right to be reimbursed for reasonable expenses incurred and, in some cases, to retain any benefit that was necessary to preserve the other\u2019s property. \n- The owner of the property must either accept the manager\u2019s actions and repay costs, or, if the manager acted beyond what was needed, the owner may be liable only for the actual loss caused. \n- To protect yourself, keep detailed records of all actions taken, costs paid, and any benefits received while managing another\u2019s affairs. \n- If you are the manager, promptly inform the owner of what you have done and request repayment; if you are the owner, review the manager\u2019s actions to determine whether they were necessary and reasonable before agreeing to any payment. \n- In case of dispute, you can seek resolution through civil courts that handle obligations and restitution matters, presenting the documented evidence of your conduct and expenses.\n\nThis is general information, not legal advice. Check a primary source or a lawyer before relying on it.",
       "tier_used": "Tier 2 (General Explanation)",
       "citations": [],
       "model_used": "tier2_general_explanation",
@@ -300,8 +303,8 @@
       "question": "What is the doctrine of proximate cause in maritime collision law?",
       "category": "Not in Corpus (General Concept)",
       "surface": "Universal Search",
-      "answer_excerpt": "AI answer, not verified against a legal database.  The AI service is currently unavailable to generate an explanation for this ...",
-      "full_answer": "AI answer, not verified against a legal database.\n\nThe AI service is currently unavailable to generate an explanation for this topic. Please try again shortly.\n\nThis is general information, not legal advice. Check a primary source or a lawyer before relying on it.",
+      "answer_excerpt": "AI answer, not verified against a legal database.  The doctrine of proximate cause in maritime collision law is part of the bro...",
+      "full_answer": "AI answer, not verified against a legal database.\n\nThe doctrine of proximate cause in maritime collision law is part of the broader maritime tort and liability framework, which determines who is legally responsible for damages when a ship collision occurs. \n- It requires showing that the negligent act of a vessel was the direct and foreseeable cause of the injury or loss, without any intervening events breaking the chain of causation. \n- As a shipowner or operator, you have the right to demand a thorough investigation and to contest liability if you can prove that another party\u2019s actions were the immediate cause of the collision. \n- Practical steps: gather all navigation logs, communication records, and witness statements; retain a marine surveyor to assess damage; and notify your insurer promptly to preserve coverage. \n- If you are a claimant, you should document all losses (repair costs, cargo loss, downtime) and seek expert testimony to link the collision directly to the other party\u2019s breach of navigation rules. \n- Consider engaging a maritime lawyer early to help you navigate the claims process, negotiate with insurers, and, if necessary, prepare for arbitration or court proceedings under maritime dispute resolution mechanisms. \n- Keep copies of all correspondence and ensure any settlement offers are reviewed carefully before acceptance.\n\nThis is general information, not legal advice. Check a primary source or a lawyer before relying on it.",
       "tier_used": "Tier 2 (General Explanation)",
       "citations": [],
       "model_used": "tier2_general_explanation",
@@ -313,8 +316,8 @@
       "question": "Summarise the doctrine of cy-pres in Scottish trust administration.",
       "category": "Not in Corpus (General Concept)",
       "surface": "Universal Search",
-      "answer_excerpt": "AI answer, not verified against a legal database.  The AI service is currently unavailable to generate an explanation for this ...",
-      "full_answer": "AI answer, not verified against a legal database.\n\nThe AI service is currently unavailable to generate an explanation for this topic. Please try again shortly.\n\nThis is general information, not legal advice. Check a primary source or a lawyer before relying on it.",
+      "answer_excerpt": "AI answer, not verified against a legal database.  The cy\u2011pres doctrine is a rule in trust law that lets a court change the pur...",
+      "full_answer": "AI answer, not verified against a legal database.\n\nThe cy\u2011pres doctrine is a rule in trust law that lets a court change the purpose of a trust when the original goal can no longer be achieved, while still keeping the trust\u2019s assets in the same hands. \n- If a trust\u2019s original aim becomes impossible, the trustee can apply to the court for a cy\u2011pres order to redirect the funds to a new, similar purpose that the settlor would have approved. \n- To use this rule, the trustee must file a petition with the court, explain why the original purpose is unworkable, and propose an alternative use that is as close as possible to the settlor\u2019s intent. \n- The court will consider the settlor\u2019s intentions, the trust\u2019s terms, and the interests of beneficiaries before granting the order. \n- Beneficiaries who disagree can object in the same proceedings, and the court will weigh their concerns against the trustee\u2019s proposal. \n- Once the cy\u2011pres order is granted, the trustee must follow the new instructions and keep beneficiaries informed of any changes. \n- This process falls under the general area of trust and estate administration law.\n\nThis is general information, not legal advice. Check a primary source or a lawyer before relying on it.",
       "tier_used": "Tier 2 (General Explanation)",
       "citations": [],
       "model_used": "tier2_general_explanation",
@@ -339,8 +342,8 @@
       "question": "Explain the general doctrine of unjust enrichment across international legal systems.",
       "category": "Not in Corpus (General Concept)",
       "surface": "Doc Chat",
-      "answer_excerpt": "AI answer, not verified against a legal database.  The AI service is currently unavailable to generate an explanation for this ...",
-      "full_answer": "AI answer, not verified against a legal database.\n\nThe AI service is currently unavailable to generate an explanation for this topic. Please try again shortly.\n\nThis is general information, not legal advice. Check a primary source or a lawyer before relying on it.",
+      "answer_excerpt": "AI answer, not verified against a legal database.  Unjust enrichment is a principle in contract, tort, and equity that stops on...",
+      "full_answer": "AI answer, not verified against a legal database.\n\nUnjust enrichment is a principle in contract, tort, and equity that stops one person from keeping money or benefits that rightfully belong to another. \n- It applies in most countries, whether the law is based on common law, civil law, or a mix of both. \n- If you have received something you shouldn\u2019t have (e.g., a payment, goods, or services), you can ask the other party to return it or pay its value. \n- To protect your rights, keep clear records of the transaction, document any proof that the benefit was undeserved, and send a written demand for restitution. \n- If the other party refuses, you can file a claim in a civil court or a small\u2011claims tribunal, where the court will assess whether the enrichment was unjust and order repayment or compensation. \n- In some jurisdictions, you may also have a claim under a specific \u201cunjust enrichment\u201d statute or under general principles of equity that require restitution. \n- Practical next steps: gather evidence, write a formal letter, consider mediation, and if needed, seek a lawyer who specializes in civil or equity law to file a claim.\n\nThis is general information, not legal advice. Check a primary source or a lawyer before relying on it.",
       "tier_used": "Tier 2 (General Explanation)",
       "citations": [],
       "model_used": "tier2_general_explanation",
