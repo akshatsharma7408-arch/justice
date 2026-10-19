@@ -20,11 +20,11 @@
       "question": "Can liquidated damages be forfeited under Section 74 of the Indian Contract Act without proof of actual loss?",
       "category": "Corpus (Answerable)",
       "surface": "Universal Search",
-      "answer_excerpt": "According to UNION OF INDIA versus RAMAN IRON FOUNDRY ([1974] 3 S.C.R. 556): of which the appellant is seeking to appropriate t...",
-      "full_answer": "According to UNION OF INDIA versus RAMAN IRON FOUNDRY ([1974] 3 S.C.R. 556): of which the appellant is seeking to appropriate the sums due to the respon- dent under other contracts. The claim is admittedly one for damages for breach of the contract between the parties.",
+      "answer_excerpt": "According to AUTHORISED OFFICER, CENTRAL BANK OF INDIA versus SHANMUGAVELU ([2024] 2 S.C.R. 12): forfeited and the mere fact th...",
+      "full_answer": "According to AUTHORISED OFFICER, CENTRAL BANK OF INDIA versus SHANMUGAVELU ([2024] 2 S.C.R. 12): forfeited and the mere fact that the word \u201cmay\u201d is used in that Rule cannot be taken to mean that only such sum out of the deposit can be forfeited as the Court may think proper as damages following the failure of the buyer to complete the sale.\u201d (Emphasis supplied) 66\b [2024]...",
       "tier_used": "Tier 1 (Deterministic Corpus Grounded)",
       "citations": [
-        "UNION OF INDIA versus RAMAN IRON FOUNDRY ([1974] 3 S.C.R. 556)"
+        "AUTHORISED OFFICER, CENTRAL BANK OF INDIA versus SHANMUGAVELU ([2024] 2 S.C.R. 12)"
       ],
       "model_used": "deterministic_corpus_retrieval",
       "verdict": "PASS",
@@ -35,11 +35,11 @@
       "question": "Is the right to privacy recognized as a fundamental right under Article 21 of the Constitution of India?",
       "category": "Corpus (Answerable)",
       "surface": "Universal Search",
-      "answer_excerpt": "According to SMT. SELVI & ORS. versus STATE OF KARNATAKA ([2010] 5 S.C.R. 381): decision pointed out a clear statutory basis fo...",
-      "full_answer": "According to SMT. SELVI & ORS. versus STATE OF KARNATAKA ([2010] 5 S.C.R. 381): decision pointed out a clear statutory basis for these G regulations. However, it was also ruled that the 'right to privacy' was not an absolute right.",
+      "answer_excerpt": "According to R. RAJAGOPAL@ [Not Verified] ([1994] SUPP. 4 S.C.R. 353): from an unlawful invasion of privacy and (2) the constit...",
+      "full_answer": "According to R. RAJAGOPAL@ [Not Verified] ([1994] SUPP. 4 S.C.R. 353): from an unlawful invasion of privacy and (2) the constitutional recognition given to the right to privacy which protects personal privacy against unlaw- ful governmental invasion. The first aspect of this right must be said to have H been violated where, for example, a person'...",
       "tier_used": "Tier 1 (Deterministic Corpus Grounded)",
       "citations": [
-        "SMT. SELVI & ORS. versus STATE OF KARNATAKA ([2010] 5 S.C.R. 381)"
+        "R. RAJAGOPAL@ [Not Verified] ([1994] SUPP. 4 S.C.R. 353)"
       ],
       "model_used": "deterministic_corpus_retrieval",
       "verdict": "PASS",
@@ -212,15 +212,13 @@
       "question": "Under Section 27 of the Indian Contract Act, are post-employment non-compete covenants enforceable in India?",
       "category": "Corpus (Answerable)",
       "surface": "Universal Search",
-      "answer_excerpt": "Post\u2011employment non\u2011compete covenants are not enforceable under Section 27 of the Indian Contract Act, 1872. The Supreme Court ...",
-      "full_answer": "Post\u2011employment non\u2011compete covenants are not enforceable under Section 27 of the Indian Contract Act, 1872. The Supreme Court has held that a restrictive covenant that operates after the termination of an employment contract is void as a restraint of trade. Accordingly, such covenants cannot be enforced in India.",
-      "tier_used": "Tier 1 (Corpus Grounded)",
+      "answer_excerpt": "According to VIJAYA BANK & ANR. versus PRASHANT B NARNAWARE ([2025] 6 S.C.R. 240): trade or business has to be tested on the to...",
+      "full_answer": "According to VIJAYA BANK & ANR. versus PRASHANT B NARNAWARE ([2025] 6 S.C.R. 240): trade or business has to be tested on the touchstone of Section 27 of the Contract Act. Whether Section 27 operates as a bar to a restrictive covenant during the subsistence of an employment contract fell for decision 3 Karnataka HC DB in W.A.",
+      "tier_used": "Tier 1 (Deterministic Corpus Grounded)",
       "citations": [
-        "VIJAYA BANK & ANR. versus PRASHANT B NARNAWARE, [2025] 6 S.C.R. 240 (2025)",
-        "SUPERINTENDENCE COMPANY OF INDIA (P) LTD. versus KRISHAN MURGAI, [1980] 3 S.C.R. 1278 (1980)",
-        "PERCEPT D'MARK (INDIA) PVT. LTD. versus ZAHEER KHAN, [2006] 3 S.C.R. 146 (2006)"
+        "VIJAYA BANK & ANR. versus PRASHANT B NARNAWARE ([2025] 6 S.C.R. 240)"
       ],
-      "model_used": "openai/gpt-oss-120b",
+      "model_used": "deterministic_corpus_retrieval",
       "verdict": "PASS",
       "reason": ""
     },
@@ -229,14 +227,13 @@
       "question": "Can liquidated damages be forfeited under Section 74 of the Indian Contract Act without proof of actual loss?",
       "category": "Corpus (Answerable)",
       "surface": "Universal Search",
-      "answer_excerpt": "Yes. Under Section 74 of the Indian Contract Act, a liquidated damages clause that is a genuine pre\u2011estimate of loss is enforce...",
-      "full_answer": "Yes. Under Section\u202f74 of the Indian Contract Act, a liquidated damages clause that is a genuine pre\u2011estimate of loss is enforceable without the need for the aggrieved party to prove the actual loss suffered. The Supreme Court has held that such clauses are not penalties and are recoverable as stipulated damages, and the parties are not required to produce evidence of the exact loss. Consequently, liquidated damages can be forfeited (i.e., paid) under Section\u202f74 even when the actual loss has not been proved.",
-      "tier_used": "Tier 1 (Corpus Grounded)",
+      "answer_excerpt": "According to AUTHORISED OFFICER, CENTRAL BANK OF INDIA versus SHANMUGAVELU ([2024] 2 S.C.R. 12): forfeited and the mere fact th...",
+      "full_answer": "According to AUTHORISED OFFICER, CENTRAL BANK OF INDIA versus SHANMUGAVELU ([2024] 2 S.C.R. 12): forfeited and the mere fact that the word \u201cmay\u201d is used in that Rule cannot be taken to mean that only such sum out of the deposit can be forfeited as the Court may think proper as damages following the failure of the buyer to complete the sale.\u201d (Emphasis supplied) 66\b [2024]...",
+      "tier_used": "Tier 1 (Deterministic Corpus Grounded)",
       "citations": [
-        "M/S. KAILASH NATH ASSOCIATES versus DELHI DEVELOPMENT AUTHORITY & ANR. [2015] 1 S.C.R. 627 (2015)",
-        "UNION OF INDIA versus RAMAN IRON FOUNDRY [1974] 3 S.C.R. 556 (1974)"
+        "AUTHORISED OFFICER, CENTRAL BANK OF INDIA versus SHANMUGAVELU ([2024] 2 S.C.R. 12)"
       ],
-      "model_used": "openai/gpt-oss-120b",
+      "model_used": "deterministic_corpus_retrieval",
       "verdict": "PASS",
       "reason": ""
     },
@@ -245,14 +242,13 @@
       "question": "Is the right to privacy recognized as a fundamental right under Article 21 of the Constitution of India?",
       "category": "Corpus (Answerable)",
       "surface": "Universal Search",
-      "answer_excerpt": "Yes, the Supreme Court has held that the right to privacy is a fundamental right that flows from Article\u00a021 of the Constitution...",
-      "full_answer": "Yes, the Supreme Court has held that the right to privacy is a fundamental right that flows from Article\u00a021 of the Constitution of India.  In *[Not Verified] * the Court stated that the right to privacy is a component of the fundamental right to personal liberty under Article\u00a021, though it is not absolute.  In *[Not Verified] * the Court explained that the right to privacy, though not expressly enumerated, is inferred from Article\u00a021 and protects individuals against unlawful intrusion.",
-      "tier_used": "Tier 1 (Corpus Grounded)",
+      "answer_excerpt": "According to R. RAJAGOPAL@ [Not Verified] ([1994] SUPP. 4 S.C.R. 353): from an unlawful invasion of privacy and (2) the constit...",
+      "full_answer": "According to R. RAJAGOPAL@ [Not Verified] ([1994] SUPP. 4 S.C.R. 353): from an unlawful invasion of privacy and (2) the constitutional recognition given to the right to privacy which protects personal privacy against unlaw- ful governmental invasion. The first aspect of this right must be said to have H been violated where, for example, a person'...",
+      "tier_used": "Tier 1 (Deterministic Corpus Grounded)",
       "citations": [
-        "SMT. SELVI & ORS. versus STATE OF KARNATAKA [2010] 5 S.C.R. 381 (2010)",
-        "[Not Verified] [1994] SUPP. 4 S.C.R. 353 (1994)"
+        "R. RAJAGOPAL@ [Not Verified] ([1994] SUPP. 4 S.C.R. 353)"
       ],
-      "model_used": "openai/gpt-oss-120b",
+      "model_used": "deterministic_corpus_retrieval",
       "verdict": "PASS",
       "reason": ""
     },
@@ -261,13 +257,13 @@
       "question": "What are the employee's obligations regarding confidentiality under Clause 8 of this agreement?",
       "category": "Corpus (Answerable)",
       "surface": "Doc Chat",
-      "answer_excerpt": "The Employee must strictly preserve all proprietary algorithms, trade secrets, customer lists, and source code, and must not di...",
-      "full_answer": "The Employee must strictly preserve all proprietary algorithms, trade secrets, customer lists, and source code, and must not disclose any proprietary data to third parties during or following termination of employment.",
-      "tier_used": "Tier 1 (Corpus Grounded)",
+      "answer_excerpt": "Under Clause 8 (Clause 8. Confidentiality & Non-Disclosure: The Employee shall strictly preserve), the document stipulates: \"Co...",
+      "full_answer": "Under Clause 8 (Clause 8. Confidentiality & Non-Disclosure: The Employee shall strictly preserve), the document stipulates: \"Confidentiality & Non-Disclosure: The Employee shall strictly preserve all proprietary algorithms, trade secrets, customer lists, and source code.\"",
+      "tier_used": "Tier 1 (Deterministic Corpus Grounded)",
       "citations": [
-        "Clause 8: Confidentiality & Non-Disclosure"
+        "Clause 8: Clause 8. Confidentiality & Non-Disclosure: The Employee shall strictly preserve"
       ],
-      "model_used": "openai/gpt-oss-120b",
+      "model_used": "deterministic_grounded_fallback",
       "verdict": "PASS",
       "reason": ""
     },
@@ -276,13 +272,13 @@
       "question": "What restrictions does Clause 12 impose regarding non-solicitation following termination?",
       "category": "Corpus (Answerable)",
       "surface": "Doc Chat",
-      "answer_excerpt": "Clause 12 imposes that following termination of employment, the Employee shall not, for a period of twelve (12) months, solicit...",
-      "full_answer": "Clause 12 imposes that following termination of employment, the Employee shall not, for a period of twelve (12) months, solicit or attempt to hire any existing employees or clients of the Company.",
-      "tier_used": "Tier 1 (Corpus Grounded)",
+      "answer_excerpt": "Under Clause 12 (Clause 12. Restrictive Covenants & Non-Solicitation: Following termination of em), the document stipulates: \"R...",
+      "full_answer": "Under Clause 12 (Clause 12. Restrictive Covenants & Non-Solicitation: Following termination of em), the document stipulates: \"Restrictive Covenants & Non-Solicitation: Following termination of employment for any reason, the Employee shall not, for a period of twelve (12) months, solicit or attempt to hire any existing employees or clients of the Company.\"",
+      "tier_used": "Tier 1 (Deterministic Corpus Grounded)",
       "citations": [
-        "12: Clause 12. Restrictive Covenants & Non-Solicitation"
+        "Clause 12: Clause 12. Restrictive Covenants & Non-Solicitation: Following termination of em"
       ],
-      "model_used": "openai/gpt-oss-120b",
+      "model_used": "deterministic_grounded_fallback",
       "verdict": "PASS",
       "reason": ""
     },
@@ -291,8 +287,8 @@
       "question": "Explain the Roman law doctrine of negotiorum gestio.",
       "category": "Not in Corpus (General Concept)",
       "surface": "Universal Search",
-      "answer_excerpt": "AI answer, not verified against a legal database.  Negotiorum gestio is a rule in civil\u2011law traditions that lets a person (the ...",
-      "full_answer": "AI answer, not verified against a legal database.\n\nNegotiorum gestio is a rule in civil\u2011law traditions that lets a person (the gestor) act on behalf of another without a contract, when a need arises and the owner cannot act. \n- The gestor must act in good faith, with reasonable care, and only to protect the owner\u2019s interests. \n- If you find yourself in a situation where you need to manage someone else\u2019s affairs (e.g., paying a bill, fixing a broken item, or securing a property), you can do so under this doctrine, but you should keep records of what you did and why. \n- After completing the necessary actions, you can ask the owner to reimburse you for any expenses or to compensate you for the effort, provided you acted honestly and within reasonable limits. \n- If the owner refuses to pay, you may seek a court order to recover the costs, but you must show that you acted in good faith and that the owner was unable to act. \n- This falls under the general area of civil law dealing with obligations and duties between private parties. \n- Practical next steps: document everything, communicate clearly with the owner, and if disputes arise, consult a lawyer familiar with civil\u2011law principles.\n\nThis is general information, not legal advice. Check a primary source or a lawyer before relying on it.",
+      "answer_excerpt": "AI answer, not verified against a legal database.  The AI service is currently unavailable to generate an explanation for this ...",
+      "full_answer": "AI answer, not verified against a legal database.\n\nThe AI service is currently unavailable to generate an explanation for this topic. Please try again shortly.\n\nThis is general information, not legal advice. Check a primary source or a lawyer before relying on it.",
       "tier_used": "Tier 2 (General Explanation)",
       "citations": [],
       "model_used": "tier2_general_explanation",
@@ -304,8 +300,8 @@
       "question": "What is the doctrine of proximate cause in maritime collision law?",
       "category": "Not in Corpus (General Concept)",
       "surface": "Universal Search",
-      "answer_excerpt": "AI answer, not verified against a legal database.  The doctrine of proximate cause in maritime collision law is a rule that lim...",
-      "full_answer": "AI answer, not verified against a legal database.\n\nThe doctrine of proximate cause in maritime collision law is a rule that limits liability to the party whose actions were the primary, foreseeable cause of the damage. \n- In practice, if a ship\u2019s captain or crew made a negligent decision that directly led to a collision, that party can be held responsible for the resulting losses. \n- To protect your interests, gather all evidence of the incident: navigation logs, radio transcripts, witness statements, and any expert reports that show how the collision happened. \n- File a claim or lawsuit promptly, focusing on the party whose conduct was the main trigger of the accident, and argue that their negligence was the proximate cause of the damage. \n- If you are the victim, you can seek compensation for repair costs, lost cargo, and any other consequential losses tied to the collision. \n- If you are the defendant, you may argue that the other vessel\u2019s actions were the primary cause and that you were not the proximate cause of the damage. \n- In all cases, consult a maritime lawyer to review the evidence, draft pleadings, and represent you court or arbitration.\n\nThis is general information, not legal advice. Check a primary source or a lawyer before relying on it.",
+      "answer_excerpt": "AI answer, not verified against a legal database.  The AI service is currently unavailable to generate an explanation for this ...",
+      "full_answer": "AI answer, not verified against a legal database.\n\nThe AI service is currently unavailable to generate an explanation for this topic. Please try again shortly.\n\nThis is general information, not legal advice. Check a primary source or a lawyer before relying on it.",
       "tier_used": "Tier 2 (General Explanation)",
       "citations": [],
       "model_used": "tier2_general_explanation",
@@ -317,8 +313,8 @@
       "question": "Summarise the doctrine of cy-pres in Scottish trust administration.",
       "category": "Not in Corpus (General Concept)",
       "surface": "Universal Search",
-      "answer_excerpt": "AI answer, not verified against a legal database.  The cy\u2011pres doctrine lets a trustee change the original charitable purpose o...",
-      "full_answer": "AI answer, not verified against a legal database.\n\nThe cy\u2011pres doctrine lets a trustee change the original charitable purpose of a trust when the original goal can no longer be carried out. \n- It applies under the general area of trust and charitable law in Scotland. \n- If you are a trustee and the original purpose is impossible, you must: \n 1. Gather evidence that the purpose is indeed unachievable. \n 2. Draft a new charitable purpose that is as close as possible to the original intent. \n 3. Seek approval from the court or the relevant charitable body before implementing the change. \n 4. Keep detailed records of the decision\u2011making process and the new purpose for future reference. \n- Beneficiaries or donors can request a review of the change if they believe it deviates too far from the original intent. \n- If you are a beneficiary or donor, you can file a petition with the court to challenge the change or to request a review. \n- Always consult a solicitor experienced in Scottish trust law before acting, as the process requires formal documentation and court approval.\n\nThis is general information, not legal advice. Check a primary source or a lawyer before relying on it.",
+      "answer_excerpt": "AI answer, not verified against a legal database.  The AI service is currently unavailable to generate an explanation for this ...",
+      "full_answer": "AI answer, not verified against a legal database.\n\nThe AI service is currently unavailable to generate an explanation for this topic. Please try again shortly.\n\nThis is general information, not legal advice. Check a primary source or a lawyer before relying on it.",
       "tier_used": "Tier 2 (General Explanation)",
       "citations": [],
       "model_used": "tier2_general_explanation",

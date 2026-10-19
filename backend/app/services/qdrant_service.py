@@ -52,6 +52,109 @@ def _case_to_text(case: Dict[str, Any]) -> str:
     )
 
 
+TOPIC_DEFINITIONS = {
+    "arrest_detention": {
+        "phrases": [
+            "police custody", "custodial", "illegal detention", "unlawful detention",
+            "without a warrant", "without warrant", "arrest warrant", "right to be informed",
+            "produce before magistrate", "police arrest", "remand to custody", "judicial custody",
+            "statutory bail", "default bail", "anticipatory bail", "grounds of arrest",
+            "article 22"
+        ],
+        "words": [
+            "arrest", "detention", "remand", "bail", "warrant", "handcuff", "handcuffing", "custody"
+        ]
+    },
+    "police_misconduct": {
+        "phrases": [
+            "police excesses", "custodial death", "custodial torture", "police atrocities",
+            "compensation for police", "police violence", "police brutality", "torture in custody",
+            "fake encounter", "third degree", "custodial violence"
+        ],
+        "words": [
+            "torture", "atrocities", "excesses", "encounter"
+        ]
+    },
+    "bribery_corruption": {
+        "phrases": [
+            "prevention of corruption act", "illegal gratification", "demand and acceptance",
+            "public servant", "trap case", "asking for a bribe", "anti-corruption", "take a bribe",
+            "pay a bribe"
+        ],
+        "words": [
+            "bribe", "bribery", "corruption", "gratification"
+        ]
+    },
+    "housing_tenancy": {
+        "phrases": [
+            "rent control", "unlawful ejectment", "evict without notice", "evict me",
+            "landlord and tenant", "tenant protection", "rent control act", "ejectment of tenant",
+            "landlord evict", "fixation of fair rent"
+        ],
+        "words": [
+            "tenant", "eviction", "evict", "landlord", "tenancy", "ejectment", "rent"
+        ]
+    },
+    "traffic_police_powers": {
+        "phrases": [
+            "motor vehicles act", "search and seizure", "stop and search", "search vehicle",
+            "stopped on my bike", "stopped by police", "traffic police", "issue challan",
+            "impound vehicle", "traffic violation", "seizure of vehicle", "power to stop",
+            "stopped on bike", "traffic cop"
+        ],
+        "words": [
+            "challan", "traffic", "bike", "motorcycle", "scooter", "vehicle"
+        ]
+    },
+    "fundamental_rights": {
+        "phrases": [
+            "article 21", "right to life", "personal liberty", "right to life and personal liberty",
+            "article 19", "freedom of speech", "fundamental rights", "reasonable restrictions",
+            "fundamental right", "habeas corpus", "right to privacy", "article 14"
+        ],
+        "words": [
+            "fundamental"
+        ]
+    }
+}
+
+SEARCH_STOPWORDS = {
+    "what", "to", "do", "if", "a", "an", "the", "in", "on", "of", "and", "or", "for", "with", "is", "are", "can",
+    "my", "me", "you", "your", "by", "under", "without", "when", "how", "why", "who", "whom", "which", "where",
+    "about", "tell", "show", "give", "explain", "law", "legal", "court", "judgment", "matter", "case", "state",
+    "india", "act", "acts", "section", "sections", "rule", "rules", "rights", "powers", "this", "that", "these",
+    "those", "from", "into", "over", "than", "then", "also", "any", "all", "its", "been", "being", "having",
+    "guidelines", "remedies", "protection"
+}
+
+
+def classify_query_topic(query: str) -> Optional[str]:
+    """Classifies a user query into one of the 6 citizen rights topics or returns None."""
+    q_lower = query.lower()
+    scores = {}
+    for topic, config in TOPIC_DEFINITIONS.items():
+        score = 0.0
+        for phrase in config["phrases"]:
+            if phrase in q_lower:
+                score += 3.0
+        for word in config["words"]:
+            if re.search(r"\b" + re.escape(word) + r"\b", q_lower):
+                score += 1.0
+        if score > 0:
+            scores[topic] = score
+    if scores:
+        best_topic, best_score = max(scores.items(), key=lambda x: x[1])
+        if best_score >= 1.0:
+            return best_topic
+    return None
+
+
+def extract_substantive_terms(query: str) -> List[str]:
+    """Extracts substantive content words from query, excluding generic stopwords."""
+    tokens = re.findall(r"[a-zA-Z0-9]{3,}", query.lower())
+    return [t for t in tokens if t not in SEARCH_STOPWORDS]
+
+
 class QdrantService:
     def __init__(self):
         self.url = settings.QDRANT_URL
@@ -184,17 +287,97 @@ class QdrantService:
         except Exception:
             pass
 
-        hits = self._client.search(
+        topic = classify_query_topic(query)
+        substantive_terms = extract_substantive_terms(query)
+
+        from qdrant_client.models import Filter, FieldCondition, MatchValue
+        hits = []
+
+        # 1. Topic-filtered retrieval if a citizen rights topic is detected
+        if topic:
+            try:
+                topic_filter = Filter(must=[FieldCondition(key="topic", match=MatchValue(value=topic))])
+                topic_hits = self._client.search(
+                    collection_name=target_collection,
+                    query_vector=vector,
+                    query_filter=topic_filter,
+                    limit=25
+                )
+                hits.extend(topic_hits)
+            except Exception as e:
+                logger.debug("Topic filtered search failed: %s", e)
+
+        # Also get general hits across the collection to merge and re-rank top candidates
+        general_hits = self._client.search(
             collection_name=target_collection,
             query_vector=vector,
-            limit=max(limit * 4, 20),
+            limit=25
         )
-        results: List[Dict[str, Any]] = []
-        seen_cases = set()
-        for hit in hits:
+        hits.extend(general_hits)
+
+        # Deduplicate hits by point ID
+        unique_hits = []
+        seen_hit_ids = set()
+        for h in hits:
+            if h.id not in seen_hit_ids:
+                seen_hit_ids.add(h.id)
+                unique_hits.append(h)
+
+        # 2. Re-rank candidates combining vector score, topic match, and key-term overlap
+        candidates = []
+        for hit in unique_hits:
             case = dict(hit.payload or {})
             if not self._matches_filters(case, court_filter, bench_filter):
                 continue
+
+            case_name = case.get("case_name") or case.get("title") or ""
+            text = case.get("text") or case.get("ratioSummary") or ""
+            comb_text = f"{case_name} {text}".lower()
+            name_lower = case_name.lower()
+
+            v_score = float(hit.score)
+
+            # Topic match boost:
+            if topic:
+                case_topic = case.get("topic")
+                if case_topic == topic:
+                    topic_boost = 0.20
+                elif case_topic is None:
+                    topic_boost = -0.15
+                else:
+                    topic_boost = 0.0
+            else:
+                topic_boost = 0.0
+
+            # Key-term overlap in case title and headnote:
+            title_matches = sum(1 for t in substantive_terms if t in name_lower)
+            text_matches = sum(1 for t in substantive_terms if t in comb_text)
+            term_ratio = (text_matches / max(len(substantive_terms), 1)) if substantive_terms else 1.0
+            term_boost = min(0.35, title_matches * 0.15 + term_ratio * 0.15)
+
+            combined_score = v_score + topic_boost + term_boost
+
+            # 3. Relevance Floor:
+            # - Baseline vector similarity floor: 0.40
+            # - Combined score floor: 0.50
+            # - Must share substantive key terms with the query:
+            if v_score < 0.40:
+                continue
+            if combined_score < 0.50:
+                continue
+            if substantive_terms and text_matches == 0:
+                continue
+
+            # Specific everyday-rights filter for vehicle/bike stops:
+            # If the user is asking about being stopped on a bike/vehicle, the case MUST
+            # involve police stop/search/challan powers, not an unrelated accident insurance claim.
+            if "bike" in substantive_terms:
+                has_bike = any(bt in comb_text for bt in ["bike", "motorcycle", "scooter", "two-wheeler", "two wheeler"])
+                has_stop = any(st in comb_text for st in ["stop", "stopped", "police", "challan", "search", "seizure", "inspection", "officer"])
+                if not (has_bike and has_stop):
+                    continue
+
+            # Populate standard case fields
             if not case.get("title") and case.get("case_name"):
                 case["title"] = case.get("case_name")
             if not case.get("decisionYear") and case.get("year"):
@@ -208,19 +391,30 @@ class QdrantService:
             if not case.get("benchSize"):
                 case["benchSize"] = 2
             if not case.get("statutes"):
-                case["statutes"] = ["Indian Contract Act, 1872", "Constitution of India, Article 141"]
+                case["statutes"] = ["Constitution of India", "Supreme Court of India Jurisprudence"]
 
-            case_key = (case.get("title") or "").strip().lower()
-            if case_key and case_key in seen_cases:
-                continue
-            if case_key:
-                seen_cases.add(case_key)
-
-            case["relevance_score"] = round(float(hit.score), 3)
+            case["relevance_score"] = round(float(combined_score), 3)
+            case["raw_vector_score"] = round(float(v_score), 3)
             case["retrieval_mode"] = f"qdrant+{target_collection}+{embedding_service.mode}"
-            results.append(case)
-            if len(results) >= limit:
+            candidates.append(case)
+
+        # Re-rank by combined score descending
+        candidates.sort(key=lambda x: x["relevance_score"], reverse=True)
+
+        # Deduplicate cases by title and cap at most 3 cases
+        results: List[Dict[str, Any]] = []
+        seen_cases = set()
+        max_to_return = min(limit, 3)
+        for c in candidates:
+            title_key = (c.get("title") or "").strip().lower()
+            if title_key and title_key in seen_cases:
+                continue
+            if title_key:
+                seen_cases.add(title_key)
+            results.append(c)
+            if len(results) >= max_to_return:
                 break
+
         return results
 
     def _search_local(self, query: str, court_filter: str, bench_filter: str, limit: int) -> List[Dict[str, Any]]:
@@ -316,9 +510,8 @@ class QdrantService:
                     if len(results) >= limit * 3:
                         break
 
-        # Final sort by relevance score
         results.sort(key=lambda x: x.get("relevance_score", 0), reverse=True)
-        return results[:limit]
+        return results[:min(limit, 3)]
 
     # ------------------------------------------------------------------ #
     # Citation Verification                                               #
