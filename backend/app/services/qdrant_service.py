@@ -52,7 +52,6 @@ def _case_to_text(case: Dict[str, Any]) -> str:
     )
 
 
-<<<<<<< HEAD
 TOPIC_DEFINITIONS = {
     "arrest_detention": {
         "phrases": [
@@ -154,7 +153,8 @@ def extract_substantive_terms(query: str) -> List[str]:
     """Extracts substantive content words and section numbers from query, excluding generic stopwords."""
     tokens = re.findall(r"[a-zA-Z]{3,}|\b\d+\b", query.lower())
     return [t for t in tokens if t not in SEARCH_STOPWORDS]
-=======
+
+
 def extract_query_aliases(query: str) -> List[str]:
     """
     Identifies if a query contains an alias, short name, or citation of a landmark case,
@@ -188,7 +188,6 @@ def extract_query_aliases(query: str) -> List[str]:
                 matched.append(a)
 
     return list(dict.fromkeys(matched))
->>>>>>> landmark-cases
 
 
 class QdrantService:

@@ -109,6 +109,7 @@ class TestQdrantExactBoost(unittest.TestCase):
     def test_search_qdrant_unrelated_query_no_boost(self):
         """Verifies that queries without landmark aliases do not trigger scroll."""
         service = QdrantService()
+        service.corpus = []
         mock_client = MagicMock()
         service._client = mock_client
 
