@@ -1,0 +1,161 @@
+/* ==========================================================================
+   JUSTICE — Design System & Theme Tokens
+   Strict Dark Editorial Legal Theme:
+   Base: #0B1A15, Panels: #12261F, Raised: #17302A, Deeper: #07110D
+   Headings/Key Text: #EFE8D6 (Ivory), Body: #D9D3C2, Muted: #9AA79F
+   Accent Copper: #C77B3A, Bright Copper (Hover/Glow): #E0955A
+   Borders: #24403A
+   Verified: #4CAF7D, Warning: #E0A030, Error: #D9534F
+   ========================================================================== */
+
+:root {
+  /* Surface & Background Hierarchy */
+  --bg-base: #0B1A15;
+  --bg-panel: #12261F;
+  --bg-raised: #17302A;
+  --bg-deep: #07110D;
+  --bg-gradient-hero: linear-gradient(180deg, #0B1A15 0%, #0F2A21 50%, #07110D 100%);
+  --bg-gradient-subtle: linear-gradient(135deg, rgba(18, 38, 31, 0.9) 0%, rgba(11, 26, 21, 0.95) 100%);
+
+  /* Typography Palette */
+  --text-ivory: #EFE8D6;
+  --text-body: #D9D3C2;
+  --text-muted: #9AA79F;
+  --text-deep: #07110D;
+
+  /* Accent & Glow */
+  --copper: #C77B3A;
+  --copper-hover: #E0955A;
+  --copper-glow: rgba(224, 149, 90, 0.22);
+  --copper-glow-faint: rgba(199, 123, 58, 0.12);
+  --copper-subtle: rgba(199, 123, 58, 0.08);
+  --copper-hairline: rgba(199, 123, 58, 0.45);
+
+  /* Borders */
+  --border: #24403A;
+  --border-light: #2D5048;
+  --border-subtle: rgba(36, 64, 58, 0.6);
+  --border-active: rgba(199, 123, 58, 0.6);
+
+  /* Status Tokens */
+  --verified: #4CAF7D;
+  --verified-bg: rgba(76, 175, 125, 0.12);
+  --verified-border: rgba(76, 175, 125, 0.35);
+
+  --warning: #E0A030;
+  --warning-bg: rgba(224, 160, 48, 0.12);
+  --warning-border: rgba(224, 160, 48, 0.35);
+
+  --error: #D9534F;
+  --error-bg: rgba(217, 83, 79, 0.12);
+  --error-border: rgba(217, 83, 79, 0.35);
+
+  /* Ivory Contrast Section (Full-width showcase) */
+  --ivory-bg: #EFE8D6;
+  --ivory-text-heading: #07110D;
+  --ivory-text-body: #162620;
+  --ivory-text-muted: #3D5248;
+  --ivory-border: #D8CEB8;
+  --ivory-card-bg: #E5DDC7;
+  --ivory-card-raised: #DDD3BB;
+
+  /* Typography */
+  --font-serif: 'Cormorant Garamond', Garamond, Georgia, serif;
+  --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  --font-mono: 'JetBrains Mono', Menlo, Consolas, monospace;
+
+  /* Layout Constants */
+  --topbar-height: 64px;
+  --topbar-compact-height: 54px;
+  --container-max: 1240px;
+
+  /* Card Inner Light & Shadows */
+  --card-inner-light: inset 0 1px 0 0 rgba(239, 232, 214, 0.05);
+  --card-shadow: 0 4px 24px -2px rgba(0, 0, 0, 0.5);
+  --card-shadow-hover: 0 8px 36px -4px rgba(0, 0, 0, 0.65), 0 0 20px rgba(199, 123, 58, 0.08);
+
+  /* Transitions */
+  --ease-editorial: cubic-bezier(0.16, 1, 0.3, 1);
+  --duration-fast: 180ms;
+  --duration-normal: 250ms;
+  --duration-slow: 400ms;
+}
+
+/* Base Document Setup */
+html, body {
+  background-color: var(--bg-base);
+  color: var(--text-body);
+  font-family: var(--font-sans);
+  line-height: 1.6;
+  font-size: 15px;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  overflow-x: hidden;
+  margin: 0;
+  padding: 0;
+}
+
+/* Subtle 3-4% Film-grain overlay (law-journal print texture) */
+body::before {
+  content: "";
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  pointer-events: none;
+  z-index: 9999;
+  opacity: 0.038;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E");
+}
+
+/* Text Selection */
+::selection {
+  background: var(--copper);
+  color: var(--bg-deep);
+}
+
+/* Headings Typography */
+h1, h2, h3, h4, .font-serif, .font-judicial {
+  font-family: var(--font-serif);
+  color: var(--text-ivory);
+  font-weight: 600;
+  letter-spacing: -0.01em;
+}
+
+.mono {
+  font-family: var(--font-mono);
+  font-size: 0.88em;
+}
+
+/* Custom Scrollbar */
+::-webkit-scrollbar {
+  width: 7px;
+  height: 7px;
+}
+::-webkit-scrollbar-track {
+  background: var(--bg-deep);
+}
+::-webkit-scrollbar-thumb {
+  background: var(--border);
+  border-radius: 4px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: var(--copper);
+}
+
+/* Focus Rings (Accessibility WCAG AA) */
+:focus-visible {
+  outline: 2px solid var(--copper-hover);
+  outline-offset: 2px;
+}
+
+/* Prefers Reduced Motion */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}

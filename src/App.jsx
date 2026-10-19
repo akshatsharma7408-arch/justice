@@ -1,27 +1,32 @@
-import React, { useState } from 'react';
-import { Search, Scale, FileText, SlidersHorizontal, Cpu, BookOpen } from 'lucide-react';
-import Header from './components/Header';
-import Footer from './components/Footer';
-import UniversalSearch from './components/UniversalSearch';
-import SmartCitator from './components/SmartCitator';
-import DocumentAnalyzer from './components/DocumentAnalyzer';
-import ManupatraComparison from './components/ManupatraComparison';
-import LegalMaxims from './components/LegalMaxims';
-import AgentVisualizerModal from './components/AgentVisualizerModal';
-import CommandPalette from './components/CommandPalette';
-import CaseChatPanel from './components/CaseChatPanel';
-import ExplainSelectionModal from './components/ExplainSelectionModal';
+import React, { useState, useEffect, lazy, Suspense } from 'react';
+import Navbar from './components/Navbar';
+import LandingPage from './components/LandingPage';
 import TextSelectionToolbar from './components/TextSelectionToolbar';
 import { AgentExecutionSession } from './services/agentEngine';
 
+// Lazy-load heavy module views and modals to optimize Landing Page performance (Lighthouse > 85)
+const SearchResults = lazy(() => import('./components/SearchResults'));
+const SmartCitator = lazy(() => import('./components/SmartCitator'));
+const DocumentAnalyzer = lazy(() => import('./components/DocumentAnalyzer'));
+const DocumentChat = lazy(() => import('./components/DocumentChat'));
+const ManupatraComparison = lazy(() => import('./components/ManupatraComparison'));
+const LegalMaxims = lazy(() => import('./components/LegalMaxims'));
+const CaseChatPanel = lazy(() => import('./components/CaseChatPanel'));
+const AgentVisualizerModal = lazy(() => import('./components/AgentVisualizerModal'));
+const CommandPalette = lazy(() => import('./components/CommandPalette'));
+const ExplainSelectionModal = lazy(() => import('./components/ExplainSelectionModal'));
+
 export default function App() {
-  const [activeTab, setActiveTab] = useState('analyzer'); // default to analyzer
+  // Navigation: 'landing' (default first page), 'search', 'citator', 'analyzer', 'docchat', 'comparison', 'maxims'
+  const [activeView, setActiveView] = useState('landing');
+  const [activeSearchQuery, setActiveSearchQuery] = useState('');
   const [selectedCitatorCaseId, setSelectedCitatorCaseId] = useState('sc-2006-percept');
+
+  // Modals & Panels
   const [isAgentModalOpen, setIsAgentModalOpen] = useState(false);
   const [isCommandPaletteOpen, setIsCommandPaletteOpen] = useState(false);
   const [agentSessionState, setAgentSessionState] = useState(null);
   const [isAgentRunning, setIsAgentRunning] = useState(false);
-  const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false);
 
   // Active case for Case Chat scoping
   const [activeCase, setActiveCase] = useState({
@@ -56,9 +61,22 @@ export default function App() {
     });
   };
 
+  const handleNavigate = (view, query = '') => {
+    setActiveView(view);
+    if (query) {
+      setActiveSearchQuery(query);
+    }
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
+  const handleSearchSubmit = (query) => {
+    setActiveSearchQuery(query);
+    setActiveView('search');
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
   const handleTriggerGlobalExplain = (selectedText) => {
-    // If a case is open (citator tab or active case in search), route to Case Chat
-    if (activeTab === 'citator' || (activeTab === 'search' && activeCase)) {
+    if (activeView === 'citator' || (activeView === 'search' && activeCase)) {
       setIsCaseChatOpen(true);
       try {
         localStorage.setItem('justice_case_chat_open', 'true');
@@ -67,15 +85,13 @@ export default function App() {
       return;
     }
 
-    // In Document Analyzer, pass document context
-    if (activeTab === 'analyzer') {
+    if (activeView === 'analyzer' || activeView === 'docchat') {
       setStandaloneExplainText(selectedText);
       setStandaloneExplainContext("Contract & Clause Audit Context");
       setIsExplainModalOpen(true);
       return;
     }
 
-    // Otherwise open standalone popup
     setStandaloneExplainText(selectedText);
     setStandaloneExplainContext(null);
     setIsExplainModalOpen(true);
@@ -94,264 +110,168 @@ export default function App() {
     } catch (e) {}
   };
 
-  // Jump from search to citator
   const handleSelectCaseForCitator = (precedent) => {
     setSelectedCitatorCaseId(precedent.id);
-    setActiveTab('citator');
+    setActiveView('citator');
+    window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
-  // Launch agent analysis workflow
   const handleTriggerAgentAnalysis = (clause, contractTitle) => {
     setIsAgentModalOpen(true);
     setIsAgentRunning(true);
 
     const session = new AgentExecutionSession(
-      (update) => {
-        setAgentSessionState(update);
-      },
-      (completion) => {
-        setIsAgentRunning(false);
-      }
+      (update) => setAgentSessionState(update),
+      () => setIsAgentRunning(false)
     );
 
     session.runAnalysis(clause, contractTitle);
   };
 
-  // Command palette navigation
-  const handleCommandNavigate = (tab, openOnly = false, caseId = null) => {
+  const handleCommandNavigate = (target, openOnly = false, caseId = null) => {
     if (openOnly) {
       setIsCommandPaletteOpen(true);
       return;
     }
-    if (tab) setActiveTab(tab);
-    if (caseId) setSelectedCitatorCaseId(caseId);
+    if (target) {
+      setActiveView(target);
+    }
+    if (caseId) {
+      setSelectedCitatorCaseId(caseId);
+    }
+    window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
+  // Case Chat should show alongside when viewing citator or search with an active case
+  const showCaseChatBeside = (activeView === 'citator' || activeView === 'search') && activeCase;
+
   return (
-    <div className="workspace-app-shell">
-      {/* Slim Top Bar Header */}
-      <Header
-        activeTab={activeTab}
-        setActiveTab={setActiveTab}
-        onOpenCommandPalette={() => setIsCommandPaletteOpen(true)}
-        onOpenAgentModal={() => setIsAgentModalOpen(true)}
-        isMobileSidebarOpen={isMobileSidebarOpen}
-        onToggleMobileSidebar={() => setIsMobileSidebarOpen(!isMobileSidebarOpen)}
-      />
+    <div className="justice-app-root">
+      {/* Persistent Top Navbar on all non-landing module pages */}
+      {activeView !== 'landing' && (
+        <Navbar
+          activeView={activeView}
+          onNavigate={handleNavigate}
+          onSearchSubmit={handleSearchSubmit}
+          searchQuery={activeSearchQuery}
+          onOpenCommandPalette={() => setIsCommandPaletteOpen(true)}
+          onOpenAgentModal={() => setIsAgentModalOpen(true)}
+        />
+      )}
 
-      {/* Main Workspace Frame with Fixed Left Sidebar */}
-      <div className="workspace-body-layout">
-        {/* Mobile Backdrop */}
-        {isMobileSidebarOpen && (
-          <div 
-            className="sidebar-backdrop" 
-            onClick={() => setIsMobileSidebarOpen(false)}
-            aria-hidden="true"
-          />
-        )}
-
-        {/* Fixed Left Navigation Sidebar */}
-        <aside className={`workspace-sidebar ${isMobileSidebarOpen ? 'mobile-open' : ''}`}>
-          <div className="sidebar-content-wrap">
-            <div className="sidebar-group-label">WORKSPACE MODULES</div>
-
-            <nav className="sidebar-nav-list" aria-label="Workspace Modules">
-              <button
-                type="button"
-                className={`sidebar-nav-item ${activeTab === 'search' ? 'active' : ''}`}
-                onClick={() => {
-                  setActiveTab('search');
-                  setIsMobileSidebarOpen(false);
-                }}
-              >
-                <div className="sidebar-nav-icon">
-                  <Search size={16} />
+      {/* Main View Area */}
+      <div className={`justice-view-layout ${showCaseChatBeside && isCaseChatOpen ? 'has-case-chat' : ''}`}>
+        <main className="justice-main-view">
+          <Suspense fallback={
+            <div className="module-view-container animate-fade-in">
+              <div className="skeleton-cards-stack">
+                <div className="skeleton-card">
+                  <div className="skeleton-line skeleton-shimmer" style={{ width: '30%' }} />
+                  <div className="skeleton-title skeleton-shimmer" />
+                  <div className="skeleton-block skeleton-shimmer" />
                 </div>
-                <div className="sidebar-nav-text">
-                  <span className="sidebar-nav-title">Universal Search</span>
-                  <span className="sidebar-nav-desc">Neural Precedents & HyDE</span>
-                </div>
-              </button>
-
-              <button
-                type="button"
-                className={`sidebar-nav-item ${activeTab === 'citator' ? 'active' : ''}`}
-                onClick={() => {
-                  setActiveTab('citator');
-                  setIsMobileSidebarOpen(false);
-                }}
-              >
-                <div className="sidebar-nav-icon">
-                  <Scale size={16} />
-                </div>
-                <div className="sidebar-nav-text">
-                  <span className="sidebar-nav-title">Smart Citator</span>
-                  <span className="sidebar-nav-desc">Article 141 Lineage DAG</span>
-                </div>
-                <span className="sidebar-module-tag">Art. 141</span>
-              </button>
-
-              <button
-                type="button"
-                className={`sidebar-nav-item ${activeTab === 'analyzer' ? 'active' : ''}`}
-                onClick={() => {
-                  setActiveTab('analyzer');
-                  setIsMobileSidebarOpen(false);
-                }}
-              >
-                <div className="sidebar-nav-icon">
-                  <FileText size={16} />
-                </div>
-                <div className="sidebar-nav-text">
-                  <span className="sidebar-nav-title">Document Analyzer</span>
-                  <span className="sidebar-nav-desc">Section 27 Redline Audit</span>
-                </div>
-                <span className="sidebar-module-tag redline">Redline</span>
-              </button>
-
-              <button
-                type="button"
-                className={`sidebar-nav-item ${activeTab === 'comparison' ? 'active' : ''}`}
-                onClick={() => {
-                  setActiveTab('comparison');
-                  setIsMobileSidebarOpen(false);
-                }}
-              >
-                <div className="sidebar-nav-icon">
-                  <SlidersHorizontal size={16} />
-                </div>
-                <div className="sidebar-nav-text">
-                  <span className="sidebar-nav-title">Comparison</span>
-                  <span className="sidebar-nav-desc">Legacy System Critique</span>
-                </div>
-              </button>
-
-              <button
-                type="button"
-                className={`sidebar-nav-item ${activeTab === 'maxims' ? 'active' : ''}`}
-                onClick={() => {
-                  setActiveTab('maxims');
-                  setIsMobileSidebarOpen(false);
-                }}
-              >
-                <div className="sidebar-nav-icon">
-                  <BookOpen size={16} />
-                </div>
-                <div className="sidebar-nav-text">
-                  <span className="sidebar-nav-title">Legal Maxims</span>
-                  <span className="sidebar-nav-desc">Latin Canons & Flashcards</span>
-                </div>
-                <span className="sidebar-module-tag">240+</span>
-              </button>
-            </nav>
-          </div>
-
-          {/* Sidebar Status Footer Card */}
-          <div className="sidebar-bottom-panel">
-            <div className="sidebar-card">
-              <div className="sidebar-card-header">
-                <span className="sidebar-card-indicator" />
-                <span className="sidebar-card-badge">CONSTITUTIONAL ENGINE</span>
               </div>
-              <p className="sidebar-card-text">
-                Enforcing Article 141 judicial hierarchy across Supreme Court & High Court benches.
-              </p>
-              <button 
-                type="button" 
-                className="sidebar-card-action"
-                onClick={() => setIsAgentModalOpen(true)}
-              >
-                <Cpu size={13} />
-                <span>Inspect Agent DAG</span>
-              </button>
             </div>
-          </div>
-        </aside>
-
-        {/* Center Workspace Scroll Pane */}
-        <div className={`workspace-main-area ${(activeTab === 'citator' || (activeTab === 'search' && activeCase)) ? 'has-case-chat' : ''}`}>
-          <div className="workspace-main-content-flow">
-            <main className="workspace-main-scroll">
-              {activeTab === 'search' && (
-                <UniversalSearch 
-                  onSelectCaseForCitator={handleSelectCaseForCitator}
-                  onOpenCaseChat={handleOpenCaseChatFromSearch}
-                />
-              )}
-
-              {activeTab === 'citator' && (
-                <SmartCitator
-                  key={selectedCitatorCaseId}
-                  initialCaseId={selectedCitatorCaseId}
-                  onActiveCaseChange={setActiveCase}
-                />
-              )}
-
-              {activeTab === 'analyzer' && (
-                <DocumentAnalyzer
-                  onTriggerAgentAnalysis={handleTriggerAgentAnalysis}
-                />
-              )}
-
-              {activeTab === 'comparison' && (
-                <ManupatraComparison
-                  onSwitchToWorkspace={() => setActiveTab('analyzer')}
-                />
-              )}
-
-              {activeTab === 'maxims' && (
-                <LegalMaxims />
-              )}
-
-              {/* Bottom Status Footer */}
-              <Footer
-                onOpenComparison={() => setActiveTab('comparison')}
-                onOpenAgentModal={() => setIsAgentModalOpen(true)}
-              />
-            </main>
-
-            {/* Case Chat Panel alongside open case */}
-            {(activeTab === 'citator' || (activeTab === 'search' && activeCase)) && (
-              <CaseChatPanel
-                caseId={activeCase?.id || selectedCitatorCaseId}
-                caseTitle={activeCase?.title}
-                caseCitation={activeCase?.citation}
-                isOpen={isCaseChatOpen}
-                onToggle={handleToggleCaseChat}
-                externalPrompt={caseChatExternalPrompt}
-                onClearExternalPrompt={() => setCaseChatExternalPrompt(null)}
+          }>
+            {/* 1. LANDING PAGE VIEW */}
+            {activeView === 'landing' && (
+              <LandingPage
+                onNavigate={handleNavigate}
+                onSearchSubmit={handleSearchSubmit}
+                onOpenCaseChat={handleOpenCaseChatFromSearch}
+                onOpenCommandPalette={() => setIsCommandPaletteOpen(true)}
               />
             )}
-          </div>
-        </div>
+
+            {/* 2. SEARCH RESULTS MODULE */}
+            {activeView === 'search' && (
+              <SearchResults
+                initialQuery={activeSearchQuery}
+                onSelectCaseForCitator={handleSelectCaseForCitator}
+                onOpenCaseChat={handleOpenCaseChatFromSearch}
+                onSearchAgain={(q) => setActiveSearchQuery(q)}
+              />
+            )}
+
+            {/* 3. SMART CITATOR MODULE */}
+            {activeView === 'citator' && (
+              <SmartCitator
+                key={selectedCitatorCaseId}
+                initialCaseId={selectedCitatorCaseId}
+                onActiveCaseChange={setActiveCase}
+              />
+            )}
+
+            {/* 4. DOCUMENT ANALYSER MODULE */}
+            {activeView === 'analyzer' && (
+              <DocumentAnalyzer
+                onTriggerAgentAnalysis={handleTriggerAgentAnalysis}
+              />
+            )}
+
+            {/* 5. DOCUMENT CHAT MODULE */}
+            {activeView === 'docchat' && (
+              <DocumentChat />
+            )}
+
+            {/* 6. COMPARISON MODULE */}
+            {activeView === 'comparison' && (
+              <ManupatraComparison
+                onSwitchToWorkspace={() => handleNavigate('analyzer')}
+              />
+            )}
+
+            {/* 7. LEGAL MAXIMS MODULE */}
+            {activeView === 'maxims' && (
+              <LegalMaxims />
+            )}
+          </Suspense>
+        </main>
+
+        {/* Case Chat Panel alongside open case on search or citator view */}
+        {showCaseChatBeside && (
+          <Suspense fallback={null}>
+            <CaseChatPanel
+              caseId={activeCase?.id || selectedCitatorCaseId}
+              caseTitle={activeCase?.title}
+              caseCitation={activeCase?.citation}
+              isOpen={isCaseChatOpen}
+              onToggle={handleToggleCaseChat}
+              externalPrompt={caseChatExternalPrompt}
+              onClearExternalPrompt={() => setCaseChatExternalPrompt(null)}
+            />
+          </Suspense>
+        )}
       </div>
 
       {/* Real-time Agent StateGraph Visualizer Modal */}
-      <AgentVisualizerModal
-        isOpen={isAgentModalOpen}
-        onClose={() => setIsAgentModalOpen(false)}
-        sessionState={agentSessionState}
-        isRunning={isAgentRunning}
-      />
+      <Suspense fallback={null}>
+        <AgentVisualizerModal
+          isOpen={isAgentModalOpen}
+          onClose={() => setIsAgentModalOpen(false)}
+          sessionState={agentSessionState}
+          isRunning={isAgentRunning}
+        />
 
-      {/* Global Omni-Command Palette (Ctrl+K / ⌘K) */}
-      <CommandPalette
-        isOpen={isCommandPaletteOpen}
-        onClose={() => setIsCommandPaletteOpen(false)}
-        onNavigate={handleCommandNavigate}
-      />
+        {/* Global Omni-Command Palette (Ctrl+K / ⌘K) */}
+        <CommandPalette
+          isOpen={isCommandPaletteOpen}
+          onClose={() => setIsCommandPaletteOpen(false)}
+          onNavigate={handleCommandNavigate}
+        />
 
-      {/* Global Text Selection Toolbar (Floats near selection 3-1500 chars, Ctrl+E) */}
+        {/* Standalone Explain Selection Modal / Bottom Sheet */}
+        <ExplainSelectionModal
+          isOpen={isExplainModalOpen}
+          onClose={() => setIsExplainModalOpen(false)}
+          selectedText={standaloneExplainText}
+          context={standaloneExplainContext}
+        />
+      </Suspense>
+
+      {/* Global Text Selection Toolbar (Floats near selection 3-1500 chars) */}
       <TextSelectionToolbar
         onTriggerExplain={handleTriggerGlobalExplain}
-      />
-
-      {/* Standalone Explain Selection Modal / Bottom Sheet */}
-      <ExplainSelectionModal
-        isOpen={isExplainModalOpen}
-        onClose={() => setIsExplainModalOpen(false)}
-        selectedText={standaloneExplainText}
-        context={standaloneExplainContext}
       />
     </div>
   );

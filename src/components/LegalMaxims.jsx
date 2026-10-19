@@ -2,7 +2,7 @@ import React, { useState, useEffect, useMemo } from 'react';
 import { 
   Search, Sparkles, BookOpen, Layers, CheckCircle2, 
   RotateCw, HelpCircle, ChevronDown, ChevronUp, ArrowRight,
-  ExternalLink, Bookmark, Check, X, Shuffle, Award
+  ExternalLink, Bookmark, Check, X, Shuffle, Award, AlertTriangle 
 } from 'lucide-react';
 import { LEGAL_MAXIMS } from '../data/legalMaxims';
 import { 
@@ -23,11 +23,6 @@ export default function LegalMaxims() {
   const [maximsList, setMaximsList] = useState(LEGAL_MAXIMS);
   const [maximOfTheDay, setMaximOfTheDay] = useState(null);
   const [isLoading, setIsLoading] = useState(false);
-
-  // AI Explain State per maxim
-  const [explainingId, setExplainingId] = useState(null);
-  const [aiExplanations, setAiExplanations] = useState({});
-  const [factScenarios, setFactScenarios] = useState({});
 
   // Flashcards state
   const [flashcardIndex, setFlashcardIndex] = useState(0);
@@ -56,20 +51,17 @@ export default function LegalMaxims() {
     return ['ALL', ...Array.from(cats).sort()];
   }, []);
 
-  // Fetch Maxim of the Day & List from backend on mount
+  // Fetch Maxim of the Day & List from backend
   useEffect(() => {
     let isMounted = true;
     setIsLoading(true);
 
-    // 1. Fetch Maxim of the day
     fetchMaximOfTheDayWithBackend()
       .then(res => {
         if (!isMounted) return;
         if (res && res.maxim) setMaximOfTheDay(res.maxim);
       })
-      .catch(err => {
-        console.warn("[LegalMaxims] Backend random maxim failed, using local stable fallback:", err.message);
-        // Fallback: stable daily hash
+      .catch(() => {
         const todayStr = new Date().toISOString().split('T')[0];
         let hash = 0;
         for (let i = 0; i < todayStr.length; i++) {
@@ -80,7 +72,6 @@ export default function LegalMaxims() {
         if (isMounted) setMaximOfTheDay(LEGAL_MAXIMS[idx]);
       });
 
-    // 2. Fetch all maxims
     fetchMaximsWithBackend(searchQuery, selectedCategory, selectedLetter, 1, 300)
       .then(res => {
         if (!isMounted) return;
@@ -88,8 +79,7 @@ export default function LegalMaxims() {
           setMaximsList(res.results);
         }
       })
-      .catch(err => {
-        console.error("[LegalMaxims] Backend maxims fetch failed, using local corpus fallback:", err);
+      .catch(() => {
         if (isMounted) setMaximsList(LEGAL_MAXIMS);
       })
       .finally(() => {
@@ -101,33 +91,41 @@ export default function LegalMaxims() {
     };
   }, [searchQuery, selectedCategory, selectedLetter]);
 
-  // Client-side filtering as fallback/refinement
+  // Client-side filter
   const filteredMaxims = useMemo(() => {
     return maximsList.filter(item => {
       if (selectedCategory !== 'ALL' && item.category !== selectedCategory) return false;
-      if (selectedLetter !== 'ALL' && !item.maxim.toLowerCase().startsWith(selectedLetter.toLowerCase())) return false;
+      if (selectedLetter !== 'ALL' && !item.maxim.toUpperCase().startsWith(selectedLetter)) return false;
       if (searchQuery.trim()) {
         const q = searchQuery.toLowerCase().trim();
-        const inMaxim = item.maxim.toLowerCase().includes(q);
-        const inMeaning = item.meaning.toLowerCase().includes(q);
-        const inExpl = (item.explanation || '').toLowerCase().includes(q);
-        return inMaxim || inMeaning || inExpl;
+        const text = `${item.maxim} ${item.meaning} ${item.explanation || ''} ${item.category || ''}`.toLowerCase();
+        return text.includes(q);
       }
       return true;
     });
   }, [maximsList, selectedCategory, selectedLetter, searchQuery]);
 
-  // Flashcards navigation
-  const currentFlashcard = filteredMaxims[flashcardIndex] || filteredMaxims[0] || LEGAL_MAXIMS[0];
+  const toggleMasteredStatus = (id) => {
+    setMasteredMaxims(prev => {
+      const next = prev.includes(id) ? prev.filter(m => m !== id) : [...prev, id];
+      try {
+        localStorage.setItem('justice_maxims_mastered', JSON.stringify(next));
+      } catch (e) {}
+      return next;
+    });
+  };
+
+  // Flashcards rotation
+  const currentFlashcard = filteredMaxims[flashcardIndex] || LEGAL_MAXIMS[0];
 
   const handleNextFlashcard = () => {
     setIsFlipped(false);
-    setFlashcardIndex((prev) => (prev + 1) % (filteredMaxims.length || 1));
+    setFlashcardIndex(prev => (prev + 1) % (filteredMaxims.length || 1));
   };
 
   const handlePrevFlashcard = () => {
     setIsFlipped(false);
-    setFlashcardIndex((prev) => (prev - 1 + (filteredMaxims.length || 1)) % (filteredMaxims.length || 1));
+    setFlashcardIndex(prev => (prev - 1 + (filteredMaxims.length || 1)) % (filteredMaxims.length || 1));
   };
 
   const handleShuffleFlashcards = () => {
@@ -136,183 +134,121 @@ export default function LegalMaxims() {
     setFlashcardIndex(rand);
   };
 
-  const toggleMasteredStatus = (id) => {
-    setMasteredMaxims((prev) => {
-      const next = prev.includes(id) ? prev.filter(x => x !== id) : [...prev, id];
-      try {
-        localStorage.setItem('justice_maxims_mastered', JSON.stringify(next));
-      } catch (err) {
-        console.warn("Failed to persist mastered status:", err);
-      }
-      return next;
-    });
-  };
-
-  // Quiz state generation
+  // Quiz Question Generator
   const currentQuizItem = useMemo(() => {
-    const list = filteredMaxims.length >= 4 ? filteredMaxims : LEGAL_MAXIMS;
-    const target = list[quizQuestionIndex % list.length];
+    const pool = filteredMaxims.length >= 4 ? filteredMaxims : LEGAL_MAXIMS;
+    const target = pool[quizQuestionIndex % pool.length];
     
-    // Pick 3 random distractor meanings from other maxims
-    const otherItems = LEGAL_MAXIMS.filter(m => m.id !== target.id);
-    const shuffledOthers = [...otherItems].sort(() => 0.5 - Math.random()).slice(0, 3);
+    // Pick 3 distractors
+    const otherCandidates = pool.filter(m => m.id !== target.id);
+    const shuffled = [...otherCandidates].sort(() => 0.5 - Math.random());
+    const distractors = shuffled.slice(0, 3).map((d, i) => ({
+      id: `distractor-${i}`,
+      text: d.meaning,
+      isCorrect: false
+    }));
+
     const options = [
-      { id: 'correct', text: target.meaning, isCorrect: true },
-      ...shuffledOthers.map((m, i) => ({ id: `distractor-${i}`, text: m.meaning, isCorrect: false }))
+      { id: 'correct-opt', text: target.meaning, isCorrect: true },
+      ...distractors
     ].sort(() => 0.5 - Math.random());
 
     return { target, options };
   }, [quizQuestionIndex, filteredMaxims]);
 
-  const handleSelectQuizOption = (option) => {
+  const handleSelectQuizOption = (opt) => {
     if (quizAnswered) return;
-    setSelectedOption(option.id);
+    setSelectedOption(opt.id);
     setQuizAnswered(true);
-    if (option.isCorrect) {
-      setQuizScore(s => s + 1);
+    if (opt.isCorrect) {
+      setQuizScore(prev => prev + 1);
     }
   };
 
   const handleNextQuizQuestion = () => {
-    setSelectedOption(null);
     setQuizAnswered(false);
-    setQuizQuestionIndex(i => i + 1);
+    setSelectedOption(null);
+    setQuizQuestionIndex(prev => prev + 1);
   };
-
-  // AI Explanation handler
-  const handleRequestAiExplanation = async (maximItem) => {
-    setExplainingId(maximItem.id);
-    const userFact = factScenarios[maximItem.id] || null;
-
-    try {
-      const res = await explainMaximWithBackend(maximItem.maxim, userFact);
-      if (res && res.explanation) {
-        setAiExplanations(prev => ({
-          ...prev,
-          [maximItem.id]: {
-            explanation: res.explanation,
-            model_used: res.model_used || 'openai/gpt-oss-120b'
-          }
-        }));
-      }
-    } catch (err) {
-      console.warn("[LegalMaxims] AI explanation failed:", err.message);
-      setAiExplanations(prev => ({
-        ...prev,
-        [maximItem.id]: {
-          explanation: `${maximItem.explanation} (Principle applied grounded in verified legal authorities.)`,
-          model_used: 'stored_corpus_baseline'
-        }
-      }));
-    } finally {
-      setExplainingId(null);
-    }
-  };
-
-  const activeDaily = maximOfTheDay || LEGAL_MAXIMS[0];
 
   return (
-    <div className="workspace-module-pane">
-      {/* Module Workspace Header */}
-      <div className="workspace-module-header">
-        <div className="module-breadcrumbs">
-          <span className="crumb-root">WORKSPACE</span>
+    <div className="module-view-container animate-fade-in">
+      {/* Module Header */}
+      <div className="module-header-block">
+        <div className="module-breadcrumbs mono">
+          <span className="crumb-root">JUSTICE</span>
           <span className="crumb-sep">/</span>
-          <span className="crumb-leaf">LEGAL MAXIMS</span>
+          <span className="crumb-leaf">LEGAL MAXIMS & CANONS</span>
         </div>
-        <h1 className="module-heading font-judicial">Latin Legal Maxims & Jurisprudence</h1>
-        <p className="module-description">
-          Authoritative compendium of over 240 classical Latin legal maxims, foundational common law canons, 
-          and constitutional principles. Designed for rigorous judicial study, contract drafting, and bar advocacy.
+        <h1 className="module-title font-serif">Legal Maxims & Latin Canons</h1>
+        <p className="module-subtitle">
+          Over 240 classical Latin legal maxims mapped to Indian Supreme Court jurisprudence, interactive 3D flashcards, and knowledge assessment quizzes.
         </p>
 
         {/* View Mode Switcher */}
-        <div className="maxims-view-tabs">
-          <button
-            type="button"
-            className={`maxims-view-btn ${activeView === 'browse' ? 'active' : ''}`}
-            onClick={() => setActiveView('browse')}
-          >
-            <BookOpen size={14} />
-            <span>Directory & Search</span>
-          </button>
-
-          <button
-            type="button"
-            className={`maxims-view-btn ${activeView === 'flashcards' ? 'active' : ''}`}
-            onClick={() => setActiveView('flashcards')}
-          >
-            <Layers size={14} />
-            <span>Interactive Flashcards</span>
-          </button>
-
-          <button
-            type="button"
-            className={`maxims-view-btn ${activeView === 'quiz' ? 'active' : ''}`}
-            onClick={() => setActiveView('quiz')}
-          >
-            <HelpCircle size={14} />
-            <span>Knowledge Quiz</span>
-          </button>
+        <div className="module-tabs-strip">
+          {[
+            { id: 'browse', label: 'Browse & Doctrine Search' },
+            { id: 'flashcards', label: '3D Flip Flashcards' },
+            { id: 'quiz', label: 'Interactive Knowledge Quiz' }
+          ].map((v) => (
+            <button
+              key={v.id}
+              type="button"
+              className={`module-tab-btn ${activeView === v.id ? 'is-active' : ''}`}
+              onClick={() => setActiveView(v.id)}
+            >
+              <span>{v.label}</span>
+              {activeView === v.id && <span className="tab-copper-line" />}
+            </button>
+          ))}
         </div>
       </div>
 
       {/* =========================================================================
-          MAXIM OF THE DAY CARD (Pinned at top of workspace)
-          ========================================================================= */}
-      {activeDaily && (
-        <div className="daily-maxim-card">
-          <div className="daily-card-header">
-            <div className="daily-badge-group">
-              <Sparkles size={14} className="daily-sparkle-icon" />
-              <span className="daily-title-badge">MAXIM OF THE DAY</span>
-              <span className="daily-date-stamp mono">{new Date().toLocaleDateString('en-IN', { month: 'short', day: 'numeric', year: 'numeric' })}</span>
-            </div>
-            <span className="maxim-category-chip">{activeDaily.category}</span>
-          </div>
-
-          <div className="daily-body">
-            <h2 className="daily-latin font-judicial">{activeDaily.maxim}</h2>
-            <div className="daily-meaning font-judicial">"{activeDaily.meaning}"</div>
-            <p className="daily-explanation">{activeDaily.explanation}</p>
-            {activeDaily.example && (
-              <div className="daily-example-box">
-                <span className="example-label">PRACTICAL SCENARIO:</span>{' '}
-                <span className="example-text">{activeDaily.example}</span>
-              </div>
-            )}
-          </div>
-        </div>
-      )}
-
-      {/* =========================================================================
-          VIEW 1: DIRECTORY & SEARCH
+          VIEW 1: BROWSE & SEARCH
           ========================================================================= */}
       {activeView === 'browse' && (
-        <>
-          {/* Search Box */}
-          <div className="maxims-search-row">
-            <div className="search-input-wrapper">
-              <Search className="search-input-icon" size={17} />
+        <div className="maxims-browse-stage animate-fade-in">
+          {/* Maxim of the Day Card */}
+          {maximOfTheDay && (
+            <div className="maxim-daily-hero-card">
+              <div className="daily-kicker-strip">
+                <span className="kicker-badge mono">MAXIM OF THE DAY</span>
+                <span className="daily-category mono">{maximOfTheDay.category}</span>
+              </div>
+              <h2 className="daily-latin-heading font-serif">{maximOfTheDay.maxim}</h2>
+              <div className="daily-meaning-quote font-serif">"{maximOfTheDay.meaning}"</div>
+              <p className="daily-explanation">{maximOfTheDay.explanation}</p>
+              {maximOfTheDay.example && (
+                <div className="daily-scenario-box font-serif">
+                  <span className="scenario-label mono">PRACTICAL SCENARIO:</span> {maximOfTheDay.example}
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* Search & Filter Bar */}
+          <div className="maxims-filter-toolbar">
+            <div className="maxims-search-box">
+              <Search size={16} className="search-icon" />
               <input
                 type="text"
-                className="search-input-field"
+                className="maxims-search-input"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                placeholder="Search Latin maxim or English meaning (e.g. 'audi', 'mens rea', 'buyer beware')..."
+                placeholder="Search Latin maxims, English meanings, or doctrine keywords..."
+                aria-label="Search Legal Maxims"
               />
             </div>
-          </div>
 
-          {/* A-Z Alphabet Filter Strip */}
-          <div className="alphabet-strip-container">
-            <span className="alphabet-label mono">INDEX:</span>
-            <div className="alphabet-scroll-row">
+            {/* A-Z Alphabet Filter */}
+            <div className="alphabet-bar mono">
               {alphabet.map((letter) => (
                 <button
                   key={letter}
                   type="button"
-                  className={`alphabet-btn mono ${selectedLetter === letter ? 'active' : ''}`}
+                  className={`alpha-btn ${selectedLetter === letter ? 'is-active' : ''}`}
                   onClick={() => setSelectedLetter(letter)}
                 >
                   {letter}
@@ -321,224 +257,82 @@ export default function LegalMaxims() {
             </div>
           </div>
 
-          {/* Category Chips Bar */}
-          <div className="category-chips-strip">
-            <span className="category-strip-label">SUBJECT:</span>
-            <div className="category-chips-list">
-              {categories.map((cat) => (
-                <button
-                  key={cat}
-                  type="button"
-                  className={`category-pill-btn ${selectedCategory === cat ? 'active' : ''}`}
-                  onClick={() => setSelectedCategory(cat)}
-                >
-                  {cat}
-                </button>
-              ))}
-            </div>
-          </div>
-
-          {/* Results Summary Bar */}
-          <div className="maxims-results-meta-bar">
-            <span className="results-count-text">
-              Showing <strong>{filteredMaxims.length}</strong> verified legal maxims
-            </span>
-            {masteredMaxims.length > 0 && (
-              <span className="mastered-stats-pill mono">
-                <Check size={12} /> {masteredMaxims.length} mastered in flashcards
-              </span>
-            )}
-          </div>
-
-          {/* Maxims Cards Grid */}
-          <div className="maxims-cards-stream">
+          {/* Maxims List */}
+          <div className="maxims-cards-stack">
             {filteredMaxims.length === 0 ? (
-              <div className="workspace-empty-card">
-                <BookOpen size={32} className="empty-icon" />
-                <h3 className="empty-heading font-judicial">No matching legal maxims found</h3>
-                <p className="empty-text">
-                  Try clearing your search query or selecting 'ALL' in the A-Z alphabet index.
-                </p>
+              <div className="results-empty-state">
+                <BookOpen size={32} className="empty-state-icon" />
+                <h3 className="empty-title font-serif">No Maxims Found</h3>
+                <p className="empty-desc">Try clearing the letter filter or search term.</p>
               </div>
             ) : (
               filteredMaxims.map((item) => {
                 const isExpanded = expandedCardId === item.id;
                 const isMastered = masteredMaxims.includes(item.id);
-                const aiExplanation = aiExplanations[item.id];
-                const isExplaining = explainingId === item.id;
 
                 return (
-                  <article key={item.id} className={`maxim-card ${isExpanded ? 'expanded' : ''}`}>
-                    <div 
-                      className="maxim-card-header" 
+                  <article key={item.id} className="maxim-item-card">
+                    <div
+                      className="maxim-card-summary-row"
                       onClick={() => setExpandedCardId(isExpanded ? null : item.id)}
                     >
-                      <div className="maxim-title-group">
-                        <div className="maxim-latin-row">
-                          <h3 className="maxim-latin-text font-judicial">{item.maxim}</h3>
-                          <span className="maxim-category-chip">{item.category}</span>
+                      <div className="maxim-main-content">
+                        <div className="maxim-meta-line mono">
+                          <span className="maxim-cat-tag">{item.category}</span>
                           {isMastered && (
-                            <span className="mastered-check-chip" title="Mastered in flashcard practice">
+                            <span className="mastered-pill">
                               <Check size={11} /> Mastered
                             </span>
                           )}
                         </div>
-                        <div className="maxim-meaning-text font-judicial">"{item.meaning}"</div>
+                        <h3 className="maxim-latin-title font-serif">{item.maxim}</h3>
+                        <div className="maxim-meaning-line font-serif">"{item.meaning}"</div>
                       </div>
 
-                      <button 
-                        type="button" 
-                        className="btn-toggle-expand"
-                        aria-label={isExpanded ? "Collapse" : "Expand"}
+                      <button
+                        type="button"
+                        className="btn-expand-maxim"
+                        aria-label={isExpanded ? 'Collapse' : 'Expand'}
                       >
                         {isExpanded ? <ChevronUp size={18} /> : <ChevronDown size={18} />}
                       </button>
                     </div>
 
-                    {/* Expandable Details Canvas */}
                     {isExpanded && (
-                      <div className="maxim-expanded-content">
-                        {/* 2-3 sentence simple explanation */}
-                        <div className="maxim-section-block">
-                          <div className="section-label-kicker mono">LEGAL DOCTRINE & EXPLANATION</div>
+                      <div className="maxim-expanded-drawer animate-fade-in">
+                        <div className="maxim-section">
+                          <div className="section-kicker mono">LEGAL DOCTRINE & EXPLANATION</div>
                           <p className="section-prose">{item.explanation}</p>
                         </div>
 
-                        {/* Real-world Practical Scenario */}
                         {item.example && (
-                          <div className="maxim-section-block example-block">
-                            <div className="section-label-kicker mono">PRACTICAL SCENARIO</div>
-                            <p className="section-prose font-judicial">"{item.example}"</p>
+                          <div className="maxim-section">
+                            <div className="section-kicker mono">PRACTICAL SCENARIO</div>
+                            <p className="section-prose font-serif">"{item.example}"</p>
                           </div>
                         )}
 
-                        {/* Origin Note */}
-                        {item.origin_note && (
-                          <div className="maxim-section-block origin-block">
-                            <span className="origin-title mono">HISTORICAL ORIGIN:</span>{' '}
-                            <span className="origin-text">{item.origin_note}</span>
-                          </div>
-                        )}
-
-                        {/* Related Maxims Chips */}
-                        {item.related_maxims && item.related_maxims.length > 0 && (
-                          <div className="maxim-section-block">
-                            <div className="section-label-kicker mono">RELATED MAXIMS</div>
-                            <div className="related-chips-row">
-                              {item.related_maxims.map((relId) => {
-                                const relItem = LEGAL_MAXIMS.find(m => m.id === relId);
-                                return (
-                                  <button
-                                    key={relId}
-                                    type="button"
-                                    className="related-maxim-chip"
-                                    onClick={() => {
-                                      setSearchQuery(relItem ? relItem.maxim : relId);
-                                      setExpandedCardId(relId);
-                                    }}
-                                  >
-                                    <span>{relItem ? relItem.maxim : relId}</span>
-                                    <ArrowRight size={11} />
-                                  </button>
-                                );
-                              })}
-                            </div>
-                          </div>
-                        )}
-
-                        {/* Indian Case References or Needs Citation Badge */}
-                        <div className="maxim-section-block">
-                          <div className="section-label-kicker mono">INDIAN JUDICIAL PRECEDENTS</div>
-                          {item.indian_case_refs && item.indian_case_refs.length > 0 ? (
-                            <div className="case-refs-list">
-                              {item.indian_case_refs.map((cRef, idx) => (
-                                <div key={idx} className="case-ref-row">
-                                  <div className="case-name font-judicial">{cRef.case_name}</div>
-                                  <div className="case-citation mono">{cRef.citation}</div>
-                                  {cRef.source_url && (
-                                    <a
-                                      href={cRef.source_url}
-                                      target="_blank"
-                                      rel="noopener noreferrer"
-                                      className="case-source-link"
-                                    >
-                                      <span>View Judgment</span>
-                                      <ExternalLink size={11} />
-                                    </a>
-                                  )}
+                        {item.indian_case_refs && item.indian_case_refs.length > 0 && (
+                          <div className="maxim-section">
+                            <div className="section-kicker mono">INDIAN JUDICIAL PRECEDENTS</div>
+                            <div className="precedents-list">
+                              {item.indian_case_refs.map((ref, idx) => (
+                                <div key={idx} className="precedent-pill mono">
+                                  <strong>{ref.case_name}</strong> &bull; {ref.citation}
                                 </div>
                               ))}
                             </div>
-                          ) : (
-                            <div className="needs-citation-badge mono">
-                              <span>Needs citation</span> &bull; 
-                              <span className="needs-sub">Strict accuracy: no synthetic case citations permitted</span>
-                            </div>
-                          )}
-                        </div>
-
-                        {/* Grounded Legal AI Explanation Bar */}
-                        <div className="maxim-ai-interactive-panel">
-                          <div className="ai-panel-header">
-                            <div className="ai-title-group">
-                              <Sparkles size={14} className="sparkle-icon" />
-                              <span className="ai-title">AI-GROUNDED LEGAL SYNTHESIS</span>
-                            </div>
-                            <button
-                              type="button"
-                              className="btn-ai-explain"
-                              onClick={() => handleRequestAiExplanation(item)}
-                              disabled={isExplaining}
-                            >
-                              <span>{isExplaining ? 'Synthesizing...' : 'Explain with Legal AI'}</span>
-                            </button>
                           </div>
+                        )}
 
-                          <div className="fact-input-row">
-                            <input
-                              type="text"
-                              className="fact-scenario-input"
-                              placeholder="Optional: Enter a brief fact scenario to apply this maxim to..."
-                              value={factScenarios[item.id] || ''}
-                              onChange={(e) => setFactScenarios({ ...factScenarios, [item.id]: e.target.value })}
-                            />
-                          </div>
-
-                          {aiExplanation && (
-                            <div className="ai-explanation-box">
-                              <div className="ai-box-badge mono" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '8px' }}>
-                                <span>GROUNDED EXPLANATION</span>
-                                {aiExplanation?.model_used && (
-                                  <span className={`ai-model-tag mono ${aiExplanation.model_used.includes('baseline') || aiExplanation.model_used.includes('fallback') ? 'is-fallback' : 'is-neural'}`} title={`Model: ${aiExplanation.model_used}`}>
-                                    [{aiExplanation.model_used.includes('baseline') ? 'CORPUS BASELINE' : aiExplanation.model_used}]
-                                  </span>
-                                )}
-                              </div>
-                              <p className="ai-box-text">
-                                {renderWithBadges(typeof aiExplanation === 'string' ? aiExplanation : aiExplanation.explanation)}
-                              </p>
-                            </div>
-                          )}
-                        </div>
-
-                        {/* Footer Card Actions */}
-                        <div className="maxim-card-footer">
+                        <div className="maxim-footer-bar">
                           <button
                             type="button"
-                            className={`btn-mastered-toggle ${isMastered ? 'mastered' : ''}`}
+                            className={`btn-mastered-toggle ${isMastered ? 'is-mastered' : ''} mono`}
                             onClick={() => toggleMasteredStatus(item.id)}
                           >
-                            {isMastered ? (
-                              <>
-                                <Check size={13} />
-                                <span>Mastered in Flashcards</span>
-                              </>
-                            ) : (
-                              <>
-                                <Bookmark size={13} />
-                                <span>Mark as Known</span>
-                              </>
-                            )}
+                            <Check size={13} />
+                            <span>{isMastered ? 'Mastered in Flashcards' : 'Mark as Mastered'}</span>
                           </button>
                         </div>
                       </div>
@@ -548,65 +342,65 @@ export default function LegalMaxims() {
               })
             )}
           </div>
-        </>
+        </div>
       )}
 
       {/* =========================================================================
-          VIEW 2: FLASHCARDS MODE
+          VIEW 2: 3D FLIP FLASHCARDS
           ========================================================================= */}
       {activeView === 'flashcards' && (
-        <div className="flashcards-stage">
-          <div className="flashcards-top-meta">
-            <span className="flashcard-counter mono">
-              CARD {flashcardIndex + 1} OF {filteredMaxims.length || 1}
-            </span>
-            <div className="flashcard-progress-tags">
-              <span className="progress-pill mastered mono">
-                {masteredMaxims.length} MASTERED
-              </span>
-              <span className="progress-pill remaining mono">
-                {(filteredMaxims.length || LEGAL_MAXIMS.length) - masteredMaxims.length} REVIEWING
+        <div className="flashcards-stage animate-fade-in">
+          <div className="flashcards-meta-row mono">
+            <span>CARD {flashcardIndex + 1} OF {filteredMaxims.length || 1}</span>
+            <div className="flashcards-score-pills">
+              <span className="score-pill green">{masteredMaxims.length} MASTERED</span>
+              <span className="score-pill grey">
+                {(filteredMaxims.length || LEGAL_MAXIMS.length) - masteredMaxims.length} REMAINING
               </span>
             </div>
           </div>
 
-          {/* Interactive Flip Card */}
-          <div className="flashcard-interactive-container" onClick={() => setIsFlipped(!isFlipped)}>
-            <div className={`flashcard-surface ${isFlipped ? 'flipped' : ''}`}>
+          {/* 3D Flip Card Container */}
+          <div
+            className="flashcard-3d-scene"
+            onClick={() => setIsFlipped(!isFlipped)}
+            title="Click card to flip"
+          >
+            <div className={`flashcard-3d-flipper ${isFlipped ? 'is-flipped' : ''}`}>
               {/* FRONT: Latin Maxim */}
               <div className="flashcard-face flashcard-front">
-                <span className="flashcard-badge mono">LATIN LEGAL MAXIM &bull; CLICK TO FLIP</span>
-                <span className="flashcard-cat">{currentFlashcard.category}</span>
-                <h2 className="flashcard-latin-title font-judicial">{currentFlashcard.maxim}</h2>
-                <div className="flip-instruction">
-                  <RotateCw size={14} />
+                <span className="card-kicker mono">LATIN LEGAL CANON &bull; CLICK TO FLIP</span>
+                <span className="card-category-tag mono">{currentFlashcard.category}</span>
+                <h2 className="card-latin-title font-serif">{currentFlashcard.maxim}</h2>
+                <div className="card-flip-prompt mono">
+                  <RotateCw size={13} />
                   <span>Click to reveal English meaning</span>
                 </div>
               </div>
 
               {/* BACK: English Meaning & Doctrine */}
               <div className="flashcard-face flashcard-back">
-                <span className="flashcard-badge mono">ENGLISH MEANING & DOCTRINE</span>
-                <h3 className="flashcard-meaning-title font-judicial">"{currentFlashcard.meaning}"</h3>
-                <p className="flashcard-back-expl">{currentFlashcard.explanation}</p>
+                <span className="card-kicker mono">ENGLISH MEANING & JURISPRUDENCE</span>
+                <h3 className="card-meaning-title font-serif">"{currentFlashcard.meaning}"</h3>
+                <p className="card-explanation-prose">{currentFlashcard.explanation}</p>
                 {currentFlashcard.example && (
-                  <div className="flashcard-back-eg">
+                  <div className="card-scenario-note font-serif">
                     <strong>Scenario:</strong> {currentFlashcard.example}
                   </div>
                 )}
-                <div className="flip-instruction">
-                  <RotateCw size={14} />
+                <div className="card-flip-prompt mono">
+                  <RotateCw size={13} />
                   <span>Click to flip back</span>
                 </div>
               </div>
             </div>
           </div>
 
-          {/* Flashcard Action Buttons */}
-          <div className="flashcard-controls-bar">
+          {/* Flashcard Navigation Controls */}
+          <div className="flashcard-controls-strip">
             <button
               type="button"
-              className="btn-secondary"
+              className="btn-control-prev mono"
               onClick={handlePrevFlashcard}
             >
               Previous Card
@@ -614,30 +408,23 @@ export default function LegalMaxims() {
 
             <button
               type="button"
-              className={`btn-knowledge-toggle ${masteredMaxims.includes(currentFlashcard.id) ? 'known' : 'review'}`}
+              className={`btn-control-mastered mono ${masteredMaxims.includes(currentFlashcard.id) ? 'is-mastered' : ''}`}
               onClick={(e) => {
                 e.stopPropagation();
                 toggleMasteredStatus(currentFlashcard.id);
               }}
             >
-              {masteredMaxims.includes(currentFlashcard.id) ? (
-                <>
-                  <CheckCircle2 size={16} />
-                  <span>Mastered (Click to review again)</span>
-                </>
-              ) : (
-                <>
-                  <Bookmark size={16} />
-                  <span>Know It (Mark as Mastered)</span>
-                </>
-              )}
+              <CheckCircle2 size={15} />
+              <span>
+                {masteredMaxims.includes(currentFlashcard.id) ? 'Mastered' : 'Mark as Known'}
+              </span>
             </button>
 
             <button
               type="button"
-              className="btn-secondary"
+              className="btn-control-shuffle mono"
               onClick={handleShuffleFlashcards}
-              title="Pick a random card"
+              title="Pick random card"
             >
               <Shuffle size={14} />
               <span>Shuffle</span>
@@ -645,7 +432,7 @@ export default function LegalMaxims() {
 
             <button
               type="button"
-              className="btn-primary"
+              className="btn-control-next mono"
               onClick={handleNextFlashcard}
             >
               <span>Next Card</span>
@@ -656,71 +443,73 @@ export default function LegalMaxims() {
       )}
 
       {/* =========================================================================
-          VIEW 3: KNOWLEDGE QUIZ MODE
+          VIEW 3: INTERACTIVE KNOWLEDGE QUIZ (Green/Red Animated Feedback)
           ========================================================================= */}
       {activeView === 'quiz' && (
-        <div className="quiz-stage-container">
-          <div className="quiz-score-header">
-            <div className="quiz-question-ord mono">
-              QUESTION {quizQuestionIndex + 1}
-            </div>
-            <div className="quiz-score-badge mono">
+        <div className="quiz-stage animate-fade-in">
+          <div className="quiz-header-bar mono">
+            <span>QUESTION {quizQuestionIndex + 1}</span>
+            <div className="quiz-score-pill">
               <Award size={14} />
               <span>SCORE: {quizScore} / {quizQuestionIndex + (quizAnswered ? 1 : 0)}</span>
             </div>
           </div>
 
-          <div className="quiz-card-surface">
-            <span className="quiz-kicker mono">WHAT IS THE MEANING OF THIS LEGAL MAXIM?</span>
-            <h2 className="quiz-maxim-question font-judicial">{currentQuizItem.target.maxim}</h2>
-            <div className="quiz-category-tag">{currentQuizItem.target.category}</div>
+          <div className="quiz-question-card">
+            <span className="quiz-question-kicker mono">SELECT THE CORRECT LEGAL MEANING</span>
+            <h2 className="quiz-target-maxim font-serif">{currentQuizItem.target.maxim}</h2>
+            <div className="quiz-category-badge mono">{currentQuizItem.target.category}</div>
 
-            {/* 4 Multiple Choice Options */}
-            <div className="quiz-options-grid">
-              {currentQuizItem.options.map((opt) => {
+            {/* 4 Options Grid */}
+            <div className="quiz-options-matrix">
+              {currentQuizItem.options.map((opt, idx) => {
                 let statusClass = '';
                 if (quizAnswered) {
-                  if (opt.isCorrect) statusClass = 'correct';
-                  else if (selectedOption === opt.id) statusClass = 'incorrect';
+                  if (opt.isCorrect) statusClass = 'is-correct';
+                  else if (selectedOption === opt.id) statusClass = 'is-incorrect';
                 }
 
                 return (
                   <button
                     key={opt.id}
                     type="button"
-                    className={`quiz-option-btn ${selectedOption === opt.id ? 'selected' : ''} ${statusClass}`}
+                    className={`quiz-option-card ${selectedOption === opt.id ? 'is-selected' : ''} ${statusClass}`}
                     onClick={() => handleSelectQuizOption(opt)}
                     disabled={quizAnswered}
                   >
-                    <span className="quiz-option-letter mono">
-                      {opt.id === 'distractor-0' ? 'B' : opt.id === 'distractor-1' ? 'C' : opt.id === 'distractor-2' ? 'D' : 'A'}
+                    <span className="opt-letter mono">
+                      {String.fromCharCode(65 + idx)}
                     </span>
-                    <span className="quiz-option-text font-judicial">"{opt.text}"</span>
-                    {quizAnswered && opt.isCorrect && <Check size={16} className="option-feedback-icon correct" />}
-                    {quizAnswered && !opt.isCorrect && selectedOption === opt.id && <X size={16} className="option-feedback-icon incorrect" />}
+                    <span className="opt-text font-serif">"{opt.text}"</span>
+                    {quizAnswered && opt.isCorrect && (
+                      <Check size={16} className="opt-feedback-icon green" />
+                    )}
+                    {quizAnswered && !opt.isCorrect && selectedOption === opt.id && (
+                      <X size={16} className="opt-feedback-icon red" />
+                    )}
                   </button>
                 );
               })}
             </div>
 
-            {/* Quiz Post-Answer Feedback */}
+            {/* Post-Answer Animated Feedback Banner */}
             {quizAnswered && (
-              <div className="quiz-feedback-banner">
-                <div className="feedback-result-line">
+              <div className="quiz-feedback-banner animate-fade-in">
+                <div className="feedback-headline">
                   {currentQuizItem.options.find(o => o.id === selectedOption)?.isCorrect ? (
-                    <span className="feedback-text correct">Correct! Outstanding retention.</span>
+                    <span className="feedback-result correct font-serif">Correct! Outstanding retention.</span>
                   ) : (
-                    <span className="feedback-text incorrect">
+                    <span className="feedback-result incorrect font-serif">
                       Incorrect. The correct meaning is: "{currentQuizItem.target.meaning}"
                     </span>
                   )}
                 </div>
-                <p className="feedback-expl">{currentQuizItem.target.explanation}</p>
+                <p className="feedback-explanation">{currentQuizItem.target.explanation}</p>
 
-                <div className="quiz-next-bar">
+                <div className="feedback-actions">
                   <button
                     type="button"
-                    className="btn-primary"
+                    className="btn-quiz-next mono"
                     onClick={handleNextQuizQuestion}
                   >
                     <span>Next Question</span>

@@ -1,163 +1,40 @@
 /* ==========================================================================
-   JUSTICE — Legal Research Workspace Design System
-   Theme: Warm paper background (#FAF8F4), white surfaces (#FFFFFF),
-   ink-navy text (#16213E), muted gray secondary, restrained deep saffron (#C2410C),
-   Fraunces serif headings, Inter body, 8px radius cards, clean border lines.
+   JUSTICE — Root Styling & Global Utilities
    ========================================================================== */
 
-:root {
-  /* Surface & Background Palette */
-  --bg-paper: #FAF8F4;
-  --bg-primary: #FAF8F4;
-  --bg-surface: #FFFFFF;
-  --bg-surface-hover: #FDFBF7;
-  --bg-subtle: #F4EFEA;
-  --bg-muted: #EBE5DC;
-  --bg-card: #FFFFFF;
-  --bg-card-hover: #FDFCF9;
+@import './styles/theme.css';
 
-  /* Text & Ink Tokens */
-  --text-primary: #16213E;
-  --text-secondary: #5A6A85;
-  --text-muted: #8E9AA8;
-  --text-inverse: #FFFFFF;
-
-  /* Accent: Deep Saffron (Restrained for Primary Actions & Active States) */
-  --accent-saffron: #C2410C;
-  --accent-saffron-hover: #9A3412;
-  --accent-saffron-subtle: #FFF7ED;
-  --accent-saffron-border: #FFEDD5;
-  --accent-saffron-ring: rgba(194, 65, 12, 0.2);
-
-  /* Border & Hairlines */
-  --border-color: #E8E3DA;
-  --border-light: #EFEBE3;
-  --border-subtle: #E8E3DA;
-  --border-medium: #D1C9BE;
-  --border-hairline: #E8E3DA;
-  --border-hover: #C5BCB0;
-
-  /* Legal Status Semantics (Good Law vs Overruled vs Caution) */
-  --status-good-text: #15803D;
-  --status-good-bg: #DCFCE7;
-  --status-good-border: #BBF7D0;
-  --status-good-dot: #16A34A;
-
-  --status-risk-text: #B91C1C;
-  --status-risk-bg: #FEE2E2;
-  --status-risk-border: #FECACA;
-  --status-risk-dot: #DC2626;
-
-  --status-caution-text: #B45309;
-  --status-caution-bg: #FEF3C7;
-  --status-caution-border: #FDE68A;
-  --status-caution-dot: #D97706;
-
-  /* Typography */
-  --font-serif: 'Fraunces', 'Source Serif 4', Georgia, 'Times New Roman', serif;
-  --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-  --font-mono: 'JetBrains Mono', Menlo, Consolas, monospace;
-
-  /* Radii */
-  --radius-sm: 4px;
-  --radius-md: 8px;
-  --radius-lg: 12px;
-  --radius-full: 9999px;
-
-  /* Shadows (Calm & Restrained) */
-  --shadow-none: none;
-  --shadow-subtle: 0 1px 2px rgba(22, 33, 62, 0.04);
-  --shadow-card: 0 1px 3px rgba(22, 33, 62, 0.04), 0 1px 2px rgba(22, 33, 62, 0.02);
-  --shadow-card-hover: 0 4px 12px rgba(22, 33, 62, 0.06), 0 1px 3px rgba(22, 33, 62, 0.02);
-  --shadow-dropdown: 0 8px 24px -4px rgba(22, 33, 62, 0.12), 0 2px 6px -1px rgba(22, 33, 62, 0.04);
-  --shadow-modal: 0 20px 48px -12px rgba(22, 33, 62, 0.22);
-
-  /* Layout Constants */
-  --topbar-height: 56px;
-  --sidebar-width: 260px;
-  --transition-fast: 0.15s ease-in-out;
-  --transition-normal: 0.22s ease-in-out;
-}
-
-/* ==========================================================================
-   CSS Reset & Base Rules
-   ========================================================================== */
 *, *::before, *::after {
   box-sizing: border-box;
   margin: 0;
   padding: 0;
 }
 
-html, body {
-  height: 100%;
-  font-family: var(--font-sans);
-  background-color: var(--bg-paper);
-  color: var(--text-primary);
-  line-height: 1.6;
-  font-size: 14.5px;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
-  overflow-x: hidden;
-}
-
 #root {
   min-height: 100vh;
   display: flex;
   flex-direction: column;
-  background-color: var(--bg-paper);
+  background-color: var(--bg-base);
+  color: var(--text-body);
 }
 
-/* Custom Workspace Scrollbar */
-::-webkit-scrollbar {
-  width: 6px;
-  height: 6px;
-}
-::-webkit-scrollbar-track {
-  background: var(--bg-paper);
-}
-::-webkit-scrollbar-thumb {
-  background: #D4CDC2;
-  border-radius: var(--radius-sm);
-}
-::-webkit-scrollbar-thumb:hover {
-  background: #B5ACA0;
-}
-
-/* Text Selection */
-::selection {
-  background: var(--accent-saffron-subtle);
-  color: var(--accent-saffron);
-}
-
-/* Typography Hierarchy */
-h1, h2, h3, h4, .font-judicial {
-  font-family: var(--font-serif);
-  font-weight: 600;
-  letter-spacing: -0.015em;
-  color: var(--text-primary);
-}
-
-.mono {
-  font-family: var(--font-mono);
-  font-size: 0.88em;
-}
-
-/* Button & Link Reset */
+/* Base button and input styling */
 button {
   font-family: inherit;
   cursor: pointer;
   border: none;
   background: transparent;
+  color: inherit;
 }
 
 input, select, textarea {
   font-family: inherit;
-  color: var(--text-primary);
+  color: var(--text-ivory);
+  background: var(--bg-deep);
+  border: 1px solid var(--border);
 }
 
-/* ==========================================================================
-   Skeleton Shimmer Utilities
-   ========================================================================== */
+/* Skeletons */
 @keyframes skeleton-shimmer {
   0% {
     background-position: -200% 0;
@@ -170,43 +47,83 @@ input, select, textarea {
 .skeleton-shimmer {
   background: linear-gradient(
     90deg,
-    #ECE7DE 0%,
-    #F6F3ED 50%,
-    #ECE7DE 100%
+    var(--bg-panel) 0%,
+    var(--bg-raised) 50%,
+    var(--bg-panel) 100%
   );
   background-size: 200% 100%;
   animation: skeleton-shimmer 1.5s ease-in-out infinite;
-  border-radius: var(--radius-sm);
+  border-radius: 4px;
 }
 
 .skeleton-card {
-  background-color: var(--bg-surface);
-  border: 1px solid var(--border-color);
-  border-radius: var(--radius-md);
-  padding: 20px 24px;
+  background-color: var(--bg-panel);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 24px;
   display: flex;
   flex-direction: column;
-  gap: 14px;
+  gap: 16px;
+  box-shadow: var(--card-inner-light);
 }
 
 .skeleton-line {
   height: 14px;
-  border-radius: var(--radius-sm);
+  border-radius: 3px;
 }
 
 .skeleton-badge {
   height: 22px;
-  width: 80px;
-  border-radius: var(--radius-full);
+  width: 90px;
+  border-radius: 9999px;
 }
 
 .skeleton-title {
-  height: 22px;
-  width: 65%;
-  border-radius: var(--radius-sm);
+  height: 24px;
+  width: 70%;
+  border-radius: 4px;
 }
 
 .skeleton-block {
-  height: 72px;
-  border-radius: var(--radius-sm);
+  height: 80px;
+  border-radius: 4px;
+}
+
+/* Badges: Verified vs Not Verified */
+.badge-not-verified, .badge-verified {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-family: var(--font-mono);
+  font-size: 0.78rem;
+  font-weight: 500;
+  padding: 2px 8px;
+  border-radius: 3px;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  vertical-align: middle;
+}
+
+.badge-not-verified {
+  background: var(--warning-bg);
+  color: var(--warning);
+  border: 1px solid var(--warning-border);
+}
+
+.badge-verified {
+  background: var(--verified-bg);
+  color: var(--verified);
+  border: 1px solid var(--verified-border);
+}
+
+/* Editorial rule lines */
+.editorial-rule {
+  width: 100%;
+  height: 1px;
+  background: var(--border);
+  margin: 32px 0;
+}
+
+.copper-hairline {
+  border-bottom: 1px solid var(--copper-hairline);
 }

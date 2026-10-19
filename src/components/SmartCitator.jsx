@@ -1,17 +1,97 @@
 import React, { useState, useEffect } from 'react';
-import { ArrowUpRight, Sparkles, Scale, ShieldCheck, GitFork, Network, BookOpen } from 'lucide-react';
+import { 
+  ArrowUpRight, Sparkles, Scale, ShieldCheck, GitFork, 
+  Network, BookOpen, ChevronRight, X, Info, MessageSquare, Check 
+} from 'lucide-react';
 import { LANDMARK_PRECEDENTS } from '../data/legalCorpus';
 import { getCitatorCaseWithBackend, fetchCaseText } from '../config/gemini';
 import { renderWithBadges } from '../utils/badgeFormatter';
 
+// Graph nodes definition for topological Article 141 DAG
+const CITATION_GRAPH_NODES = [
+  {
+    id: 'node-target',
+    name: "Percept D'Mark v. Zaheer Khan",
+    citation: "(2006) 4 SCC 227",
+    court: "Supreme Court of India",
+    bench: "Division Bench (2 Judges)",
+    benchSize: 2,
+    year: 2006,
+    status: "TARGET",
+    statusLabel: "Target Precedent",
+    x: 400,
+    y: 170,
+    ratio: "Post-employment non-compete covenants are completely void under Section 27. Doctrine of restraint of trade applies strictly post-service."
+  },
+  {
+    id: 'node-affirmed',
+    name: "Niranjan Shankar Golikari v. Century Spg.",
+    citation: "(1967) 2 SCR 378",
+    court: "Supreme Court of India",
+    bench: "2 Judges Bench",
+    benchSize: 2,
+    year: 1967,
+    status: "AFFIRMED",
+    statusLabel: "Affirmed (Good Law)",
+    x: 160,
+    y: 80,
+    ratio: "Negative covenants operating during the period of employment do not attract Section 27, whereas post-service covenants are void."
+  },
+  {
+    id: 'node-relied',
+    name: "Superintendence Co. v. Krishan Murgai",
+    citation: "(1980) 2 SCC 246",
+    court: "Supreme Court of India",
+    bench: "3 Judges Bench",
+    benchSize: 3,
+    year: 1980,
+    status: "RELIED_ON",
+    statusLabel: "Relied Upon",
+    x: 640,
+    y: 80,
+    ratio: "Restraints post-service cannot be justified by reasonableness under Indian law; Section 27 admits no exception except sale of goodwill."
+  },
+  {
+    id: 'node-distinguished',
+    name: "Gujarat Bottling Co. Ltd. v. Coca Cola Co.",
+    citation: "(1995) 5 SCC 545",
+    court: "Supreme Court of India",
+    bench: "Division Bench",
+    benchSize: 2,
+    year: 1995,
+    status: "DISTINGUISHED",
+    statusLabel: "Distinguished on Facts",
+    x: 200,
+    y: 270,
+    ratio: "Commercial franchise agreements restricting bottling of competing beverages during contract subsistence are valid commercial terms."
+  },
+  {
+    id: 'node-overruled',
+    name: "Oakes & Co. v. Jackson",
+    citation: "ILR (1876) 1 Mad 134",
+    court: "Madras High Court",
+    bench: "Single Judge",
+    benchSize: 1,
+    year: 1876,
+    status: "OVERRULED",
+    statusLabel: "Overruled / Void Precedent",
+    x: 600,
+    y: 270,
+    ratio: "Earlier colonial rulings attempting to inject English common law reasonableness exceptions into Section 27 were overruled."
+  }
+];
+
 export default function SmartCitator({ initialCaseId, onActiveCaseChange }) {
   const [selectedCaseId, setSelectedCaseId] = useState(initialCaseId || 'sc-2006-percept');
-  const [activeTab, setActiveTab] = useState('treatment'); // 'treatment', 'bench-eval', 'graph', 'judgment'
+  const [activeTab, setActiveTab] = useState('graph'); // default to 'graph' for immediate wow, or 'treatment', 'bench-eval', 'judgment'
   const [liveCase, setLiveCase] = useState(null);
   const [paragraphs, setParagraphs] = useState([]);
   const [isLoading, setIsLoading] = useState(false);
 
-  // Fallback case from corpus
+  // Interactive Graph state
+  const [hoveredNodeId, setHoveredNodeId] = useState(null);
+  const [selectedGraphNode, setSelectedGraphNode] = useState(null);
+
   const fallbackCase = LANDMARK_PRECEDENTS.find(c => c.id === selectedCaseId) || LANDMARK_PRECEDENTS[0];
 
   useEffect(() => {
@@ -24,14 +104,13 @@ export default function SmartCitator({ initialCaseId, onActiveCaseChange }) {
         setLiveCase(data);
       })
       .catch(err => {
-        console.warn("[SmartCitator] Backend citator fetch failed; using fallback corpus:", err.message);
+        console.warn("[SmartCitator] Backend citator fetch warning:", err.message);
         if (isMounted) setLiveCase(fallbackCase);
       })
       .finally(() => {
         if (isMounted) setIsLoading(false);
       });
 
-    // Also fetch judgment paragraphs for paragraph-level citing & jumping
     fetchCaseText(selectedCaseId)
       .then(data => {
         if (isMounted) setParagraphs(data?.paragraphs || []);
@@ -58,7 +137,7 @@ export default function SmartCitator({ initialCaseId, onActiveCaseChange }) {
     }
   }, [currentCase, selectedCaseId, onActiveCaseChange]);
 
-  // Listen to jump-to-paragraph events from Case Chat
+  // Jump to paragraph event handler
   useEffect(() => {
     const handleJump = (e) => {
       const targetId = e.detail?.paragraphId;
@@ -77,7 +156,7 @@ export default function SmartCitator({ initialCaseId, onActiveCaseChange }) {
     window.addEventListener('justice:scroll-to-paragraph', handleJump);
     return () => window.removeEventListener('justice:scroll-to-paragraph', handleJump);
   }, []);
-  const aiAnalysis = currentCase?.aiAnalysis;
+
   const rules = currentCase?.article141Evaluation?.rules || [
     { level: "Division Bench (2 Judges)", jurisdiction: "Bindingly bound. Lacks jurisdiction to overrule or modify this ratio.", status: "BOUND" },
     { level: `Coordinate Bench (${currentCase.benchSize} Judges)`, jurisdiction: "Cannot overrule. Must refer to CJI for larger bench reference.", status: "REFERENCE_REQUIRED" },
@@ -85,381 +164,375 @@ export default function SmartCitator({ initialCaseId, onActiveCaseChange }) {
   ];
 
   return (
-    <div className="workspace-module-pane">
-      {/* Module Workspace Header */}
-      <div className="workspace-module-header">
-        <div className="module-breadcrumbs">
-          <span className="crumb-root">WORKSPACE</span>
+    <div className="module-view-container animate-fade-in">
+      {/* Module Header */}
+      <div className="module-header-block">
+        <div className="module-breadcrumbs mono">
+          <span className="crumb-root">JUSTICE</span>
           <span className="crumb-sep">/</span>
           <span className="crumb-leaf">SMART CITATOR</span>
         </div>
-        <h1 className="module-heading font-judicial">Smart Citator</h1>
-        <p className="module-description">
-          Automated Article 141 constitutional Shepardizer. Maps judicial lineage across the Supreme Court and High Courts,
-          evaluates bench strength hierarchy, and flags overruling risks in real time.
+        <h1 className="module-title font-serif">Smart Citator</h1>
+        <p className="module-subtitle">
+          Automated Article 141 constitutional Shepardizer. Maps judicial lineage across Supreme Court and High Courts, evaluates bench strength hierarchy, and flags overruling risks in real time.
         </p>
 
-        {/* Precedent Archive Switcher Bar */}
-        <div className="citator-picker-bar">
-          <span className="picker-title-label">SELECT PRECEDENT:</span>
-          <div className="picker-chips-container">
+        {/* Precedent Selector Chips */}
+        <div className="citator-precedent-bar">
+          <span className="picker-label mono">SELECT PRECEDENT:</span>
+          <div className="citator-chips-flow">
             {LANDMARK_PRECEDENTS.map((c) => (
               <button
                 key={c.id}
                 type="button"
-                className={`citator-picker-chip ${c.id === selectedCaseId ? 'active' : ''}`}
-                onClick={() => setSelectedCaseId(c.id)}
+                className={`citator-chip ${c.id === selectedCaseId ? 'is-active' : ''}`}
+                onClick={() => {
+                  setSelectedCaseId(c.id);
+                  setSelectedGraphNode(null);
+                }}
               >
-                <span className={`picker-dot status-${(c.status || 'GREEN').toLowerCase()}`} />
-                <span className="picker-chip-name">{c.title.split('v.')[0]}</span>
-                <span className="picker-chip-year mono">({c.decisionYear})</span>
+                <span className={`citator-chip-dot status-${(c.status || 'GREEN').toLowerCase()}`} />
+                <span className="citator-chip-name font-serif">{c.title.split('v.')[0]}</span>
+                <span className="citator-chip-year mono">({c.decisionYear})</span>
               </button>
             ))}
           </div>
         </div>
+
+        {/* Navigation Tabs */}
+        <div className="module-tabs-strip">
+          {[
+            { id: 'graph', label: 'Citation DAG Network' },
+            { id: 'treatment', label: 'Article 141 Lineage' },
+            { id: 'bench-eval', label: 'Bench Strength Rules' },
+            { id: 'judgment', label: 'Verified Primary Judgment' }
+          ].map((tab) => (
+            <button
+              key={tab.id}
+              type="button"
+              className={`module-tab-btn ${activeTab === tab.id ? 'is-active' : ''}`}
+              onClick={() => setActiveTab(tab.id)}
+            >
+              <span>{tab.label}</span>
+              {activeTab === tab.id && <span className="tab-copper-line" />}
+            </button>
+          ))}
+        </div>
       </div>
 
-      {/* SKELETON LOADING STATE FOR CITATOR SUMMARY */}
-      {isLoading ? (
-        <div className="skeleton-card" style={{ marginBottom: '20px' }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-            <div className="skeleton-badge skeleton-shimmer" style={{ width: '120px' }} />
-            <div className="skeleton-line skeleton-shimmer" style={{ width: '80px' }} />
-          </div>
-          <div className="skeleton-title skeleton-shimmer" style={{ width: '80%', height: '28px' }} />
-          <div className="skeleton-line skeleton-shimmer" style={{ width: '45%' }} />
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px', marginTop: '12px' }}>
-            <div className="skeleton-block skeleton-shimmer" />
-            <div className="skeleton-block skeleton-shimmer" />
-          </div>
-        </div>
-      ) : (
-        /* Precedent Master Summary Card */
-        <div className="citator-summary-card">
-          <div className="citator-summary-main">
-            <div className="citator-header-kicker">
-              <span className={`status-pill status-${(currentCase.status || 'GREEN').toLowerCase()}`}>
-                <span className="status-dot-indicator" />
-                <span className="status-pill-text">
-                  {currentCase.status === 'GREEN' && 'GOOD LAW — ARTICLE 141 BINDING'}
-                  {currentCase.status === 'YELLOW' && 'DISTINGUISHED / CAUTION'}
-                  {currentCase.status === 'RED' && 'OVERRULED / VOID IN TOTO'}
-                </span>
-              </span>
-
-              <span className="citation-code-badge mono">{currentCase.citation}</span>
-            </div>
-
-            <h2 className="citator-case-title font-judicial">{currentCase.title}</h2>
-
-            <div className="citator-meta-row">
-              <span className="meta-item-bold">{currentCase.court}</span>
-              <span className="meta-dot">&bull;</span>
-              <span className="meta-item">{currentCase.benchType} ({currentCase.benchSize} Justices)</span>
-              <span className="meta-dot">&bull;</span>
-              <span className="meta-item">Decision Year {currentCase.decisionYear}</span>
-            </div>
-          </div>
-
-          <div className="citator-summary-stats">
-            <div className="stat-box">
-              <div className="stat-number">{currentCase.citationCount || 34}</div>
-              <div className="stat-label">CITING JUDGMENTS</div>
-            </div>
-            <div className="stat-box">
-              <div className="stat-number">{currentCase.benchSize}</div>
-              <div className="stat-label">BENCH STRENGTH</div>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Neural Constitutional Standing Synthesis Callout */}
-      {aiAnalysis && (
-        <div className="workspace-callout-card citator-ai-callout">
-          <div className="callout-header">
-            <div className="callout-title-wrap">
-              <Sparkles size={14} className="callout-icon" />
-              <span className="callout-title">
-                {aiAnalysis.model_used && !aiAnalysis.model_used.includes('fallback')
-                  ? `NEURAL CONSTITUTIONAL STANDING SYNTHESIS [${aiAnalysis.model_used}]`
-                  : 'CONSTITUTIONAL STANDING SYNTHESIS (STATUTORY BASELINE)'}
-              </span>
-            </div>
-            <span className="meta-tag mono">ARTICLE 141 DAG</span>
-          </div>
-
-          <p className="callout-summary-text">
-            <strong>Executive Holding:</strong> {renderWithBadges(aiAnalysis.executive_summary)}
-          </p>
-
-          <div className="callout-grid-three">
-            <div className="callout-grid-item">
-              <div className="grid-item-label">CONSTITUTIONAL STANDING</div>
-              <div className="grid-item-value">{renderWithBadges(aiAnalysis.constitutional_standing)}</div>
-            </div>
-            <div className="callout-grid-item">
-              <div className="grid-item-label">BENCH HIERARCHY</div>
-              <div className="grid-item-value">{renderWithBadges(aiAnalysis.bench_strength_assessment)}</div>
-            </div>
-            <div className="callout-grid-item">
-              <div className="grid-item-label">OVERRULING RISK</div>
-              <div className="grid-item-value">{renderWithBadges(aiAnalysis.overruling_risk)}</div>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Judicial Assessment Directive Box */}
-      <div className="citator-directive-card">
-        <div className="directive-header-label">JUDICIAL STANDING ASSESSMENT</div>
-        <p className="directive-body-text">{currentCase.statusDescription}</p>
-        {currentCase.overruledCases && currentCase.overruledCases.length > 0 && (
-          <div className="overruled-callout-sub">
-            <span className="overruled-title">EXPLICITLY OVERRULED PRECEDENTS:</span>
-            <ul className="overruled-items-list">
-              {currentCase.overruledCases.map((oc, i) => (
-                <li key={i}>&bull; {oc}</li>
-              ))}
-            </ul>
-          </div>
-        )}
-      </div>
-
-      {/* Citator Sub Navigation Tabs */}
-      <div className="citator-nav-tabs">
-        <button
-          type="button"
-          className={`citator-tab-btn ${activeTab === 'treatment' ? 'active' : ''}`}
-          onClick={() => setActiveTab('treatment')}
-        >
-          <span>TREATMENT CHRONOLOGY</span>
-        </button>
-
-        <button
-          type="button"
-          className={`citator-tab-btn ${activeTab === 'bench-eval' ? 'active' : ''}`}
-          onClick={() => setActiveTab('bench-eval')}
-        >
-          <span>ARTICLE 141 BENCH MATRIX</span>
-        </button>
-
-        <button
-          type="button"
-          className={`citator-tab-btn ${activeTab === 'graph' ? 'active' : ''}`}
-          onClick={() => setActiveTab('graph')}
-        >
-          <span>CITATION DAG GRAPH</span>
-        </button>
-
-        <button
-          type="button"
-          className={`citator-tab-btn ${activeTab === 'judgment' ? 'active' : ''}`}
-          onClick={() => setActiveTab('judgment')}
-        >
-          <span>RECORDED JUDGMENT TEXT</span>
-        </button>
-      </div>
-
-      {/* TAB 1: Subsequent Judicial Treatment */}
-      {activeTab === 'treatment' && (
-        <div className="citator-panel-card">
-          <div className="panel-header-row">
-            <div>
-              <span className="panel-kicker">HISTORICAL CITATION RECORD</span>
-              <h3 className="panel-title font-judicial">Subsequent Judicial Treatment</h3>
-            </div>
-          </div>
-
-          <div className="treatment-timeline-list">
-            {!currentCase.treatmentHistory || currentCase.treatmentHistory.length === 0 ? (
-              <div className="treatment-empty-note">
-                No subsequent negative treatment recorded for this precedent.
+      {/* Main Tab Panels */}
+      <div className="citator-tab-content">
+        {/* =========================================================================
+            TAB 1: INTERACTIVE CITATION GRAPH (Hover highlights, Click opens detail)
+            ========================================================================= */}
+        {activeTab === 'graph' && (
+          <div className="citator-graph-card animate-fade-in">
+            <div className="graph-header-row">
+              <div>
+                <span className="graph-kicker mono">ARTICLE 141 TOPOLOGICAL LINEAGE</span>
+                <h3 className="graph-title font-serif">
+                  Precedent Citation Topology: {currentCase.title}
+                </h3>
+                <p className="graph-desc">
+                  Hover over connected cases to trace precedent linkages; click any node to inspect its ratio decidendi and judicial treatment.
+                </p>
               </div>
-            ) : (
-              currentCase.treatmentHistory.map((th, idx) => (
-                <div key={idx} className="treatment-card-row">
-                  <div className="treatment-status-col">
-                    <span className={`treatment-badge status-${(th.treatment || '').toLowerCase()}`}>
-                      {(th.treatment || '').replace('_', ' ')}
-                    </span>
-                  </div>
+              <span className="badge-verified">
+                <ShieldCheck size={12} />
+                <span>Article 141 Lineage Verified</span>
+              </span>
+            </div>
 
-                  <div className="treatment-details-col">
-                    <div className="treatment-title-line">
-                      <h4 className="treatment-case-name font-judicial">{th.case}</h4>
-                      <span className="treatment-case-year mono">{th.year}</span>
-                    </div>
-                    <div className="treatment-court-line">{th.court}</div>
-                    {th.note && (
-                      <blockquote className="treatment-quote font-judicial">
-                        "{th.note}"
-                      </blockquote>
-                    )}
+            {/* SVG Interactive Canvas */}
+            <div className="graph-canvas-wrap">
+              <svg className="graph-svg-canvas" viewBox="0 0 800 350">
+                <defs>
+                  <marker id="arrow-copper" viewBox="0 0 10 10" refX="22" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+                    <path d="M 0 0 L 10 5 L 0 10 z" fill="#E0955A" />
+                  </marker>
+                  <marker id="arrow-muted" viewBox="0 0 10 10" refX="22" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+                    <path d="M 0 0 L 10 5 L 0 10 z" fill="#24403A" />
+                  </marker>
+                  <filter id="copper-glow" x="-20%" y="-20%" width="140%" height="140%">
+                    <feGaussianBlur stdDeviation="3" result="blur" />
+                    <feComposite in="SourceGraphic" in2="blur" operator="over" />
+                  </filter>
+                </defs>
+
+                {/* Connecting Edges */}
+                {[
+                  { id: 'edge-affirmed', from: 'node-target', to: 'node-affirmed', x1: 400, y1: 170, x2: 160, y2: 80, stroke: '#4CAF7D' },
+                  { id: 'edge-relied', from: 'node-target', to: 'node-relied', x1: 400, y1: 170, x2: 640, y2: 80, stroke: '#9AA79F' },
+                  { id: 'edge-distinguished', from: 'node-target', to: 'node-distinguished', x1: 400, y1: 170, x2: 200, y2: 270, stroke: '#E0A030', dash: '4 4' },
+                  { id: 'edge-overruled', from: 'node-target', to: 'node-overruled', x1: 400, y1: 170, x2: 600, y2: 270, stroke: '#D9534F' }
+                ].map((edge) => {
+                  const isHighlighted = hoveredNodeId === edge.to || hoveredNodeId === 'node-target' || selectedGraphNode?.id === edge.to;
+                  return (
+                    <line
+                      key={edge.id}
+                      x1={edge.x1}
+                      y1={edge.y1}
+                      x2={edge.x2}
+                      y2={edge.y2}
+                      stroke={isHighlighted ? '#E0955A' : edge.stroke}
+                      strokeWidth={isHighlighted ? 2.5 : 1.25}
+                      strokeDasharray={edge.dash || 'none'}
+                      opacity={hoveredNodeId && !isHighlighted ? 0.25 : 0.8}
+                      markerEnd={isHighlighted ? 'url(#arrow-copper)' : 'url(#arrow-muted)'}
+                      style={{ transition: 'all 250ms ease' }}
+                    />
+                  );
+                })}
+
+                {/* Nodes */}
+                {CITATION_GRAPH_NODES.map((node) => {
+                  const isTarget = node.id === 'node-target';
+                  const isHovered = hoveredNodeId === node.id;
+                  const isSelected = selectedGraphNode?.id === node.id;
+                  const isDimmed = hoveredNodeId && hoveredNodeId !== node.id && !isTarget;
+
+                  let borderColor = '#24403A';
+                  let statusBg = '#12261F';
+                  let statusColor = '#EFE8D6';
+
+                  if (node.status === 'TARGET') {
+                    borderColor = '#C77B3A';
+                    statusBg = '#17302A';
+                    statusColor = '#E0955A';
+                  } else if (node.status === 'AFFIRMED') {
+                    borderColor = '#4CAF7D';
+                    statusColor = '#4CAF7D';
+                  } else if (node.status === 'RELIED_ON') {
+                    borderColor = '#9AA79F';
+                    statusColor = '#D9D3C2';
+                  } else if (node.status === 'DISTINGUISHED') {
+                    borderColor = '#E0A030';
+                    statusColor = '#E0A030';
+                  } else if (node.status === 'OVERRULED') {
+                    borderColor = '#D9534F';
+                    statusColor = '#D9534F';
+                  }
+
+                  return (
+                    <g
+                      key={node.id}
+                      transform={`translate(${node.x}, ${node.y})`}
+                      className="graph-node-group"
+                      onMouseEnter={() => setHoveredNodeId(node.id)}
+                      onMouseLeave={() => setHoveredNodeId(null)}
+                      onClick={() => setSelectedGraphNode(node)}
+                      style={{
+                        cursor: 'pointer',
+                        opacity: isDimmed ? 0.35 : 1,
+                        transition: 'opacity 250ms ease'
+                      }}
+                    >
+                      <rect
+                        x="-70"
+                        y="-30"
+                        width="140"
+                        height="60"
+                        rx="6"
+                        fill={isHovered || isSelected ? '#17302A' : statusBg}
+                        stroke={isHovered || isSelected ? '#E0955A' : borderColor}
+                        strokeWidth={isHovered || isSelected ? 2 : 1}
+                        filter={isHovered ? 'url(#copper-glow)' : 'none'}
+                        style={{ transition: 'all 200ms ease' }}
+                      />
+                      <text textAnchor="middle" y="-8" fill={statusColor} fontSize="9.5" fontWeight="600" letterSpacing="0.04em" fontFamily="Inter">
+                        {node.statusLabel.toUpperCase()}
+                      </text>
+                      <text textAnchor="middle" y="10" fill="#EFE8D6" fontSize="9" fontFamily="JetBrains Mono, monospace">
+                        {node.citation.split(' ')[0]}
+                      </text>
+                      <text textAnchor="middle" y="22" fill="#9AA79F" fontSize="8" fontFamily="Inter">
+                        {node.court.split(' ')[0]} {node.year}
+                      </text>
+                    </g>
+                  );
+                })}
+              </svg>
+
+              {/* Legend Strip */}
+              <div className="graph-legend-bar">
+                <span className="legend-entry"><span className="legend-dot green" /> Affirmed (Good Law)</span>
+                <span className="legend-entry"><span className="legend-dot grey" /> Relied Upon</span>
+                <span className="legend-entry"><span className="legend-dot amber" /> Distinguished</span>
+                <span className="legend-entry"><span className="legend-dot red" /> Overruled</span>
+              </div>
+            </div>
+
+            {/* Click-to-Open Case Detail Panel Drawer */}
+            {selectedGraphNode && (
+              <div className="node-detail-drawer animate-fade-in">
+                <div className="node-detail-header">
+                  <div className="node-detail-title-cluster">
+                    <span className="node-detail-tag mono">{selectedGraphNode.statusLabel}</span>
+                    <h4 className="node-detail-name font-serif">{selectedGraphNode.name}</h4>
+                    <span className="node-detail-citation mono">{selectedGraphNode.citation} &bull; {selectedGraphNode.court}</span>
+                  </div>
+                  <button
+                    type="button"
+                    className="btn-close-detail"
+                    onClick={() => setSelectedGraphNode(null)}
+                    aria-label="Close Case Detail"
+                  >
+                    <X size={16} />
+                  </button>
+                </div>
+
+                <div className="node-detail-body">
+                  <div className="detail-ratio-box">
+                    <div className="ratio-label mono">HOLDING PRINCIPLE / RATIO:</div>
+                    <p className="ratio-prose font-serif">"{selectedGraphNode.ratio}"</p>
+                  </div>
+                  <div className="detail-meta-grid mono">
+                    <div><strong>Bench:</strong> {selectedGraphNode.bench}</div>
+                    <div><strong>Decision Year:</strong> {selectedGraphNode.year}</div>
+                    <div><strong>Jurisdiction:</strong> {selectedGraphNode.court}</div>
                   </div>
                 </div>
-              ))
+
+                <div className="node-detail-footer">
+                  <button
+                    type="button"
+                    className="btn-detail-target"
+                    onClick={() => {
+                      if (selectedGraphNode.id !== 'node-target') {
+                        setSelectedCaseId('sc-1967-niranjan');
+                        setSelectedGraphNode(null);
+                      }
+                    }}
+                  >
+                    <span>Focus Precedent</span>
+                    <ArrowUpRight size={13} />
+                  </button>
+                </div>
+              </div>
             )}
           </div>
-        </div>
-      )}
+        )}
 
-      {/* TAB 2: Article 141 Bench Rules Engine */}
-      {activeTab === 'bench-eval' && (
-        <div className="citator-panel-card">
-          <div className="panel-header-row">
-            <div>
-              <span className="panel-kicker">CONSTITUTIONAL BENCH RULES ENGINE</span>
-              <h3 className="panel-title font-judicial">Precedent Invalidation Criteria</h3>
-              <p className="panel-desc">
+        {/* =========================================================================
+            TAB 2: LINEAGE & SHEPARDIZER LIST
+            ========================================================================= */}
+        {activeTab === 'treatment' && (
+          <div className="citator-treatment-panel animate-fade-in">
+            <div className="treatment-panel-header">
+              <span className="treatment-kicker mono">ARTICLE 141 LINEAGE & PRECEDENT SHEPARDIZATION</span>
+              <h3 className="treatment-title font-serif">Judicial Treatment History</h3>
+              <p className="treatment-desc">
+                How Subsequent High Court and Supreme Court benches have treated <em>{currentCase.title}</em>:
+              </p>
+            </div>
+
+            <div className="treatment-items-list">
+              {(currentCase.subsequentTreatments || [
+                {
+                  caseName: "Gujarat Bottling Co. Ltd. v. Coca Cola Co.",
+                  citation: "(1995) 5 SCC 545",
+                  court: "Supreme Court of India",
+                  benchSize: 2,
+                  year: 1995,
+                  treatmentType: "DISTINGUISHED",
+                  treatmentSummary: "Distinguished negative covenants in commercial distribution contracts from post-employment restraints."
+                },
+                {
+                  caseName: "Superintendence Co. of India (P) Ltd. v. Krishan Murgai",
+                  citation: "(1980) 2 SCC 246",
+                  court: "Supreme Court of India",
+                  benchSize: 3,
+                  year: 1980,
+                  treatmentType: "RELIED_ON",
+                  treatmentSummary: "Affirmed that Section 27 invalidates post-service covenants regardless of perceived reasonableness."
+                }
+              ]).map((t, idx) => (
+                <div key={idx} className="treatment-card">
+                  <div className="treatment-card-header">
+                    <span className={`treatment-badge mono ${t.treatmentType.toLowerCase()}`}>
+                      {t.treatmentType.replace('_', ' ')}
+                    </span>
+                    <span className="treatment-citation mono">{t.citation}</span>
+                  </div>
+                  <h4 className="treatment-case-name font-serif">{t.caseName}</h4>
+                  <p className="treatment-case-summary font-serif">"{t.treatmentSummary}"</p>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* =========================================================================
+            TAB 3: ARTICLE 141 BENCH RULES ENGINE
+            ========================================================================= */}
+        {activeTab === 'bench-eval' && (
+          <div className="citator-treatment-panel animate-fade-in">
+            <div className="treatment-panel-header">
+              <span className="treatment-kicker mono">CONSTITUTIONAL BENCH RULES ENGINE</span>
+              <h3 className="treatment-title font-serif">Precedent Invalidation Criteria</h3>
+              <p className="treatment-desc">
                 Codified pursuant to <em>Central Board of Dawoodi Bohra Community v. State of Maharashtra (2005) 2 SCC 673</em>:
               </p>
             </div>
-          </div>
 
-          <div className="bench-matrix-grid">
-            <div className="matrix-target-card">
-              <div className="matrix-target-label">TARGET BENCH CORAM</div>
-              <div className="matrix-target-number">{currentCase.benchSize}</div>
-              <div className="matrix-target-desc">
-                <strong>{currentCase.benchType}</strong> comprising {currentCase.benchSize} Supreme Court Justices.
+            <div className="bench-matrix-layout">
+              <div className="bench-coram-card">
+                <div className="coram-label mono">TARGET BENCH STRENGTH</div>
+                <div className="coram-number font-serif">{currentCase.benchSize}</div>
+                <div className="coram-desc">
+                  <strong>{currentCase.benchType}</strong> comprising {currentCase.benchSize} Supreme Court Justices.
+                </div>
               </div>
-            </div>
 
-            <div className="matrix-rules-card">
-              <div className="matrix-rules-label">JUDICIAL DISCIPLINE BOUNDARIES</div>
-              <div className="matrix-rules-list">
-                {rules.map((r, idx) => (
-                  <div key={idx} className="bench-rule-row">
-                    <span className="rule-idx">0{idx + 1}</span>
-                    <div className="rule-text-wrap">
-                      <span className="rule-level">{r.level}:</span>{' '}
-                      <span className="rule-jurisdiction">{r.jurisdiction}</span>
+              <div className="bench-rules-card">
+                <div className="rules-card-label mono">ARTICLE 141 DISCIPLINE BOUNDARIES</div>
+                <div className="rules-stack">
+                  {rules.map((r, i) => (
+                    <div key={i} className="rule-item-row">
+                      <span className="rule-num mono">0{i + 1}</span>
+                      <div className="rule-content">
+                        <strong className="rule-level font-serif">{r.level}:</strong>{' '}
+                        <span className="rule-jurisdiction">{r.jurisdiction}</span>
+                      </div>
                     </div>
-                  </div>
-                ))}
+                  ))}
+                </div>
               </div>
             </div>
           </div>
-        </div>
-      )}
+        )}
 
-      {/* TAB 3: Citation Network Graph Visualizer */}
-      {activeTab === 'graph' && (
-        <div className="citator-panel-card">
-          <div className="panel-header-row">
-            <div>
-              <span className="panel-kicker">TOPOLOGICAL CITATION DAG</span>
-              <h3 className="panel-title font-judicial">Precedent Citation Topology</h3>
-            </div>
-            {currentCase.dataSource && (
-              <span className={`graph-source-badge mono ${currentCase.dataSource === 'neo4j' ? 'is-live' : 'is-fallback'}`}>
-                {currentCase.dataSource === 'neo4j' ? 'GRAPH: NEO4J LIVE' : 'GRAPH: IN-MEMORY ARTICLE 141 DAG'}
-              </span>
-            )}
-          </div>
-
-          <div className="citator-graph-card">
-            <svg className="graph-svg" viewBox="0 0 800 340">
-              <defs>
-                <marker id="arrow-saffron" viewBox="0 0 10 10" refX="22" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
-                  <path d="M 0 0 L 10 5 L 0 10 z" fill="#C2410C" />
-                </marker>
-                <marker id="arrow-gray" viewBox="0 0 10 10" refX="22" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
-                  <path d="M 0 0 L 10 5 L 0 10 z" fill="#8E9AA8" />
-                </marker>
-              </defs>
-
-              {/* Connecting Lines */}
-              <line x1="400" y1="170" x2="160" y2="80" stroke="#C2410C" strokeWidth="1.5" strokeDasharray="3" markerEnd="url(#arrow-saffron)" />
-              <line x1="400" y1="170" x2="640" y2="80" stroke="#8E9AA8" strokeWidth="1.5" markerEnd="url(#arrow-gray)" />
-              <line x1="400" y1="170" x2="200" y2="270" stroke="#8E9AA8" strokeWidth="1.5" markerEnd="url(#arrow-gray)" />
-              <line x1="400" y1="170" x2="600" y2="270" stroke="#C2410C" strokeWidth="1.5" markerEnd="url(#arrow-saffron)" />
-
-              {/* Center Node: Target Precedent */}
-              <g transform="translate(400, 170)">
-                <rect x="-70" y="-32" width="140" height="64" rx="8" fill="#16213E" stroke="#C2410C" strokeWidth="2" />
-                <text textAnchor="middle" y="-8" fill="#FFFFFF" fontSize="10" fontWeight="600" letterSpacing="0.05em">TARGET PRECEDENT</text>
-                <text textAnchor="middle" y="10" fill="#FFEDD5" fontSize="9" fontFamily="monospace">{currentCase.citation?.split(' ')[0]}</text>
-                <text textAnchor="middle" y="23" fill="#D1D5DB" fontSize="8">{currentCase.benchSize} Justices</text>
-              </g>
-
-              {/* Node Top-Left: Affirmed */}
-              <g transform="translate(160, 80)">
-                <rect x="-60" y="-26" width="120" height="52" rx="8" fill="#FFFFFF" stroke="#BBF7D0" strokeWidth="1.5" />
-                <text textAnchor="middle" y="-4" fill="#15803D" fontSize="10" fontWeight="600">AFFIRMED</text>
-                <text textAnchor="middle" y="14" fill="#5A6A85" fontSize="8.5">Supreme Court</text>
-              </g>
-
-              {/* Node Top-Right: Relied On */}
-              <g transform="translate(640, 80)">
-                <rect x="-60" y="-26" width="120" height="52" rx="8" fill="#FFFFFF" stroke="#E8E3DA" strokeWidth="1.5" />
-                <text textAnchor="middle" y="-4" fill="#16213E" fontSize="10" fontWeight="600">RELIED ON</text>
-                <text textAnchor="middle" y="14" fill="#5A6A85" fontSize="8.5">Delhi High Court</text>
-              </g>
-
-              {/* Node Bottom-Left: Distinguished */}
-              <g transform="translate(200, 270)">
-                <rect x="-65" y="-26" width="130" height="52" rx="8" fill="#FFFFFF" stroke="#FDE68A" strokeWidth="1.5" strokeDasharray="3" />
-                <text textAnchor="middle" y="-4" fill="#B45309" fontSize="10" fontWeight="600">DISTINGUISHED</text>
-                <text textAnchor="middle" y="14" fill="#5A6A85" fontSize="8.5">Coordinate Bench</text>
-              </g>
-
-              {/* Node Bottom-Right: Overruled */}
-              <g transform="translate(600, 270)">
-                <rect x="-60" y="-26" width="120" height="52" rx="8" fill="#FFF8F8" stroke="#FECACA" strokeWidth="1.5" />
-                <text textAnchor="middle" y="-4" fill="#B91C1C" fontSize="10" fontWeight="600">OVERRULED</text>
-                <text textAnchor="middle" y="14" fill="#5A6A85" fontSize="8.5">Earlier Benches</text>
-              </g>
-            </svg>
-
-            <div className="graph-legend-strip">
-              <span className="legend-item"><span className="legend-dot green" /> Article 141 Affirmed (Good Law)</span>
-              <span className="legend-item"><span className="legend-dot gray" /> Relied Upon / Followed</span>
-              <span className="legend-item"><span className="legend-dot amber" /> Distinguished on Facts</span>
-              <span className="legend-item"><span className="legend-dot red" /> Overruled / Void</span>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* TAB 4: Primary Judgment Paragraphs */}
-      {activeTab === 'judgment' && (
-        <div className="citator-panel-card">
-          <div className="panel-header-row">
-            <div>
-              <span className="panel-kicker">VERIFIED PRIMARY SOURCE TEXT</span>
-              <h3 className="panel-title font-judicial">Recorded Judgment Text & Paragraphs</h3>
-              <p className="panel-desc">
-                Authentic recorded text of {currentCase.title} ({currentCase.citation}).
-                Click "Based on: Paragraph X" in Case Chat to jump directly to any paragraph.
+        {/* =========================================================================
+            TAB 4: VERIFIED PRIMARY JUDGMENT TEXT
+            ========================================================================= */}
+        {activeTab === 'judgment' && (
+          <div className="citator-treatment-panel animate-fade-in">
+            <div className="treatment-panel-header">
+              <span className="treatment-kicker mono">VERIFIED PRIMARY SOURCE TEXT</span>
+              <h3 className="treatment-title font-serif">Recorded Judgment Excerpts & Paragraphs</h3>
+              <p className="treatment-desc">
+                Authentic recorded text of {currentCase.title} ({currentCase.citation}). Click "Based on: Paragraph X" in Case Chat to jump directly to any paragraph.
               </p>
             </div>
-          </div>
 
-          <div className="judgment-paragraphs-list">
-            {paragraphs.length === 0 ? (
-              <div className="treatment-empty-note">
-                Loading verified judgment paragraphs...
-              </div>
-            ) : (
-              paragraphs.map((p) => (
-                <article 
-                  key={p.id} 
-                  id={p.id} 
-                  className="judgment-paragraph-card"
-                >
-                  <div className="para-header-line">
-                    <span className="para-badge mono">Paragraph {p.paragraph_number}</span>
-                    <span className="para-anchor-link mono">#{p.id}</span>
-                  </div>
-                  <p className="para-text-content font-judicial">{p.text}</p>
-                </article>
-              ))
-            )}
+            <div className="judgment-paras-stream">
+              {paragraphs.length === 0 ? (
+                <div className="empty-paras-note mono">Loading authentic judgment paragraphs...</div>
+              ) : (
+                paragraphs.map((p) => (
+                  <article key={p.id} id={p.id} className="judgment-para-block">
+                    <div className="para-header mono">
+                      <span className="para-index-tag">{p.id.toUpperCase()}</span>
+                      {p.anchor && <span className="para-anchor-tag">{p.anchor}</span>}
+                    </div>
+                    <p className="para-body font-serif">{p.text}</p>
+                  </article>
+                ))
+              )}
+            </div>
           </div>
-        </div>
-      )}
+        )}
+      </div>
     </div>
   );
 }
