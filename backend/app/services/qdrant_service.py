@@ -52,6 +52,41 @@ def _case_to_text(case: Dict[str, Any]) -> str:
     )
 
 
+def extract_query_aliases(query: str) -> List[str]:
+    """
+    Identifies if a query contains an alias, short name, or citation of a landmark case,
+    ignoring punctuation and spacing (e.g. 'AIR 1973 SC 1461', '(1973) 4 SCC 225', 'Kesavananda').
+    Returns matching canonical alias strings for Qdrant filtering.
+    """
+    if not query or len(query.strip()) < 3:
+        return []
+
+    q_norm = re.sub(r'[\s\W_]+', '', query).lower()
+    matched = []
+
+    try:
+        from app.ingest.landmark_pipeline import LANDMARK_CASES
+    except Exception:
+        LANDMARK_CASES = []
+
+    for case_def in LANDMARK_CASES:
+        all_aliases = [
+            case_def["common_name"],
+            case_def["short_name"],
+            f"{case_def['short_name']} case",
+            f"{case_def['common_name']} case",
+        ] + case_def.get("extra_aliases", [])
+
+        for a in all_aliases:
+            if not a:
+                continue
+            a_norm = re.sub(r'[\s\W_]+', '', a).lower()
+            if len(a_norm) >= 4 and a_norm in q_norm:
+                matched.append(a)
+
+    return list(dict.fromkeys(matched))
+
+
 class QdrantService:
     def __init__(self):
         self.url = settings.QDRANT_URL
@@ -184,18 +219,65 @@ class QdrantService:
         except Exception:
             pass
 
+        # Small exact-match boost for landmark aliases and citations
+        exact_boost_results: List[Dict[str, Any]] = []
+        matched_aliases = extract_query_aliases(query)
+        if matched_aliases:
+            try:
+                from qdrant_client.models import Filter, FieldCondition, MatchValue
+                conditions = [FieldCondition(key="aliases", match=MatchValue(value=a)) for a in matched_aliases]
+                boost_hits, _ = self._client.scroll(
+                    collection_name=target_collection,
+                    scroll_filter=Filter(should=conditions),
+                    limit=limit,
+                    with_payload=True,
+                    with_vectors=False
+                )
+                seen_boost = set()
+                for hit in boost_hits:
+                    p = dict(hit.payload or {})
+                    if not self._matches_filters(p, court_filter, bench_filter):
+                        continue
+                    c_title = p.get("common_name") or p.get("case_name") or p.get("title")
+                    c_key = (c_title or "").strip().lower()
+                    if not c_key or c_key in seen_boost:
+                        continue
+                    seen_boost.add(c_key)
+
+                    p["title"] = c_title
+                    p["decisionYear"] = p.get("year")
+                    p["ratioSummary"] = p.get("text", "")[:450] + ("..." if len(p.get("text", "")) > 450 else "")
+                    p["court"] = "Supreme Court of India"
+                    p["benchType"] = "Supreme Court Bench"
+                    p["benchSize"] = p.get("benchSize", 5 if p.get("landmark") else 2)
+                    p["statutes"] = p.get("statutes", ["Constitution of India", "Indian Precedents"])
+                    p["relevance_score"] = 0.99
+                    p["retrieval_mode"] = f"qdrant_exact_boost+{target_collection}"
+                    exact_boost_results.append(p)
+                    if len(exact_boost_results) >= limit:
+                        break
+            except Exception as e:
+                logger.debug("Exact match boost failed: %s", e)
+
         hits = self._client.search(
             collection_name=target_collection,
             query_vector=vector,
             limit=max(limit * 4, 20),
         )
-        results: List[Dict[str, Any]] = []
+        results: List[Dict[str, Any]] = list(exact_boost_results)
         seen_cases = set()
+        for r in exact_boost_results:
+            for k in [r.get("title"), r.get("case_name"), r.get("common_name")]:
+                if k:
+                    seen_cases.add(k.strip().lower())
+
         for hit in hits:
             case = dict(hit.payload or {})
             if not self._matches_filters(case, court_filter, bench_filter):
                 continue
-            if not case.get("title") and case.get("case_name"):
+            if case.get("common_name"):
+                case["title"] = case.get("common_name")
+            elif not case.get("title") and case.get("case_name"):
                 case["title"] = case.get("case_name")
             if not case.get("decisionYear") and case.get("year"):
                 case["decisionYear"] = case.get("year")
@@ -210,18 +292,22 @@ class QdrantService:
             if not case.get("statutes"):
                 case["statutes"] = ["Indian Contract Act, 1872", "Constitution of India, Article 141"]
 
-            case_key = (case.get("title") or "").strip().lower()
-            if case_key and case_key in seen_cases:
+            case_keys = {
+                (case.get("title") or "").strip().lower(),
+                (case.get("case_name") or "").strip().lower(),
+                (case.get("common_name") or "").strip().lower(),
+            }
+            case_keys.discard("")
+            if any(k in seen_cases for k in case_keys):
                 continue
-            if case_key:
-                seen_cases.add(case_key)
+            seen_cases.update(case_keys)
 
             case["relevance_score"] = round(float(hit.score), 3)
             case["retrieval_mode"] = f"qdrant+{target_collection}+{embedding_service.mode}"
             results.append(case)
             if len(results) >= limit:
                 break
-        return results
+        return results[:limit]
 
     def _search_local(self, query: str, court_filter: str, bench_filter: str, limit: int) -> List[Dict[str, Any]]:
         query_vec = embedding_service.embed_query(query)
@@ -315,6 +401,41 @@ class QdrantService:
 
                     if len(results) >= limit * 3:
                         break
+
+        matched_aliases = extract_query_aliases(query)
+        if matched_aliases:
+            landmark_chunks_file = SC_DATASET_DIR / "chunks" / "landmark_chunks.json"
+            if landmark_chunks_file.exists():
+                try:
+                    with open(landmark_chunks_file, "r", encoding="utf-8") as f:
+                        l_chunks = json.load(f)
+                    seen_boost = {r.get("title", "").strip().lower() for r in results}
+                    for lc in l_chunks:
+                        c_title = lc.get("common_name") or lc.get("case_name")
+                        c_key = (c_title or "").strip().lower()
+                        if not c_key or c_key in seen_boost:
+                            continue
+                        lc_aliases = [re.sub(r'[\s\W_]+', '', a).lower() for a in lc.get("aliases", [])]
+                        if any(re.sub(r'[\s\W_]+', '', ma).lower() in lc_aliases for ma in matched_aliases):
+                            seen_boost.add(c_key)
+                            results.insert(0, {
+                                "id": lc.get("case_id"),
+                                "title": c_title,
+                                "citation": lc.get("citation") or lc.get("neutral_citation") or f"[{lc.get('year')}] SCR",
+                                "court": "Supreme Court of India",
+                                "benchType": "Supreme Court Bench",
+                                "benchSize": 5,
+                                "decisionYear": lc.get("year"),
+                                "statutes": ["Constitution of India", "Indian Precedents"],
+                                "ratioSummary": lc.get("text", "")[:450] + ("..." if len(lc.get("text", "")) > 450 else ""),
+                                "relevance_score": 0.99,
+                                "retrieval_mode": f"local_exact_boost+landmark_cases+{embedding_service.mode}",
+                                "source_link": lc.get("source_link"),
+                                "neutral_citation": lc.get("neutral_citation"),
+                                "bench": lc.get("bench")
+                            })
+                except Exception as e:
+                    logger.debug("Local landmark boost failed: %s", e)
 
         # Final sort by relevance score
         results.sort(key=lambda x: x.get("relevance_score", 0), reverse=True)
