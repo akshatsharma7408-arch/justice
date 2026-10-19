@@ -17,6 +17,7 @@ retrieval mode and embedding engine are always transparent.
 import json
 import logging
 import math
+import os
 import re
 from pathlib import Path
 from typing import Any, Dict, List, Optional
@@ -90,10 +91,26 @@ class QdrantService:
         return self._corpus_vectors
 
     def _ensure_sc_dataset_loaded(self):
-        """Loads and caches the 17,737 chunks and dense vectors from the SC dataset."""
+        """Loads and caches chunks and dense vectors from the SC dataset if local indexing is active."""
         if self._sc_loaded:
             return
         self._sc_loaded = True
+
+        # Render & Production RAM Protection:
+        # Never load the 33k-vector local dataset into RAM on Render (512MB RAM free-tier limit),
+        # or when Qdrant Cloud is configured. The deployed app queries Qdrant Cloud directly.
+        # If Qdrant Cloud is unreachable, it gracefully falls back to the lightweight 12-precedent
+        # landmark corpus (<1MB RAM) and Tier 2 AI explanations without triggering an OOM kill.
+        if (
+            os.getenv("RENDER")
+            or os.getenv("DISABLE_LOCAL_SC_DATASET", "").lower() in ("true", "1")
+            or (self._client and os.getenv("LOAD_LOCAL_SC_INDEX", "false").lower() not in ("true", "1"))
+        ):
+            logger.info(
+                "Skipping local SC dataset loading into RAM (conserving memory for Render; "
+                "using Qdrant Cloud with graceful 12-precedent fallback)."
+            )
+            return
 
         try:
             if SC_CHUNKS_PATH.exists() and SC_EMBEDDINGS_PATH.exists():
