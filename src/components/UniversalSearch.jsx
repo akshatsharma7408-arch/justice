@@ -4,31 +4,60 @@ import { LANDMARK_PRECEDENTS } from '../data/legalCorpus';
 import { searchPrecedentsWithBackend } from '../config/gemini';
 import { renderWithBadges } from '../utils/badgeFormatter';
 
+const ROTATING_PLACEHOLDERS = [
+  "Section 27 Contract Act post termination non compete enforceability",
+  "What are my rights if an officer arrests me without a warrant?",
+  "Can my landlord evict me without notice?",
+  "What should I do if a police officer asks for a bribe?",
+  "What are my rights when stopped on my bike?",
+  "Are non-compete clauses valid after I quit my job?"
+];
+
 export default function UniversalSearch({ onSelectCaseForCitator }) {
-  const [query, setQuery] = useState('Section 27 Contract Act post termination non compete enforceability');
+  const [query, setQuery] = useState('');
+  const [placeholderIndex, setPlaceholderIndex] = useState(0);
+  const [placeholderFade, setPlaceholderFade] = useState(false);
   const [courtFilter, setCourtFilter] = useState('ALL');
   const [benchFilter, setBenchFilter] = useState('ALL');
-  const [showHyde, setShowHyde] = useState(true);
-  const [hydeRatio, setHydeRatio] = useState(
-    "Under Indian jurisprudence governing the Indian Contract Act, 1872, the doctrine of restraint of trade (Section 27) applies strictly to all covenants operating post-termination. The Supreme Court of India does not import the English law test of 'reasonableness' for covenants operating after cessation of employment; such covenants are void in toto pursuant to Percept D'Mark v. Zaheer Khan (2006) and Superintendence Co. v. Krishan Murgai (1981)."
-  );
-  const [results, setResults] = useState(LANDMARK_PRECEDENTS);
+  const [showHyde, setShowHyde] = useState(false);
+  const [hydeRatio, setHydeRatio] = useState('');
+  const [results, setResults] = useState([]);
+  const [hasSearched, setHasSearched] = useState(false);
   const [modelUsed, setModelUsed] = useState('openai/gpt-oss-120b');
   const [isSearching, setIsSearching] = useState(false);
 
+  // Rotating placeholders every 4 seconds with smooth fade transition
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setPlaceholderFade(true);
+      setTimeout(() => {
+        setPlaceholderIndex((prev) => (prev + 1) % ROTATING_PLACEHOLDERS.length);
+        setPlaceholderFade(false);
+      }, 350);
+    }, 4000);
+
+    return () => clearInterval(interval);
+  }, []);
+
   const sampleQueries = [
+    { label: "Arrested without a warrant", text: "What to do if police arrest me without a warrant" },
+    { label: "Landlord eviction notice", text: "Can my landlord evict me without notice" },
+    { label: "Police asking for a bribe", text: "What should I do if a police officer asks for a bribe" },
+    { label: "Rights when stopped by traffic police", text: "What are my rights when stopped by traffic police on the road" },
     { label: "Non-Compete Enforceability (Sec 27)", text: "Section 27 Contract Act post termination non compete enforceability" },
-    { label: "Right to Privacy & Art. 21", text: "Right to privacy under Article 21 proportionality test and state surveillance" },
-    { label: "Liquidated Damages as Penalty (Sec 74)", text: "Section 74 Indian Contract Act forfeiture of earnest money without proof of loss" },
-    { label: "PMLA Bail & Twin Conditions", text: "Section 45 PMLA twin conditions for bail and supply of ECIR" },
-    { label: "Habeas Corpus & Emergency", text: "ADM Jabalpur habeas corpus emergency detention suspension of Article 21" }
+    { label: "Right to Privacy & Art. 21", text: "Right to privacy under Article 21 proportionality test and state surveillance" }
   ];
 
-  // Execute search against FastAPI backend
+  // Execute search against FastAPI backend - only runs on non-empty query
   const executeSearch = async (searchQuery = query, court = courtFilter, bench = benchFilter) => {
+    const trimmed = searchQuery ? searchQuery.trim() : '';
+    if (!trimmed) {
+      return;
+    }
     setIsSearching(true);
+    setHasSearched(true);
     try {
-      const resp = await searchPrecedentsWithBackend(searchQuery, court, bench, true, 10);
+      const resp = await searchPrecedentsWithBackend(trimmed, court, bench, true, 10);
       if (resp && resp.results) {
         setResults(resp.results);
       }
@@ -38,11 +67,13 @@ export default function UniversalSearch({ onSelectCaseForCitator }) {
       if (resp && resp.hyde_synthetic_ratio) {
         setHydeRatio(resp.hyde_synthetic_ratio);
         setShowHyde(true);
+      } else {
+        setShowHyde(false);
       }
     } catch (err) {
       console.warn("[UniversalSearch] Backend search failed; using local corpus filter:", err.message);
       // Local fallback filter
-      const terms = searchQuery.toLowerCase().split(' ').filter(t => t.length > 2);
+      const terms = trimmed.toLowerCase().split(' ').filter(t => t.length > 2);
       const filtered = LANDMARK_PRECEDENTS.filter(item => {
         if (court !== 'ALL' && item.court !== court) return false;
         if (bench === 'CONSTITUTION' && item.benchSize < 5) return false;
@@ -57,14 +88,11 @@ export default function UniversalSearch({ onSelectCaseForCitator }) {
     }
   };
 
-  // Initial load
-  useEffect(() => {
-    executeSearch(query, courtFilter, benchFilter);
-  }, []);
-
   const handleSearchSubmit = (e) => {
     e.preventDefault();
-    executeSearch(query, courtFilter, benchFilter);
+    const trimmed = query.trim();
+    if (!trimmed) return;
+    executeSearch(trimmed, courtFilter, benchFilter);
   };
 
   const handleSelectSampleQuery = (sampleText) => {
@@ -74,12 +102,16 @@ export default function UniversalSearch({ onSelectCaseForCitator }) {
 
   const handleBenchChange = (newBench) => {
     setBenchFilter(newBench);
-    executeSearch(query, courtFilter, newBench);
+    if (query && query.trim()) {
+      executeSearch(query.trim(), courtFilter, newBench);
+    }
   };
 
   const handleCourtChange = (newCourt) => {
     setCourtFilter(newCourt);
-    executeSearch(query, newCourt, benchFilter);
+    if (query && query.trim()) {
+      executeSearch(query.trim(), newCourt, benchFilter);
+    }
   };
 
   return (
@@ -93,7 +125,7 @@ export default function UniversalSearch({ onSelectCaseForCitator }) {
         </div>
         <h1 className="module-heading font-judicial">Universal Search</h1>
         <p className="module-description">
-          Natural language jurisprudence retrieval across Indian Supreme Court and High Court precedents.
+          Natural language jurisprudence retrieval across Indian Supreme Court judgments.
           Synthesized with neural HyDE reasoning and dense-sparse hybrid retrieval.
         </p>
 
@@ -106,10 +138,23 @@ export default function UniversalSearch({ onSelectCaseForCitator }) {
               className="search-input-field"
               value={query}
               onChange={(e) => setQuery(e.target.value)}
-              placeholder="Search legal doctrines, statutory questions, or case citations..."
+              placeholder=""
+              aria-label="Search Indian Supreme Court judgments"
             />
+            {!query && (
+              <span
+                className={`search-rotating-placeholder ${placeholderFade ? 'is-fading' : ''}`}
+                aria-hidden="true"
+              >
+                {ROTATING_PLACEHOLDERS[placeholderIndex]}
+              </span>
+            )}
           </div>
-          <button type="submit" className="btn-primary search-action-btn" disabled={isSearching}>
+          <button
+            type="submit"
+            className="btn-primary search-action-btn"
+            disabled={isSearching || !query.trim()}
+          >
             <span>{isSearching ? 'Synthesizing...' : 'Search Precedents'}</span>
             <ArrowRight size={15} />
           </button>
@@ -163,10 +208,18 @@ export default function UniversalSearch({ onSelectCaseForCitator }) {
       {/* Filter and Control Bar */}
       <div className="workspace-filter-row">
         <div className="filter-summary">
-          <span className="filter-count">{results.length}</span>
-          <span className="filter-label">
-            precedents retrieved {isSearching && '(updating...)'}
-          </span>
+          {hasSearched ? (
+            <>
+              <span className="filter-count">{results.length}</span>
+              <span className="filter-label">
+                precedents retrieved {isSearching && '(updating...)'}
+              </span>
+            </>
+          ) : (
+            <span className="filter-label">
+              Awaiting query &mdash; choose a topic chip or enter your question
+            </span>
+          )}
         </div>
 
         <div className="filter-dropdowns">
@@ -217,6 +270,14 @@ export default function UniversalSearch({ onSelectCaseForCitator }) {
                 </div>
               </div>
             ))}
+          </div>
+        ) : !hasSearched ? (
+          <div className="workspace-empty-card initial-search-prompt">
+            <Scale size={36} className="empty-icon" />
+            <h3 className="empty-heading font-judicial">Ready to Search Supreme Court Judgments</h3>
+            <p className="empty-text">
+              Type an everyday question or legal doctrine above, or click any popular query chip to retrieve verified Supreme Court precedents.
+            </p>
           </div>
         ) : results.length === 0 ? (
           <div className="workspace-empty-card">

@@ -693,6 +693,35 @@
   box-shadow: 0 0 0 3px var(--accent-saffron-ring);
 }
 
+.search-input-field::placeholder {
+  color: var(--text-muted);
+  opacity: 1;
+}
+
+/* Rotating Placeholder Overlay for Universal Search */
+.search-rotating-placeholder {
+  position: absolute;
+  left: 44px;
+  right: 16px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: var(--text-muted);
+  font-size: 0.96rem;
+  line-height: 1.2;
+  pointer-events: none;
+  user-select: none;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  opacity: 1;
+  transition: opacity 350ms ease-in-out, transform 350ms ease-in-out;
+}
+
+.search-rotating-placeholder.is-fading {
+  opacity: 0;
+  transform: translateY(calc(-50% - 3px));
+}
+
 .search-action-btn {
   height: 48px;
   padding: 0 22px;
