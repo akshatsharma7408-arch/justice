@@ -1,0 +1,393 @@
+[
+  {
+    "id": 1,
+    "topic": "arrest_detention",
+    "question": "what to do if police arrest me without a warrant",
+    "model_used": "tier2_general_explanation",
+    "cites_verified_case": false,
+    "citations": [],
+    "top_3_cases": [
+      {
+        "rank": 1,
+        "title": "RAM NARAYAN AGARWAL ETC ETC. versus STATE OF UTTAR PRADESH & OTHERS",
+        "citation": "[1983] 3 S.C.R. 684",
+        "year": 1983,
+        "score": 0
+      },
+      {
+        "rank": 2,
+        "title": "M/S. SUPREME BHIWANDI WADA MANOR INFRASTRUCTURE PVT. LTD. versus THE STATE OF MAHARASHTRA & ANR.",
+        "citation": "[2021] 7 S.C.R. 226",
+        "year": 2021,
+        "score": 0
+      },
+      {
+        "rank": 3,
+        "title": "IFFCO TOKIO GENERAL INSURANCE COMPANY LTD. versus PEARL BEVERAGES LTD.",
+        "citation": "[2021] 14 S.C.R. 104",
+        "year": 2021,
+        "score": 0
+      }
+    ],
+    "ai_answer": "AI answer, not verified against a legal database.\n\nYou have the right to know why you are being arrested and to be informed of any charges; ask the officer to explain the reason. \n- You may request to speak with a lawyer immediately and should not answer substantive questions until counsel is present. \n- If the police do not have a warrant, they must have a valid reason such as being caught in the act or having reasonable suspicion; you can politely ask them to show any written justification. \n- Ask for a copy of the arrest record and keep a note of the officers’ names, badge numbers, and the time and place of the arrest. \n- After release, you can file a complaint with the appropriate oversight body or seek legal counsel to challenge any unlawful detention. \n- The relevant framework is criminal procedure law, which governs arrests, detention, and the right to counsel.\n\nThis is general information, not legal advice. Check a primary source or a lawyer before relying on it."
+  },
+  {
+    "id": 2,
+    "topic": "arrest_detention",
+    "question": "guidelines for arrest, remand and bail in criminal procedure",
+    "model_used": "tier2_general_explanation",
+    "cites_verified_case": false,
+    "citations": [],
+    "top_3_cases": [
+      {
+        "rank": 1,
+        "title": "VIHAAN KUMAR versus STATE OF HARYANA & ANR.",
+        "citation": "[2025] 2 S.C.R. 424",
+        "year": 2025,
+        "score": 0
+      },
+      {
+        "rank": 2,
+        "title": "KASIREDDY UPENDER REDDY versus STATE OF ANDHRA PRADESH AND ORS.",
+        "citation": "[2025] 7 S.C.R. 105",
+        "year": 2025,
+        "score": 0
+      },
+      {
+        "rank": 3,
+        "title": "SUMIT versus STATE OF U.P. & ANR.",
+        "citation": "[2026] 3 S.C.R. 87",
+        "year": 2026,
+        "score": 0
+      }
+    ],
+    "ai_answer": "AI answer, not verified against a legal database.\n\nWhen the police take you into custody, they must inform you of the reason for arrest and your right to remain silent and to consult a lawyer. \n- You have the right to be produced before a magistrate within a short, legally prescribed time (usually 24 hours) where the magistrate decides whether you can be kept in police custody or must be released on bail. \n- If the magistrate orders remand, you may be held in police or judicial custody for a limited period; during this time you can still request legal counsel and file a petition for bail. \n- Bail can be sought by filing an application that shows you are not a flight risk, that the alleged offense is not extremely serious, and that you will cooperate with the investigation; the court may impose conditions such as surrendering your passport or providing surety. \n- If bail is denied, you can appeal the decision to a higher court, arguing that the reasons for denial are not justified under criminal procedure laws. \n- Throughout the process, keep detailed records of all communications, attend all court appearances, and maintain contact with your lawyer to ensure your rights are protected.\n\nThis is general information, not legal advice. Check a primary source or a lawyer before relying on it."
+  },
+  {
+    "id": 3,
+    "topic": "police_misconduct",
+    "question": "compensation for custodial death and police atrocities",
+    "model_used": "tier2_general_explanation",
+    "cites_verified_case": false,
+    "citations": [],
+    "top_3_cases": [
+      {
+        "rank": 1,
+        "title": "DALBIR SINGH versus STATE OF U.P. AND ORS.",
+        "citation": "[2009] 1 S.C.R. 824",
+        "year": 2009,
+        "score": 0
+      },
+      {
+        "rank": 2,
+        "title": "RE-INHUMAN CONDITIONS IN 1382 PRISONS versus I.A. NO. 68248 OF 2017",
+        "citation": "[2017] 14 S.C.R. 519",
+        "year": 2017,
+        "score": 0
+      },
+      {
+        "rank": 3,
+        "title": "SUBE SINGH versus STATE OF HARYANA AND ORS.",
+        "citation": "[2006] 2 S.C.R. 67",
+        "year": 2006,
+        "score": 0
+      }
+    ],
+    "ai_answer": "AI answer, not verified against a legal database.\n\nThe death of a person while in police custody falls under criminal procedure and human rights law, which provide a right to compensation for wrongful death and for violations of personal liberty. \n- You can file a claim for compensation with the appropriate civil court or a special tribunal that handles police misconduct, typically by submitting a written petition that includes the death certificate, medical reports, and any evidence of police wrongdoing. \n- Simultaneously, you should lodge a formal complaint with the police oversight body or internal affairs division, requesting an investigation and a copy of the investigation report. \n- If the police department does not act, you may approach the higher administrative authority (such as the state home department) or the human rights commission for a directive to investigate and provide relief. \n- Consider seeking a court‑ordered interim relief, such as a stay on any further police action against family members and an order for immediate financial assistance pending the final decision. \n- Retain all documents, witness statements, and any media coverage, and engage a lawyer experienced in criminal and human rights matters to draft the petition and represent you court. \n- Be aware that the compensation amount is usually determined based on factors like loss of earnings, pain and suffering, and the circumstances of the death, and the court may also award punitive damages against the officers involved.\n\nThis is general information, not legal advice. Check a primary source or a lawyer before relying on it."
+  },
+  {
+    "id": 4,
+    "topic": "police_misconduct",
+    "question": "remedies for custodial torture and police excesses",
+    "model_used": "tier2_general_explanation",
+    "cites_verified_case": false,
+    "citations": [],
+    "top_3_cases": [
+      {
+        "rank": 1,
+        "title": "KHURSHEED AHMAD CHOHAN versus UNION OF TERRITORY OF JAMMU AND KASHMIR AND ORS. ETC.",
+        "citation": "[2025] 7 S.C.R. 1295",
+        "year": 2025,
+        "score": 0
+      },
+      {
+        "rank": 2,
+        "title": "D.K. BASU versus STATE OF WEST BENGAL",
+        "citation": "[1996] SUPP. 10 S.C.R. 284",
+        "year": 1996,
+        "score": 0
+      },
+      {
+        "rank": 3,
+        "title": "SUBE SINGH versus STATE OF HARYANA AND ORS.",
+        "citation": "[2006] 2 S.C.R. 67",
+        "year": 2006,
+        "score": 0
+      }
+    ],
+    "ai_answer": "AI answer, not verified against a legal database.\n\nThe victim or family has the right to lodge a formal complaint with the police department or a higher authority (such as the state police headquarters) alleging torture or excesses. \n- They can also approach an independent oversight body or human‑rights commission that investigates custodial abuse. \n- A criminal complaint can be filed under the criminal procedure framework, which allows prosecution of police officers for assault, wrongful confinement, or other unlawful acts. \n- Simultaneously, a civil claim for damages can be pursued under the tort law framework for bodily injury and mental trauma caused by the abuse. \n- It is advisable to collect medical reports, witness statements, and any video or audio evidence as soon as possible, and to preserve the original police report or detention record. \n- Contact a lawyer experienced in criminal and human‑rights matters to draft the complaints, represent you before the investigating agency, and guide you on filing a petition for a judicial inquiry or bail‑in‑case‑of‑detention. \n- If the police refuse to act, you may approach the higher courts or a special tribunal that handles complaints against law‑enforcement agencies.\n\nThis is general information, not legal advice. Check a primary source or a lawyer before relying on it."
+  },
+  {
+    "id": 5,
+    "topic": "bribery_corruption",
+    "question": "police officer is asking for a bribe",
+    "model_used": "tier2_general_explanation",
+    "cites_verified_case": false,
+    "citations": [],
+    "top_3_cases": [
+      {
+        "rank": 1,
+        "title": "SITA SOREN versus UNION OF INDIA",
+        "citation": "[2024] 3 S.C.R. 462",
+        "year": 2024,
+        "score": 0
+      },
+      {
+        "rank": 2,
+        "title": "D. VELAYUTHAM versus STATE REP. BY INSPECTOR OF POLICE, SALEM TOWN, CHENNAI",
+        "citation": "[2015] 6 S.C.R. 361",
+        "year": 2015,
+        "score": 0
+      },
+      {
+        "rank": 3,
+        "title": "SELVARAJ versus STATE OF KARNATAKA",
+        "citation": "[2015] 9 S.C.R. 381",
+        "year": 2015,
+        "score": 0
+      }
+    ],
+    "ai_answer": "AI answer, not verified against a legal database.\n\nYou have the right to refuse any demand for a bribe and to request that the officer identify themselves and state the legal basis for any action they are taking. \n- Calmly ask for a written notice or citation instead of an informal payment, and note the officer’s badge number, name, and patrol vehicle details. \n- Report the incident immediately to the senior police authority or an anti‑corruption body; many jurisdictions have hotlines or online portals for filing such complaints. \n- If you feel threatened or the officer tries to detain you, you may request to speak with a lawyer before answering further questions. \n- Keep any evidence (e.g., recordings, messages, receipts) securely, as it will support any future investigation. \n- The matter falls under criminal and anti‑corruption law, as well as police conduct regulations.\n\nThis is general information, not legal advice. Check a primary source or a lawyer before relying on it."
+  },
+  {
+    "id": 6,
+    "topic": "bribery_corruption",
+    "question": "demand and acceptance of illegal gratification by public servant under Prevention of Corruption Act",
+    "model_used": "tier2_general_explanation",
+    "cites_verified_case": false,
+    "citations": [],
+    "top_3_cases": [
+      {
+        "rank": 1,
+        "title": "NEERAJ DUTTA versus STATE (GOVT. OF N.C.T. OF DELHI)",
+        "citation": "[2022] 5 S.C.R. 104",
+        "year": 2022,
+        "score": 0
+      },
+      {
+        "rank": 2,
+        "title": "MUKHTIAR SINGH versus STATE OF PUNJAB",
+        "citation": "[2016] 4 S.C.R. 995",
+        "year": 2016,
+        "score": 0
+      },
+      {
+        "rank": 3,
+        "title": "M SAMBASIVA RAO versus THE STATE OF ANDHRA PRADESH",
+        "citation": "[2025] 7 S.C.R. 1183",
+        "year": 2025,
+        "score": 0
+      }
+    ],
+    "ai_answer": "AI answer, not verified against a legal database.\n\nThe matter falls under anti‑corruption and criminal law that governs public servants and the receipt of illegal gratification. \n- If you have been asked to give or have given a bribe, you have the right to report the demand to the appropriate anti‑corruption agency or police without fear of retaliation; many jurisdictions provide protection for whistle‑blowers. \n- You should preserve any evidence (messages, emails, receipts) that shows the demand and any acceptance, as this will be crucial for any investigation. \n- If you are being investigated, you have the right to remain silent and to obtain legal representation before answering any further questions. \n- Consider filing a formal complaint with the anti‑corruption body, providing all details and supporting documents, and request that they initiate an inquiry. \n- If you are a victim of coercion or extortion, you may also approach the regular criminal police to lodge a complaint, which can be investigated alongside the anti‑corruption case.\n\nThis is general information, not legal advice. Check a primary source or a lawyer before relying on it."
+  },
+  {
+    "id": 7,
+    "topic": "housing_tenancy",
+    "question": "can my landlord evict me without notice",
+    "model_used": "tier2_general_explanation",
+    "cites_verified_case": false,
+    "citations": [],
+    "top_3_cases": [
+      {
+        "rank": 1,
+        "title": "MOHD. ASIF NASEER versus WEST WATCH COMPANY THROUGH ITS PROPRIETOR",
+        "citation": "[2020] 4 S.C.R. 1173",
+        "year": 2020,
+        "score": 0
+      },
+      {
+        "rank": 2,
+        "title": "ABDUL KHUDDUS versus H.M. CHANDIRAMANI (DEAD) THR LRS. & ORS.",
+        "citation": "[2021] 10 S.C.R. 643",
+        "year": 2021,
+        "score": 0
+      },
+      {
+        "rank": 3,
+        "title": "RAM KRISHAN GROVER AND OTHERS versus UNION OF INDIA AND OTHERS",
+        "citation": "[2019] 17 S.C.R. 1",
+        "year": 2019,
+        "score": 0
+      }
+    ],
+    "ai_answer": "AI answer, not verified against a legal database.\n\nThe right to stay in a rented home is protected by tenancy and rent control laws, which normally require the landlord to give you a written notice before starting eviction proceedings. \n- A landlord can only evict without notice in very limited situations, such as if you are engaging in illegal activity on the premises or have caused serious damage, but even then a court order is usually required. \n- If you receive an oral threat of eviction, ask the landlord for a written notice specifying the reason and the period you have to vacate; keep a copy for your records. \n- If no proper notice is given, you can raise the issue with the local rent control authority or housing tribunal and request a stay of eviction while the matter is reviewed. \n- Gather your lease agreement, rent receipts, and any communication with the landlord, and consider consulting a tenant‑rights lawyer to help you file a response or defense. \n- Do not leave the premises until you have either complied with a lawful notice or obtained a court order confirming the eviction.\n\nThis is general information, not legal advice. Check a primary source or a lawyer before relying on it."
+  },
+  {
+    "id": 8,
+    "topic": "housing_tenancy",
+    "question": "tenant protection against unlawful ejectment and eviction under rent control laws",
+    "model_used": "tier2_general_explanation",
+    "cites_verified_case": false,
+    "citations": [],
+    "top_3_cases": [
+      {
+        "rank": 1,
+        "title": "HEERA TRADERS versus KAMLA JAIN",
+        "citation": "[2022] 10 S.C.R. 291",
+        "year": 2022,
+        "score": 0
+      },
+      {
+        "rank": 2,
+        "title": "K. SUBRAMANIAM (DIED) THROUGH LRS K.S. BALAKRISHNAN & ORS. versus M/S KRISHNA MILLS PVT. LTD.",
+        "citation": "[2025] 12 S.C.R. 167",
+        "year": 2025,
+        "score": 0
+      },
+      {
+        "rank": 3,
+        "title": "KESHO RAM & CO. & ORS. ETC. versus UNION OF INDIA & ORS.",
+        "citation": "[1989] 2 S.C.R. 1005",
+        "year": 1989,
+        "score": 0
+      }
+    ],
+    "ai_answer": "AI answer, not verified against a legal database.\n\nThe tenant’s protection comes under the tenancy and rent‑control statutes, which require a landlord to obtain a court order before forcing a tenant out. \n- If the landlord tries to change locks, shut off utilities, or otherwise make you leave without a legal eviction proceeding, you can treat that as unlawful ejectment and call the police or a local housing authority for immediate assistance. \n- File a written complaint with the appropriate rent‑control board or housing tribunal within the prescribed time limit, asking for an order to stop the eviction and, if needed, to recover any damages or rent paid. \n- Keep copies of your lease, rent receipts, any notices received, and a log of the landlord’s actions; these documents will be essential evidence in any hearing. \n- Attend the scheduled hearing, present your evidence, and request that the court reaffirm your right to stay until a lawful eviction order is issued, if at all. \n- Consider seeking a lawyer or a tenant‑rights organization’s help to draft your response and to represent you in the proceeding. \n- Do not pay any extra “move‑out” fees or agree to vacate until you have a written, court‑approved eviction order.\n\nThis is general information, not legal advice. Check a primary source or a lawyer before relying on it."
+  },
+  {
+    "id": 9,
+    "topic": "traffic_police_powers",
+    "question": "my rights when stopped on my bike",
+    "model_used": "tier2_general_explanation",
+    "cites_verified_case": false,
+    "citations": [],
+    "top_3_cases": [
+      {
+        "rank": 1,
+        "title": "KERALA STATE ROAD TRANSPORT CORPORATION versus BABY P. P. & ORS.",
+        "citation": "[2018] 5 S.C.R. 747",
+        "year": 2018,
+        "score": 0
+      },
+      {
+        "rank": 2,
+        "title": "SODAN SINGH ETC. ETC. versus NEW DELHI MUNICIPAL COMMITTEE & ANR. ETC.",
+        "citation": "[1989] 3 S.C.R. 1038",
+        "year": 1989,
+        "score": 0
+      },
+      {
+        "rank": 3,
+        "title": "GUNASEKARAN versus THE DIVISIONAL ENGINEER NATIONAL HIGHWAYS & ORS.",
+        "citation": "[2021] 8 S.C.R. 1149",
+        "year": 2021,
+        "score": 0
+      }
+    ],
+    "ai_answer": "AI answer, not verified against a legal database.\n\nYou have the right to be treated with respect and to ask why you are being stopped. \n- Keep your hands visible, stay on the bike, and do not move until the officer says it’s safe. \n- You can ask for identification and the reason for the stop; you do not have to provide a driver’s licence or registration unless the officer asks for it. \n- If you feel the stop is unlawful, calmly note the officer’s badge number and vehicle details, and consider filing a complaint later. \n- If you are asked to get off the bike, you may do so only if it is safe and you are not in danger. \n- If you are stopped for a traffic violation, you can request a written citation and keep a copy of any documents you receive. \n- In general, these rights fall under traffic and criminal procedure laws.\n\nThis is general information, not legal advice. Check a primary source or a lawyer before relying on it."
+  },
+  {
+    "id": 10,
+    "topic": "traffic_police_powers",
+    "question": "powers of police to search vehicle and issue challan under Motor Vehicles Act",
+    "model_used": "tier2_general_explanation",
+    "cites_verified_case": false,
+    "citations": [],
+    "top_3_cases": [
+      {
+        "rank": 1,
+        "title": "GOHAR MOHAMMED versus UTTAR PRADESH STATE ROAD TRANSPORT CORPORATION & OTHERS",
+        "citation": "[2022] 9 S.C.R. 43",
+        "year": 2022,
+        "score": 0
+      },
+      {
+        "rank": 2,
+        "title": "NATIONAL INSURANCE CO. LTD.  versus SMT. THUNGALA DHANA LAXMI & ORS.",
+        "citation": "[2026] 8 S.C.R. 284",
+        "year": 2026,
+        "score": 0
+      },
+      {
+        "rank": 3,
+        "title": "HARDEV MOTOR TRANSPORT versus STATE OF M.P. AND ORS.",
+        "citation": "[2006] SUPP. 7 S.C.R. 766",
+        "year": 2006,
+        "score": 0
+      }
+    ],
+    "ai_answer": "AI answer, not verified against a legal database.\n\nPolice can search a vehicle if they suspect a traffic violation or a crime, but they must have a reasonable basis and usually need a warrant or the driver’s consent. \n- If they find a violation (e.g., expired registration, missing documents, illegal items), they can issue a challan (ticket) on the spot. \n- You have the right to ask for the reason for the search and the specific violation cited. \n- If you believe the search was unlawful, you can file a complaint with the local police station or the traffic police department, and you may also approach a consumer forum or a civil court for relief. \n- Keep a copy of the challan and any evidence of the search (photos, witness statements) to support your case. \n- If you are fined, you can pay the fine within the prescribed time or contest it by filing a written objection with the traffic authority. \n- In any dispute, consult a lawyer or a legal aid service to understand your rights under traffic and criminal procedure laws.\n\nThis is general information, not legal advice. Check a primary source or a lawyer before relying on it."
+  },
+  {
+    "id": 11,
+    "topic": "fundamental_rights",
+    "question": "protection of right to life and personal liberty under Article 21",
+    "model_used": "openai/gpt-oss-120b",
+    "cites_verified_case": false,
+    "citations": [
+      "KAUSHAL KISHOR versus STATE OF UTTAR PRADESH & ORS. [2023] 8 S.C.R. 581 (2023)",
+      "UNNI KRISHNAN, [Not Verified] ETC. ETC. [1993] 1 S.C.R. 594 (1993)",
+      "PEOPLE'S UNION FOR CIVIL LIBERTIES (PUCL) AND ANR. versus UNION OF INDIA AND ANR. [2003] 2 S.C.R. 1136 (2003)"
+    ],
+    "top_3_cases": [
+      {
+        "rank": 1,
+        "title": "KAUSHAL KISHOR versus STATE OF UTTAR PRADESH & ORS.",
+        "citation": "[2023] 8 S.C.R. 581",
+        "year": 2023,
+        "score": 0
+      },
+      {
+        "rank": 2,
+        "title": "UNNI KRISHNAN, J.P. AND ORS. ETC. IRRC versus STATE OF ANDHRA PRADESH AND ORS. ETC. ETC.",
+        "citation": "[1993] 1 S.C.R. 594",
+        "year": 1993,
+        "score": 0
+      },
+      {
+        "rank": 3,
+        "title": "PEOPLE'S UNION FOR CIVIL LIBERTIES (PUCL) AND ANR.  versus UNION OF INDIA AND ANR.",
+        "citation": "[2003] 2 S.C.R. 1136",
+        "year": 2003,
+        "score": 0
+      }
+    ],
+    "ai_answer": "The Supreme Court has held that Article 21 of the Constitution protects the right to life and personal liberty as a fundamental right that is not limited to a single source.  In *Kaushal Kishor v. State of Uttar Pradesh* the Court emphasized that Article 21 is not the sole repository of the right to life and personal liberty, and that the right is broad and evolving.  *Unni Krishnan J.P. v. State of Andhra Pradesh* further clarified that the term ‘personal liberty’ includes privacy, dignity and the freedom to move, and that these attributes are inseparable from the right to life.  In *People’s Union for Civil Liberties v. Union of India* the Court reiterated that personal liberty is of the widest amplitude and that unenumerated rights such as the right to privacy, the right to go abroad and the right against solitary confinement fall within Article 21.  Together, these decisions establish that Article 21 guarantees a comprehensive protection of life and personal liberty, encompassing privacy, dignity, freedom of movement and other related liberties."
+  },
+  {
+    "id": 12,
+    "topic": "fundamental_rights",
+    "question": "freedom of speech and reasonable restrictions under Article 19",
+    "model_used": "openai/gpt-oss-120b",
+    "cites_verified_case": true,
+    "citations": [
+      "KAUSHAL KISHOR versus STATE OF UTTAR PRADESH & ORS. [2023] 8 S.C.R. 581 (2023)",
+      "LIFE INSURANCE CORPN. OF INDIA AND ORS. ETC. versus PROF. MANUBHAI D. SHAH ETC. ETC. [1992] 3 S.C.R. 595 (1992)"
+    ],
+    "top_3_cases": [
+      {
+        "rank": 1,
+        "title": "KAUSHAL KISHOR versus STATE OF UTTAR PRADESH & ORS.",
+        "citation": "[2023] 8 S.C.R. 581",
+        "year": 2023,
+        "score": 0
+      },
+      {
+        "rank": 2,
+        "title": "LIFE INSURANCE CORPN. OF INDIA AND ORS. ETC. versus PROF. MANUBHAI D. SHAH ETC. ETC.",
+        "citation": "[1992] 3 S.C.R. 595",
+        "year": 1992,
+        "score": 0
+      },
+      {
+        "rank": 3,
+        "title": "SHREYA SINGHAL versus UNION OF INDIA",
+        "citation": "[2015] 5 S.C.R. 963",
+        "year": 2015,
+        "score": 0
+      }
+    ],
+    "ai_answer": "The Supreme Court has held that Article 19(1)(a) does not confer an absolute right to freedom of speech and expression; it is subject to reasonable restrictions enumerated in Article 19(2).  The Court has repeatedly emphasized that the right is accompanied by duties towards fellow citizens and society, and that any speech which does not conform to the content of Article 19(1)(a) may be restrained.  Accordingly, the State may impose restrictions on speech that is hateful, defamatory, or otherwise contrary to the interests of the community, provided such restrictions are made only on the grounds listed in Article 19(2) and are reasonable in the circumstances."
+  }
+]

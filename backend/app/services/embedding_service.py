@@ -46,11 +46,13 @@ class EmbeddingService:
         """
         # Try fastembed first (lightweight ONNX runtime)
         try:
+            import os
             from fastembed import TextEmbedding
-            self._model = TextEmbedding(model_name="sentence-transformers/all-MiniLM-L6-v2")
+            threads = min(os.cpu_count() or 4, 12)
+            self._model = TextEmbedding(model_name="sentence-transformers/all-MiniLM-L6-v2", threads=threads)
             self._engine = "fastembed_onnx"
             self.mode = "local_semantic_onnx"
-            logger.info("Initialized local semantic embeddings using fastembed ONNX (all-MiniLM-L6-v2, dim=%d)", EMBEDDING_DIM)
+            logger.info("Initialized local semantic embeddings using fastembed ONNX (all-MiniLM-L6-v2, dim=%d, threads=%d)", EMBEDDING_DIM, threads)
             return
         except Exception as e:
             logger.debug("Fastembed unavailable or failed to load: %s", e)
@@ -83,7 +85,7 @@ class EmbeddingService:
         if self._model:
             try:
                 if self._engine == "fastembed_onnx":
-                    embeddings = list(self._model.embed(texts))
+                    embeddings = list(self._model.embed(texts, batch_size=len(texts)))
                     return [list(map(float, emb)) for emb in embeddings]
                 elif self._engine == "sentence_transformers_pytorch":
                     embeddings = self._model.encode(texts, convert_to_numpy=True)

@@ -186,14 +186,30 @@ def match_case_to_query_entities(entities: Dict[str, Any], case: Dict[str, Any])
             "government", "board", "authority", "commission", "department", "bank"
         } | indian_states
         for cn in entities["case_names"]:
-            tokens = [t for t in re.findall(r'[a-zA-Z0-9]{3,}', cn.lower()) if t not in stopwords]
-            if tokens and any(
-                re.search(rf'\b{re.escape(tok)}\b', case_title) or 
-                re.search(rf'\b{re.escape(tok)}\b', case_keywords)
-                for tok in tokens
-            ):
-                name_matched = True
-                break
+            cn_lower = cn.lower()
+            parts = re.split(r'\s+(?:v\.|vs\.?|versus)\s+', cn_lower)
+            if len(parts) == 2:
+                side_stopwords = {
+                    "versus", "state", "union", "india", "court", "limited", "ltd", "pvt", "corp",
+                    "corporation", "company", "and", "the", "ors", "anr", "v", "vs", "of", "govt",
+                    "government", "board", "authority", "commission", "department", "bank"
+                }
+                p1_tokens = [t for t in re.findall(r'[a-zA-Z0-9]{3,}', parts[0]) if t not in side_stopwords]
+                p2_tokens = [t for t in re.findall(r'[a-zA-Z0-9]{3,}', parts[1]) if t not in side_stopwords]
+                m1 = any(re.search(rf'\b{re.escape(tok)}\b', case_title) for tok in p1_tokens) if p1_tokens else True
+                m2 = any(re.search(rf'\b{re.escape(tok)}\b', case_title) for tok in p2_tokens) if p2_tokens else True
+                if m1 and m2:
+                    name_matched = True
+                    break
+            else:
+                tokens = [t for t in re.findall(r'[a-zA-Z0-9]{3,}', cn_lower) if t not in stopwords]
+                if tokens and any(
+                    re.search(rf'\b{re.escape(tok)}\b', case_title) or 
+                    re.search(rf'\b{re.escape(tok)}\b', case_keywords)
+                    for tok in tokens
+                ):
+                    name_matched = True
+                    break
         if not name_matched:
             return False
 
@@ -671,7 +687,7 @@ class LLMService:
                 "answer": tier2_ans,
                 "ratio_decidendi": tier2_ans,
                 "citations": [],
-                "results": [],
+                "results": retrieved_cases,
                 "model_used": "tier2_general_explanation"
             }
 
@@ -802,7 +818,7 @@ class LLMService:
                 "answer": tier2_ans,
                 "ratio_decidendi": tier2_ans,
                 "citations": [],
-                "results": [],
+                "results": retrieved_cases,
                 "model_used": "tier2_general_explanation"
             }
 
