@@ -139,7 +139,10 @@ def extract_query_entities(query: str) -> Dict[str, Any]:
         "hadley v baxendale", "hadley v. baxendale", "kesavananda", "maneka gandhi", 
         "puttaswamy", "dawoodi bohra", "kailash nath", "zaheer khan", "percept d'mark", 
         "krishan murgai", "niranjan golikari", "gujarat bottling", "wipro", 
-        "ambiance india", "desiccant rotors", "stellar information", "adm jabalpur"
+        "ambiance india", "desiccant rotors", "stellar information", "adm jabalpur",
+        "vishaka", "navtej johar", "navtej singh johar", "minerva mills", "golaknath",
+        "bommai", "s.r. bommai", "olga tellis", "dk basu", "d.k. basu", "arnesh kumar",
+        "lalita kumari", "shreya singhal", "indra sawhney"
     ]
     for kn in known_landmarks:
         if kn in q.lower() and not any(kn in cn.lower() for cn in case_names):
@@ -163,12 +166,14 @@ def match_case_to_query_entities(entities: Dict[str, Any], case: Dict[str, Any])
     A similarity score alone is not enough.
     """
     case_title = (case.get("title") or case.get("case_name") or "").lower()
+    case_common = (case.get("common_name") or "").lower()
+    case_aliases = " ".join(case.get("aliases") or []).lower()
     case_cit = (case.get("citation") or case.get("neutral_citation") or "").lower()
     case_statutes = " ".join(case.get("statutes", [])).lower()
     case_ratio = (case.get("ratioSummary") or "").lower()
     case_body = (case.get("text") or "").lower()
     case_keywords = " ".join(case.get("keywords", [])).lower()
-    case_full = f"{case_title} {case_cit} {case_statutes} {case_keywords} {case_ratio} {case_body}"
+    case_full = f"{case_title} {case_common} {case_aliases} {case_cit} {case_statutes} {case_keywords} {case_ratio} {case_body}"
 
     # If query specified case names / party names, the case MUST match at least one
     if entities["case_names"]:
