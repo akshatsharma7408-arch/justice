@@ -561,11 +561,23 @@ def run_step_6_index_qdrant(
         )
         logger.info("Created collection '%s' (384-dim, cosine)", COLLECTION_NAME)
 
-    # Upsert in batches of 100 points
-    batch_size = 100
+    # Upsert in batches of 256 points with retries
+    batch_size = 256
     total = len(chunks)
     upserted = 0
     POINT_NS = uuid.UUID("7a2b3c4d-5e6f-7a8b-9c0d-1e2f3a4b5c6d")
+
+    # Ensure payload indexes for high-speed metadata filtering
+    from qdrant_client.models import PayloadSchemaType
+    for field in ["case_name", "citation", "case_id"]:
+        try:
+            client.create_payload_index(
+                collection_name=COLLECTION_NAME,
+                field_name=field,
+                field_schema=PayloadSchemaType.KEYWORD
+            )
+        except Exception:
+            pass
 
     for i in range(0, total, batch_size):
         chunk_batch = chunks[i:i + batch_size]
@@ -587,11 +599,25 @@ def run_step_6_index_qdrant(
             }
             points.append(PointStruct(id=point_id, vector=v, payload=payload))
 
-        client.upsert(collection_name=COLLECTION_NAME, points=points)
+        # Upsert with retries
+        max_retries = 3
+        for attempt in range(1, max_retries + 1):
+            try:
+                client.upsert(collection_name=COLLECTION_NAME, points=points)
+                break
+            except Exception as e:
+                if attempt == max_retries:
+                    logger.error("Failed to upsert batch %d-%d after %d attempts: %s", i, min(i + batch_size, total), max_retries, e)
+                    raise
+                wait_time = 2 ** attempt
+                logger.warning("Upsert batch %d-%d failed (attempt %d/%d): %s. Retrying in %ds...",
+                               i, min(i + batch_size, total), attempt, max_retries, e, wait_time)
+                time.sleep(wait_time)
+
         upserted += len(points)
 
-        # Check memory limit periodically
-        if upserted % 500 == 0 or upserted == total:
+        # Log progress periodically
+        if upserted % 1024 == 0 or upserted == total:
             info = client.get_collection(COLLECTION_NAME)
             pts = getattr(info, "points_count", upserted)
             logger.info("Qdrant Upsert: %d / %d points indexed into '%s' (total points: %s)",

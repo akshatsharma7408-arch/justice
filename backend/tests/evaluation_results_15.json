@@ -1,0 +1,219 @@
+[
+  {
+    "id": 1,
+    "question": "Under Section 27 of the Indian Contract Act, are post-employment non-compete covenants enforceable in India?",
+    "category": "Corpus (Answerable)",
+    "surface": "Universal Search",
+    "answer_excerpt": "According to Percept D'Mark (India) (P) Ltd. v. Zaheer Khan ((2006) 4 SCC 227): A restrictive covenant operating after terminat...",
+    "full_answer": "According to Percept D'Mark (India) (P) Ltd. v. Zaheer Khan ((2006) 4 SCC 227): A restrictive covenant operating after termination of the contract (here a right of first refusal after the agreement expired) is void under Section 27 of the Indian Contract Act, 1872. Negative covenants can be enforced only during the subsistence of the contract; the English common-law test of reasonableness does not apply to post-termination restraints in India.",
+    "tier_used": "Tier 1 (Corpus Grounded)",
+    "citations": [
+      "Percept D'Mark (India) (P) Ltd. v. Zaheer Khan ((2006) 4 SCC 227)"
+    ],
+    "model_used": "deterministic_corpus_retrieval",
+    "verdict": "PASS",
+    "reason": ""
+  },
+  {
+    "id": 2,
+    "question": "Can liquidated damages be forfeited under Section 74 of the Indian Contract Act without proof of actual loss?",
+    "category": "Corpus (Answerable)",
+    "surface": "Universal Search",
+    "answer_excerpt": "According to Kailash Nath Associates v. Delhi Development Authority ((2015) 4 SCC 136): Section 74 of the Contract Act awards o...",
+    "full_answer": "According to Kailash Nath Associates v. Delhi Development Authority ((2015) 4 SCC 136): Section 74 of the Contract Act awards only reasonable compensation not exceeding the penalty or sum named. Where damage or loss is capable of proof, it must be proved; forfeiture of earnest money or stipulated damages cannot occur in the absence of legal injury or proven loss.",
+    "tier_used": "Tier 1 (Corpus Grounded)",
+    "citations": [
+      "Kailash Nath Associates v. Delhi Development Authority ((2015) 4 SCC 136)"
+    ],
+    "model_used": "deterministic_corpus_retrieval",
+    "verdict": "PASS",
+    "reason": ""
+  },
+  {
+    "id": 3,
+    "question": "Is the right to privacy recognized as a fundamental right under Article 21 of the Constitution of India?",
+    "category": "Corpus (Answerable)",
+    "surface": "Universal Search",
+    "answer_excerpt": "According to Justice K.S. Puttaswamy (Retd.) v. Union of India ((2017) 10 SCC 1): The right to privacy is a fundamental right i...",
+    "full_answer": "According to Justice K.S. Puttaswamy (Retd.) v. Union of India ((2017) 10 SCC 1): The right to privacy is a fundamental right intrinsic to Article 21 and Part III of the Constitution. The nine-judge bench expressly overruled M.P. Sharma (1954) and ADM Jabalpur (1976) to the extent they denied that status, and framed a proportionality test for state interference.",
+    "tier_used": "Tier 1 (Corpus Grounded)",
+    "citations": [
+      "Justice K.S. Puttaswamy (Retd.) v. Union of India ((2017) 10 SCC 1)"
+    ],
+    "model_used": "deterministic_corpus_retrieval",
+    "verdict": "PASS",
+    "reason": ""
+  },
+  {
+    "id": 4,
+    "question": "What are the employee's obligations regarding confidentiality under Clause 8 of this agreement?",
+    "category": "Corpus (Answerable)",
+    "surface": "Doc Chat",
+    "answer_excerpt": "Under Clause 8 (Clause 8. Confidentiality & Non-Disclosure: The Employee shall strictly preserve), the document stipulates: \"Co...",
+    "full_answer": "Under Clause 8 (Clause 8. Confidentiality & Non-Disclosure: The Employee shall strictly preserve), the document stipulates: \"Confidentiality & Non-Disclosure: The Employee shall strictly preserve all proprietary algorithms, trade secrets, customer lists, and source code.\"",
+    "tier_used": "Tier 1 (Corpus Grounded)",
+    "citations": [
+      "Clause 8: Clause 8. Confidentiality & Non-Disclosure: The Employee shall strictly preserve"
+    ],
+    "model_used": "deterministic_grounded_fallback",
+    "verdict": "PASS",
+    "reason": ""
+  },
+  {
+    "id": 5,
+    "question": "What restrictions does Clause 12 impose regarding non-solicitation following termination?",
+    "category": "Corpus (Answerable)",
+    "surface": "Doc Chat",
+    "answer_excerpt": "Under Clause 12 (Clause 12. Restrictive Covenants & Non-Solicitation: Following termination of em), the document stipulates: \"R...",
+    "full_answer": "Under Clause 12 (Clause 12. Restrictive Covenants & Non-Solicitation: Following termination of em), the document stipulates: \"Restrictive Covenants & Non-Solicitation: Following termination of employment for any reason, the Employee shall not, for a period of twelve (12) months, solicit or attempt to hire any existing employees or clients of the Company.\"",
+    "tier_used": "Tier 1 (Corpus Grounded)",
+    "citations": [
+      "Clause 12: Clause 12. Restrictive Covenants & Non-Solicitation: Following termination of em"
+    ],
+    "model_used": "deterministic_grounded_fallback",
+    "verdict": "PASS",
+    "reason": ""
+  },
+  {
+    "id": 6,
+    "question": "Explain the Roman law doctrine of negotiorum gestio.",
+    "category": "Not in Corpus (General Concept)",
+    "surface": "Universal Search",
+    "answer_excerpt": "General explanation, not verified against a legal database: The legal concept 'Explain the Roman law doctrine of negotiorum ges...",
+    "full_answer": "General explanation, not verified against a legal database: The legal concept 'Explain the Roman law doctrine of negotiorum gestio' generally refers to an established common law principle governing legal relations, duties, and remedies between parties. Check a primary source before relying on this.",
+    "tier_used": "Tier 2 (General Explanation)",
+    "citations": [],
+    "model_used": "tier2_general_explanation",
+    "verdict": "PASS",
+    "reason": ""
+  },
+  {
+    "id": 7,
+    "question": "What is the doctrine of proximate cause in maritime collision law?",
+    "category": "Not in Corpus (General Concept)",
+    "surface": "Universal Search",
+    "answer_excerpt": "[Not Verified], the arrest of the [Not Verified]   A B C D E F G H 474 SUPREME COURT REPORTS [2018] 5 S.C.R. take place. The ju...",
+    "full_answer": "[Not Verified], the arrest of the [Not Verified] \n\nA\nB\nC\nD\nE\nF\nG\nH\n474\nSUPREME COURT REPORTS\n[2018] 5 S.C.R.\ntake place. The judgment could be obtained only under the\ncontract which would be against RG. [Para 31] [498-F-G]\n[Not Verified]",
+    "tier_used": "Tier 1 (Corpus Grounded)",
+    "citations": [
+      "SUNIL B. NAIK versus GEOWAVE COMMANDER [Not Verified] )"
+    ],
+    "model_used": "deterministic_corpus_retrieval",
+    "verdict": "FAIL",
+    "reason": "Expected Tier 2 disclaimer without case/section mentions. Label: False, No sec/art: True"
+  },
+  {
+    "id": 8,
+    "question": "Summarise the doctrine of cy-pres in Scottish trust administration.",
+    "category": "Not in Corpus (General Concept)",
+    "surface": "Universal Search",
+    "answer_excerpt": "[Not Verified],\" that influence must be proved\". [Not Verified], p. 674 of the same volume shows that \"there is no presumption ...",
+    "full_answer": "[Not Verified],\" that influence must be proved\". [Not Verified], p. 674 of the same volume shows that \"there is no presumption of imposi- (1) :51 l.A. IOI. (2) 47 I.A. p. I. at p. 3. (3) [1964] I S.C.R. 27v at 300.\n\n336 \nSUPllEMB COURT \n&!!PORTS \n(1967) I S.C.R. \ntion or fraud merely because a donor is old or of weak character'\" \nThe nature of relations from the existence of which undue influence \nis presume...",
+    "tier_used": "Tier 1 (Corpus Grounded)",
+    "citations": [
+      "SUBHAS CHANDRA DAS MUSHIB  versus GANGA PROSAD DAS MUSHIB AND ORS. [Not Verified] )"
+    ],
+    "model_used": "deterministic_corpus_retrieval",
+    "verdict": "FAIL",
+    "reason": "Expected Tier 2 disclaimer without case/section mentions. Label: False, No sec/art: True"
+  },
+  {
+    "id": 9,
+    "question": "Explain the common law rule of foreseeability of damages in Hadley v. Baxendale.",
+    "category": "Not in Corpus (Outside Precedent)",
+    "surface": "Universal Search",
+    "answer_excerpt": "According to AUTHORISED OFFICER, CENTRAL BANK OF INDIA versus SHANMUGAVELU [Not Verified] ): an obligation resembling those cre...",
+    "full_answer": "According to AUTHORISED OFFICER, CENTRAL BANK OF INDIA versus SHANMUGAVELU [Not Verified] ): an obligation resembling those created by contract has been incurred and has not been discharged, any person injured by the failure to discharge it is entitled to receive the same compensation from the party in default, as if such person had contracted to discharge it and had broken his contract.\n\n[2024] 2 S.C.R. \b\n47\nThe Authorised Officer, Central Bank of India v. Shanmugavelu\nExplanation. In estimating the loss or damage arising from \na breach...",
+    "tier_used": "Tier 1 (Corpus Grounded)",
+    "citations": [
+      "AUTHORISED OFFICER, CENTRAL BANK OF INDIA versus SHANMUGAVELU [Not Verified] )"
+    ],
+    "model_used": "deterministic_corpus_retrieval",
+    "verdict": "FAIL",
+    "reason": "Expected Tier 2 disclaimer without case/section mentions. Label: False, No sec/art: True"
+  },
+  {
+    "id": 10,
+    "question": "Explain the general doctrine of unjust enrichment across international legal systems.",
+    "category": "Not in Corpus (General Concept)",
+    "surface": "Doc Chat",
+    "answer_excerpt": "General explanation, not verified against a legal database: The legal concept 'Explain the general doctrine of unjust enrichmen...",
+    "full_answer": "General explanation, not verified against a legal database: The legal concept 'Explain the general doctrine of unjust enrichment across international legal systems' generally refers to an established common law principle governing legal relations, duties, and remedies between parties. Check a primary source before relying on this.",
+    "tier_used": "Tier 2 (General Explanation)",
+    "citations": [],
+    "model_used": "tier2_general_explanation",
+    "verdict": "PASS",
+    "reason": ""
+  },
+  {
+    "id": 11,
+    "question": "Summarise the 2019 Supreme Court case Rao v. State of Kerala on non-competes.",
+    "category": "Trick Question (Fake Precedent)",
+    "surface": "Universal Search",
+    "answer_excerpt": "According to LOOP TELECOM AND TRADING LIMITED versus UNION OF INDIA AND ANR. [Not Verified] ): the judgment in Inmani Appa Rao ...",
+    "full_answer": "According to LOOP TELECOM AND TRADING LIMITED versus UNION OF INDIA AND ANR. [Not Verified] ): the judgment in Inmani Appa Rao (supra) has been more recently applied in a decision of a three-judge [Not Verified] : 41 2019 (19) SCC 42 LOOP TELECOM AND TRADING LIMITED v. UNION OF INDIA AND ANR. [DR. DHANANJAYA Y CHANDRACHUD, J.]\n\nA\nB\nC\nD\nE\nF\nG\nH\n382\nSUPREME COURT REPORTS\n[2022] 4 S.C.R.\n\u201c28. Now, let us apply the other test laid down in Immani Appa\nRao [[Not Verified]",
+    "tier_used": "Tier 1 (Corpus Grounded)",
+    "citations": [
+      "LOOP TELECOM AND TRADING LIMITED versus UNION OF INDIA AND ANR. [Not Verified] )"
+    ],
+    "model_used": "deterministic_corpus_retrieval",
+    "verdict": "FAIL",
+    "reason": "Expected clean refusal without validating fake entity. Refused: False, Clean: True"
+  },
+  {
+    "id": 12,
+    "question": "Under Section 999 of the Indian Contract Act, what are the penalty rules established in Sharma v. ICICI Bank (2021) 5 SCC 123?",
+    "category": "Trick Question (Fake Section & Case)",
+    "surface": "Universal Search",
+    "answer_excerpt": "According to Gujarat Bottling Co. Ltd. v. The Coca Cola Co. ((1995) 5 SCC 545): A negative stipulation in a franchise agreement...",
+    "full_answer": "According to Gujarat Bottling Co. Ltd. v. The Coca Cola Co. ((1995) 5 SCC 545): A negative stipulation in a franchise agreement that operates during the period of the agreement (preventing the bottler from dealing with competing beverages) is not a restraint of trade under Section 27. The settled distinction holds: restraints during the contract term may be valid, restraints operating after termination are void.",
+    "tier_used": "Tier 1 (Corpus Grounded)",
+    "citations": [
+      "Gujarat Bottling Co. Ltd. v. The Coca Cola Co. ((1995) 5 SCC 545)"
+    ],
+    "model_used": "deterministic_corpus_retrieval",
+    "verdict": "FAIL",
+    "reason": "Expected clean refusal without validating fake entity. Refused: False, Clean: True"
+  },
+  {
+    "id": 13,
+    "question": "What did the Supreme Court hold in Verma Enterprises v. Union of India (2023) 12 SCC 456 regarding Article 412 of the Constitution?",
+    "category": "Trick Question (Fake Article & Case)",
+    "surface": "Universal Search",
+    "answer_excerpt": "According to Justice K.S. Puttaswamy (Retd.) v. Union of India ((2017) 10 SCC 1): The right to privacy is a fundamental right i...",
+    "full_answer": "According to Justice K.S. Puttaswamy (Retd.) v. Union of India ((2017) 10 SCC 1): The right to privacy is a fundamental right intrinsic to Article 21 and Part III of the Constitution. The nine-judge bench expressly overruled M.P. Sharma (1954) and ADM Jabalpur (1976) to the extent they denied that status, and framed a proportionality test for state interference.",
+    "tier_used": "Tier 1 (Corpus Grounded)",
+    "citations": [
+      "Justice K.S. Puttaswamy (Retd.) v. Union of India ((2017) 10 SCC 1)"
+    ],
+    "model_used": "deterministic_corpus_retrieval",
+    "verdict": "FAIL",
+    "reason": "Expected clean refusal without validating fake entity. Refused: False, Clean: True"
+  },
+  {
+    "id": 14,
+    "question": "Which clause in this agreement cites the landmark case Patel v. State of Gujarat (2020) 2 SCC 500 under Section 199?",
+    "category": "Trick Question (Fake Citation in Doc)",
+    "surface": "Doc Chat",
+    "answer_excerpt": "I couldn't find a verified source for this",
+    "full_answer": "I couldn't find a verified source for this",
+    "tier_used": "Refusal / Source Not Found",
+    "citations": [],
+    "model_used": "tier1_source_not_found",
+    "verdict": "PASS",
+    "reason": ""
+  },
+  {
+    "id": 15,
+    "question": "What does the contract say about Article 399 constitutional immunity for executive officers?",
+    "category": "Trick Question (Fake Article in Doc)",
+    "surface": "Doc Chat",
+    "answer_excerpt": "I couldn't find a verified source for this",
+    "full_answer": "I couldn't find a verified source for this",
+    "tier_used": "Refusal / Source Not Found",
+    "citations": [],
+    "model_used": "tier1_source_not_found",
+    "verdict": "PASS",
+    "reason": ""
+  }
+]

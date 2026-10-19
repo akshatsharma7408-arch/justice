@@ -12,6 +12,7 @@ import {
   uploadDocumentForChatWithBackend,
   chatWithDocumentWithBackend 
 } from '../config/gemini';
+import { renderWithBadges } from '../utils/badgeFormatter';
 
 export default function DocumentAnalyzer({ onTriggerAgentAnalysis }) {
   const [selectedPresetId, setSelectedPresetId] = useState('preset-tech-consultant');
@@ -768,7 +769,7 @@ export default function DocumentAnalyzer({ onTriggerAgentAnalysis }) {
                             </div>
                           ) : (
                             <div className="bubble-body font-judicial">
-                              {msg.text}
+                              {renderWithBadges(msg.text)}
                             </div>
                           )}
 

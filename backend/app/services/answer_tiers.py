@@ -94,45 +94,8 @@ def sanitize_tier2_text(text: str) -> str:
     Strictly strips out any case names, citations, section numbers, or article numbers
     from text to guarantee compliance with Tier 2 restrictions.
     """
-    # 1. Strip formal law citations like (2015) 4 SCC 136 or AIR 1967 SC 1098
-    cleaned = re.sub(r'\(?\b\d{4}\)?\s*\d*\s*(?:SCC|AIR|SCR|SCALE|CompCas|ILR)[^\n,;.]*', '', text, flags=re.IGNORECASE)
-    cleaned = re.sub(r'\bAIR\s+\d{4}\s+[A-Za-z\s]+', '', cleaned, flags=re.IGNORECASE)
-    cleaned = re.sub(r'\b\d+\s+SCC\s+\d+\b', '', cleaned, flags=re.IGNORECASE)
-
-    # 2. Strip case party names e.g. 'X v. Y' or 'X vs. Y'
-    cleaned = re.sub(r'\b[A-Z][a-zA-Z0-9\s\.\']+\s+(?:v\.|vs\.?|versus)\s+[A-Z][a-zA-Z0-9\s\.\']+', 'judicial precedent', cleaned)
-
-    # 2b. Strip specific precedent and party names
-    known_precedent_tokens = [
-        r'\bkailash\s+nath(?:\s+associates)?\b',
-        r'\bdelhi\s+development\s+authority\b|\bdda\b',
-        r'\bpercept\s+d\'?mark\b',
-        r'\bzaheer\s+khan\b',
-        r'\bkrishan\s+murgai\b',
-        r'\bsuperintendence\s+co(?:mpany)?(?:\s+of\s+india)?\b',
-        r'\bniranjan\s+shankar\s+golikari\b|\bgolikari\b',
-        r'\bputtaswamy\b|\bjustice\s+k\.?s\.?\s+puttaswamy\b',
-        r'\badm\s+jabalpur\b|\bshivkant\s+shukla\b',
-        r'\bdawoodi\s+bohra(?:\s+community)?\b',
-        r'\bambiance\s+india\b|\bnaveen\s+jain\b',
-        r'\bstellar\s+information(?:\s+technology)?\b|\brakesh\s+kumar\b',
-        r'\baffle\s+holdings\b',
-        r'\bkesavananda\s+bharati\b',
-        r'\bminerva\s+mills\b',
-        r'\bmaneka\s+gandhi\b',
-    ]
-    for p_pat in known_precedent_tokens:
-        cleaned = re.sub(p_pat, 'judicial precedent', cleaned, flags=re.IGNORECASE)
-
-    # 3. Strip specific section numbers (e.g. 'Section 27', 'Section 74', 'Sec. 10')
-    cleaned = re.sub(r'\b(?:sections?|secs?\.?|s\.)\s*\d+[a-zA-Z]*\b', 'statutory provisions', cleaned, flags=re.IGNORECASE)
-
-    # 4. Strip specific article numbers (e.g. 'Article 21', 'Art. 141')
-    cleaned = re.sub(r'\b(?:articles?|arts?\.?)\s*\d+[a-zA-Z]*\b', 'constitutional provisions', cleaned, flags=re.IGNORECASE)
-
-    # 5. Clean up duplicate spaces and punctuation
-    cleaned = re.sub(r'\s+', ' ', cleaned).strip(' ,;:-')
-    return cleaned
+    from app.services.citation_checker import citation_checker
+    return citation_checker.check_and_badge_text(text, is_tier2=True)
 
 
 def format_tier2_response(explanation: str) -> str:

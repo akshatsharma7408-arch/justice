@@ -26,6 +26,7 @@ from app.services.answer_tiers import (
     format_tier2_response,
     NOT_FOUND_SPECIFIC_MSG
 )
+from app.services.citation_checker import citation_checker
 from app.routers.audit import (
     extract_text_from_pdf, 
     extract_text_from_docx, 
@@ -52,6 +53,7 @@ class DocUploadResponse(BaseModel):
 class DocChatRequest(BaseModel):
     doc_id: str
     question: str
+    force_fallback: bool = Field(False, description="Whether to force deterministic grounded fallback")
 
 class DocChatResponse(BaseModel):
     model_config = {"protected_namespaces": ()}
@@ -399,7 +401,8 @@ async def chat_with_document_endpoint(payload: DocChatRequest):
                 model_used="tier1_source_not_found"
             )
         else:
-            tier2_ans = await llm_service.generate_tier2_explanation(question)
+            tier2_ans = await llm_service.generate_tier2_explanation(question, force_fallback=payload.force_fallback)
+            tier2_ans = citation_checker.check_and_badge_text(tier2_ans, doc_context=doc.raw_text, is_tier2=True)
             return DocChatResponse(
                 answer=tier2_ans,
                 citations=[],
@@ -434,7 +437,7 @@ async def chat_with_document_endpoint(payload: DocChatRequest):
     )
 
     client = llm_service.client
-    if client and not is_gemini_in_cooldown():
+    if client and not is_gemini_in_cooldown() and not payload.force_fallback:
         try:
             config = types.GenerateContentConfig(
                 system_instruction=system_instruction,
@@ -481,7 +484,8 @@ async def chat_with_document_endpoint(payload: DocChatRequest):
                             model_used="tier1_source_not_found"
                         )
                     else:
-                        tier2_ans = await llm_service.generate_tier2_explanation(question)
+                        tier2_ans = await llm_service.generate_tier2_explanation(question, force_fallback=payload.force_fallback)
+                        tier2_ans = citation_checker.check_and_badge_text(tier2_ans, doc_context=doc.raw_text, is_tier2=True)
                         return DocChatResponse(
                             answer=tier2_ans,
                             citations=[],
@@ -497,8 +501,9 @@ async def chat_with_document_endpoint(payload: DocChatRequest):
                             quoted_text=c.get("quoted_text") or ""
                         ))
 
+                ans_badged = citation_checker.check_and_badge_text(ans, doc_context=doc.raw_text, is_tier2=False)
                 return DocChatResponse(
-                    answer=ans,
+                    answer=ans_badged,
                     citations=citations,
                     model_used=settings.LLM_MODEL
                 )
@@ -521,8 +526,10 @@ async def chat_with_document_endpoint(payload: DocChatRequest):
         ]
         quote = matched_sentences[0] if matched_sentences else best_chunk.text
 
+        ans_text = f"Under {best_chunk.clause_number} ({best_chunk.heading}), the document stipulates: \"{quote}\""
+        ans_badged = citation_checker.check_and_badge_text(ans_text, doc_context=doc.raw_text, is_tier2=False)
         return DocChatResponse(
-            answer=f"Under {best_chunk.clause_number} ({best_chunk.heading}), the document stipulates: \"{quote}\"",
+            answer=ans_badged,
             citations=[
                 Citation(
                     clause_number=best_chunk.clause_number,
@@ -540,7 +547,8 @@ async def chat_with_document_endpoint(payload: DocChatRequest):
             model_used="tier1_source_not_found"
         )
     else:
-        tier2_ans = await llm_service.generate_tier2_explanation(question)
+        tier2_ans = await llm_service.generate_tier2_explanation(question, force_fallback=payload.force_fallback)
+        tier2_ans = citation_checker.check_and_badge_text(tier2_ans, doc_context=doc.raw_text, is_tier2=True)
         return DocChatResponse(
             answer=tier2_ans,
             citations=[],

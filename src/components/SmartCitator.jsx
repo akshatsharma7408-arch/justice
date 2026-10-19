@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { ArrowUpRight, Sparkles, Scale, ShieldCheck, GitFork, Network } from 'lucide-react';
 import { LANDMARK_PRECEDENTS } from '../data/legalCorpus';
 import { getCitatorCaseWithBackend } from '../config/gemini';
+import { renderWithBadges } from '../utils/badgeFormatter';
 
 export default function SmartCitator({ initialCaseId }) {
   const [selectedCaseId, setSelectedCaseId] = useState(initialCaseId || 'sc-2006-percept');
@@ -148,21 +149,21 @@ export default function SmartCitator({ initialCaseId }) {
           </div>
 
           <p className="callout-summary-text">
-            <strong>Executive Holding:</strong> {aiAnalysis.executive_summary}
+            <strong>Executive Holding:</strong> {renderWithBadges(aiAnalysis.executive_summary)}
           </p>
 
           <div className="callout-grid-three">
             <div className="callout-grid-item">
               <div className="grid-item-label">CONSTITUTIONAL STANDING</div>
-              <div className="grid-item-value">{aiAnalysis.constitutional_standing}</div>
+              <div className="grid-item-value">{renderWithBadges(aiAnalysis.constitutional_standing)}</div>
             </div>
             <div className="callout-grid-item">
               <div className="grid-item-label">BENCH HIERARCHY</div>
-              <div className="grid-item-value">{aiAnalysis.bench_strength_assessment}</div>
+              <div className="grid-item-value">{renderWithBadges(aiAnalysis.bench_strength_assessment)}</div>
             </div>
             <div className="callout-grid-item">
               <div className="grid-item-label">OVERRULING RISK</div>
-              <div className="grid-item-value">{aiAnalysis.overruling_risk}</div>
+              <div className="grid-item-value">{renderWithBadges(aiAnalysis.overruling_risk)}</div>
             </div>
           </div>
         </div>

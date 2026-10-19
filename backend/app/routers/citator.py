@@ -95,10 +95,18 @@ async def get_citator_case_by_id(case_id: str, include_ai: bool = Query(True, de
     ai_analysis = None
     source_citation = f"{case_data.get('title')} ({case_data.get('citation')})"
     citations_list = [source_citation]
+    from app.services.citation_checker import citation_checker
     if include_ai:
         ai_analysis = await llm_service.generate_citator_analysis(case_data)
-        if ai_analysis and ai_analysis.get("citations"):
-            citations_list = ai_analysis["citations"]
+        if ai_analysis:
+            for f in ["constitutional_standing", "bench_strength_assessment", "overruling_risk", "article_141_doctrine", "executive_summary"]:
+                if f in ai_analysis and isinstance(ai_analysis[f], str):
+                    ai_analysis[f] = citation_checker.check_and_badge_text(ai_analysis[f], is_tier2=False)
+            if ai_analysis.get("citations"):
+                ai_analysis["citations"] = citation_checker.badge_citations_list(ai_analysis["citations"])
+                citations_list = ai_analysis["citations"]
+
+    citations_list = citation_checker.badge_citations_list(citations_list)
 
     return CitatorCaseResponse(
         id=case_data["id"],

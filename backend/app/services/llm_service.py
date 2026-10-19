@@ -7,8 +7,10 @@ Includes backward compatibility and deterministic legal fallback layers.
 """
 
 import os
+import re
 import json
 import logging
+import asyncio
 from typing import Dict, Any, Optional, List
 from pydantic import BaseModel, Field
 
@@ -17,6 +19,7 @@ from google.genai import types
 from app.services.groq_client import GroqClient
 from app.config import settings
 from app.services.answer_tiers import needs_specific_source, format_tier2_response, NOT_FOUND_SPECIFIC_MSG
+from app.services.citation_checker import citation_checker
 
 logger = logging.getLogger("justice.llm")
 
@@ -51,6 +54,194 @@ class SearchSynthesisSchema(BaseModel):
     answer: str = Field(description="Answer strictly grounded in the provided retrieved precedents. If not found or outside the retrieved sources, must be 'I couldn't find this in the available sources'.")
     ratio_decidendi: str = Field(description="Synthetic holding or 'I couldn't find this in the available sources'")
     citations: List[str] = Field(description="List of cited precedent titles and citations from the retrieved sources")
+
+
+def clean_ocr_noise(text: str) -> str:
+    """
+    Strips OCR noise, page headers, volume markers, and margin letters.
+    """
+    if not text:
+        return ""
+    # Strip Supreme Court Reports / SCC page headers & volume markers
+    # e.g., "[2022] 4 S.C.R. 382", "SUPREME COURT OF INDIA", "Page 12 of 30", margin letters "[A]", "B ", etc.
+    t = re.sub(r'\[?\b\d{4}\]?\s*\d*\s*S\.?C\.?R\.?\s*\d*', ' ', text, flags=re.IGNORECASE)
+    t = re.sub(r'\[?\b\d{4}\]?\s*\d*\s*S\.?C\.?C\.?\s*\d*', ' ', text, flags=re.IGNORECASE)
+    t = re.sub(r'\bSUPREME COURT (?:REPORTS|OF INDIA)\b', ' ', t, flags=re.IGNORECASE)
+    t = re.sub(r'\bHIGH COURT OF [A-Z\s]+\b', ' ', t, flags=re.IGNORECASE)
+    t = re.sub(r'\bPage\s+\d+(?:\s+of\s+\d+)?\b', ' ', t, flags=re.IGNORECASE)
+    t = re.sub(r'\b(?:PETITIONER|RESPONDENT|DATE OF JUDGMENT|BENCH|HEADNOTE|JUDGMENT)\s*:?', ' ', t, flags=re.IGNORECASE)
+    # Strip SCR margin letter markers like [A], [B], [C], or leading A., B., etc.
+    t = re.sub(r'\[[A-H]\]', ' ', t)
+    t = re.sub(r'(?:^|\n)\s*[A-H]\s+(?=[A-Z])', ' ', t)
+    # Strip repeated dashes, underscores, and formatting artifacts
+    t = re.sub(r'[-_=]{3,}', ' ', t)
+    # Normalize whitespaces, tabs, newlines
+    t = re.sub(r'\s+', ' ', t).strip()
+    return t
+
+
+def clean_case_summary(case: Dict[str, Any]) -> str:
+    """
+    Rule (4): Never output raw chunk text in an answer. Show only a clean short summary
+    or the case metadata, and strip OCR noise such as page headers and volume markers.
+    """
+    title = case.get("title") or case.get("case_name") or "Precedent"
+    cit = case.get("citation") or case.get("neutral_citation") or ""
+    statutes = case.get("statutes") or []
+    stat_str = f" under {', '.join(statutes)}" if statutes else ""
+    
+    raw_summary = case.get("text") or case.get("ratioSummary") or ""
+    cleaned = clean_ocr_noise(raw_summary)
+    
+    # Extract the most meaningful 1-2 sentences, avoiding raw chunk dumps
+    sentences = [s.strip() for s in re.split(r'(?<=[.!?])\s+', cleaned) if len(s.strip()) > 20]
+    
+    if sentences:
+        short_summary = " ".join(sentences[:2])
+        if len(short_summary) > 280:
+            short_summary = short_summary[:277] + "..."
+    else:
+        short_summary = f"This precedent{stat_str} establishes authoritative judicial doctrine on the issue."
+
+    return short_summary
+
+
+def extract_query_entities(query: str) -> Dict[str, Any]:
+    """
+    Extracts specific legal entities from a query: sections, articles, citations, and case/party names.
+    """
+    q = query.strip()
+    
+    # 1. Sections (e.g. Section 27, Sec. 74, s. 999)
+    sections = re.findall(r'\b(?:sections?|secs?\.?|s\.)\s*(\d+[a-zA-Z]*)\b', q, re.IGNORECASE)
+    
+    # 2. Articles (e.g. Article 21, Art. 412, art 399)
+    articles = re.findall(r'\b(?:articles?|arts?\.?)\s*(\d+[a-zA-Z]*)\b', q, re.IGNORECASE)
+    
+    # 3. Judicial citations (e.g. (2021) 5 SCC 123, 2023 12 SCC 456, [2022] 4 SCR 382)
+    citations = re.findall(
+        r'\(?\[?\b\d{4}\)?\]?[ \t]*\d*[ \t]*(?:SCC|AIR|SCR|SCALE|CompCas|ILR|PTC|DLT|INSC|S\.C\.R\.)[ \t]*\d+[A-Za-z0-9\s]*',
+        q,
+        re.IGNORECASE
+    )
+    
+    # 4. Case names / party names
+    case_names = []
+    case_matches = re.findall(
+        r'\b([A-Z][A-Za-z0-9&\'\.\(\)\-]*(?:[ \t]+[A-Za-z0-9&\'\.\(\)\-]+){0,4}[ \t]+(?:v\.|vs\.?|versus)[ \t]+[A-Z][A-Za-z0-9&\'\.\(\)\-]*(?:[ \t]+[A-Za-z0-9&\'\.\(\)\-]+){0,4})\b',
+        q,
+        re.IGNORECASE
+    )
+    for m in case_matches:
+        case_names.append(m.strip())
+        
+    known_landmarks = [
+        "hadley v baxendale", "hadley v. baxendale", "kesavananda", "maneka gandhi", 
+        "puttaswamy", "dawoodi bohra", "kailash nath", "zaheer khan", "percept d'mark", 
+        "krishan murgai", "niranjan golikari", "gujarat bottling", "wipro", 
+        "ambiance india", "desiccant rotors", "stellar information", "adm jabalpur"
+    ]
+    for kn in known_landmarks:
+        if kn in q.lower() and not any(kn in cn.lower() for cn in case_names):
+            case_names.append(kn)
+            
+    has_specific = bool(sections or articles or citations or case_names or needs_specific_source(query))
+    
+    return {
+        "sections": [s.lower() for s in sections],
+        "articles": [a.lower() for a in articles],
+        "citations": [c.strip().lower() for c in citations],
+        "case_names": case_names,
+        "has_specific_entity": has_specific
+    }
+
+
+def match_case_to_query_entities(entities: Dict[str, Any], case: Dict[str, Any]) -> bool:
+    """
+    Rule (1): The fallback must never return a retrieved case as an answer unless the query's
+    case name, party names, citation, section or article actually appear in that case's metadata or text.
+    A similarity score alone is not enough.
+    """
+    case_title = (case.get("title") or case.get("case_name") or "").lower()
+    case_cit = (case.get("citation") or case.get("neutral_citation") or "").lower()
+    case_statutes = " ".join(case.get("statutes", [])).lower()
+    case_ratio = (case.get("ratioSummary") or "").lower()
+    case_body = (case.get("text") or "").lower()
+    case_keywords = " ".join(case.get("keywords", [])).lower()
+    case_full = f"{case_title} {case_cit} {case_statutes} {case_keywords} {case_ratio} {case_body}"
+
+    # If query specified case names / party names, the case MUST match at least one
+    if entities["case_names"]:
+        name_matched = False
+        indian_states = {
+            "kerala", "maharashtra", "delhi", "gujarat", "punjab", "haryana", "rajasthan", 
+            "karnataka", "tamil", "nadu", "andhra", "pradesh", "telangana", "uttar", "bihar", 
+            "bengal", "odisha", "assam", "madhya", "kashmir", "jammu", "himachal", "goa", 
+            "jharkhand", "chhattisgarh", "uttarakhand", "manipur", "meghalaya", "mizoram", 
+            "nagaland", "tripura", "sikkim"
+        }
+        stopwords = {
+            "versus", "state", "union", "india", "court", "limited", "ltd", "pvt", "corp",
+            "corporation", "company", "and", "the", "ors", "anr", "v", "vs", "of", "govt",
+            "government", "board", "authority", "commission", "department", "bank"
+        } | indian_states
+        for cn in entities["case_names"]:
+            tokens = [t for t in re.findall(r'[a-zA-Z0-9]{3,}', cn.lower()) if t not in stopwords]
+            if tokens and any(
+                re.search(rf'\b{re.escape(tok)}\b', case_title) or 
+                re.search(rf'\b{re.escape(tok)}\b', case_keywords)
+                for tok in tokens
+            ):
+                name_matched = True
+                break
+        if not name_matched:
+            return False
+
+    # If query specified citations, the case citation MUST match
+    if entities["citations"]:
+        cit_matched = False
+        for cit_str in entities["citations"]:
+            nums = re.findall(r'\b\d+\b', cit_str)
+            if nums and any(num in case_cit for num in nums):
+                cit_matched = True
+                break
+        if not cit_matched:
+            return False
+
+    # If query specified sections, the case MUST contain the section in statutes or text
+    if entities["sections"]:
+        sec_matched = False
+        for sec in entities["sections"]:
+            if (
+                re.search(rf'\b(?:sections?|secs?\.?|s\.)\s*{re.escape(sec)}\b', case_full)
+                or f"section {sec}" in case_statutes
+                or f" {sec}," in case_statutes
+                or f" {sec} " in case_statutes
+            ):
+                sec_matched = True
+                break
+        if not sec_matched:
+            return False
+
+    # If query specified articles, the case MUST contain the article in statutes or text
+    if entities["articles"]:
+        art_matched = False
+        for art in entities["articles"]:
+            if (
+                re.search(rf'\b(?:articles?|arts?\.?)\s*{re.escape(art)}\b', case_full)
+                or f"article {art}" in case_statutes
+                or f" {art}," in case_statutes
+                or f" {art} " in case_statutes
+            ):
+                art_matched = True
+                break
+        if not art_matched:
+            return False
+
+    if not (entities["case_names"] or entities["citations"] or entities["sections"] or entities["articles"]):
+        return False
+
+    return True
 
 
 class LLMService:
@@ -334,11 +525,15 @@ class LLMService:
                     if not parsed.get("citations"):
                         parsed["citations"] = [source_ref]
                     parsed["model_used"] = self.model
+                    for f in ["constitutional_standing", "bench_strength_assessment", "overruling_risk", "article_141_doctrine", "executive_summary"]:
+                        if f in parsed and isinstance(parsed[f], str):
+                            parsed[f] = citation_checker.check_and_badge_text(parsed[f], is_tier2=False)
+                    parsed["citations"] = citation_checker.badge_citations_list(parsed.get("citations", []))
                     return parsed
             except Exception as e:
                 logger.warning("Citator analysis failed: %s. Using deterministic synthesis.", e)
 
-        return {
+        res = {
             "constitutional_standing": f"Binding precedent under Article 141 for all subordinate courts and coordinate {case_data.get('benchSize')}-judge benches.",
             "bench_strength_assessment": f"{case_data.get('benchType')} with {case_data.get('benchSize')} Judges. Under Dawoodi Bohra (2005), coordinate benches cannot overrule.",
             "overruling_risk": "Low. The core ratio decidendi has been consistently followed across Indian High Courts.",
@@ -347,8 +542,13 @@ class LLMService:
             "citations": [source_ref],
             "model_used": "deterministic_legal_fallback"
         }
+        for f in ["constitutional_standing", "bench_strength_assessment", "overruling_risk", "article_141_doctrine", "executive_summary"]:
+            if f in res and isinstance(res[f], str):
+                res[f] = citation_checker.check_and_badge_text(res[f], is_tier2=False)
+        res["citations"] = citation_checker.badge_citations_list(res["citations"])
+        return res
 
-    async def generate_tier2_explanation(self, query: str) -> str:
+    async def generate_tier2_explanation(self, query: str, force_fallback: bool = False) -> str:
         """
         Generates a Tier 2 general conceptual explanation for a legal concept
         not verified in the local database.
@@ -375,39 +575,70 @@ class LLMService:
             f"and end with 'Check a primary source before relying on this.'"
         )
 
-        if self.client:
-            try:
-                config = types.GenerateContentConfig(
-                    system_instruction=system_instruction,
-                    temperature=0.2,
-                    max_output_tokens=300
-                )
-                response = self.client.models.generate_content(
-                    model=self.model,
-                    contents=prompt,
-                    config=config
-                )
-                if response and response.text:
-                    return format_tier2_response(response.text)
-            except Exception as e:
-                logger.warning("Tier 2 LLM generation failed: %s. Using deterministic concept synthesis.", e)
+        if self.client and not force_fallback:
+            for attempt in range(1, 3):
+                try:
+                    config = types.GenerateContentConfig(
+                        system_instruction=system_instruction,
+                        temperature=0.2,
+                        max_output_tokens=300
+                    )
+                    response = self.client.models.generate_content(
+                        model=self.model,
+                        contents=prompt,
+                        config=config
+                    )
+                    if response and response.text:
+                        return format_tier2_response(response.text)
+                except Exception as e:
+                    if attempt == 1:
+                        logger.warning("Tier 2 LLM generation attempt 1 failed: %s. Retrying once...", e)
+                        await asyncio.sleep(0.5)
+                    else:
+                        logger.warning("Tier 2 LLM generation attempt 2 failed: %s. Using deterministic concept synthesis.", e)
 
         # Deterministic conceptual fallback
         concept = query.strip("? .")
+        clean_concept = re.sub(
+            r'^(?:explain|what is|summarise|summarize|describe|discuss)\s+(?:the\s+)?(?:roman law\s+)?(?:doctrine\s+of\s+|rule\s+of\s+|principle\s+of\s+)?',
+            '',
+            concept,
+            flags=re.IGNORECASE
+        ).strip()
         return format_tier2_response(
-            f"The legal concept '{concept}' generally refers to an established common law principle governing legal relations, duties, and remedies between parties."
+            f"The legal concept '{clean_concept}' generally refers to an established principle governing rights, obligations, and remedies between parties in jurisprudence."
         )
 
-    async def synthesize_search_answer(self, query: str, retrieved_cases: List[Dict[str, Any]]) -> Dict[str, Any]:
+    async def synthesize_search_answer(
+        self, 
+        query: str, 
+        retrieved_cases: List[Dict[str, Any]], 
+        force_fallback: bool = False
+    ) -> Dict[str, Any]:
         """
         Synthesizes an AI answer for universal search using the Two-Tier framework:
         - Tier 1: Grounded solely in verified retrieved precedents with full citations.
         - Tier 2: Concise general conceptual explanation if not found in verified sources.
         - Specific query not found: "I couldn't find a verified source for this"
+
+        Enforces strict fallback rules:
+        Rule (1): Fallback must never return a retrieved case as an answer unless the query's
+                  case name, party names, citation, section or article actually appear in that
+                  case's metadata or text. A similarity score alone is not enough.
+        Rule (2): If the query names a specific case, citation, section or article that is not
+                  in the corpus, return "I couldn't find a verified source for this".
+        Rule (3): If the query is a general concept with no specific case named, return the
+                  Tier 2 labeled general explanation, same as neural mode.
+        Rule (4): Never output raw chunk text in an answer. Show only a clean short summary or
+                  the case metadata, and strip OCR noise such as page headers and volume markers.
+        Rule (5): Retry the model call once before falling back, and log why it failed.
         """
+        entities = extract_query_entities(query)
+        is_specific_ask = entities["has_specific_entity"] or needs_specific_source(query)
+
         # If no cases were retrieved, determine whether it's a specific ask or general concept
         if not retrieved_cases:
-            if needs_specific_source(query):
+            if is_specific_ask:
                 return {
                     "answer": NOT_FOUND_SPECIFIC_MSG,
                     "ratio_decidendi": NOT_FOUND_SPECIFIC_MSG,
@@ -416,7 +647,7 @@ class LLMService:
                     "model_used": "tier1_verified_source_not_found"
                 }
             else:
-                tier2_ans = await self.generate_tier2_explanation(query)
+                tier2_ans = await self.generate_tier2_explanation(query, force_fallback=force_fallback)
                 return {
                     "answer": tier2_ans,
                     "ratio_decidendi": tier2_ans,
@@ -425,14 +656,38 @@ class LLMService:
                     "model_used": "tier2_general_explanation"
                 }
 
+        # Rule (2): If the query explicitly asks for a specific case name that does not exist in our retrieved corpus,
+        # return "I couldn't find a verified source for this"
+        if entities["case_names"]:
+            has_matched_case = any(
+                match_case_to_query_entities({
+                    "case_names": entities["case_names"],
+                    "citations": [],
+                    "sections": [],
+                    "articles": []
+                }, c)
+                for c in retrieved_cases
+            )
+            if not has_matched_case:
+                return {
+                    "answer": NOT_FOUND_SPECIFIC_MSG,
+                    "ratio_decidendi": NOT_FOUND_SPECIFIC_MSG,
+                    "citations": [],
+                    "results": [],
+                    "model_used": "tier1_verified_source_not_found"
+                }
+
         cases_context = []
         for idx, c in enumerate(retrieved_cases[:5]):
+            body_text = c.get("text") or c.get("ratioSummary", "")
+            if len(body_text) > 1200:
+                body_text = body_text[:1200] + "..."
             cases_context.append(
                 f"[{idx + 1}] Title: {c.get('title')}\n"
                 f"    Citation: {c.get('citation')} ({c.get('decisionYear', '')})\n"
                 f"    Court: {c.get('court', '')} | Bench: {c.get('benchType', '')} ({c.get('benchSize', '')} judges)\n"
                 f"    Statutes: {', '.join(c.get('statutes', []))}\n"
-                f"    Ratio Summary: {c.get('ratioSummary', '')}\n"
+                f"    Judicial Text / Ratio: {body_text}\n"
             )
         context_str = "\n".join(cases_context)
 
@@ -454,88 +709,116 @@ class LLMService:
             f"Return valid structured JSON matching the schema."
         )
 
-        if self.client:
-            try:
-                config = types.GenerateContentConfig(
-                    system_instruction=system_instruction,
-                    temperature=0.1,
-                    max_output_tokens=768,
-                    response_mime_type="application/json",
-                    response_schema=SearchSynthesisSchema
-                )
-                response = self.client.models.generate_content(
-                    model=self.model,
-                    contents=prompt,
-                    config=config
-                )
-                if response.text:
-                    parsed = json.loads(response.text)
-                    ans = parsed.get("answer", "").strip()
-                    cits = parsed.get("citations", [])
-                    lower_ans = ans.lower()
-                    is_not_found = (
-                        "not_found" in lower_ans
-                        or "couldn't find" in lower_ans
-                        or "not found" in lower_ans
-                        or "does not contain" in lower_ans
-                        or not ans
-                        or not cits
+        # Rule (5): Retry the model call once before falling back, and log why it failed
+        if self.client and not force_fallback:
+            for attempt in range(1, 3):
+                try:
+                    config = types.GenerateContentConfig(
+                        system_instruction=system_instruction,
+                        temperature=0.1,
+                        max_output_tokens=768,
+                        response_mime_type="application/json",
+                        response_schema=SearchSynthesisSchema
                     )
-                    if is_not_found:
-                        # Precedents did not answer the question
-                        if needs_specific_source(query):
-                            return {
-                                "answer": NOT_FOUND_SPECIFIC_MSG,
-                                "ratio_decidendi": NOT_FOUND_SPECIFIC_MSG,
-                                "citations": [],
-                                "results": [],
-                                "model_used": "tier1_verified_source_not_found"
-                            }
-                        else:
-                            tier2_ans = await self.generate_tier2_explanation(query)
-                            return {
-                                "answer": tier2_ans,
-                                "ratio_decidendi": tier2_ans,
-                                "citations": [],
-                                "results": [],
-                                "model_used": "tier2_general_explanation"
-                            }
+                    response = self.client.models.generate_content(
+                        model=self.model,
+                        contents=prompt,
+                        config=config
+                    )
+                    if response.text:
+                        parsed = json.loads(response.text)
+                        ans = parsed.get("answer", "").strip()
+                        cits = parsed.get("citations", [])
+                        lower_ans = ans.lower()
+                        is_not_found = (
+                            "not_found" in lower_ans
+                            or "couldn't find" in lower_ans
+                            or "not found" in lower_ans
+                            or "does not contain" in lower_ans
+                            or not ans
+                            or not cits
+                        )
+                        if is_not_found:
+                            # Precedents did not answer the question
+                            if is_specific_ask:
+                                return {
+                                    "answer": NOT_FOUND_SPECIFIC_MSG,
+                                    "ratio_decidendi": NOT_FOUND_SPECIFIC_MSG,
+                                    "citations": [],
+                                    "results": [],
+                                    "model_used": "tier1_verified_source_not_found"
+                                }
+                            else:
+                                tier2_ans = await self.generate_tier2_explanation(query, force_fallback=force_fallback)
+                                return {
+                                    "answer": tier2_ans,
+                                    "ratio_decidendi": tier2_ans,
+                                    "citations": [],
+                                    "results": [],
+                                    "model_used": "tier2_general_explanation"
+                                }
 
-                    parsed["model_used"] = self.model
-                    parsed["results"] = retrieved_cases
-                    return parsed
-            except Exception as e:
-                logger.warning("Search answer synthesis failed: %s. Using deterministic fallback.", e)
+                        parsed["answer"] = citation_checker.check_and_badge_text(parsed.get("answer", ""), is_tier2=False)
+                        parsed["ratio_decidendi"] = citation_checker.check_and_badge_text(parsed.get("ratio_decidendi", "") or parsed["answer"], is_tier2=False)
+                        parsed["citations"] = citation_checker.badge_citations_list(parsed.get("citations", []))
+                        parsed["model_used"] = self.model
+                        parsed["results"] = retrieved_cases
+                        return parsed
+                except Exception as e:
+                    if attempt == 1:
+                        logger.warning("Search synthesis model call attempt 1 failed: %s. Retrying once before fallback...", e)
+                        await asyncio.sleep(0.5)
+                    else:
+                        logger.error("Search synthesis model call attempt 2 failed: %s. Triggering deterministic fallback.", e)
 
-        # Deterministic fallback
-        top = retrieved_cases[0]
-        if top.get("relevance_score", 0) >= 0.35:
-            top_src = f"{top.get('title')} ({top.get('citation')})"
+        # -------------------------------------------------------------
+        # Deterministic Legal Fallback
+        # -------------------------------------------------------------
+        # Rule (3): If the query is a general concept with no specific case named,
+        # return the Tier 2 labeled general explanation, same as neural mode.
+        if not entities["has_specific_entity"] and not needs_specific_source(query):
+            tier2_ans = await self.generate_tier2_explanation(query, force_fallback=force_fallback)
             return {
-                "answer": f"According to {top_src}: {top.get('ratioSummary', '')}",
-                "ratio_decidendi": top.get("ratioSummary", ""),
-                "citations": [top_src],
-                "results": retrieved_cases,
-                "model_used": "deterministic_corpus_retrieval"
+                "answer": tier2_ans,
+                "ratio_decidendi": tier2_ans,
+                "citations": [],
+                "results": [],
+                "model_used": "tier2_general_explanation"
             }
-        else:
-            if needs_specific_source(query):
-                return {
-                    "answer": NOT_FOUND_SPECIFIC_MSG,
-                    "ratio_decidendi": NOT_FOUND_SPECIFIC_MSG,
-                    "citations": [],
-                    "results": [],
-                    "model_used": "tier1_verified_source_not_found"
-                }
-            else:
-                tier2_ans = await self.generate_tier2_explanation(query)
-                return {
-                    "answer": tier2_ans,
-                    "ratio_decidendi": tier2_ans,
-                    "citations": [],
-                    "results": [],
-                    "model_used": "tier2_general_explanation"
-                }
+
+        # Rule (1): Never return a retrieved case as an answer unless the query's
+        # case name, party names, citation, section or article actually appear in that
+        # case's metadata or text. A similarity score alone is not enough.
+        matched_case = None
+        for case in retrieved_cases:
+            if match_case_to_query_entities(entities, case):
+                matched_case = case
+                break
+
+        # Rule (2): If the query names a specific case, citation, section or article
+        # that is not in the corpus, return "I couldn't find a verified source for this".
+        if not matched_case:
+            return {
+                "answer": NOT_FOUND_SPECIFIC_MSG,
+                "ratio_decidendi": NOT_FOUND_SPECIFIC_MSG,
+                "citations": [],
+                "results": [],
+                "model_used": "deterministic_source_not_found"
+            }
+
+        # Rule (4): Never output raw chunk text in an answer. Show only a clean short summary
+        # or the case metadata, and strip OCR noise such as page headers and volume markers.
+        source_ref = f"{matched_case.get('title')} ({matched_case.get('citation')})"
+        summary = clean_case_summary(matched_case)
+        ans_str = citation_checker.check_and_badge_text(f"According to {source_ref}: {summary}", is_tier2=False)
+        ratio_str = citation_checker.check_and_badge_text(summary, is_tier2=False)
+        return {
+            "answer": ans_str,
+            "ratio_decidendi": ratio_str,
+            "citations": citation_checker.badge_citations_list([source_ref]),
+            "results": [matched_case],
+            "model_used": "deterministic_corpus_retrieval"
+        }
 
     async def synthesize_legal_summary(self, clause_text: str, contract_title: str) -> str:
         """Concise legal synthesis for agent trace visualizer."""

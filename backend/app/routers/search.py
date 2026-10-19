@@ -23,6 +23,7 @@ class SearchRequest(BaseModel):
     bench_type: Optional[str] = Field("ALL", description="Bench filter: 'ALL', 'CONSTITUTION', 'DIVISION'")
     enable_hyde: bool = Field(True, description="Whether to synthesize judicial ratio from retrieved precedents")
     limit: int = Field(5, ge=1, le=50, description="Maximum number of precedents to return")
+    force_fallback: bool = Field(False, description="Whether to force deterministic legal fallback")
 
 class SearchResponse(BaseModel):
     model_config = {"protected_namespaces": ()}
@@ -50,14 +51,24 @@ async def search_precedents_post(payload: SearchRequest):
     )
 
     # Synthesize AI answer using the Two-Tier framework
-    synthesis = await llm_service.synthesize_search_answer(payload.query, results)
+    synthesis = await llm_service.synthesize_search_answer(
+        payload.query, 
+        results, 
+        force_fallback=payload.force_fallback
+    )
     tier1_results = synthesis.get("results", [])
+
+    from app.services.citation_checker import citation_checker
+    is_tier2 = "tier2" in synthesis.get("model_used", "").lower()
+    ai_ans = citation_checker.check_and_badge_text(synthesis.get("answer") or "", is_tier2=is_tier2)
+    ratio = citation_checker.check_and_badge_text(synthesis.get("ratio_decidendi") or ai_ans, is_tier2=is_tier2)
+    citations = citation_checker.badge_citations_list(synthesis.get("citations", [])) if not is_tier2 else []
 
     return SearchResponse(
         query=payload.query,
-        hyde_synthetic_ratio=synthesis.get("ratio_decidendi") or synthesis.get("answer"),
-        ai_answer=synthesis.get("answer"),
-        citations=synthesis.get("citations", []),
+        hyde_synthetic_ratio=ratio,
+        ai_answer=ai_ans,
+        citations=citations,
         model_used=synthesis.get("model_used", settings.LLM_MODEL),
         results_count=len(tier1_results),
         results=tier1_results
@@ -70,7 +81,8 @@ async def search_precedents_get(
     court: str = Query("ALL", description="Court filter"),
     bench: str = Query("ALL", description="Bench filter"),
     enable_hyde: bool = Query(True, description="Enable HyDE with neural LLM"),
-    limit: int = Query(5, ge=1, le=50, description="Results limit")
+    limit: int = Query(5, ge=1, le=50, description="Results limit"),
+    force_fallback: bool = Query(False, description="Whether to force deterministic legal fallback")
 ):
     """
     GET /api/v1/search
@@ -82,6 +94,7 @@ async def search_precedents_get(
         court=court,
         bench_type=bench,
         enable_hyde=enable_hyde,
-        limit=limit
+        limit=limit,
+        force_fallback=force_fallback
     )
     return await search_precedents_post(req)

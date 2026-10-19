@@ -271,14 +271,18 @@ async def explain_maxim(req: MaximExplainRequest):
             f"the factual scenario involves an assessment of whether the rights or obligations contemplated by the maxim were adhered to."
         )
 
+    from app.services.citation_checker import citation_checker
+    badged_explanation = citation_checker.check_and_badge_text(explanation_text, is_tier2=False)
+    badged_application = citation_checker.check_and_badge_text(application_text, is_tier2=False) if application_text else None
+
     return {
         "found": True,
         "id": target_entry["id"],
         "maxim": stored_maxim,
         "meaning": stored_meaning,
         "category": stored_category,
-        "explanation": explanation_text,
-        "application_to_facts": application_text,
+        "explanation": badged_explanation,
+        "application_to_facts": badged_application,
         "stored_example": stored_example,
         "indian_case_refs": stored_cases,
         "citations": [source_citation],

@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Search, ArrowRight, ArrowUpRight, Sparkles, SlidersHorizontal, Scale } from 'lucide-react';
 import { LANDMARK_PRECEDENTS } from '../data/legalCorpus';
 import { searchPrecedentsWithBackend } from '../config/gemini';
+import { renderWithBadges } from '../utils/badgeFormatter';
 
 export default function UniversalSearch({ onSelectCaseForCitator }) {
   const [query, setQuery] = useState('Section 27 Contract Act post termination non compete enforceability');
@@ -149,7 +150,7 @@ export default function UniversalSearch({ onSelectCaseForCitator }) {
             </button>
           </div>
           <blockquote className="hyde-quote font-judicial">
-            "{hydeRatio}"
+            {renderWithBadges(hydeRatio)}
           </blockquote>
           <div className="callout-footer-meta">
             <span className="meta-tag">Model: <strong>{modelUsed}</strong></span>

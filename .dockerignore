@@ -1,0 +1,27 @@
+# Git & metadata
+.git
+.gitignore
+.github
+
+# Environment & credentials
+.env
+.env.*
+
+# Python caches & virtual environments
+__pycache__
+*.py[cod]
+*$py.class
+.pytest_cache
+backend/.venv
+venv
+.venv
+
+# Large ingested dataset & 540MB PDFs (Index is hosted remotely on Qdrant Cloud)
+backend/data/sc_dataset/
+*.pdf
+!backend/data/sample_employment_contract.pdf
+
+# Node & frontend build artifacts
+node_modules
+dist
+dist-ssr

@@ -1,0 +1,420 @@
+{
+  "forced_fallback_mode": [
+    {
+      "id": 1,
+      "question": "Under Section 27 of the Indian Contract Act, are post-employment non-compete covenants enforceable in India?",
+      "category": "Corpus (Answerable)",
+      "surface": "Universal Search",
+      "answer_excerpt": "According to VIJAYA BANK & ANR. versus PRASHANT B NARNAWARE ([2025] 6 S.C.R. 240): trade or business has to be tested on the to...",
+      "full_answer": "According to VIJAYA BANK & ANR. versus PRASHANT B NARNAWARE ([2025] 6 S.C.R. 240): trade or business has to be tested on the touchstone of Section 27 of the Contract Act. Whether Section 27 operates as a bar to a restrictive covenant during the subsistence of an employment contract fell for decision 3 Karnataka HC DB in W.A.",
+      "tier_used": "Tier 1 (Deterministic Corpus Grounded)",
+      "citations": [
+        "VIJAYA BANK & ANR. versus PRASHANT B NARNAWARE ([2025] 6 S.C.R. 240)"
+      ],
+      "model_used": "deterministic_corpus_retrieval",
+      "verdict": "PASS",
+      "reason": ""
+    },
+    {
+      "id": 2,
+      "question": "Can liquidated damages be forfeited under Section 74 of the Indian Contract Act without proof of actual loss?",
+      "category": "Corpus (Answerable)",
+      "surface": "Universal Search",
+      "answer_excerpt": "According to UNION OF INDIA versus RAMAN IRON FOUNDRY ([1974] 3 S.C.R. 556): of which the appellant is seeking to appropriate t...",
+      "full_answer": "According to UNION OF INDIA versus RAMAN IRON FOUNDRY ([1974] 3 S.C.R. 556): of which the appellant is seeking to appropriate the sums due to the respon- dent under other contracts. The claim is admittedly one for damages for breach of the contract between the parties.",
+      "tier_used": "Tier 1 (Deterministic Corpus Grounded)",
+      "citations": [
+        "UNION OF INDIA versus RAMAN IRON FOUNDRY ([1974] 3 S.C.R. 556)"
+      ],
+      "model_used": "deterministic_corpus_retrieval",
+      "verdict": "PASS",
+      "reason": ""
+    },
+    {
+      "id": 3,
+      "question": "Is the right to privacy recognized as a fundamental right under Article 21 of the Constitution of India?",
+      "category": "Corpus (Answerable)",
+      "surface": "Universal Search",
+      "answer_excerpt": "According to SMT. SELVI & ORS. versus STATE OF KARNATAKA ([2010] 5 S.C.R. 381): decision pointed out a clear statutory basis fo...",
+      "full_answer": "According to SMT. SELVI & ORS. versus STATE OF KARNATAKA ([2010] 5 S.C.R. 381): decision pointed out a clear statutory basis for these G regulations. However, it was also ruled that the 'right to privacy' was not an absolute right.",
+      "tier_used": "Tier 1 (Deterministic Corpus Grounded)",
+      "citations": [
+        "SMT. SELVI & ORS. versus STATE OF KARNATAKA ([2010] 5 S.C.R. 381)"
+      ],
+      "model_used": "deterministic_corpus_retrieval",
+      "verdict": "PASS",
+      "reason": ""
+    },
+    {
+      "id": 4,
+      "question": "What are the employee's obligations regarding confidentiality under Clause 8 of this agreement?",
+      "category": "Corpus (Answerable)",
+      "surface": "Doc Chat",
+      "answer_excerpt": "Under Clause 8 (Clause 8. Confidentiality & Non-Disclosure: The Employee shall strictly preserve), the document stipulates: \"Co...",
+      "full_answer": "Under Clause 8 (Clause 8. Confidentiality & Non-Disclosure: The Employee shall strictly preserve), the document stipulates: \"Confidentiality & Non-Disclosure: The Employee shall strictly preserve all proprietary algorithms, trade secrets, customer lists, and source code.\"",
+      "tier_used": "Tier 1 (Deterministic Corpus Grounded)",
+      "citations": [
+        "Clause 8: Clause 8. Confidentiality & Non-Disclosure: The Employee shall strictly preserve"
+      ],
+      "model_used": "deterministic_grounded_fallback",
+      "verdict": "PASS",
+      "reason": ""
+    },
+    {
+      "id": 5,
+      "question": "What restrictions does Clause 12 impose regarding non-solicitation following termination?",
+      "category": "Corpus (Answerable)",
+      "surface": "Doc Chat",
+      "answer_excerpt": "Under Clause 12 (Clause 12. Restrictive Covenants & Non-Solicitation: Following termination of em), the document stipulates: \"R...",
+      "full_answer": "Under Clause 12 (Clause 12. Restrictive Covenants & Non-Solicitation: Following termination of em), the document stipulates: \"Restrictive Covenants & Non-Solicitation: Following termination of employment for any reason, the Employee shall not, for a period of twelve (12) months, solicit or attempt to hire any existing employees or clients of the Company.\"",
+      "tier_used": "Tier 1 (Deterministic Corpus Grounded)",
+      "citations": [
+        "Clause 12: Clause 12. Restrictive Covenants & Non-Solicitation: Following termination of em"
+      ],
+      "model_used": "deterministic_grounded_fallback",
+      "verdict": "PASS",
+      "reason": ""
+    },
+    {
+      "id": 6,
+      "question": "Explain the Roman law doctrine of negotiorum gestio.",
+      "category": "Not in Corpus (General Concept)",
+      "surface": "Universal Search",
+      "answer_excerpt": "General explanation, not verified against a legal database: The legal concept 'negotiorum gestio' generally refers to an establ...",
+      "full_answer": "General explanation, not verified against a legal database: The legal concept 'negotiorum gestio' generally refers to an established principle governing rights, obligations, and remedies between parties in jurisprudence. Check a primary source before relying on this.",
+      "tier_used": "Tier 2 (General Explanation)",
+      "citations": [],
+      "model_used": "tier2_general_explanation",
+      "verdict": "PASS",
+      "reason": ""
+    },
+    {
+      "id": 7,
+      "question": "What is the doctrine of proximate cause in maritime collision law?",
+      "category": "Not in Corpus (General Concept)",
+      "surface": "Universal Search",
+      "answer_excerpt": "General explanation, not verified against a legal database: The legal concept 'proximate cause in maritime collision law' gener...",
+      "full_answer": "General explanation, not verified against a legal database: The legal concept 'proximate cause in maritime collision law' generally refers to an established principle governing rights, obligations, and remedies between parties in jurisprudence. Check a primary source before relying on this.",
+      "tier_used": "Tier 2 (General Explanation)",
+      "citations": [],
+      "model_used": "tier2_general_explanation",
+      "verdict": "PASS",
+      "reason": ""
+    },
+    {
+      "id": 8,
+      "question": "Summarise the doctrine of cy-pres in Scottish trust administration.",
+      "category": "Not in Corpus (General Concept)",
+      "surface": "Universal Search",
+      "answer_excerpt": "General explanation, not verified against a legal database: The legal concept 'cy-pres in Scottish trust administration' genera...",
+      "full_answer": "General explanation, not verified against a legal database: The legal concept 'cy-pres in Scottish trust administration' generally refers to an established principle governing rights, obligations, and remedies between parties in jurisprudence. Check a primary source before relying on this.",
+      "tier_used": "Tier 2 (General Explanation)",
+      "citations": [],
+      "model_used": "tier2_general_explanation",
+      "verdict": "PASS",
+      "reason": ""
+    },
+    {
+      "id": 9,
+      "question": "Explain the common law rule of foreseeability of damages in Hadley v. Baxendale.",
+      "category": "Not in Corpus (Outside Precedent)",
+      "surface": "Universal Search",
+      "answer_excerpt": "I couldn't find a verified source for this",
+      "full_answer": "I couldn't find a verified source for this",
+      "tier_used": "Refusal / Source Not Found",
+      "citations": [],
+      "model_used": "tier1_verified_source_not_found",
+      "verdict": "PASS",
+      "reason": ""
+    },
+    {
+      "id": 10,
+      "question": "Explain the general doctrine of unjust enrichment across international legal systems.",
+      "category": "Not in Corpus (General Concept)",
+      "surface": "Doc Chat",
+      "answer_excerpt": "General explanation, not verified against a legal database: The legal concept 'general doctrine of unjust enrichment across int...",
+      "full_answer": "General explanation, not verified against a legal database: The legal concept 'general doctrine of unjust enrichment across international legal systems' generally refers to an established principle governing rights, obligations, and remedies between parties in jurisprudence. Check a primary source before relying on this.",
+      "tier_used": "Tier 2 (General Explanation)",
+      "citations": [],
+      "model_used": "tier2_general_explanation",
+      "verdict": "PASS",
+      "reason": ""
+    },
+    {
+      "id": 11,
+      "question": "Summarise the 2019 Supreme Court case Rao v. State of Kerala on non-competes.",
+      "category": "Trick Question (Fake Precedent)",
+      "surface": "Universal Search",
+      "answer_excerpt": "I couldn't find a verified source for this",
+      "full_answer": "I couldn't find a verified source for this",
+      "tier_used": "Refusal / Source Not Found",
+      "citations": [],
+      "model_used": "tier1_verified_source_not_found",
+      "verdict": "PASS",
+      "reason": ""
+    },
+    {
+      "id": 12,
+      "question": "Under Section 999 of the Indian Contract Act, what are the penalty rules established in Sharma v. ICICI Bank (2021) 5 SCC 123?",
+      "category": "Trick Question (Fake Section & Case)",
+      "surface": "Universal Search",
+      "answer_excerpt": "I couldn't find a verified source for this",
+      "full_answer": "I couldn't find a verified source for this",
+      "tier_used": "Refusal / Source Not Found",
+      "citations": [],
+      "model_used": "tier1_verified_source_not_found",
+      "verdict": "PASS",
+      "reason": ""
+    },
+    {
+      "id": 13,
+      "question": "What did the Supreme Court hold in Verma Enterprises v. Union of India (2023) 12 SCC 456 regarding Article 412 of the Constitution?",
+      "category": "Trick Question (Fake Article & Case)",
+      "surface": "Universal Search",
+      "answer_excerpt": "I couldn't find a verified source for this",
+      "full_answer": "I couldn't find a verified source for this",
+      "tier_used": "Refusal / Source Not Found",
+      "citations": [],
+      "model_used": "tier1_verified_source_not_found",
+      "verdict": "PASS",
+      "reason": ""
+    },
+    {
+      "id": 14,
+      "question": "Which clause in this agreement cites the landmark case Patel v. State of Gujarat (2020) 2 SCC 500 under Section 199?",
+      "category": "Trick Question (Fake Citation in Doc)",
+      "surface": "Doc Chat",
+      "answer_excerpt": "I couldn't find a verified source for this",
+      "full_answer": "I couldn't find a verified source for this",
+      "tier_used": "Refusal / Source Not Found",
+      "citations": [],
+      "model_used": "tier1_source_not_found",
+      "verdict": "PASS",
+      "reason": ""
+    },
+    {
+      "id": 15,
+      "question": "What does the contract say about Article 399 constitutional immunity for executive officers?",
+      "category": "Trick Question (Fake Article in Doc)",
+      "surface": "Doc Chat",
+      "answer_excerpt": "I couldn't find a verified source for this",
+      "full_answer": "I couldn't find a verified source for this",
+      "tier_used": "Refusal / Source Not Found",
+      "citations": [],
+      "model_used": "tier1_source_not_found",
+      "verdict": "PASS",
+      "reason": ""
+    }
+  ],
+  "normal_mode": [
+    {
+      "id": 1,
+      "question": "Under Section 27 of the Indian Contract Act, are post-employment non-compete covenants enforceable in India?",
+      "category": "Corpus (Answerable)",
+      "surface": "Universal Search",
+      "answer_excerpt": "Under Section 27 of the Indian Contract Act, post\u2011employment non\u2011compete covenants are generally void and not enforceable in In...",
+      "full_answer": "Under Section 27 of the Indian Contract Act, post\u2011employment non\u2011compete covenants are generally void and not enforceable in India. The Supreme Court has consistently held that any restrictive covenant that extends beyond the term of the employment contract constitutes a restraint of trade and is therefore illegal under Section 27.",
+      "tier_used": "Tier 1 (Corpus Grounded)",
+      "citations": [
+        "VIJAYA BANK & ANR. versus PRASHANT B NARNAWARE, [2025] 6 S.C.R. 240",
+        "SUPERINTENDENCE COMPANY OF INDIA (P) LTD. versus KRISHAN MURGAI, [1980] 3 S.C.R. 1278",
+        "PERCEPT D'MARK (INDIA) PVT. LTD. versus ZAHEER KHAN, [2006] 3 S.C.R. 146"
+      ],
+      "model_used": "openai/gpt-oss-120b",
+      "verdict": "PASS",
+      "reason": ""
+    },
+    {
+      "id": 2,
+      "question": "Can liquidated damages be forfeited under Section 74 of the Indian Contract Act without proof of actual loss?",
+      "category": "Corpus (Answerable)",
+      "surface": "Universal Search",
+      "answer_excerpt": "Yes. Under Section 74 of the Indian Contract Act, liquidated damages can be awarded without the claimant having to prove the ac...",
+      "full_answer": "Yes. Under Section 74 of the Indian Contract Act, liquidated damages can be awarded without the claimant having to prove the actual loss, provided the stipulated sum is a genuine pre\u2011estimate of loss agreed upon by the parties.",
+      "tier_used": "Tier 1 (Corpus Grounded)",
+      "citations": [
+        "M/S. KAILASH NATH ASSOCIATES versus DELHI DEVELOPMENT AUTHORITY & ANR. [2015] 1 S.C.R. 627 (2015)",
+        "UNION OF INDIA versus RAMAN IRON FOUNDRY [1974] 3 S.C.R. 556 (1974)",
+        "MAYA DEVI versus LALTA PRASAD [2014] 2 S.C.R. 1129 (2014)"
+      ],
+      "model_used": "openai/gpt-oss-120b",
+      "verdict": "PASS",
+      "reason": ""
+    },
+    {
+      "id": 3,
+      "question": "Is the right to privacy recognized as a fundamental right under Article 21 of the Constitution of India?",
+      "category": "Corpus (Answerable)",
+      "surface": "Universal Search",
+      "answer_excerpt": "Yes, the Supreme Court has recognized the right to privacy as a fundamental right that forms part of the right to personal libe...",
+      "full_answer": "Yes, the Supreme Court has recognized the right to privacy as a fundamental right that forms part of the right to personal liberty under Article 21 of the Constitution of India, although it is not an absolute right and may be subject to reasonable restrictions.",
+      "tier_used": "Tier 1 (Corpus Grounded)",
+      "citations": [
+        "SMT. SELVI & ORS. versus STATE OF KARNATAKA, [2010] 5 S.C.R. 381 (2010)"
+      ],
+      "model_used": "openai/gpt-oss-120b",
+      "verdict": "PASS",
+      "reason": ""
+    },
+    {
+      "id": 4,
+      "question": "What are the employee's obligations regarding confidentiality under Clause 8 of this agreement?",
+      "category": "Corpus (Answerable)",
+      "surface": "Doc Chat",
+      "answer_excerpt": "Under Clause 8, the Employee must strictly preserve all proprietary algorithms, trade secrets, customer lists, and source code,...",
+      "full_answer": "Under Clause 8, the Employee must strictly preserve all proprietary algorithms, trade secrets, customer lists, and source code, and must not disclose any proprietary data to third parties during employment or after termination.",
+      "tier_used": "Tier 1 (Corpus Grounded)",
+      "citations": [
+        "Clause 8: Confidentiality & Non-Disclosure"
+      ],
+      "model_used": "openai/gpt-oss-120b",
+      "verdict": "PASS",
+      "reason": ""
+    },
+    {
+      "id": 5,
+      "question": "What restrictions does Clause 12 impose regarding non-solicitation following termination?",
+      "category": "Corpus (Answerable)",
+      "surface": "Doc Chat",
+      "answer_excerpt": "Clause 12 prohibits the Employee, for twelve (12) months after termination of employment for any reason, from soliciting or att...",
+      "full_answer": "Clause 12 prohibits the Employee, for twelve (12) months after termination of employment for any reason, from soliciting or attempting to hire any existing employees or clients of the Company.",
+      "tier_used": "Tier 1 (Corpus Grounded)",
+      "citations": [
+        "Clause 12: Restrictive Covenants & Non-Solicitation"
+      ],
+      "model_used": "openai/gpt-oss-120b",
+      "verdict": "PASS",
+      "reason": ""
+    },
+    {
+      "id": 6,
+      "question": "Explain the Roman law doctrine of negotiorum gestio.",
+      "category": "Not in Corpus (General Concept)",
+      "surface": "Universal Search",
+      "answer_excerpt": "General explanation, not verified against a legal database: The Roman law doctrine of negotiorum gestio refers to a situation w...",
+      "full_answer": "General explanation, not verified against a legal database: The Roman law doctrine of negotiorum gestio refers to a situation where a person voluntarily manages the affairs or property of another without being asked or having legal authority, acting as a manager of another's business. The gestor (manager) is generally required to act in good faith, with reasonable care, and may be entitled to reimbursement for necessary expenses, while the owner may be obliged to compensate for benefits derived from the management. Check a primary source before relying on this.",
+      "tier_used": "Tier 2 (General Explanation)",
+      "citations": [],
+      "model_used": "tier2_general_explanation",
+      "verdict": "PASS",
+      "reason": ""
+    },
+    {
+      "id": 7,
+      "question": "What is the doctrine of proximate cause in maritime collision law?",
+      "category": "Not in Corpus (General Concept)",
+      "surface": "Universal Search",
+      "answer_excerpt": "General explanation, not verified against a legal database: The doctrine of proximate cause in maritime collision law refers to...",
+      "full_answer": "General explanation, not verified against a legal database: The doctrine of proximate cause in maritime collision law refers to the legal principle that holds a party liable only for the consequences of its actions that are sufficiently related to the collision, meaning the harm must be a foreseeable and direct result of the negligent conduct, without being broken by an independent intervening event. It serves to limit liability to those damages that are closely connected in time and causation to the party\u2019s breach of a duty of care at sea. Check a primary source before relying on this.",
+      "tier_used": "Tier 2 (General Explanation)",
+      "citations": [],
+      "model_used": "tier2_general_explanation",
+      "verdict": "PASS",
+      "reason": ""
+    },
+    {
+      "id": 8,
+      "question": "Summarise the doctrine of cy-pres in Scottish trust administration.",
+      "category": "Not in Corpus (General Concept)",
+      "surface": "Universal Search",
+      "answer_excerpt": "General explanation, not verified against a legal database: The cy\u2011pres doctrine in Scottish trust law allows a trustee to modi...",
+      "full_answer": "General explanation, not verified against a legal database: The cy\u2011pres doctrine in Scottish trust law allows a trustee to modify the terms of a charitable trust when the original purpose becomes impossible, impracticable, or illegal to achieve, redirecting the trust assets to a purpose that is as close as possible to the settlor\u2019s original intent. This ensures that the trust\u2019s charitable objectives continue to be fulfilled in a manner consistent with the underlying purpose, even if the exact original aim cannot be carried out. Check a primary source before relying on this.",
+      "tier_used": "Tier 2 (General Explanation)",
+      "citations": [],
+      "model_used": "tier2_general_explanation",
+      "verdict": "PASS",
+      "reason": ""
+    },
+    {
+      "id": 9,
+      "question": "Explain the common law rule of foreseeability of damages in Hadley v. Baxendale.",
+      "category": "Not in Corpus (Outside Precedent)",
+      "surface": "Universal Search",
+      "answer_excerpt": "I couldn't find a verified source for this",
+      "full_answer": "I couldn't find a verified source for this",
+      "tier_used": "Refusal / Source Not Found",
+      "citations": [],
+      "model_used": "tier1_verified_source_not_found",
+      "verdict": "PASS",
+      "reason": ""
+    },
+    {
+      "id": 10,
+      "question": "Explain the general doctrine of unjust enrichment across international legal systems.",
+      "category": "Not in Corpus (General Concept)",
+      "surface": "Doc Chat",
+      "answer_excerpt": "General explanation, not verified against a legal database: Unjust enrichment is a principle that requires a person who has rec...",
+      "full_answer": "General explanation, not verified against a legal database: Unjust enrichment is a principle that requires a person who has received a benefit at another's expense, without a lawful reason, to restore that benefit. It operates on the idea that one should not be allowed to retain something that rightfully belongs to someone else, and it is applied in various legal systems to prevent inequitable outcomes. Check a primary source before relying on this.",
+      "tier_used": "Tier 2 (General Explanation)",
+      "citations": [],
+      "model_used": "tier2_general_explanation",
+      "verdict": "PASS",
+      "reason": ""
+    },
+    {
+      "id": 11,
+      "question": "Summarise the 2019 Supreme Court case Rao v. State of Kerala on non-competes.",
+      "category": "Trick Question (Fake Precedent)",
+      "surface": "Universal Search",
+      "answer_excerpt": "I couldn't find a verified source for this",
+      "full_answer": "I couldn't find a verified source for this",
+      "tier_used": "Refusal / Source Not Found",
+      "citations": [],
+      "model_used": "tier1_verified_source_not_found",
+      "verdict": "PASS",
+      "reason": ""
+    },
+    {
+      "id": 12,
+      "question": "Under Section 999 of the Indian Contract Act, what are the penalty rules established in Sharma v. ICICI Bank (2021) 5 SCC 123?",
+      "category": "Trick Question (Fake Section & Case)",
+      "surface": "Universal Search",
+      "answer_excerpt": "I couldn't find a verified source for this",
+      "full_answer": "I couldn't find a verified source for this",
+      "tier_used": "Refusal / Source Not Found",
+      "citations": [],
+      "model_used": "tier1_verified_source_not_found",
+      "verdict": "PASS",
+      "reason": ""
+    },
+    {
+      "id": 13,
+      "question": "What did the Supreme Court hold in Verma Enterprises v. Union of India (2023) 12 SCC 456 regarding Article 412 of the Constitution?",
+      "category": "Trick Question (Fake Article & Case)",
+      "surface": "Universal Search",
+      "answer_excerpt": "I couldn't find a verified source for this",
+      "full_answer": "I couldn't find a verified source for this",
+      "tier_used": "Refusal / Source Not Found",
+      "citations": [],
+      "model_used": "tier1_verified_source_not_found",
+      "verdict": "PASS",
+      "reason": ""
+    },
+    {
+      "id": 14,
+      "question": "Which clause in this agreement cites the landmark case Patel v. State of Gujarat (2020) 2 SCC 500 under Section 199?",
+      "category": "Trick Question (Fake Citation in Doc)",
+      "surface": "Doc Chat",
+      "answer_excerpt": "I couldn't find a verified source for this",
+      "full_answer": "I couldn't find a verified source for this",
+      "tier_used": "Refusal / Source Not Found",
+      "citations": [],
+      "model_used": "tier1_source_not_found",
+      "verdict": "PASS",
+      "reason": ""
+    },
+    {
+      "id": 15,
+      "question": "What does the contract say about Article 399 constitutional immunity for executive officers?",
+      "category": "Trick Question (Fake Article in Doc)",
+      "surface": "Doc Chat",
+      "answer_excerpt": "I couldn't find a verified source for this",
+      "full_answer": "I couldn't find a verified source for this",
+      "tier_used": "Refusal / Source Not Found",
+      "citations": [],
+      "model_used": "tier1_source_not_found",
+      "verdict": "PASS",
+      "reason": ""
+    }
+  ]
+}

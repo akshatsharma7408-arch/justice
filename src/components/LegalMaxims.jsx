@@ -10,6 +10,7 @@ import {
   fetchMaximOfTheDayWithBackend, 
   explainMaximWithBackend 
 } from '../config/gemini';
+import { renderWithBadges } from '../utils/badgeFormatter';
 
 export default function LegalMaxims() {
   const [activeView, setActiveView] = useState('browse'); // 'browse', 'flashcards', 'quiz'
@@ -514,7 +515,7 @@ export default function LegalMaxims() {
                                 )}
                               </div>
                               <p className="ai-box-text">
-                                {typeof aiExplanation === 'string' ? aiExplanation : aiExplanation.explanation}
+                                {renderWithBadges(typeof aiExplanation === 'string' ? aiExplanation : aiExplanation.explanation)}
                               </p>
                             </div>
                           )}

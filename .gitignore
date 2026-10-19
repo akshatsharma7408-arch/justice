@@ -64,9 +64,9 @@ htmlcov/
 .DS_Store
 Thumbs.db
 
-# Scraped Supreme Court Ingestion Data
-backend/data/sc_dataset/pdfs/
-backend/data/sc_dataset/metadata/*.parquet
-backend/data/sc_dataset/chunks/chunks.json
-backend/data/sc_dataset/embeddings/*.parquet
+# Supreme Court Dataset, Ingested Data Folder, & Raw PDFs
+*.pdf
+!backend/data/sample_employment_contract.pdf
+backend/data/sc_dataset/
+data/
 
