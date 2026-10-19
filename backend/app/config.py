@@ -53,7 +53,7 @@ class Settings:
     # Qdrant Vector Database
     QDRANT_URL: str = os.getenv("QDRANT_URL", "http://localhost:6333")
     QDRANT_API_KEY: str = os.getenv("QDRANT_API_KEY", "")
-    QDRANT_COLLECTION: str = os.getenv("QDRANT_COLLECTION", "indian_legal_precedents")
+    QDRANT_COLLECTION: str = os.getenv("QDRANT_COLLECTION", "sc_judgments")
 
     # Neo4j Knowledge Graph (Article 141 Citation DAG)
     NEO4J_URI: str = os.getenv("NEO4J_URI", "bolt://localhost:7687")
