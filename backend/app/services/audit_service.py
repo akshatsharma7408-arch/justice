@@ -93,17 +93,17 @@ OTHER_VIOLATIONS = [
         "redline": "The Consultant assigns to the Company proprietary rights in Works created strictly within the direct scope of engagement, excluding moral rights protected under Section 57 of the Copyright Act, 1957."
     },
     {
-        "pattern": r"liquidated\s+damages\s+equivalent\s+to\s+100%|forfeit.*?entire\s+annual|liquidated\s+damages\s+as\s+penalty|in\s+terrorem",
+        "pattern": r"regardless\s+of\s+actual\s+loss|without\s+proof\s+of\s+(?:actual\s+)?loss|irrespective\s+of\s+(?:whether\s+)?actual\s+(?:monetary\s+)?(?:injury|loss)|liquidated\s+damages\s+equivalent\s+to\s+100%|forfeit.*?entire\s+annual|liquidated\s+damages\s+as\s+penalty|in\s+terrorem|fixed\s+damages|penalty\s+stipulated",
         "statute": "The Indian Contract Act, 1872",
         "section": "74",
         "heading": "Compensation for breach of contract where penalty stipulated for",
-        "risk_level": "CRITICAL",
-        "severity": "VOID_AB_INITIO",
+        "risk_level": "WARNING",
+        "severity": "WARNING",
         "precedent": "Kailash Nath Associates v. Delhi Development Authority (2015) 4 SCC 136",
-        "doctrine": "Under Section 74, penal damages in terrorem are unenforceable. Compensation requires proof of actual loss or genuine pre-estimate.",
-        "layman": "The clause seeks 100% contract value forfeiture without proving actual loss. Indian courts will not enforce punitive penalties under Section 74.",
-        "impact": "Uncapped liquidated damages without proof of loss create severe monetary exposure and are legally suspect.",
-        "redline": "In the event of material default, the aggrieved party shall be entitled to reasonable compensation not exceeding actual proved damages, capped as a genuine pre-estimate of loss."
+        "doctrine": "Under Section 74 of the Indian Contract Act, 1872, stipulations for penalty or fixed damages payable regardless of actual loss are not automatically void ab initio, but cannot be recovered as a penalty without proof of actual damage or genuine pre-estimate. Indian courts award only reasonable compensation.",
+        "layman": "The clause stipulates a penalty or fixed damages regardless of actual loss. Under Section 74 and Kailash Nath Associates, courts will award only reasonable compensation rather than enforcing arbitrary penalties without proof of actual damage.",
+        "impact": "WARNING (Section 74 Issue): This penalty clause is not wholly void ab initio like a non-compete, but the opposing party cannot automatically forfeit or recover the stipulated sum without demonstrating reasonable proof of actual loss.",
+        "redline": "In the event of breach, the aggrieved party shall be entitled to reasonable compensation for proven actual loss, not exceeding a genuine pre-estimate of damages capped at the agreed amount."
     },
     {
         "pattern": r"exclusive\s+jurisdiction.*?waives\s+any\s+right\s+to\s+invoke\s+statutory|waives?\s+statutory.*?remedies",
@@ -237,9 +237,11 @@ class AuditService:
         # --- CASE 3: OTHER SPECIFIC STATUTORY ISSUES (e.g. Copyright Moral Rights, Section 74, Section 28) ---
         for issue in OTHER_VIOLATIONS:
             if re.search(issue["pattern"], lower):
+                is_crit = issue["risk_level"] == "CRITICAL" or issue["severity"] == "VOID_AB_INITIO"
+                status_val = "NON-COMPLIANT" if is_crit else ("WARNING" if issue.get("severity") == "WARNING" or issue.get("risk_level") == "WARNING" else "COMPLIANT")
                 return {
-                    "is_violation": issue["risk_level"] == "CRITICAL",
-                    "status": "NON_COMPLIANT" if issue["risk_level"] == "CRITICAL" else "COMPLIANT",
+                    "is_violation": is_crit,
+                    "status": status_val,
                     "risk_level": issue["risk_level"],
                     "severity": issue["severity"],
                     "statute": issue["statute"],

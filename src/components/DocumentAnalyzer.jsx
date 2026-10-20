@@ -34,7 +34,7 @@ export default function DocumentAnalyzer({ onTriggerAgentAnalysis }) {
     {
       id: 'welcome-msg',
       sender: 'assistant',
-      text: "Ask any question about this agreement. Every claim will quote the exact clause it originates from. If a topic is not covered in the document, I will strictly answer 'not found in this document' without outside speculation.",
+      text: "Ask any question about this agreement. Every claim will quote the exact clause it originates from. If a topic is not covered in the document, I will strictly answer 'The document does not mention this.' without outside speculation.",
       citations: [],
       timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
     }
@@ -180,7 +180,7 @@ export default function DocumentAnalyzer({ onTriggerAgentAnalysis }) {
         number: `${c.clause_index}`,
         title: c.title,
         text: c.original_text,
-        riskLevel: c.is_violation ? 'CRITICAL' : (c.severity === 'MODERATE' ? 'MODERATE' : 'LOW'),
+        riskLevel: c.is_violation ? 'CRITICAL' : (c.severity === 'WARNING' || c.severity === 'MODERATE' ? 'MODERATE' : 'LOW'),
         statutoryIssue: c.statutory_violation,
         legalDoctrine: c.legal_assessment,
         layman: c.layman_translation,

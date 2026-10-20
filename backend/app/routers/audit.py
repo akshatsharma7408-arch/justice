@@ -226,7 +226,30 @@ async def verify_clause_endpoint(payload: VerifyClauseRequest):
 
     # 3. Rule-based heuristic verification for robust validation
     heuristic_eval = audit_service.evaluate_clause_heuristics(payload.clause_text, payload.clause_title)
-    is_violation = ai_audit.get("is_violation", False) or heuristic_eval.get("is_violation", False)
+    sev = heuristic_eval.get("severity", "CLEAN")
+
+    if heuristic_eval.get("section") == "74" or sev == "WARNING":
+        return VerifyClauseResponse(
+            status="WARNING",
+            risk_level="WARNING",
+            statute=heuristic_eval["statute"],
+            section="74",
+            heading=heuristic_eval["heading"],
+            statutory_text=heuristic_eval["statutory_text"],
+            binding_precedent=heuristic_eval["binding_precedent"],
+            legal_doctrine=heuristic_eval["legal_doctrine"],
+            layman_translation=heuristic_eval["layman_translation"],
+            practical_impact=heuristic_eval["practical_impact"],
+            balanced_redline=heuristic_eval["balanced_redline"],
+            is_violation=False,
+            severity="WARNING",
+            governing_authorities=heuristic_eval["governing_authorities"],
+            precedents=[heuristic_eval["binding_precedent"]],
+            statutory_issue=heuristic_eval["statutory_violation"],
+            model_used="statutory_heuristic_audit"
+        )
+
+    is_violation = ai_audit.get("is_violation", False) or heuristic_eval.get("is_violation", False) or sev == "VOID_AB_INITIO"
 
     if is_violation:
         status = "NON-COMPLIANT"
@@ -273,24 +296,24 @@ async def verify_clause_endpoint(payload: VerifyClauseRequest):
     else:
         return VerifyClauseResponse(
             status="COMPLIANT",
-            risk_level="LOW",
-            statute=statute_name,
-            section="27",
-            heading=heading,
-            statutory_text=body,
-            binding_precedent="Niranjan Shankar Golikari v. Century Spg. & Mfg. Co. Ltd. (1967) 2 SCR 378",
-            legal_doctrine=(
-                "Under Niranjan Shankar Golikari (1967), negative covenants operating strictly during the active subsistence "
-                "of employment are valid to prevent conflict of interest. Does not violate Section 27."
+            risk_level=heuristic_eval.get("risk_level", "LOW"),
+            statute=heuristic_eval.get("statute", statute_name),
+            section=heuristic_eval.get("section", "27"),
+            heading=heuristic_eval.get("heading", heading),
+            statutory_text=heuristic_eval.get("statutory_text", body),
+            binding_precedent=heuristic_eval.get("binding_precedent", "Niranjan Shankar Golikari v. Century Spg. & Mfg. Co. Ltd. (1967) 2 SCR 378"),
+            legal_doctrine=heuristic_eval.get(
+                "legal_doctrine",
+                "Under Niranjan Shankar Golikari (1967), negative covenants operating strictly during the active subsistence of employment are valid to prevent conflict of interest. Does not violate Section 27."
             ),
-            layman_translation=ai_audit.get("layman_translation") or "This clause appears compliant with Section 27 standards during the active term.",
-            practical_impact=ai_audit.get("practical_impact") or "Standard commercial undertaking.",
+            layman_translation=ai_audit.get("layman_translation") or heuristic_eval.get("layman_translation") or "This clause appears compliant with Section 27 standards during the active term.",
+            practical_impact=ai_audit.get("practical_impact") or heuristic_eval.get("practical_impact") or "Standard commercial undertaking.",
             balanced_redline=None,
             is_violation=False,
-            severity="CLEAN",
-            governing_authorities=["Niranjan Shankar Golikari (1967) 2 SCR 378", "Section 27, Indian Contract Act, 1872"],
-            precedents=["Niranjan Shankar Golikari v. Century Spg. & Mfg. Co. Ltd. (1967) 2 SCR 378"],
-            statutory_issue=None,
+            severity=sev if sev != "VOID_AB_INITIO" else "CLEAN",
+            governing_authorities=heuristic_eval.get("governing_authorities", ["The Indian Contract Act, 1872"]),
+            precedents=heuristic_eval.get("governing_authorities", ["The Indian Contract Act, 1872"]),
+            statutory_issue=heuristic_eval.get("statutory_violation"),
             model_used=ai_audit.get("model_used", "deterministic_legal_fallback")
         )
 

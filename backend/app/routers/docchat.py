@@ -374,14 +374,127 @@ def split_compound_question(question: str) -> List[str]:
     return [q]
 
 
+def extract_substantive_clause_sentence(
+    chunk: ClauseChunk, 
+    query: str, 
+    substantive_words: Optional[List[str]] = None
+) -> Tuple[str, str]:
+    """
+    Extracts the substantive clause sentence that answers the query,
+    avoiding mere titles, headings, numbers, or non-substantive lines (e.g. 'Notice.').
+    Returns (quote, plain_explanation).
+    """
+    text = chunk.text.strip()
+    q_lower = query.lower()
+    
+    # 1. Split into sentence units
+    raw_units = []
+    for line in text.split('\n'):
+        line_clean = line.strip()
+        if not line_clean:
+            continue
+        sents = [s.strip() for s in re.split(r'(?<=[.!?])\s+', line_clean) if s.strip()]
+        raw_units.extend(sents)
+
+    # 2. Filter out headings, titles, and trivial labels
+    heading_clean = re.sub(r'^[0-9\.\s\-_:]+', '', chunk.heading).strip().lower()
+    clause_num_clean = chunk.clause_number.strip().lower()
+    
+    candidates = []
+    for s in raw_units:
+        s_clean = s.strip()
+        words = re.findall(r'\b[a-zA-Z0-9\']+\b', s_clean)
+        s_lower = s_clean.lower().rstrip('.: ')
+        if len(words) <= 3 and (s_lower == heading_clean or s_lower == clause_num_clean or s_lower in ["notice", "term", "parties", "recitals", "preamble", "compensation", "indemnity", "termination"]):
+            continue
+        if s_clean.endswith(':') and len(words) <= 4:
+            continue
+        candidates.append(s_clean)
+
+    if not candidates:
+        candidates = [text]
+
+    # 3. Score candidates against substantive query words and intent
+    if not substantive_words:
+        substantive_words = [w for w in re.findall(r'\b[a-z0-9]{3,}\b', q_lower) if w not in {
+            "what", "when", "where", "which", "how", "why", "this", "that", "there", "have", "does",
+            "tell", "show", "give", "please", "find", "explain", "describe", "shall", "will", "would",
+            "could", "should", "the", "and", "for", "clause", "section", "document"
+        }]
+
+    scored_candidates = []
+    for cand in candidates:
+        c_lower = cand.lower()
+        score = sum(2.0 for w in substantive_words if re.search(rf'\b{re.escape(w)}\b', c_lower))
+        
+        # Specific intent bonuses
+        if any(w in q_lower for w in ["notice", "period", "terminate", "days", "months"]):
+            if any(w in c_lower for w in ["day", "days", "month", "months", "week", "weeks", "written notice", "terminate", "giving"]):
+                score += 4.0
+        if any(w in q_lower for w in ["parties", "who"]):
+            if any(w in c_lower for w in ["between", "entered into", "party", "parties", "company", "employee", "consultant"]):
+                score += 4.0
+        if any(w in q_lower for w in ["salary", "pay", "compensation", "fee"]):
+            if any(w in c_lower for w in ["inr", "rs", "salary", "remuneration", "payable", "per annum", "monthly"]):
+                score += 4.0
+        if any(w in q_lower for w in ["compete", "working elsewhere", "work elsewhere", "competitor"]):
+            if any(w in c_lower for w in ["compete", "solicit", "employment", "following termination", "restriction"]):
+                score += 4.0
+        if any(w in q_lower for w in ["damages", "penalty", "loss"]):
+            if any(w in c_lower for w in ["damages", "penalty", "forfeit", "loss", "compensation"]):
+                score += 4.0
+                
+        cand_words = len(re.findall(r'\b[a-zA-Z0-9\']+\b', cand))
+        if 5 <= cand_words <= 35:
+            score += 1.0
+
+        scored_candidates.append((cand, score))
+
+    scored_candidates.sort(key=lambda x: x[1], reverse=True)
+    best_quote = scored_candidates[0][0]
+
+    # Clean the quote of any leftover leading header prefix (e.g. "8. Notice: Either party...")
+    clean_quote = re.sub(r'^(?:Clause|Section|\b\d+\b)[0-9\.\s\-_:]*(?:Notice|Term|Compensation|Damages|Restraint)?[\.\s\-_:]*', '', best_quote, flags=re.IGNORECASE).strip()
+    if len(clean_quote) < 15:
+        clean_quote = best_quote
+
+    # 4. Generate grounded one-line plain explanation
+    quote_lower = clean_quote.lower()
+    
+    if any(w in quote_lower or w in q_lower for w in ["notice", "terminate", "giving notice"]):
+        m_time = re.search(r'(\d+)\s*(days?|months?|weeks?)', quote_lower)
+        time_str = f" of {m_time.group(0)}" if m_time else ""
+        explanation = f"This allows either party to terminate the agreement by providing advance written notice{time_str}."
+    elif any(w in quote_lower or w in q_lower for w in ["between", "parties", "entered into"]):
+        explanation = "This identifies the contracting entities entering into and legally bound by this agreement."
+    elif any(w in quote_lower or w in q_lower for w in ["salary", "compensation", "inr", "payable"]):
+        explanation = "This specifies the agreed compensation and payment schedule for services rendered."
+    elif any(w in quote_lower or w in q_lower for w in ["non-compete", "compete", "restraint"]):
+        explanation = "This sets out non-compete restrictions and prohibited competitive activities."
+    elif any(w in quote_lower or w in q_lower for w in ["solicit", "non-solicitation"]):
+        explanation = "This restricts soliciting existing clients or hiring employees for the stated post-termination period."
+    elif any(w in quote_lower or w in q_lower for w in ["liquidated damages", "penalty", "actual loss"]):
+        explanation = "This defines the contractual damages or penalty applicable upon material default or breach."
+    elif any(w in quote_lower or w in q_lower for w in ["intellectual property", "inventions", "works", "moral rights"]):
+        explanation = "This governs ownership, assignment, and proprietary rights in works and inventions created during the engagement."
+    elif any(w in quote_lower or w in q_lower for w in ["governing law", "jurisdiction", "dispute", "arbitration"]):
+        explanation = "This designates the governing substantive law and judicial forum for resolving contractual disputes."
+    elif any(w in quote_lower or w in q_lower for w in ["confidential", "trade secret", "proprietary"]):
+        explanation = "This obligates the parties to maintain confidentiality and protect proprietary information."
+    else:
+        explanation = "This outlines the agreed contractual terms and conditions governing this provision."
+
+    return clean_quote, explanation
+
+
 @router.post("/chat", response_model=DocChatResponse)
 async def chat_with_document_endpoint(payload: DocChatRequest):
     """
     POST /api/v1/doc/chat
     Takes doc_id + question, embeds question, retrieves top matching chunks,
-    and answers using Gemini 3.8 Flash.
-    Strict Grounding Rule: every claim in the answer must quote the exact clause it came from.
-    If the answer is not in the document, returns "not found in this document".
+    and answers using Gemini 3.8 Flash / grounded legal engine.
+    Strict Grounding Rule: every claim in the answer must quote the exact clause sentence.
+    If the question is not covered in the document, returns 'The document does not mention this.'
     """
     doc_id = payload.doc_id.strip()
     question = payload.question.strip()
@@ -402,8 +515,7 @@ async def chat_with_document_endpoint(payload: DocChatRequest):
     boilerplate_words = {
         "what", "when", "where", "which", "who", "whom", "how", "why", "this", "that", "there", 
         "have", "does", "with", "from", "your", "under", "about", "tell", "show", "give", 
-        "please", "find", "explain", "describe", "company", "employer", "employee", "consultant", 
-        "client", "party", "parties", "agreement", "contract", "herein", "hereof", "thereof", 
+        "please", "find", "explain", "describe",
         "shall", "will", "would", "could", "should", "the", "and", "for", "any", "all", "terms", 
         "clause", "section", "document", "provision", "stipulation", "is", "are", "was", "were",
         "my", "me", "our", "us", "their", "them", "his", "her", "elsewhere"
@@ -425,12 +537,11 @@ async def chat_with_document_endpoint(payload: DocChatRequest):
             # If the user specifically asks about "notice" / "notice period", the document MUST contain "notice"
             if "notice" in sub_lower and "notice" not in doc.raw_text.lower():
                 sub_answers.append(
-                    f"Part {idx + 1} ({sub_q}): The document does not contain any clause or provision specifying a notice period."
+                    f"Part {idx + 1} ({sub_q}): The document does not contain any clause or provision specifying a notice period. (The document does not mention this.)"
                 )
                 continue
 
             # Specific check for working elsewhere / post-employment restrictions:
-            # In employment agreements, restrictions on working elsewhere or competing are covered in Restrictive Covenants
             if any(w in sub_lower for w in ["working elsewhere", "work elsewhere", "compete", "stop me", "another company", "competitor"]):
                 cov_chunk = next((c for c, _ in top_sub_chunks if "restrictive" in c.heading.lower() or "non-solicitation" in c.heading.lower() or "covenant" in c.heading.lower() or "clause 12" in c.clause_number.lower()), None)
                 if cov_chunk:
@@ -442,24 +553,17 @@ async def chat_with_document_endpoint(payload: DocChatRequest):
 
             if not best_chunk or best_score < 0.15 or not (chunk_matched or ("restrictive" in best_chunk.heading.lower())):
                 sub_answers.append(
-                    f"Part {idx + 1} ({sub_q}): The document does not contain any clause or provision covering this topic."
+                    f"Part {idx + 1} ({sub_q}): The document does not mention this."
                 )
             else:
-                sentences = [s.strip() for s in re.split(r'(?<=[.!?])\s+', best_chunk.text) if s.strip()]
-                matched_sentences = [
-                    s for s in sentences 
-                    if any(re.search(rf'\b{re.escape(w)}\b', s, re.IGNORECASE) for w in sub_substantive)
-                ]
-                quote = matched_sentences[0] if matched_sentences else best_chunk.text
-
-                # If asking about working elsewhere and clause is non-solicitation:
+                quote, plain_explanation = extract_substantive_clause_sentence(best_chunk, sub_q, sub_substantive)
                 if any(w in sub_lower for w in ["working elsewhere", "work elsewhere", "stop me"]):
                     explanation = (
-                        f"Under {best_chunk.clause_number} ({best_chunk.heading}), the agreement provides: \"{quote}\" "
+                        f"Under {best_chunk.clause_number} ({best_chunk.heading}), the agreement provides: \"{quote}\"\n"
                         f"The document only restricts the solicitation of existing employees or clients for 12 months post-termination, and does not contain a clause prohibiting you from working elsewhere."
                     )
                 else:
-                    explanation = f"Under {best_chunk.clause_number} ({best_chunk.heading}), the document stipulates: \"{quote}\""
+                    explanation = f"Under {best_chunk.clause_number} ({best_chunk.heading}), the document stipulates: \"{quote}\"\n{plain_explanation}"
 
                 sub_answers.append(f"Part {idx + 1} ({sub_q}): {explanation}")
                 all_citations.append(Citation(
@@ -476,40 +580,58 @@ async def chat_with_document_endpoint(payload: DocChatRequest):
             model_used="compound_grounded_subquestions"
         )
 
+    # Check if asking about parties / contracting entities -> Read Preamble (first clause)
+    is_parties_q = any(w in question.lower() for w in [
+        "who are the parties", "parties to", "contracting parties", "party to this",
+        "who is signing", "who signed", "who is the employer", "who is the employee",
+        "who is the consultant", "who is the company", "who entered"
+    ]) or question.strip().lower() in ["who are the parties", "parties", "the parties", "who are parties"]
+
+    if is_parties_q and doc.chunks:
+        preamble_chunk = next(
+            (c for c in doc.chunks[:2] if any(w in c.text.lower() for w in ["between", "entered into", "party", "parties", "company", "consultant", "employee", "apex", "technologies"])),
+            doc.chunks[0]
+        )
+        if any(w in preamble_chunk.text.lower() for w in ["between", "entered into", "party", "parties", "company", "consultant", "employee", "apex", "technologies"]):
+            quote, plain_explanation = extract_substantive_clause_sentence(preamble_chunk, question, ["parties", "between", "entered", "company", "employee", "consultant"])
+            ans_text = f"Under {preamble_chunk.clause_number} ({preamble_chunk.heading}), the document stipulates: \"{quote}\"\n\n{plain_explanation}"
+            ans_badged = citation_checker.check_and_badge_text(ans_text, doc_context=doc.raw_text, is_tier2=False)
+            return DocChatResponse(
+                answer=ans_badged,
+                citations=[
+                    Citation(
+                        clause_number=preamble_chunk.clause_number,
+                        heading=preamble_chunk.heading,
+                        quoted_text=quote
+                    )
+                ],
+                model_used="preamble_parties_reader"
+            )
+
     # 2. Retrieve top matching chunks for single question
     top_chunks_with_scores = retrieve_top_chunks(doc, question, top_k=5)
     top_chunks = [item[0] for item in top_chunks_with_scores]
     max_score = top_chunks_with_scores[0][1] if top_chunks_with_scores else 0.0
 
-    boilerplate_words = {
-        "what", "when", "where", "which", "who", "whom", "how", "why", "this", "that", "there", 
-        "have", "does", "with", "from", "your", "under", "about", "tell", "show", "give", 
-        "please", "find", "explain", "describe", "company", "employer", "employee", "consultant", 
-        "client", "party", "parties", "agreement", "contract", "herein", "hereof", "thereof", 
-        "shall", "will", "would", "could", "should", "the", "and", "for", "any", "all", "terms", 
-        "clause", "section", "document", "provision", "stipulation", "is", "are", "was", "were"
-    }
     substantive_q_words = [w for w in re.findall(r'\b[a-z0-9]{3,}\b', question.lower()) if w not in boilerplate_words]
-    doc_tokens = set(re.findall(r'\b[a-z0-9]{3,}\b', doc.raw_text.lower()))
     has_substantive_in_doc = any(w in doc_tokens for w in substantive_q_words) if substantive_q_words else False
 
-    # CRITICAL: If retrieval returns nothing relevant, apply Two-Tier logic!
+    # Specific check for notice period when notice is absent from document
+    if "notice" in question.lower() and "notice" not in doc.raw_text.lower():
+        return DocChatResponse(
+            answer="The document does not mention this.",
+            citations=[],
+            model_used="document_not_covered"
+        )
+
+    # Questions not covered must answer "The document does not mention this."
     if not has_substantive_in_doc or not top_chunks or max_score < 0.15:
         logger.info(f"DocChat: No relevant excerpts found in document for '{question}'.")
-        if needs_specific_source(question) or is_document_specific_query(question):
-            return DocChatResponse(
-                answer=NOT_FOUND_SPECIFIC_MSG,
-                citations=[],
-                model_used="tier1_source_not_found"
-            )
-        else:
-            tier2_ans = await llm_service.generate_tier2_explanation(question, force_fallback=payload.force_fallback)
-            tier2_ans = citation_checker.check_and_badge_text(tier2_ans, doc_context=doc.raw_text, is_tier2=True)
-            return DocChatResponse(
-                answer=tier2_ans,
-                citations=[],
-                model_used="tier2_general_explanation"
-            )
+        return DocChatResponse(
+            answer="The document does not mention this.",
+            citations=[],
+            model_used="document_not_covered"
+        )
 
     # 3. Format context excerpts
     context_blocks = []
@@ -523,10 +645,12 @@ async def chat_with_document_endpoint(payload: DocChatRequest):
         "You are an authoritative legal document analyst. "
         "Your task is to answer questions about the provided contract strictly and solely using the provided excerpts. "
         "CRITICAL GROUNDING AND ACCURACY RULES: "
-        "1. Every single claim or statement in your answer MUST be grounded in the text and quote the exact clause it came from. "
-        "2. If the question cannot be answered from the provided excerpts, or if the document does not mention or cover the topic, "
-        "you MUST set the answer field to EXACTLY 'I couldn't find this in the available sources', set citations to an empty list [], and NEVER use outside legal knowledge or external facts. "
-        "3. Do NOT make inferences, invent provisions, or assume standard industry terms if not explicitly stated in the document excerpts. "
+        "1. Every single claim or statement in your answer MUST be grounded in the text. "
+        "Quote the exact substantive clause sentence (do NOT return only the heading or title). "
+        "2. Follow the quoted sentence with a single one-line plain explanation grounded strictly and only in that clause. "
+        "Format: Under [Clause Number] ([Heading]): \"[Substantive clause sentence]\"\n\n[One-line plain explanation grounded only in that clause.] "
+        "3. If the question cannot be answered from the provided excerpts, or if the document does not mention or cover the topic, "
+        "you MUST set the answer field to EXACTLY 'The document does not mention this.', set citations to an empty list [], and NEVER use outside legal knowledge or external facts. "
         "4. Your citations must contain the exact 'clause_number', 'heading', and verbatim 'quoted_text' from the document."
     )
 
@@ -566,7 +690,6 @@ async def chat_with_document_endpoint(payload: DocChatRequest):
                 ans = data.get("answer", "").strip()
                 raw_cits = data.get("citations", [])
 
-                # Enforce strict "I couldn't find this in the available sources" guardrail
                 lower_ans = ans.lower()
                 is_not_found = (
                     "couldn't find" in lower_ans
@@ -576,23 +699,15 @@ async def chat_with_document_endpoint(payload: DocChatRequest):
                     or "not mentioned" in lower_ans
                     or "not specified" in lower_ans
                     or "no mention" in lower_ans
+                    or "does not mention" in lower_ans
                 )
 
                 if is_not_found or not ans or not raw_cits:
-                    if needs_specific_source(question) or is_document_specific_query(question):
-                        return DocChatResponse(
-                            answer=NOT_FOUND_SPECIFIC_MSG,
-                            citations=[],
-                            model_used="tier1_source_not_found"
-                        )
-                    else:
-                        tier2_ans = await llm_service.generate_tier2_explanation(question, force_fallback=payload.force_fallback)
-                        tier2_ans = citation_checker.check_and_badge_text(tier2_ans, doc_context=doc.raw_text, is_tier2=True)
-                        return DocChatResponse(
-                            answer=tier2_ans,
-                            citations=[],
-                            model_used="tier2_general_explanation"
-                        )
+                    return DocChatResponse(
+                        answer="The document does not mention this.",
+                        citations=[],
+                        model_used="document_not_covered"
+                    )
 
                 citations = []
                 for c in raw_cits:
@@ -620,15 +735,9 @@ async def chat_with_document_endpoint(payload: DocChatRequest):
     chunk_tokens = set(re.findall(r'\b[a-z0-9]{3,}\b', f"{best_chunk.heading} {best_chunk.text}".lower())) if best_chunk else set()
     has_substantive_match = any(w in chunk_tokens for w in substantive_q_words) if (best_chunk and substantive_q_words) else False
 
-    if best_chunk and has_substantive_match and best_score >= 0.20:
-        sentences = [s.strip() for s in re.split(r'(?<=[.!?])\s+', best_chunk.text) if s.strip()]
-        matched_sentences = [
-            s for s in sentences 
-            if any(re.search(rf'\b{re.escape(w)}\b', s, re.IGNORECASE) for w in substantive_q_words)
-        ]
-        quote = matched_sentences[0] if matched_sentences else best_chunk.text
-
-        ans_text = f"Under {best_chunk.clause_number} ({best_chunk.heading}), the document stipulates: \"{quote}\""
+    if best_chunk and has_substantive_match and best_score >= 0.15:
+        quote, plain_explanation = extract_substantive_clause_sentence(best_chunk, question, substantive_q_words)
+        ans_text = f"Under {best_chunk.clause_number} ({best_chunk.heading}), the document stipulates: \"{quote}\"\n\n{plain_explanation}"
         ans_badged = citation_checker.check_and_badge_text(ans_text, doc_context=doc.raw_text, is_tier2=False)
         return DocChatResponse(
             answer=ans_badged,
@@ -642,20 +751,11 @@ async def chat_with_document_endpoint(payload: DocChatRequest):
             model_used="deterministic_grounded_fallback"
         )
 
-    if needs_specific_source(question) or is_document_specific_query(question):
-        return DocChatResponse(
-            answer=NOT_FOUND_SPECIFIC_MSG,
-            citations=[],
-            model_used="tier1_source_not_found"
-        )
-    else:
-        tier2_ans = await llm_service.generate_tier2_explanation(question, force_fallback=payload.force_fallback)
-        tier2_ans = citation_checker.check_and_badge_text(tier2_ans, doc_context=doc.raw_text, is_tier2=True)
-        return DocChatResponse(
-            answer=tier2_ans,
-            citations=[],
-            model_used="tier2_general_explanation"
-        )
+    return DocChatResponse(
+        answer="The document does not mention this.",
+        citations=[],
+        model_used="document_not_covered"
+    )
 
 
 
