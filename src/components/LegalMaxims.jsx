@@ -3,13 +3,14 @@ import { motion } from 'framer-motion';
 import { 
   Search, Sparkles, BookOpen, Layers, CheckCircle2, 
   RotateCw, HelpCircle, ChevronDown, ChevronUp, ArrowRight,
-  ExternalLink, Bookmark, Check, X, Shuffle, Award, AlertTriangle 
+  ExternalLink, Bookmark, Check, X, Shuffle, Award, AlertTriangle, Send
 } from 'lucide-react';
 import { LEGAL_MAXIMS } from '../data/legalMaxims';
 import { 
   fetchMaximsWithBackend, 
   fetchMaximOfTheDayWithBackend, 
-  explainMaximWithBackend 
+  explainMaximWithBackend,
+  chatMaximWithBackend 
 } from '../config/gemini';
 import { renderWithBadges } from '../utils/badgeFormatter';
 
@@ -42,6 +43,11 @@ export default function LegalMaxims() {
   const [quizScore, setQuizScore] = useState(0);
   const [selectedOption, setSelectedOption] = useState(null);
   const [quizAnswered, setQuizAnswered] = useState(false);
+
+  // Maxim Chat & Situation states
+  const [maximChats, setMaximChats] = useState({});
+  const [chatInputs, setChatInputs] = useState({});
+  const [chatLoading, setChatLoading] = useState({});
 
   // Alphabet list for A-Z index
   const alphabet = ['ALL', ...'ABCDEFGHIJKLMNOPQRSTUVWYZ'.split('')];
@@ -114,6 +120,66 @@ export default function LegalMaxims() {
       } catch (e) {}
       return next;
     });
+  };
+
+  const handleSendMaximChat = async (item, directText = null) => {
+    const textToSend = (directText !== null ? directText : (chatInputs[item.id] || '')).trim();
+    if (!textToSend) return;
+
+    if (textToSend.endsWith(': ')) {
+      setChatInputs(prev => ({ ...prev, [item.id]: textToSend }));
+      return;
+    }
+
+    const currentHistory = maximChats[item.id] || [];
+    const newHistory = [...currentHistory, { role: 'user', content: textToSend }];
+
+    setMaximChats(prev => ({
+      ...prev,
+      [item.id]: newHistory
+    }));
+
+    if (directText === null) {
+      setChatInputs(prev => ({ ...prev, [item.id]: '' }));
+    }
+
+    setChatLoading(prev => ({ ...prev, [item.id]: true }));
+
+    try {
+      const res = await chatMaximWithBackend({
+        maximId: item.id,
+        maxim: item.maxim,
+        message: textToSend,
+        history: currentHistory.slice(-4),
+        factSituation: textToSend.toLowerCase().includes('situation') ? textToSend : null
+      });
+
+      setMaximChats(prev => ({
+        ...prev,
+        [item.id]: [
+          ...newHistory,
+          {
+            role: 'assistant',
+            content: res.response || res.explanation || "No explanation returned.",
+            citations: res.citations || []
+          }
+        ]
+      }));
+    } catch (err) {
+      setMaximChats(prev => ({
+        ...prev,
+        [item.id]: [
+          ...newHistory,
+          {
+            role: 'assistant',
+            content: `Failed to consult AI: ${err.message || 'Please try again.'}`,
+            citations: []
+          }
+        ]
+      }));
+    } finally {
+      setChatLoading(prev => ({ ...prev, [item.id]: false }));
+    }
   };
 
   // Flashcards rotation
@@ -325,6 +391,93 @@ export default function LegalMaxims() {
                             </div>
                           </div>
                         )}
+
+                        {/* Interactive AI Maxim Chat & Situation Consultation */}
+                        <div className="maxim-chat-section">
+                          <div className="section-kicker mono flex items-center justify-between">
+                            <span className="flex items-center gap-1.5 text-copper">
+                              <Sparkles size={13} /> AI MAXIM CONSULTATION & SITUATION ADVISER
+                            </span>
+                          </div>
+
+                          {/* Quick suggestion chips */}
+                          <div className="maxim-quick-chips">
+                            <button
+                              type="button"
+                              className="maxim-chip-btn"
+                              onClick={() => handleSendMaximChat(item, "Apply this maxim to my situation: ")}
+                            >
+                              Apply to my situation
+                            </button>
+                            <button
+                              type="button"
+                              className="maxim-chip-btn"
+                              onClick={() => handleSendMaximChat(item, "Is this applicable for an adult?")}
+                            >
+                              Is this applicable for an adult?
+                            </button>
+                            <button
+                              type="button"
+                              className="maxim-chip-btn"
+                              onClick={() => handleSendMaximChat(item, "What are the key exceptions under Indian law?")}
+                            >
+                              Exceptions in India
+                            </button>
+                          </div>
+
+                          {/* Chat thread */}
+                          {maximChats[item.id] && maximChats[item.id].length > 0 && (
+                            <div className="maxim-chat-thread">
+                              {maximChats[item.id].map((msg, mIdx) => (
+                                <div key={mIdx} className={`maxim-chat-msg ${msg.role === 'user' ? 'user-msg' : 'assistant-msg'}`}>
+                                  <div className="msg-header mono">
+                                    {msg.role === 'user' ? 'YOU' : 'JUSTICE AI'}
+                                  </div>
+                                  <div className="msg-content font-serif">
+                                    {msg.role === 'assistant' ? renderWithBadges(msg.content) : msg.content}
+                                  </div>
+                                  {msg.citations && msg.citations.length > 0 && (
+                                    <div className="msg-citations mono">
+                                      Cited: {msg.citations.join(', ')}
+                                    </div>
+                                  )}
+                                </div>
+                              ))}
+                            </div>
+                          )}
+
+                          {chatLoading[item.id] && (
+                            <div className="maxim-chat-loading mono">
+                              <RotateCw size={13} className="spin-icon" /> Consulting Indian judicial doctrine...
+                            </div>
+                          )}
+
+                          {/* Input bar */}
+                          <form
+                            className="maxim-chat-input-bar"
+                            onSubmit={(e) => {
+                              e.preventDefault();
+                              handleSendMaximChat(item);
+                            }}
+                          >
+                            <input
+                              type="text"
+                              className="maxim-chat-input"
+                              value={chatInputs[item.id] || ''}
+                              onChange={(e) => setChatInputs(prev => ({ ...prev, [item.id]: e.target.value }))}
+                              placeholder="Ask a question or describe your situation (e.g. 'is this applicable for an adult')..."
+                            />
+                            <button
+                              type="submit"
+                              className="btn-send-maxim-chat"
+                              disabled={chatLoading[item.id] || !chatInputs[item.id]?.trim()}
+                              title="Send query"
+                            >
+                              <Send size={14} />
+                              <span>Consult</span>
+                            </button>
+                          </form>
+                        </div>
 
                         <div className="maxim-footer-bar">
                           <button

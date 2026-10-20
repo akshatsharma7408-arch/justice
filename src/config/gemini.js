@@ -228,11 +228,13 @@ export async function fetchMaximOfTheDayWithBackend() {
 /**
  * POST /api/v1/maxims/explain
  */
-export async function explainMaximWithBackend(maximOrId, factSituation = null) {
+export async function explainMaximWithBackend(maximOrId, factSituation = null, userMessage = null, history = []) {
   const payload = {
     id: maximOrId,
     maxim: maximOrId,
-    fact_situation: factSituation
+    fact_situation: factSituation,
+    message: userMessage,
+    history: (history || []).slice(-4)
   };
   const res = await fetch(`${API_BASE}/maxims/explain`, {
     method: 'POST',
@@ -244,6 +246,37 @@ export async function explainMaximWithBackend(maximOrId, factSituation = null) {
   }
   return await res.json();
 }
+
+/**
+ * MODULE E: Legal Maxim Chat & Situation Application
+ * POST /api/v1/maxims/chat
+ */
+export async function chatMaximWithBackend({
+  maximId = null,
+  maxim = null,
+  message,
+  history = [],
+  factSituation = null
+}) {
+  const payload = {
+    maxim_id: maximId,
+    maxim: maxim,
+    message: message,
+    history: (history || []).slice(-4),
+    fact_situation: factSituation
+  };
+  const res = await fetch(`${API_BASE}/maxims/chat`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(payload)
+  });
+  if (!res.ok) {
+    const errorData = await res.json().catch(() => ({}));
+    throw new Error(errorData.detail || `Maxim chat failed (HTTP ${res.status})`);
+  }
+  return await res.json();
+}
+
 
 /**
  * MODULE F: Document Chat
