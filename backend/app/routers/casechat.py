@@ -259,9 +259,11 @@ def _init_case_data():
 
 
 def get_case_record(case_id: str) -> Optional[Dict[str, Any]]:
-    """Resolves a case_id to its metadata record."""
+    """Resolves a case_id to its metadata record from local index or Qdrant."""
     _init_case_data()
-    cid = case_id.strip()
+    cid = (case_id or "").strip()
+    if not cid:
+        return None
 
     # Direct match in metadata index
     if cid in _CASE_METADATA_INDEX:
@@ -282,6 +284,18 @@ def get_case_record(case_id: str) -> Optional[Dict[str, Any]]:
         if cid_lower in v.get("title", "").lower():
             return v
 
+    # Query Qdrant vector database
+    try:
+        from app.services.qdrant_service import qdrant_service
+        q_case = qdrant_service.get_case_by_id(cid)
+        if q_case:
+            _CASE_METADATA_INDEX[cid] = q_case
+            if cid not in _CHUNKS_BY_CASE and q_case.get("chunks"):
+                _CHUNKS_BY_CASE[cid] = q_case["chunks"]
+            return q_case
+    except Exception as e:
+        logger.warning("Could not load case '%s' from Qdrant: %s", cid, e)
+
     return None
 
 
@@ -289,10 +303,12 @@ def get_case_chunks(case_id: str) -> List[Dict[str, Any]]:
     """
     Returns the ordered chunks for a given case.
     If the case is a landmark case mapped to Supreme Court chunks, returns those.
-    Otherwise, if it has no raw chunk file, synthesizes clean numbered paragraphs from its verified record.
+    Otherwise, queries Qdrant service or synthesizes clean numbered paragraphs from its verified record.
     """
     _init_case_data()
-    cid = case_id.strip()
+    cid = (case_id or "").strip()
+    if not cid:
+        return []
 
     # 1. Check if it's a mapped landmark case
     mapped_sc_id = LANDMARK_ID_TO_SC_MAP.get(cid)
@@ -308,13 +324,27 @@ def get_case_chunks(case_id: str) -> List[Dict[str, Any]]:
         if k.lower() == cid.lower():
             return v
 
-    # 4. Synthesize structured paragraphs for landmark cases without raw chunk files
+    # 4. Fetch chunks from Qdrant service
+    try:
+        from app.services.qdrant_service import qdrant_service
+        q_chunks = qdrant_service.get_case_chunks_by_id(cid)
+        if q_chunks:
+            _CHUNKS_BY_CASE[cid] = q_chunks
+            if cid not in _CASE_METADATA_INDEX:
+                meta = qdrant_service.get_case_by_id(cid)
+                if meta:
+                    _CASE_METADATA_INDEX[cid] = meta
+            return q_chunks
+    except Exception as e:
+        logger.warning("Could not fetch chunks for case '%s' from Qdrant: %s", cid, e)
+
+    # 5. Synthesize structured paragraphs for landmark cases without raw chunk files
     meta = get_case_record(cid)
     if meta:
         title = meta.get("title", "Case")
         citation = meta.get("citation", "")
         court = meta.get("court", "Supreme Court of India")
-        statutes = ", ".join(meta.get("statutes", [])) or "Indian Contract Act, 1872"
+        statutes = ", ".join(meta.get("statutes", [])) or "Constitutional & Statutory Framework"
         judges = ", ".join(meta.get("judges", [])) or "Supreme Court Bench"
         ratio = meta.get("ratioSummary", "")
         keywords = ", ".join(meta.get("keywords", []))
@@ -334,7 +364,7 @@ def get_case_chunks(case_id: str) -> List[Dict[str, Any]]:
                 "case_id": cid,
                 "case_name": title,
                 "citation": citation,
-                "text": f"STATUTORY PROVISIONS EVALUATED:\nThis matter was decided under: {statutes}.\nThe court considered whether restrictive stipulations and covenants were hit by statutory prohibitions."
+                "text": f"STATUTORY PROVISIONS EVALUATED:\nThis matter was decided under: {statutes}.\nThe court considered the legal framework and constitutional principles applicable to the dispute."
             },
             {
                 "chunk_id": f"{cid}_para_2",
@@ -350,7 +380,7 @@ def get_case_chunks(case_id: str) -> List[Dict[str, Any]]:
                 "case_id": cid,
                 "case_name": title,
                 "citation": citation,
-                "text": f"LEGAL DOCTRINE & APPLICATION:\nUnder Indian jurisprudence, covenants in restraint of trade operating after contract termination are void ab initio. The court firmly ruled on the rights of the parties under applicable Indian law."
+                "text": f"LEGAL DOCTRINE & APPLICATION:\nUnder Article 141 of the Constitution of India, the law declared by the Supreme Court is binding on all courts within the territory of India."
             }
         ]
         return paras
@@ -429,60 +459,93 @@ def check_presence_in_case(chunks: List[Dict[str, Any]], query: str) -> bool:
 # ---------------------------------------------------------------------------
 # Summarise Case: Fixed 4-Section Structure
 # ---------------------------------------------------------------------------
-SUMMARY_FIXED_FORMAT_INSTRUCTIONS = """You must strictly output the summary in this EXACT four-section structure:
+SUMMARY_FIXED_FORMAT_INSTRUCTIONS = """You must strictly output the summary in this EXACT structure:
 
 What it was about:
-(Exactly 2 lines explaining what the dispute was about and who was involved)
+(Exactly 2 to 3 lines explaining what the dispute was about and who was involved, in plain words)
 
 What the court decided:
-(Exactly 2 lines explaining the court's final decision and holding)
+(Exactly 2 to 3 lines explaining the court's final decision and holding, in plain words)
 
 Why it matters:
-(Exactly 2 lines explaining why this decision matters for ordinary people and businesses)
+(Exactly 2 lines explaining why this decision matters for ordinary people and legal rights, in plain words)
 
 Key points:
 - (Point 1: 1 concise sentence)
 - (Point 2: 1 concise sentence)
 - (Point 3: 1 concise sentence)
-- (Point 4: optional concise sentence)
-- (Point 5: optional concise sentence)
 
-Use simple everyday words. Explain any legal jargon in brackets [like this]. Do not invent facts, section numbers, or other case names."""
+Use simple everyday words. Explain any legal jargon in brackets [like this]. Answer ONLY from the provided text. Do not invent facts, section numbers, or other case names."""
 
 
 def generate_deterministic_summary(case_meta: Dict[str, Any], chunks: List[Dict[str, Any]]) -> str:
-    """Produces the exact 4-section summary deterministically from verified metadata & chunks."""
+    """Produces the exact structured summary deterministically from verified metadata & chunks."""
     title = case_meta.get("title", "The case")
     citation = case_meta.get("citation", "")
     court = case_meta.get("court", "Supreme Court of India")
-    statutes = ", ".join(case_meta.get("statutes", [])) or "the Indian Contract Act, 1872"
+    statutes_list = case_meta.get("statutes", [])
+    statutes = ", ".join(statutes_list) if statutes_list else "the statutory and constitutional framework"
     ratio = case_meta.get("ratioSummary", "")
 
     # Clean ratio text
     ratio_clean = re.sub(r'\s+', ' ', ratio).strip()
     if not ratio_clean and chunks:
-        ratio_clean = chunks[min(2, len(chunks) - 1)].get("text", "")[:280]
+        for ch in chunks:
+            t = ch.get("text", "")
+            if any(w in t.lower() for w in ["held", "ratio", "we hold", "order", "decision"]):
+                clean_t = re.sub(r'^\s*\d+\s*\[\d+\].*?\n', '', t).strip()
+                ratio_clean = clean_t[:300]
+                break
+        if not ratio_clean:
+            clean_t = re.sub(r'^\s*\d+\s*\[\d+\].*?\n', '', chunks[-1].get("text", "")).strip()
+            ratio_clean = clean_t[:300]
+
+    # Background from chunk 0 or 1
+    bg_snippet = ""
+    if chunks:
+        c0 = chunks[0].get("text", "")
+        c0_clean = re.sub(r'^\s*\d+\s*\[\d+\].*?\n', '', c0).strip()
+        sentences = [s.strip() for s in re.split(r'(?<=[.!?])\s+', c0_clean) if len(s.strip()) > 20]
+        if sentences:
+            bg_snippet = " ".join(sentences[:2])
+            if len(bg_snippet) > 240:
+                bg_snippet = bg_snippet[:240] + "..."
+
+    what_about = f"This case, {title}" + (f" ({citation})" if citation else "") + f", was adjudicated by the {court} under {statutes}."
+    if bg_snippet:
+        what_about += f"\nThe dispute arose regarding: {bg_snippet}"
+    else:
+        what_about += f"\nThe court examined the underlying dispute and rights of the parties under Indian law."
+
+    what_decided = f"The court held: {ratio_clean}" if ratio_clean else "The court adjudicated the appeal based on statutory provisions and evidentiary findings."
+    if not what_decided.endswith("."):
+        what_decided += "."
+
+    why_matters = (
+        f"This decision clarifies the scope and legal enforcement of {statutes}. "
+        f"It serves as binding precedent under Article 141 of the Constitution for all subordinate courts and tribunals in India."
+    )
+
+    key_points = [
+        "Binding precedent declared by the Supreme Court under Article 141.",
+        f"Authoritative adjudication under {statutes}."
+    ]
+    if ratio_clean:
+        first_clause = ratio_clean.split(".")[0].strip()
+        if first_clause:
+            key_points.insert(0, first_clause)
+    key_points_str = "\n".join(f"- {kp}" for kp in key_points)
 
     return (
-        f"What it was about:\n"
-        f"This dispute in {title} ({citation}) came before the {court} regarding commercial covenants under {statutes}.\n"
-        f"The court had to determine whether contractual restrictions between the parties could be legally enforced in India.\n\n"
-        f"What the court decided:\n"
-        f"{ratio_clean}\n"
-        f"The court firmly ruled that statutory protections prevail over private contracts, making prohibited restrictions void ab initio [invalid from the very start].\n\n"
-        f"Why it matters:\n"
-        f"This decision protects employees, professionals, and citizens from unfair covenants that restrict their freedom to work or trade.\n"
-        f"It establishes that Indian courts will strictly strike down void post-service restraints regardless of claims of reasonableness.\n\n"
-        f"Key points:\n"
-        f"- Covenants operating after contract termination are strictly void ab initio [legally invalid from day one].\n"
-        f"- Freedom of trade and lawful profession under Indian law cannot be waived by signing a contract.\n"
-        f"- English common-law rules of 'reasonable restraints' do not apply to post-service non-compete clauses in India.\n"
-        f"- Negative covenants are enforceable only during the active term of employment or agreement."
+        f"What it was about:\n{what_about}\n\n"
+        f"What the court decided:\n{what_decided}\n\n"
+        f"Why it matters:\n{why_matters}\n\n"
+        f"Key points:\n{key_points_str}"
     )
 
 
 async def generate_case_summary(case_meta: Dict[str, Any], chunks: List[Dict[str, Any]], force_fallback: bool = False) -> str:
-    """Generates the fixed 4-section summary using LLM chunk combination or deterministic fallback."""
+    """Generates the fixed 3-section summary using LLM chunk combination or deterministic fallback."""
     if force_fallback or not llm_service.is_active or not llm_service.client:
         return generate_deterministic_summary(case_meta, chunks)
 
@@ -495,7 +558,7 @@ async def generate_case_summary(case_meta: Dict[str, Any], chunks: List[Dict[str
         selected_chunks.append(chunks[1])
 
     # Find ratio chunk
-    ratio_chunks = [c for c in chunks[2:] if any(w in c.get("text", "").lower() for w in ["held", "ratio", "decision", "section 27", "order"])]
+    ratio_chunks = [c for c in chunks[2:] if any(w in c.get("text", "").lower() for w in ["held", "ratio", "decision", "section", "order"])]
     if ratio_chunks:
         selected_chunks.extend(ratio_chunks[:2])
     elif len(chunks) > 2:
@@ -552,40 +615,44 @@ def generate_deterministic_case_answer(case_meta: Dict[str, Any], chunks: List[D
         p2 = parts[1].strip() if len(parts) > 1 else "The respondent"
         ans = (
             f"In this case, the appellant/petitioner was {p1}, and the respondent was {p2}. "
-            f"The matter was adjudicated by the {court} under citation {citation}."
+            f"The matter was adjudicated by the {court}" + (f" under citation {citation}." if citation else ".")
         )
         return (ans, "Paragraph 1", "chunk-0")
 
     # 2. What did the court decide?
     if any(k in q_lower for k in ["what did the court decide", "decide", "decision", "holding", "order"]):
         ratio = case_meta.get("ratioSummary", "")
+        target_idx = 0
         if not ratio and chunks:
-            ratio = chunks[min(2, len(chunks)-1)].get("text", "")[:280]
-        ans = (
-            f"The court held: {ratio} "
-            f"The court clarified that covenants in restraint of trade [agreements stopping someone from working] "
-            f"cannot be enforced post-termination and are void ab initio [invalid from the very start]."
-        )
-        target_idx = 2 if len(chunks) > 2 else 0
+            for idx, ch in enumerate(chunks):
+                t = ch.get("text", "")
+                if any(w in t.lower() for w in ["held", "ratio", "we hold", "order"]):
+                    ratio = t[:280]
+                    target_idx = idx
+                    break
+            if not ratio:
+                target_idx = min(2, len(chunks)-1)
+                ratio = chunks[target_idx].get("text", "")[:280]
+        ans = f"The court held: {ratio}"
         return (ans, f"Paragraph {target_idx + 1}", f"chunk-{target_idx}")
 
     # 3. Why does it matter for ordinary people?
     if any(k in q_lower for k in ["why does it matter", "matter for ordinary", "ordinary people", "impact"]):
+        statutes = ", ".join(case_meta.get("statutes", [])) or "the applicable legal framework"
         ans = (
-            f"For ordinary people and employees, this case guarantees that once you finish or leave an engagement, "
-            f"an employer cannot prevent you from taking another job or starting your own trade [freedom of profession]. "
-            f"Clauses attempting to block you after leaving are void ab initio [completely invalid in law]."
+            f"For ordinary citizens and litigants, this case establishes authoritative binding precedent regarding {statutes}. "
+            f"It ensures that rights and statutory obligations are interpreted consistently across courts in India."
         )
-        target_idx = 3 if len(chunks) > 3 else 0
+        target_idx = min(3, len(chunks)-1) if chunks else 0
         return (ans, f"Paragraph {target_idx + 1}", f"chunk-{target_idx}")
 
     # 4. Which laws or sections were used?
     if any(k in q_lower for k in ["which laws", "sections were used", "what sections", "statutes"]):
         statutes = case_meta.get("statutes", [])
-        stat_str = ", ".join(statutes) if statutes else "Section 27 of the Indian Contract Act, 1872"
+        stat_str = ", ".join(statutes) if statutes else "Applicable provisions of Indian law"
         ans = (
             f"The laws and provisions evaluated in this judgment are: {stat_str}. "
-            f"The court focused primarily on the statutory bar against agreements in restraint of trade."
+            f"The court based its decision on these statutory and constitutional principles."
         )
         target_idx = 1 if len(chunks) > 1 else 0
         return (ans, f"Paragraph {target_idx + 1}", f"chunk-{target_idx}")
@@ -596,11 +663,13 @@ def generate_deterministic_case_answer(case_meta: Dict[str, Any], chunks: List[D
         best_chunk = top[0]
         c_text = best_chunk.get("text", "")[:350].strip()
         idx = best_chunk.get("chunk_index", 0)
-        ans = (
-            f"According to the judgment text: \"{c_text}...\" "
-            f"This addresses the query strictly within the boundaries of this case's recorded text."
-        )
-        return (ans, f"Paragraph {idx + 1}", f"chunk-{idx}")
+        q_words = [w.lower() for w in re.findall(r'[a-zA-Z0-9]{4,}', question) if w.lower() not in STOPWORDS]
+        if any(w in c_text.lower() for w in q_words):
+            ans = (
+                f"According to the judgment text: \"{c_text}...\" "
+                f"This addresses the query strictly within the boundaries of this case's recorded text."
+            )
+            return (ans, f"Paragraph {idx + 1}", f"chunk-{idx}")
 
     return ("This case does not say that.", None, None)
 

@@ -165,6 +165,83 @@ def test_get_case_text_valid(client=client):
     assert first_para["paragraph_number"] == 1
     assert len(first_para["text"]) > 0
 
+
+# ---------------------------------------------------------------------------
+# Item 1 Tests: Kesavananda, Normal SC Case, Made-up ID, Unanswered Question
+# ---------------------------------------------------------------------------
+
+def test_case_chat_kesavananda(client=client):
+    """Kesavananda (S_1973_1_1_1002) loaded by case_id returns 200 and structured summary."""
+    res = client.post("/api/v1/case-chat", json={
+        "case_id": "S_1973_1_1_1002",
+        "question": "Summarise this case",
+        "force_fallback": True
+    })
+    assert res.status_code == 200
+    data = res.json()
+    assert data["case_id"] == "S_1973_1_1_1002"
+    assert "What it was about:" in data["answer"]
+    assert "What the court decided:" in data["answer"]
+    assert "Why it matters:" in data["answer"]
+
+
+def test_case_chat_normal_sc_case(client=client):
+    """Normal SC case (2025_2_424_451) from Qdrant works for chat, text, and citator."""
+    # 1. Case chat summary
+    res_chat = client.post("/api/v1/case-chat", json={
+        "case_id": "2025_2_424_451",
+        "question": "Summarise this case",
+        "force_fallback": True
+    })
+    assert res_chat.status_code == 200
+    data_chat = res_chat.json()
+    assert "What it was about:" in data_chat["answer"]
+    assert "What the court decided:" in data_chat["answer"]
+
+    # 2. Case text
+    res_text = client.get("/api/v1/case-text/2025_2_424_451")
+    assert res_text.status_code == 200
+    data_text = res_text.json()
+    assert data_text["total_paragraphs"] > 0
+    assert len(data_text["paragraphs"]) > 0
+
+    # 3. Citator fallback
+    res_cit = client.get("/api/v1/citator/2025_2_424_451?include_ai=false")
+    assert res_cit.status_code == 200
+    data_cit = res_cit.json()
+    assert data_cit["id"] == "2025_2_424_451"
+    assert "citation graph not available for this case" in data_cit["statusDescription"]
+
+
+def test_case_chat_made_up_id_clean_404(client=client):
+    """A made-up case_id returns a clean 404 message across chat, text, and citator."""
+    fake_id = "made_up_case_id_xyz999"
+    res_chat = client.post("/api/v1/case-chat", json={
+        "case_id": fake_id,
+        "question": "Summarise this case"
+    })
+    assert res_chat.status_code == 404
+    assert f"Case '{fake_id}' was not found in the verified dataset." in res_chat.json()["detail"]
+
+    res_text = client.get(f"/api/v1/case-text/{fake_id}")
+    assert res_text.status_code == 404
+
+    res_cit = client.get(f"/api/v1/citator/{fake_id}")
+    assert res_cit.status_code == 404
+
+
+def test_case_chat_question_not_in_case(client=client):
+    """Asking about a topic not in the case returns 'This case does not say that.'"""
+    res = client.post("/api/v1/case-chat", json={
+        "case_id": "S_1973_1_1_1002",
+        "question": "What does this case say about bitcoin mining rewards and cryptocurrency blockchain?",
+        "force_fallback": True
+    })
+    assert res.status_code == 200
+    data = res.json()
+    assert data["answer"] == "This case does not say that."
+
+
 if __name__ == "__main__":
     headers = {}
     if SITE_PASSWORD:
@@ -185,6 +262,10 @@ if __name__ == "__main__":
         ("test_explain_selection_too_short", test_explain_selection_too_short),
         ("test_explain_selection_too_long", test_explain_selection_too_long),
         ("test_get_case_text_valid", test_get_case_text_valid),
+        ("test_case_chat_kesavananda", test_case_chat_kesavananda),
+        ("test_case_chat_normal_sc_case", test_case_chat_normal_sc_case),
+        ("test_case_chat_made_up_id_clean_404", test_case_chat_made_up_id_clean_404),
+        ("test_case_chat_question_not_in_case", test_case_chat_question_not_in_case),
     ]
 
     passed = 0

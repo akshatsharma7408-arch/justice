@@ -82,10 +82,36 @@ async def get_citator_case_by_id(case_id: str, include_ai: bool = Query(True, de
     """
     case_data = neo4j_service.get_citator_case(case_id)
     if not case_data:
-        raise HTTPException(
-            status_code=404,
-            detail="I couldn't find a verified source for this"
-        )
+        from app.services.qdrant_service import qdrant_service
+        q_case = qdrant_service.get_case_by_id(case_id)
+        if not q_case:
+            from app.routers.casechat import get_case_record
+            q_case = get_case_record(case_id)
+        if not q_case:
+            raise HTTPException(
+                status_code=404,
+                detail=f"Case '{case_id}' was not found in the verified dataset."
+            )
+
+        bench_size = q_case.get("benchSize", 2)
+        bench_type = q_case.get("benchType") or ("Constitution Bench" if bench_size >= 5 else "Division Bench")
+        case_data = {
+            "id": case_id,
+            "title": q_case.get("title", case_id),
+            "citation": q_case.get("citation", "Citation pending"),
+            "court": q_case.get("court", "Supreme Court of India"),
+            "benchType": bench_type,
+            "benchSize": bench_size,
+            "decisionYear": q_case.get("decisionYear") or q_case.get("year"),
+            "status": "GREEN",
+            "statusLabel": "RECORDED JUDGMENT (SUPREME COURT)",
+            "citationCount": 0,
+            "statusDescription": "citation graph not available for this case",
+            "overruledCases": [],
+            "treatmentHistory": [],
+            "precedentChain": [f"{q_case.get('title', case_id)} ({q_case.get('citation', '')})"],
+            "dataSource": "qdrant_dataset"
+        }
 
     hierarchy = neo4j_service.evaluate_article_141_hierarchy(
         bench_size=case_data.get("benchSize", 2),

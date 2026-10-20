@@ -510,6 +510,145 @@ class QdrantService:
             logger.warning("Could not load local Supreme Court dataset: %s", e)
 
     # ------------------------------------------------------------------ #
+    # Case by ID & Chunk Fetching (for Case Chat, Text, Citator)          #
+    # ------------------------------------------------------------------ #
+    def get_case_chunks_by_id(self, case_id: str) -> List[Dict[str, Any]]:
+        """
+        Retrieves all chunks for a given case_id in chunk_index order.
+        Queries live Qdrant collection 'sc_judgments' first, then falls back to local SC chunks.
+        """
+        cid = (case_id or "").strip()
+        if not cid:
+            return []
+
+        # 1. Query live Qdrant
+        if self._client:
+            try:
+                from qdrant_client.models import Filter, FieldCondition, MatchValue
+                target_collection = self.sc_collection_name
+                try:
+                    available = {c.name for c in self._client.get_collections().collections}
+                    if target_collection not in available:
+                        target_collection = self.collection_name
+                except Exception:
+                    pass
+
+                all_chunks = []
+                offset = None
+                while True:
+                    hits, next_offset = self._client.scroll(
+                        collection_name=target_collection,
+                        scroll_filter=Filter(must=[FieldCondition(key="case_id", match=MatchValue(value=cid))]),
+                        limit=100,
+                        offset=offset,
+                        with_payload=True,
+                        with_vectors=False
+                    )
+                    for h in hits:
+                        p = dict(h.payload or {})
+                        p["id"] = p.get("id") or str(h.id)
+                        p["chunk_id"] = p.get("chunk_id") or f"{cid}_chunk_{p.get('chunk_index', 0)}"
+                        all_chunks.append(p)
+                    if not next_offset or len(hits) == 0:
+                        break
+                    offset = next_offset
+
+                if all_chunks:
+                    all_chunks.sort(key=lambda x: x.get("chunk_index", 0))
+                    return all_chunks
+            except Exception as e:
+                logger.warning("Live Qdrant scroll for case_id '%s' failed: %s", cid, e)
+
+        # 2. Local index fallback
+        self._ensure_sc_dataset_loaded()
+        if self._sc_chunks:
+            matches = [c for c in self._sc_chunks if c.get("case_id") == cid]
+            if matches:
+                matches.sort(key=lambda x: x.get("chunk_index", 0))
+                return matches
+
+        # 3. Check citizen rights and landmark chunk files directly if not loaded in memory
+        for path in [
+            SC_DATASET_DIR / "chunks" / "landmark_chunks.json",
+            SC_DATASET_DIR / "chunks" / "citizen_rights_chunks.json",
+            SC_DATASET_DIR / "chunks" / "chunks.json"
+        ]:
+            if path.exists():
+                try:
+                    with open(path, "r", encoding="utf-8") as f:
+                        data = json.load(f)
+                        matched = [c for c in data if c.get("case_id") == cid]
+                        if matched:
+                            matched.sort(key=lambda x: x.get("chunk_index", 0))
+                            return matched
+                except Exception:
+                    pass
+
+        return []
+
+    def get_case_by_id(self, case_id: str) -> Optional[Dict[str, Any]]:
+        """
+        Loads case metadata and combined information for any case in the corpus or Qdrant.
+        """
+        cid = (case_id or "").strip()
+        if not cid:
+            return None
+
+        # Check corpus first
+        for c in self.corpus:
+            if c.get("id") == cid or (c.get("title") and c.get("title").lower() == cid.lower()):
+                c_copy = dict(c)
+                c_copy["case_id"] = c.get("id")
+                return c_copy
+
+        chunks = self.get_case_chunks_by_id(cid)
+        if not chunks:
+            return None
+
+        first = chunks[0]
+        title = first.get("common_name") or first.get("case_name") or first.get("title") or cid
+        citation = first.get("citation") or first.get("neutral_citation") or ""
+        year = first.get("year") or first.get("decisionYear")
+        bench = first.get("bench") or ""
+        bench_size = first.get("benchSize")
+        if not bench_size and bench:
+            judges_list = [j.strip() for j in re.split(r'[,;&]|\band\b', bench) if j.strip()]
+            bench_size = len(judges_list) if len(judges_list) > 0 else 2
+        if not bench_size:
+            bench_size = 5 if first.get("landmark") else 2
+        bench_type = "Constitution Bench" if bench_size >= 5 else ("Division Bench" if bench_size == 2 else f"{bench_size}-Judge Bench")
+
+        # Pick best holding/ratio
+        ratio = ""
+        for ch in chunks:
+            text_lower = ch.get("text", "").lower()
+            if ch.get("landmark") or any(w in text_lower for w in ["held", "ratio", "we hold", "order"]):
+                ratio = ch.get("text", "")[:320]
+                break
+        if not ratio:
+            ratio = first.get("text", "")[:320]
+
+        combined_text = "\n".join(ch.get("text", "") for ch in chunks[:3])
+        statutes = extract_statutes_from_text(combined_text)
+
+        return {
+            "id": cid,
+            "case_id": cid,
+            "title": title,
+            "citation": citation,
+            "court": first.get("court") or "Supreme Court of India",
+            "decisionYear": year,
+            "year": year,
+            "bench": bench,
+            "benchType": bench_type,
+            "benchSize": bench_size,
+            "ratioSummary": ratio,
+            "statutes": statutes,
+            "total_chunks": len(chunks),
+            "chunks": chunks
+        }
+
+    # ------------------------------------------------------------------ #
     # Retrieval                                                           #
     # ------------------------------------------------------------------ #
     def search_precedents(
