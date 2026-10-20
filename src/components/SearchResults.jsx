@@ -78,6 +78,7 @@ export default function SearchResults({
   const [answerData, setAnswerData] = useState(null);
   const [isAnswerLoading, setIsAnswerLoading] = useState(false);
   const [answerError, setAnswerError] = useState(null);
+  const [searchError, setSearchError] = useState(null);
   const [copiedAnswer, setCopiedAnswer] = useState(false);
 
   // Execute search when initialQuery changes or on initial mount if provided
@@ -96,10 +97,22 @@ export default function SearchResults({
 
   const executeSearch = async (searchQuery = query, court = courtFilter, bench = benchFilter, bypassCorrection = false) => {
     const trimmed = (searchQuery || '').trim();
-    if (!trimmed) return;
+    if (!trimmed) {
+      setSearchError("Search query cannot be empty. Please enter a legal question, statute, or case name.");
+      setResults([]);
+      setIsLoading(false);
+      return;
+    }
+    if (trimmed.length > 300) {
+      setSearchError("Please shorten your question. Queries are limited to 300 characters.");
+      setResults([]);
+      setIsLoading(false);
+      return;
+    }
 
     setIsLoading(true);
     setHasSearched(true);
+    setSearchError(null);
     setAnswerError(null);
 
     const isLookup = isPureCaseLookup(trimmed);
@@ -135,18 +148,10 @@ export default function SearchResults({
       }
     } catch (err) {
       setSpellingCorrection(null);
-      console.warn("[SearchResults] Backend search error; falling back to local corpus filter:", err.message);
-      const terms = trimmed.toLowerCase().split(' ').filter(t => t.length > 2);
-      const filtered = LANDMARK_PRECEDENTS.filter(item => {
-        if (court !== 'ALL' && item.court !== court) return false;
-        if (bench === 'CONSTITUTION' && item.benchSize < 5) return false;
-        if (bench === 'DIVISION' && item.benchSize !== 2) return false;
-        if (terms.length === 0) return true;
-        const text = `${item.title} ${item.statutes.join(' ')} ${item.ratioSummary} ${item.citation}`.toLowerCase();
-        return terms.some(t => text.includes(t));
-      });
-      setResults(filtered);
-      fetchedResults = filtered;
+      console.warn("[SearchResults] Backend search error:", err.message);
+      setSearchError(err.message || "Unable to reach legal database. Please check your connection or query.");
+      setResults([]);
+      fetchedResults = [];
     } finally {
       setIsLoading(false);
     }
@@ -262,12 +267,22 @@ export default function SearchResults({
               onChange={(e) => setQuery(e.target.value)}
               placeholder="Ask an everyday rights question, enter a citation, or search case names..."
               aria-label="Search precedents and statutes"
+              maxLength={350}
             />
-            <button type="submit" className="module-search-submit-btn">
+            <button
+              type="submit"
+              className="module-search-submit-btn"
+              disabled={!query.trim() || query.length > 300}
+            >
               <span>Search</span>
               <ArrowRight size={15} />
             </button>
           </div>
+          {query.length > 300 && (
+            <div className="search-char-limit-warning mono">
+              Please shorten your question ({query.length}/300 characters)
+            </div>
+          )}
         </form>
 
         {/* Filter Controls Strip */}
@@ -318,8 +333,45 @@ export default function SearchResults({
 
       {/* Results Content Area */}
       <div className="results-content-area">
+        {/* Friendly Retry Card for Backend or Validation Errors */}
+        {searchError && (
+          <div className="search-backend-error-card animate-fade-in" role="alert" style={{ marginBottom: '24px' }}>
+            <div className="error-card-content">
+              <div className="error-card-icon-wrap">
+                <AlertCircle size={22} className="text-copper" />
+              </div>
+              <div className="error-card-text">
+                <h3 className="error-card-title font-serif">
+                  {searchError.includes("300")
+                    ? "Question is too long"
+                    : searchError.includes("empty")
+                    ? "Search query required"
+                    : "Unable to retrieve precedents"}
+                </h3>
+                <p className="error-card-desc">
+                  {searchError.includes("300")
+                    ? "Please shorten your question. Queries are limited to 300 characters."
+                    : searchError.includes("empty")
+                    ? "Please enter a legal question, bare act section, or case title to search."
+                    : `${searchError}. Click Retry to try connecting again.`}
+                </p>
+              </div>
+            </div>
+            <div className="error-card-actions">
+              <button
+                type="button"
+                className="btn-friendly-retry mono"
+                onClick={() => executeSearch(query, courtFilter, benchFilter)}
+              >
+                <RefreshCw size={13} className={isLoading ? "spin-icon" : ""} />
+                <span>Retry Search</span>
+              </button>
+            </div>
+          </div>
+        )}
+
         {/* Top AI Answer Section: Skeleton / Error / Answer Card (hidden for pure case lookups and blank queries) */}
-        {hasSearched && !isCurrentLookup && (
+        {hasSearched && !isCurrentLookup && !searchError && (
           <div className="search-ai-answer-section" style={{ marginBottom: '24px' }}>
             {isAnswerLoading ? (
               <div className="search-ai-answer-skeleton" aria-busy="true">

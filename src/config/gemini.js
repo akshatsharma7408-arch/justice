@@ -142,7 +142,8 @@ export async function searchPrecedentsWithBackend(query, court = "ALL", benchTyp
     })
   });
   if (!res.ok) {
-    throw new Error(`Universal search failed (HTTP ${res.status})`);
+    const errorData = await res.json().catch(() => ({}));
+    throw new Error(errorData.detail || `Universal search failed (HTTP ${res.status})`);
   }
   return await res.json();
 }
@@ -165,7 +166,8 @@ export async function fetchSearchAnswerWithBackend(query, court = "ALL", benchTy
     })
   });
   if (!res.ok) {
-    throw new Error(`Search answer failed (HTTP ${res.status})`);
+    const errorData = await res.json().catch(() => ({}));
+    throw new Error(errorData.detail || `Search answer failed (HTTP ${res.status})`);
   }
   return await res.json();
 }

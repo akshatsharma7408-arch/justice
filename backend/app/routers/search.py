@@ -5,7 +5,7 @@ Strict Grounding: answers strictly from retrieved precedents, cites sources for 
 and returns 'I couldn't find this in the available sources' directly if retrieval returns nothing.
 """
 
-from fastapi import APIRouter, Query
+from fastapi import APIRouter, Query, HTTPException
 from pydantic import BaseModel, Field
 from typing import List, Dict, Any, Optional
 import logging
@@ -124,6 +124,17 @@ async def search_precedents_post(payload: SearchRequest):
     If enable_hyde is True, synthesizes judicial holding strictly from retrieved precedents with source citations.
     """
     raw_query = (payload.query or "").strip()
+    if not raw_query:
+        raise HTTPException(
+            status_code=400,
+            detail="Search query cannot be empty. Please enter a legal question, statute, or case name."
+        )
+    if len(raw_query) > 300:
+        raise HTTPException(
+            status_code=400,
+            detail="Please shorten your question. Queries are limited to 300 characters."
+        )
+
     corrected_q, has_corr = correct_query(raw_query)
     effective_query = raw_query if payload.bypass_correction else (corrected_q if has_corr else raw_query)
     has_spelling = has_corr and not payload.bypass_correction
@@ -190,6 +201,12 @@ async def search_answer_post(payload: SearchAnswerRequest):
     - No strong match: Tier 2 explanation with no_strong_case_match=True
     """
     raw_query = (payload.query or "").strip()
+    if len(raw_query) > 300:
+        raise HTTPException(
+            status_code=400,
+            detail="Please shorten your question. Queries are limited to 300 characters."
+        )
+
     if not raw_query:
         return SearchAnswerResponse(
             query="",
@@ -309,6 +326,11 @@ async def search_answer_get(
     Convenience query-param endpoint for browser and REST querying.
     """
     search_text = (q or query or "").strip()
+    if len(search_text) > 300:
+        raise HTTPException(
+            status_code=400,
+            detail="Please shorten your question. Queries are limited to 300 characters."
+        )
     if not search_text:
         return SearchAnswerResponse(
             query="",
@@ -348,7 +370,18 @@ async def search_precedents_get(
     GET /api/v1/search
     Convenience query-param endpoint for browser and REST querying.
     """
-    search_text = q or query or "Section 27 non-compete"
+    search_text = (q if q is not None else (query if query is not None else "")).strip()
+    if not search_text:
+        raise HTTPException(
+            status_code=400,
+            detail="Search query cannot be empty. Please enter a legal question, statute, or case name."
+        )
+    if len(search_text) > 300:
+        raise HTTPException(
+            status_code=400,
+            detail="Please shorten your question. Queries are limited to 300 characters."
+        )
+
     req = SearchRequest(
         query=search_text,
         court=court,

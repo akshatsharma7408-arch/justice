@@ -208,6 +208,7 @@ export default function LandingPage({
                     onChange={(e) => setSearchQuery(e.target.value)}
                     aria-label="Ask any question, case name, statute or citation"
                     autoComplete="off"
+                    maxLength={350}
                   />
                   {!searchQuery && (
                     <div style={{ position: 'absolute', left: 0, pointerEvents: 'none', width: '100%' }}>
@@ -219,11 +220,17 @@ export default function LandingPage({
                   type="submit"
                   className="hero-search-submit-btn"
                   aria-label="Execute Search"
+                  disabled={!searchQuery.trim() || searchQuery.length > 300}
                 >
                   <span>Search Precedents</span>
                   <ArrowRight size={16} />
                 </MagneticButton>
               </div>
+              {searchQuery.length > 300 && (
+                <div className="search-char-limit-warning mono">
+                  Please shorten your question ({searchQuery.length}/300 characters)
+                </div>
+              )}
             </form>
 
             {/* Horizontally Draggable Popular Questions Strip */}
