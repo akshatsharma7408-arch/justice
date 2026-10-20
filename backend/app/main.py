@@ -19,7 +19,7 @@ import time
 from pathlib import Path
 
 from app.config import settings
-from app.routers import search, citator, audit, maxims, docchat, casechat
+from app.routers import search, citator, audit, maxims, docchat, casechat, cases
 from app.services.llm_service import llm_service
 from app.services.qdrant_service import qdrant_service
 from app.services.neo4j_service import neo4j_service
@@ -96,6 +96,8 @@ app.include_router(audit.router)
 app.include_router(maxims.router)
 app.include_router(docchat.router)
 app.include_router(casechat.router)
+app.include_router(cases.router)
+app.include_router(cases.alias_router)
 
 # 3. Diagnostic Health Endpoint
 @app.get("/health", tags=["Diagnostic"])

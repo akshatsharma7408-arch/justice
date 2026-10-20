@@ -14,6 +14,12 @@ import numpy as np
 from typing import List, Tuple, Dict, Any, Optional
 from PIL import Image, ImageOps
 
+try:
+    from pillow_heif import register_heif_opener
+    register_heif_opener()
+except ImportError:
+    pass
+
 from app.services.llm_service import clean_ocr_noise
 
 logger = logging.getLogger("justice.ocr")

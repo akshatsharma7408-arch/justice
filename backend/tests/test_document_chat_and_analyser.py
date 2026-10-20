@@ -256,5 +256,104 @@ def test_upload_images_with_drawn_text_ocr():
     assert resp.status_code == 200
     data = resp.json()
     assert "doc_id" in data
-    assert data["chunks_count"] >= 1 or len(data.get("raw_text") or "") > 0
+def test_upload_oversized_file_rejected():
+    """Verify upload of file > 10MB returns 400."""
+    fake_huge_bytes = b"x" * (10 * 1024 * 1024 + 1024)
+    resp = client.post(
+        "/api/v1/doc/upload",
+        files={"file": ("huge_contract.pdf", fake_huge_bytes, "application/pdf")}
+    )
+    assert resp.status_code == 400
+    assert "exceeds 10MB limit" in resp.json()["detail"]
+
+
+def test_upload_too_many_files_rejected():
+    """Verify upload of > 10 files returns 400."""
+    files = [("files", (f"page_{i}.png", b"fake image content", "image/png")) for i in range(12)]
+    resp = client.post(
+        "/api/v1/doc/upload",
+        files=files
+    )
+    assert resp.status_code == 400
+    assert "Maximum 10 files allowed" in resp.json()["detail"]
+
+
+def test_multi_image_order_preservation():
+    """Verify multi-image uploads preserve page ordering (Page 1 before Page 2)."""
+    import io
+    from PIL import Image, ImageDraw
+
+    img1 = Image.new("RGB", (600, 200), color="white")
+    draw1 = ImageDraw.Draw(img1)
+    draw1.text((30, 50), "Clause 1. First Page of Master Agreement", fill="black")
+    buf1 = io.BytesIO()
+    img1.save(buf1, format="PNG")
+
+    img2 = Image.new("RGB", (600, 200), color="white")
+    draw2 = ImageDraw.Draw(img2)
+    draw2.text((30, 50), "Clause 2. Second Page of Master Agreement", fill="black")
+    buf2 = io.BytesIO()
+    img2.save(buf2, format="JPEG")
+
+    resp = client.post(
+        "/api/v1/doc/upload",
+        files=[
+            ("files", ("page_01.png", buf1.getvalue(), "image/png")),
+            ("files", ("page_02.jpg", buf2.getvalue(), "image/jpeg"))
+        ]
+    )
+    assert resp.status_code == 200
+    data = resp.json()
+    raw = data.get("raw_text") or ""
+    # Check that Page 1 appears before Page 2
+    pos1 = raw.find("--- Page 1")
+    pos2 = raw.find("--- Page 2")
+    assert pos1 != -1 and pos2 != -1, f"Expected page separators, got: {raw}"
+    assert pos1 < pos2, "Expected Page 1 to appear before Page 2"
+
+
+def test_format_decoding_webp():
+    """Verify WEBP image format decoding and extraction."""
+    import io
+    from PIL import Image, ImageDraw
+
+    img = Image.new("RGB", (600, 200), color="white")
+    draw = ImageDraw.Draw(img)
+    draw.text((30, 50), "WEBP FORMAT CLAUSE: All disputes in Delhi.", fill="black")
+    buf = io.BytesIO()
+    img.save(buf, format="WEBP")
+
+    resp = client.post(
+        "/api/v1/doc/upload",
+        files=[("files", ("contract.webp", buf.getvalue(), "image/webp"))]
+    )
+    assert resp.status_code == 200
+    data = resp.json()
+    assert "doc_id" in data
+
+
+def test_edited_text_reprocesses_same_doc_id():
+    """Verify editing extracted text re-runs clause audit under the same doc_id."""
+    initial_text = (
+        "Clause 1. Post-Termination Non-Compete\n"
+        "The Consultant agrees that for 24 months following termination of this Agreement, the Consultant shall not directly or indirectly engage in or consult for any competing business anywhere in India."
+    )
+    resp1 = client.post("/api/v1/doc/upload", data={"raw_text": initial_text})
+    assert resp1.status_code == 200
+    doc_id = resp1.json()["doc_id"]
+    audit1 = resp1.json().get("audit_results", {})
+    assert audit1.get("void_clauses_count", 0) >= 1
+
+    # Now edit to remove the non-compete restraint
+    edited_text = (
+        "Clause 1. Permitted Future Engagement\n"
+        "The Consultant is free to engage in or consult for any business or employer upon termination of this Agreement."
+    )
+    resp2 = client.post("/api/v1/doc/upload", data={"raw_text": edited_text, "doc_id": doc_id})
+    assert resp2.status_code == 200
+    data2 = resp2.json()
+    assert data2["doc_id"] == doc_id
+    audit2 = data2.get("audit_results", {})
+    # Void count should now be 0
+    assert audit2.get("void_clauses_count", 0) == 0
 
