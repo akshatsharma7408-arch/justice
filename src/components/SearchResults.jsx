@@ -2,12 +2,58 @@ import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { 
   Search, ArrowRight, ArrowUpRight, Scale, ShieldCheck, 
-  ChevronDown, ChevronUp, MessageSquare, Copy, Check, Filter, Sparkles 
+  ChevronDown, ChevronUp, MessageSquare, Copy, Check, Filter, Sparkles,
+  AlertCircle, RefreshCw, BookOpen
 } from 'lucide-react';
 import { LANDMARK_PRECEDENTS } from '../data/legalCorpus';
-import { searchPrecedentsWithBackend } from '../config/gemini';
+import { searchPrecedentsWithBackend, fetchSearchAnswerWithBackend } from '../config/gemini';
 import { renderWithBadges } from '../utils/badgeFormatter';
 import { TiltCard } from './InteractiveEffects';
+
+/**
+ * Returns True only if the query is a pure case title, landmark case name,
+ * or formal citation lookup without question words or conceptual topics.
+ */
+export function isPureCaseLookup(text) {
+  if (!text) return false;
+  const q = text.trim().toLowerCase();
+
+  // Question or topic indicator words
+  const topicIndicators = [
+    "what", "why", "how", "when", "where", "can", "could", "should", "would",
+    "is", "are", "do", "does", "did", "rights", "bribe", "bribes", "evict",
+    "eviction", "liquidated damages", "arrest", "warrant", "valid", "validity",
+    "enforce", "enforceability", "compensation", "explain", "meaning", "definition",
+    "penalty", "procedure", "remedy", "relief", "doctrine"
+  ];
+  const words = q.match(/[a-zA-Z0-9]+/g) || [];
+  if (words.some(w => topicIndicators.includes(w))) {
+    return false;
+  }
+
+  // Landmark single names
+  const knownPureLandmarks = [
+    "kesavananda", "kesvananda", "kesavanand", "maneka gandhi", "maneka ghandi",
+    "puttaswamy", "puttuswamy", "navtej", "shreya singhal", "vishaka",
+    "shah bano", "golaknath", "indira gandhi", "minerva mills", "mohori bibee",
+    "bhim singh", "aruna shanbaug"
+  ];
+  if (knownPureLandmarks.some(kpl => q.includes(kpl))) {
+    return true;
+  }
+
+  // Citations
+  if (/\b(?:\d{4}\s+)?(?:scc|air|scr|scale|insc)\b/i.test(q)) {
+    return true;
+  }
+
+  // Party v. Party format
+  if (/\b[a-z0-9\.\']+\s+(?:v\.|vs\.?|versus)\s+[a-z0-9\.\']+/i.test(q)) {
+    return true;
+  }
+
+  return false;
+}
 
 export default function SearchResults({
   initialQuery = '',
@@ -27,6 +73,12 @@ export default function SearchResults({
   const [modelUsed, setModelUsed] = useState('openai/gpt-oss-120b');
   const [hydeRatio, setHydeRatio] = useState('');
 
+  // AI Answer Card State
+  const [answerData, setAnswerData] = useState(null);
+  const [isAnswerLoading, setIsAnswerLoading] = useState(false);
+  const [answerError, setAnswerError] = useState(null);
+  const [copiedAnswer, setCopiedAnswer] = useState(false);
+
   // Execute search when initialQuery changes or on initial mount if provided
   useEffect(() => {
     if (initialQuery && initialQuery.trim()) {
@@ -41,11 +93,22 @@ export default function SearchResults({
 
     setIsLoading(true);
     setHasSearched(true);
+    setAnswerError(null);
 
+    const isLookup = isPureCaseLookup(trimmed);
+    if (isLookup) {
+      setAnswerData(null);
+      setIsAnswerLoading(false);
+    } else {
+      setIsAnswerLoading(true);
+    }
+
+    let fetchedResults = null;
     try {
       const resp = await searchPrecedentsWithBackend(trimmed, court, bench, true, 10);
       if (resp && resp.results) {
         setResults(resp.results);
+        fetchedResults = resp.results;
       }
       if (resp && resp.model_used) {
         setModelUsed(resp.model_used);
@@ -67,8 +130,50 @@ export default function SearchResults({
         return terms.some(t => text.includes(t));
       });
       setResults(filtered);
+      fetchedResults = filtered;
     } finally {
       setIsLoading(false);
+    }
+
+    // Secondary fetch: Dedicated AI answer synthesis (if not a pure case lookup)
+    if (!isLookup) {
+      try {
+        const ansResp = await fetchSearchAnswerWithBackend(trimmed, court, bench, fetchedResults);
+        if (ansResp && ansResp.is_case_lookup) {
+          setAnswerData(null);
+        } else {
+          setAnswerData(ansResp);
+        }
+      } catch (ansErr) {
+        console.warn("[SearchResults] Search answer API call failed:", ansErr);
+        setAnswerError(ansErr.message || "Failed to load AI answer");
+      } finally {
+        setIsAnswerLoading(false);
+      }
+    }
+  };
+
+  const handleRetryAnswer = async () => {
+    const trimmed = query.trim();
+    if (!trimmed || isPureCaseLookup(trimmed)) return;
+    setIsAnswerLoading(true);
+    setAnswerError(null);
+    try {
+      const ansResp = await fetchSearchAnswerWithBackend(
+        trimmed,
+        courtFilter,
+        benchFilter,
+        results && results.length > 0 ? results : null
+      );
+      if (ansResp && ansResp.is_case_lookup) {
+        setAnswerData(null);
+      } else {
+        setAnswerData(ansResp);
+      }
+    } catch (err) {
+      setAnswerError(err.message || "Failed to generate AI answer");
+    } finally {
+      setIsAnswerLoading(false);
     }
   };
 
@@ -90,6 +195,23 @@ export default function SearchResults({
       if (caseKey) setCopiedCaseKey(null);
     }, 2200);
   };
+
+  const handleCopyAnswer = () => {
+    if (!answerData || !answerData.ai_answer) return;
+    let text = answerData.ai_answer;
+    if (answerData.citations && answerData.citations.length > 0) {
+      text += `\n\nVerified Sources:\n${answerData.citations.join('\n')}`;
+    }
+    navigator.clipboard?.writeText(text);
+    setCopiedAnswer(true);
+    setToastMessage("AI Answer copied to clipboard");
+    setTimeout(() => {
+      setCopiedAnswer(false);
+      setToastMessage(null);
+    }, 2200);
+  };
+
+  const isCurrentLookup = isPureCaseLookup(query);
 
   return (
     <div className="module-view-container animate-fade-in">
@@ -180,6 +302,133 @@ export default function SearchResults({
 
       {/* Results Content Area */}
       <div className="results-content-area">
+        {/* Top AI Answer Section: Skeleton / Error / Answer Card (hidden for pure case lookups) */}
+        {hasSearched && !isCurrentLookup && (
+          <div className="search-ai-answer-section" style={{ marginBottom: '24px' }}>
+            {isAnswerLoading ? (
+              <div className="search-ai-answer-skeleton" aria-busy="true">
+                <div className="skeleton-answer-top">
+                  <div className="skeleton-line skeleton-shimmer" style={{ width: '130px', height: '18px' }} />
+                  <div className="skeleton-badge skeleton-shimmer" style={{ width: '160px', height: '24px' }} />
+                </div>
+                <div className="skeleton-title skeleton-shimmer" style={{ width: '65%', height: '24px', margin: '14px 0 10px 0' }} />
+                <div className="skeleton-line skeleton-shimmer" style={{ width: '100%', height: '15px', marginBottom: '8px' }} />
+                <div className="skeleton-line skeleton-shimmer" style={{ width: '96%', height: '15px', marginBottom: '8px' }} />
+                <div className="skeleton-line skeleton-shimmer" style={{ width: '88%', height: '15px', marginBottom: '14px' }} />
+                <div className="skeleton-line skeleton-shimmer" style={{ width: '38%', height: '24px' }} />
+              </div>
+            ) : answerError ? (
+              <div className="search-ai-answer-error-card animate-fade-in">
+                <div className="error-message-row">
+                  <AlertCircle size={17} className="text-amber" />
+                  <span>Could not generate AI synthesis: {answerError}</span>
+                </div>
+                <button
+                  type="button"
+                  className="btn-retry-answer mono"
+                  onClick={handleRetryAnswer}
+                  aria-label="Retry generating AI answer"
+                >
+                  <RefreshCw size={13} />
+                  <span>Retry AI Answer</span>
+                </button>
+              </div>
+            ) : answerData && answerData.ai_answer && !answerData.is_case_lookup ? (
+              <motion.div
+                initial={{ opacity: 0, y: 12 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.35, ease: [0.16, 1, 0.3, 1] }}
+              >
+                <TiltCard
+                  className={`search-ai-answer-card ${answerData.tier === 'tier1' ? 'is-tier1' : 'is-tier2'}`}
+                  maxTilt={2}
+                >
+                  {/* Card Top Strip: Kicker + Tier Badge */}
+                  <div className="answer-card-top-strip">
+                    <span className="answer-kicker mono">
+                      {answerData.tier === 'tier1' ? 'VERIFIED LEGAL SYNTHESIS' : 'PLAIN-LANGUAGE CITIZEN SUMMARY'}
+                    </span>
+                    <div className="answer-badge-wrap">
+                      {answerData.tier === 'tier1' ? (
+                        <span className="badge-answer-tier1 mono">
+                          <ShieldCheck size={13} />
+                          <span>Verified citations</span>
+                        </span>
+                      ) : (
+                        <span className="badge-answer-tier2 mono">
+                          <Sparkles size={13} />
+                          <span>AI answer, not verified</span>
+                        </span>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Answer Headline */}
+                  <h2 className="answer-card-headline font-serif">
+                    {query}
+                  </h2>
+
+                  {/* Answer Body Prose */}
+                  <div className="answer-card-prose font-serif">
+                    {answerData.ai_answer.split('\n\n').map((paragraph, pIdx) => {
+                      const trimmedP = paragraph.trim();
+                      if (!trimmedP) return null;
+                      return (
+                        <p key={pIdx} className="answer-prose-paragraph">
+                          {answerData.tier === 'tier1' ? renderWithBadges(trimmedP) : trimmedP}
+                        </p>
+                      );
+                    })}
+                  </div>
+
+                  {/* Sources Chips (Tier 1 citations or relevant source cases) */}
+                  {answerData.citations && answerData.citations.length > 0 && (
+                    <div className="answer-sources-block">
+                      <span className="sources-kicker mono">VERIFIED CITATION SOURCES:</span>
+                      <div className="sources-chips-list">
+                        {answerData.citations.map((cite, cIdx) => (
+                          <span key={cIdx} className="source-citation-chip mono" title={cite}>
+                            <BookOpen size={11} className="chip-icon" />
+                            <span>{cite}</span>
+                          </span>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Card Actions Footer: Copy Button + Disclaimer */}
+                  <div className="answer-card-footer">
+                    <button
+                      type="button"
+                      className="btn-answer-copy mono"
+                      onClick={handleCopyAnswer}
+                      title="Copy answer and verified citations to clipboard"
+                    >
+                      {copiedAnswer ? (
+                        <>
+                          <Check size={13} />
+                          <span>Copied</span>
+                        </>
+                      ) : (
+                        <>
+                          <Copy size={13} />
+                          <span>Copy Answer</span>
+                        </>
+                      )}
+                    </button>
+
+                    <span className="answer-disclaimer-text mono">
+                      {answerData.tier === 'tier1'
+                        ? 'Grounded directly in Indian Supreme Court jurisprudence'
+                        : 'General legal information \u2022 Not legal advice \u2022 Verify with a lawyer or primary statute'}
+                    </span>
+                  </div>
+                </TiltCard>
+              </motion.div>
+            ) : null}
+          </div>
+        )}
+
         {/* Loading Skeletons */}
         {isLoading ? (
           <div className="skeleton-cards-stack" aria-busy="true">

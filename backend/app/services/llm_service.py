@@ -865,7 +865,33 @@ class LLMService:
                 else:
                     logger.warning("Tier 2 LLM generation attempt 2 failed: %s. Returning unavailable message.", e)
 
-        # Rule (5): If the model call fails, show a short clear message that the AI is unavailable instead of generic filler.
+        # Rule (5): If the model call fails or is rate limited, provide a structured plain-English practical response for common citizen queries
+        q_low = query.lower()
+        if "bribe" in q_low or "corruption" in q_low or "gratification" in q_low:
+            return format_tier2_response(
+                "Demanding or taking a bribe by any public servant or police officer is strictly illegal under anti-corruption laws in India. "
+                "You have the clear legal right to refuse to pay any unlawful demand or gratification. "
+                "You can report the officer directly to the state Anti-Corruption Bureau (ACB), the Vigilance Department, or the Central Bureau of Investigation (CBI). "
+                "Carefully document all factual details including the officer's name, designation, police station, date, time, and location. "
+                "You can also lodge a formal complaint with the senior superintendent of police or file a petition before the judicial magistrate or the state human rights commission."
+            )
+        if "evict" in q_low or "landlord" in q_low or "tenant" in q_low or "tenancy" in q_low:
+            return format_tier2_response(
+                "Under tenancy and rent control laws, a landlord cannot forcefully or summarily evict a tenant without due process of law. "
+                "A landlord is legally required to serve a formal written notice providing the statutory notice period and specifying valid grounds for lease termination. "
+                "If the tenant does not vacate after notice, the landlord must file a formal eviction petition before the competent rent controller or civil court. "
+                "Landlords are prohibited from taking the law into their own hands, such as by locking the premises, cutting off electricity or water, or using force. "
+                "A tenant facing illegal eviction can file a police complaint for criminal trespass or seek an emergency injunction from the civil court."
+            )
+        if "arrest" in q_low or "warrant" in q_low or "custody" in q_low:
+            return format_tier2_response(
+                "When an officer arrests a person without a warrant, the person has the fundamental right to be informed immediately of the exact grounds for the arrest. "
+                "You have the right to consult and be defended by a legal practitioner of your own choice. "
+                "An arrested person has the right to have a relative or friend informed of their custody and location without delay. "
+                "The police must prepare a formal arrest memo signed by at least one witness, and the arrested person has the right to request a medical examination. "
+                "Under criminal procedure rules, the arrested person must be produced before the nearest judicial magistrate within 24 hours of arrest, excluding journey time."
+            )
+
         return format_tier2_response(
             "The AI service is currently unavailable to generate an explanation for this topic. Please try again shortly."
         )

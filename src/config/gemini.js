@@ -147,6 +147,28 @@ export async function searchPrecedentsWithBackend(query, court = "ALL", benchTyp
 }
 
 /**
+ * MODULE B: AI Answer for Universal Search
+ * POST /api/v1/search/answer
+ */
+export async function fetchSearchAnswerWithBackend(query, court = "ALL", benchType = "ALL", results = null, forceFallback = false) {
+  const res = await fetch(`${API_BASE}/search/answer`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      query: query,
+      court: court,
+      bench_type: benchType,
+      results: results,
+      force_fallback: forceFallback
+    })
+  });
+  if (!res.ok) {
+    throw new Error(`Search answer failed (HTTP ${res.status})`);
+  }
+  return await res.json();
+}
+
+/**
  * MODULE C: Smart Citator
  * GET /api/v1/citator/{case_id}
  */
