@@ -216,7 +216,7 @@ export default function CaseChatPanel({
               title="Clear chat history for this case"
               aria-label="Clear chat"
             >
-              <Trash2 size={14} />
+              <Trash2 size={13} />
               <span className="action-btn-text">Clear</span>
             </button>
           )}
@@ -225,11 +225,11 @@ export default function CaseChatPanel({
             type="button"
             className="chat-toggle-collapse-btn"
             onClick={onToggle}
-            title="Collapse chat panel"
-            aria-label="Collapse panel"
+            title="Close / Collapse chat panel"
+            aria-label="Close panel"
           >
-            <ChevronDown className="mobile-only-icon" size={18} />
-            <ChevronRight className="desktop-only-icon" size={18} />
+            <X className="mobile-close-icon" size={18} />
+            <ChevronRight className="desktop-collapse-icon" size={18} />
           </button>
         </div>
       </div>
@@ -244,20 +244,8 @@ export default function CaseChatPanel({
             </div>
             <h3 className="empty-state-heading font-judicial">Have questions on this judgment?</h3>
             <p className="empty-state-desc">
-              Answers are verified and grounded strictly in the recorded text of this judgment. Never invents facts or case law.
+              Answers are verified and grounded strictly in the recorded text of this judgment. Pick a suggested prompt below or type your question.
             </p>
-
-            <div className="empty-quick-prompts">
-              <span className="quick-prompts-label">GET STARTED IMMEDIATELY:</span>
-              <button
-                type="button"
-                className="btn-summary-hero"
-                onClick={() => handleSendMessage("Summarise this case")}
-              >
-                <Sparkles size={15} />
-                <span>Summarise this case</span>
-              </button>
-            </div>
           </div>
         ) : (
           <div className="chat-messages-stream">
