@@ -62,13 +62,25 @@ def needs_specific_source(query: str) -> bool:
         "kesavananda", "minerva mills", "maneka gandhi", "bhim singh", "shah bano",
         "navtej", "shreya singhal", "vishaka", "golaknath", "shankari prasad",
         "sajjan singh", "brij bhushan", "romesh thappar", "champakam", "indira gandhi",
-        "sr bommai", "bommai", "puttaswamy ii", "aadhaar", "mohori bibee",
+        "sr bommai", "bommai", "puttaswamy", "puttaswamy ii", "aadhaar", "mohori bibee",
         "hadley v baxendale", "carlill", "donoghue", "salomon v salomon", "balfour v balfour",
         "m.c. mehta", "mc mehta", "d.k. basu", "dk basu", "aruna shanbaug"
     ]
     for name in outside_landmark_cases:
         if name in q:
             return True
+
+    try:
+        from app.services.qdrant_service import fuzzy_word_match
+        q_words = re.findall(r'[a-zA-Z0-9]{4,}', q)
+        for name in outside_landmark_cases:
+            name_words = re.findall(r'[a-zA-Z0-9]{4,}', name)
+            for qw in q_words:
+                for nw in name_words:
+                    if len(nw) >= 4 and fuzzy_word_match(qw, nw):
+                        return True
+    except Exception:
+        pass
 
     return False
 

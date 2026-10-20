@@ -28,12 +28,8 @@ export default function App() {
   const [agentSessionState, setAgentSessionState] = useState(null);
   const [isAgentRunning, setIsAgentRunning] = useState(false);
 
-  // Active case for Case Chat scoping
-  const [activeCase, setActiveCase] = useState({
-    id: 'sc-2006-percept',
-    title: "Percept D'Mark (India) (P) Ltd. v. Zaheer Khan",
-    citation: "(2006) 4 SCC 227"
-  });
+  // Active case for Case Chat scoping (null by default; opened only when user selects a case)
+  const [activeCase, setActiveCase] = useState(null);
 
   // Persist Case Chat panel collapsed state in localStorage
   const [isCaseChatOpen, setIsCaseChatOpen] = useState(() => {
@@ -66,11 +62,15 @@ export default function App() {
     if (query) {
       setActiveSearchQuery(query);
     }
+    if (view !== 'citator') {
+      setActiveCase(null);
+    }
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
   const handleSearchSubmit = (query) => {
     setActiveSearchQuery(query);
+    setActiveCase(null);
     setActiveView('search');
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
@@ -98,7 +98,10 @@ export default function App() {
   };
 
   const handleOpenCaseChatFromSearch = (precedent) => {
-    if (!precedent) return;
+    if (!precedent) {
+      setActiveCase(null);
+      return;
+    }
     setActiveCase({
       id: precedent.id,
       title: precedent.title,
@@ -142,8 +145,8 @@ export default function App() {
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
-  // Case Chat should show alongside when viewing citator or search with an active case
-  const showCaseChatBeside = (activeView === 'citator' || activeView === 'search') && activeCase;
+  // Case Chat should show alongside only when a specific case is opened
+  const showCaseChatBeside = (activeView === 'citator' || activeView === 'search') && Boolean(activeCase);
 
   return (
     <div className="justice-app-root">
@@ -189,7 +192,10 @@ export default function App() {
                 initialQuery={activeSearchQuery}
                 onSelectCaseForCitator={handleSelectCaseForCitator}
                 onOpenCaseChat={handleOpenCaseChatFromSearch}
-                onSearchAgain={(q) => setActiveSearchQuery(q)}
+                onSearchAgain={(q) => {
+                  setActiveSearchQuery(q);
+                  setActiveCase(null);
+                }}
               />
             )}
 

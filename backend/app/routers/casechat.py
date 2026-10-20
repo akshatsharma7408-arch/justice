@@ -221,6 +221,31 @@ def _init_case_data():
         except Exception as e:
             logger.error("Failed to load citizen_rights_chunks.json: %s", e)
 
+    # 4. Load landmark chunks (Kesavananda Bharati, Maneka Gandhi, Puttaswamy, etc.)
+    lm_chunks_path = _SC_DATASET_DIR / "chunks" / "landmark_chunks.json"
+    if lm_chunks_path.exists():
+        try:
+            with open(lm_chunks_path, "r", encoding="utf-8") as f:
+                lm_chunks = json.load(f)
+                for c in lm_chunks:
+                    cid = c.get("case_id")
+                    if not cid:
+                        continue
+                    if cid not in _CHUNKS_BY_CASE:
+                        _CHUNKS_BY_CASE[cid] = []
+                    _CHUNKS_BY_CASE[cid].append(c)
+                    if cid not in _CASE_METADATA_INDEX:
+                        _CASE_METADATA_INDEX[cid] = {
+                            "case_id": cid,
+                            "title": c.get("common_name") or c.get("case_name", ""),
+                            "citation": c.get("citation") or c.get("neutral_citation", ""),
+                            "court": "Supreme Court of India",
+                            "year": c.get("year"),
+                            "ratioSummary": c.get("ratioSummary") or c.get("text", "")[:350],
+                        }
+        except Exception as e:
+            logger.error("Failed to load landmark_chunks.json: %s", e)
+
     # Sort all chunk lists by chunk_index
     for cid in _CHUNKS_BY_CASE:
         _CHUNKS_BY_CASE[cid].sort(key=lambda x: x.get("chunk_index", 0))

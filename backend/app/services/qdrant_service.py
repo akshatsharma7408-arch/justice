@@ -20,7 +20,7 @@ import math
 import os
 import re
 from pathlib import Path
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List, Optional, Tuple
 import numpy as np
 
 from app.config import settings
@@ -149,6 +149,202 @@ def classify_query_topic(query: str) -> Optional[str]:
     return None
 
 
+def levenshtein_distance(s1: str, s2: str) -> int:
+    """Computes standard Levenshtein edit distance between two strings."""
+    if s1 == s2:
+        return 0
+    if len(s1) < len(s2):
+        s1, s2 = s2, s1
+    if not s2:
+        return len(s1)
+    prev = list(range(len(s2) + 1))
+    for i, c1 in enumerate(s1):
+        curr = [i + 1] * (len(s2) + 1)
+        for j, c2 in enumerate(s2):
+            cost = 0 if c1 == c2 else 1
+            curr[j + 1] = min(prev[j + 1] + 1, curr[j] + 1, prev[j] + cost)
+        prev = curr
+    return prev[-1]
+
+
+def fuzzy_word_match(w1: str, w2: str) -> bool:
+    """
+    Checks if two words match within the required edit distance:
+    - 4 to 5 letters: edit distance up to 1
+    - 6+ letters: edit distance up to 2
+    - < 4 letters or words with digits: exact match only
+    """
+    w1, w2 = w1.lower(), w2.lower()
+    if w1 == w2:
+        return True
+    if any(c.isdigit() for c in w1) or any(c.isdigit() for c in w2):
+        return False
+    min_len = min(len(w1), len(w2))
+    if min_len < 4:
+        return False
+    max_dist = 2 if min_len >= 6 else 1
+    if abs(len(w1) - len(w2)) > max_dist:
+        return False
+    return levenshtein_distance(w1, w2) <= max_dist
+
+
+def extract_statutes_from_text(text: str) -> List[str]:
+    """
+    Derives statutes, sections, and constitutional articles actually cited in the case text.
+    Returns a clean, deduplicated list of cited statutory provisions, or an empty list if none are found.
+    NEVER returns hardcoded defaults.
+    """
+    if not text:
+        return []
+
+    tags = []
+
+    # 1. Constitutional Articles (e.g., Article 21, Article 19(1)(a), Article 14, Article 32, Article 226, Article 356, Article 141)
+    art_matches = re.findall(
+        r'\b(?:Article|Art\.)\s+(\d+[A-Z]*(?:\([0-9a-z]+\))*)',
+        text,
+        re.IGNORECASE
+    )
+    for art in art_matches:
+        tag = f"Article {art}, Constitution of India"
+        if tag not in tags:
+            tags.append(tag)
+
+    # 2. Sections with named Acts (e.g., Section 27 of the Indian Contract Act, Section 74 of the Contract Act)
+    sec_act_matches = re.findall(
+        r'\b(?:Section|Sec\.)\s+(\d+[A-Z]*)\s+(?:of\s+(?:the\s+)?)?([A-Z][A-Za-z0-9\s,\(\)]+?(?:Act|Code)(?:,\s*\d{4})?)',
+        text,
+        re.IGNORECASE
+    )
+    for sec, act in sec_act_matches:
+        act_clean = act.strip().rstrip(",. ")
+        if len(act_clean) <= 50 and any(kw in act_clean.lower() for kw in [
+            "contract", "penal", "procedure", "technology", "arbitration",
+            "transfer of property", "specific relief", "evidence", "motor vehicles",
+            "rent", "constitution", "limitation", "companies", "consumer"
+        ]):
+            if "contract" in act_clean.lower():
+                act_clean = "Indian Contract Act, 1872"
+            elif "penal" in act_clean.lower():
+                act_clean = "Indian Penal Code, 1860"
+            elif "procedure" in act_clean.lower() and "criminal" in act_clean.lower():
+                act_clean = "Code of Criminal Procedure, 1973"
+            elif "technology" in act_clean.lower():
+                act_clean = "Information Technology Act, 2000"
+            tag = f"Section {sec}, {act_clean}"
+            if tag not in tags:
+                tags.append(tag)
+
+    # 3. Known contextual section mentions
+    t_lower = text.lower()
+    if "contract act" in t_lower or "restraint of trade" in t_lower or "non-compete" in t_lower:
+        if re.search(r'\b(?:Section|Sec\.)\s+27\b', text, re.IGNORECASE) and not any("Section 27" in t for t in tags):
+            tags.append("Section 27, Indian Contract Act, 1872")
+        if re.search(r'\b(?:Section|Sec\.)\s+74\b', text, re.IGNORECASE) and not any("Section 74" in t for t in tags):
+            tags.append("Section 74, Indian Contract Act, 1872")
+    if "penal code" in t_lower or "ipc" in t_lower:
+        if re.search(r'\b(?:Section|Sec\.)\s+377\b', text, re.IGNORECASE) and not any("Section 377" in t for t in tags):
+            tags.append("Section 377, Indian Penal Code, 1860")
+        if re.search(r'\b(?:Section|Sec\.)\s+498A\b', text, re.IGNORECASE) and not any("Section 498A" in t for t in tags):
+            tags.append("Section 498A, Indian Penal Code, 1860")
+    if "information technology" in t_lower or "it act" in t_lower:
+        if re.search(r'\b(?:Section|Sec\.)\s+66A\b', text, re.IGNORECASE) and not any("Section 66A" in t for t in tags):
+            tags.append("Section 66A, Information Technology Act, 2000")
+    if "criminal procedure" in t_lower or "crpc" in t_lower or "first information report" in t_lower:
+        if re.search(r'\b(?:Section|Sec\.)\s+154\b', text, re.IGNORECASE) and not any("Section 154" in t for t in tags):
+            tags.append("Section 154, Code of Criminal Procedure, 1973")
+        if re.search(r'\b(?:Section|Sec\.)\s+41A?\b', text, re.IGNORECASE) and not any("Section 41" in t for t in tags):
+            tags.append("Section 41, Code of Criminal Procedure, 1973")
+
+    return tags[:4]
+
+
+def extract_relevant_passage(
+    query: str, 
+    text: str, 
+    is_verified_ratio: bool = False, 
+    verified_ratio: str = ""
+) -> Tuple[str, str, bool]:
+    """
+    Extracts the best-matching passage from the judgment for the user's query.
+    - Prefers paragraphs from the court's reasoning or conclusion.
+    - Skips transcripts, tables, headers, and exhibits.
+    - Trims to ~400 characters at sentence boundary.
+    - Returns (passage_text, ratio_label, is_verified_ratio).
+    """
+    if is_verified_ratio and verified_ratio and len(verified_ratio.strip()) > 30:
+        return (verified_ratio.strip(), "RATIO DECIDENDI / LEGAL PRINCIPLE", True)
+
+    if not text:
+        return ("No excerpt available for this judgment.", "RELEVANT PASSAGE", False)
+
+    # Split text into paragraphs or blocks
+    raw_paras = [p.strip() for p in re.split(r'\n{2,}|\r\n{2,}', text) if p.strip()]
+    if not raw_paras:
+        raw_paras = [p.strip() for p in re.split(r'(?<=[.!?])\s+(?=[A-Z])', text) if p.strip()]
+
+    # Skip lines that are transcripts, tables, headers, or exhibits
+    noise_prefixes = (
+        "exhibit", "ex.", "pw-", "dw-", "annexure", "table", "p.w.", "d.w.", 
+        "cross-examination", "q.", "a.", "examination-in-chief", "sl. no.", 
+        "appeal from", "order date", "coram:"
+    )
+    clean_paras = []
+    for p in raw_paras:
+        p_clean = re.sub(r'[\r\n\t]+', ' ', p).strip()
+        p_lower = p_clean.lower()
+        if len(p_clean) < 40:
+            continue
+        if any(p_lower.startswith(prefix) for prefix in noise_prefixes):
+            continue
+        if re.match(r'^(?:[A-Z0-9\.\-_\s]+:|\bQ\b|\bA\b)', p_clean):
+            continue
+        clean_paras.append(p_clean)
+
+    if not clean_paras:
+        clean_paras = [re.sub(r'[\r\n\t]+', ' ', text).strip()]
+
+    # Score paragraphs:
+    reasoning_markers = [
+        "held that", "we hold", "in our view", "we are of the opinion", "it is settled law",
+        "the court held", "the supreme court held", "laid down that", "the ratio", 
+        "accordingly", "we find that", "the principle is", "cannot be sustained", 
+        "we conclude", "in conclusion", "it is well settled", "doctrine of"
+    ]
+    query_terms = [t for t in re.findall(r'[a-zA-Z0-9]{3,}', query.lower()) if t not in SEARCH_STOPWORDS]
+
+    best_para = clean_paras[0]
+    best_score = -1.0
+
+    for p in clean_paras:
+        p_lower = p.lower()
+        score = 0.0
+        if any(rm in p_lower for rm in reasoning_markers):
+            score += 3.0
+        term_matches = sum(1 for t in query_terms if t in p_lower)
+        score += term_matches * 1.5
+
+        if score > best_score:
+            best_score = score
+            best_para = p
+
+    # Trim to ~400 characters at sentence boundary
+    cleaned = best_para
+    if len(cleaned) > 400:
+        sentences = re.split(r'(?<=[.!?])\s+', cleaned)
+        trimmed = ""
+        for s in sentences:
+            if len(trimmed) + len(s) + 1 <= 420:
+                trimmed = f"{trimmed} {s}".strip() if trimmed else s
+            else:
+                break
+        if not trimmed or len(trimmed) < 150:
+            trimmed = cleaned[:397].rsplit(' ', 1)[0] + "..."
+        cleaned = trimmed
+
+    return (cleaned, "RELEVANT PASSAGE", False)
+
+
 def extract_substantive_terms(query: str) -> List[str]:
     """Extracts substantive content words and section numbers from query, excluding generic stopwords."""
     tokens = re.findall(r"[a-zA-Z]{3,}|\b\d+\b", query.lower())
@@ -158,13 +354,15 @@ def extract_substantive_terms(query: str) -> List[str]:
 def extract_query_aliases(query: str) -> List[str]:
     """
     Identifies if a query contains an alias, short name, or citation of a landmark case,
-    ignoring punctuation and spacing (e.g. 'AIR 1973 SC 1461', '(1973) 4 SCC 225', 'Kesavananda').
+    using exact substring matching and fuzzy matching (Levenshtein distance up to 2 for words >= 6,
+    up to 1 for words 4-5).
     Returns matching canonical alias strings for Qdrant filtering.
     """
     if not query or len(query.strip()) < 3:
         return []
 
     q_norm = re.sub(r'[\s\W_]+', '', query).lower()
+    q_tokens = [t.lower() for t in re.findall(r'[a-zA-Z0-9]{3,}', query) if t.lower() not in SEARCH_STOPWORDS]
     matched = []
 
     try:
@@ -180,12 +378,38 @@ def extract_query_aliases(query: str) -> List[str]:
             f"{case_def['common_name']} case",
         ] + case_def.get("extra_aliases", [])
 
+        # 1. Exact substring check on normalized strings
         for a in all_aliases:
             if not a:
                 continue
             a_norm = re.sub(r'[\s\W_]+', '', a).lower()
-            if len(a_norm) >= 4 and a_norm in q_norm:
+            if len(a_norm) >= 4 and (a_norm in q_norm or (len(q_norm) >= 4 and q_norm in a_norm)):
                 matched.append(a)
+
+        # 2. Token-level fuzzy match on case names (excluding numeric citations)
+        candidate_names = [case_def["short_name"], case_def["common_name"]] + [
+            ea for ea in case_def.get("extra_aliases", []) if not any(c.isdigit() for c in ea)
+        ]
+        q_name_tokens = [t.lower() for t in re.findall(r'[a-zA-Z]{3,}', query) if t.lower() not in SEARCH_STOPWORDS]
+        for a in candidate_names:
+            if not a:
+                continue
+            a_tokens = [t.lower() for t in re.findall(r'[a-zA-Z]{3,}', a) if t.lower() not in SEARCH_STOPWORDS]
+            if not a_tokens or not q_name_tokens:
+                continue
+
+            if len(q_name_tokens) == 1:
+                q_tok = q_name_tokens[0]
+                if any(fuzzy_word_match(q_tok, at) for at in a_tokens):
+                    matched.append(case_def["common_name"])
+                    matched.append(case_def["short_name"])
+                    break
+            else:
+                matches = sum(1 for qt in q_name_tokens if any(fuzzy_word_match(qt, at) for at in a_tokens))
+                if matches >= min(len(q_name_tokens), 2) and (matches / len(q_name_tokens)) >= 0.5:
+                    matched.append(case_def["common_name"])
+                    matched.append(case_def["short_name"])
+                    break
 
     return list(dict.fromkeys(matched))
 
@@ -322,13 +546,14 @@ class QdrantService:
         except Exception:
             pass
 
-        # Small exact-match boost for landmark aliases and citations
+        # Exact or fuzzy-match boost for landmark aliases and citations
         exact_boost_results: List[Dict[str, Any]] = []
         matched_aliases = extract_query_aliases(query)
         if matched_aliases:
             try:
                 from qdrant_client.models import Filter, FieldCondition, MatchValue
                 conditions = [FieldCondition(key="aliases", match=MatchValue(value=a)) for a in matched_aliases]
+                conditions.extend([FieldCondition(key="common_name", match=MatchValue(value=a)) for a in matched_aliases])
                 boost_hits, _ = self._client.scroll(
                     collection_name=target_collection,
                     scroll_filter=Filter(should=conditions),
@@ -347,14 +572,26 @@ class QdrantService:
                         continue
                     seen_boost.add(c_key)
 
+                    p["id"] = p.get("id") or p.get("case_id") or str(hit.id)
                     p["title"] = c_title
                     p["decisionYear"] = p.get("year")
-                    p["ratioSummary"] = p.get("text", "")[:450] + ("..." if len(p.get("text", "")) > 450 else "")
+                    
+                    text_content = p.get("text", "") or ""
+                    passage, label, is_ratio = extract_relevant_passage(
+                        query=query,
+                        text=text_content,
+                        is_verified_ratio=bool(p.get("landmark")),
+                        verified_ratio=p.get("ratioSummary", "")
+                    )
+                    p["ratioSummary"] = passage
+                    p["ratioLabel"] = label
+                    p["is_verified_ratio"] = is_ratio
+                    p["statutes"] = extract_statutes_from_text(text_content)
                     p["court"] = "Supreme Court of India"
                     p["benchType"] = "Supreme Court Bench"
                     p["benchSize"] = p.get("benchSize", 5 if p.get("landmark") else 2)
-                    p["statutes"] = p.get("statutes", ["Constitution of India", "Supreme Court of India Jurisprudence"])
                     p["relevance_score"] = 0.99
+                    p["raw_vector_score"] = 0.99
                     p["retrieval_mode"] = f"qdrant_exact_boost+{target_collection}"
                     exact_boost_results.append(p)
                     if len(exact_boost_results) >= limit:
@@ -428,6 +665,8 @@ class QdrantService:
                 c_copy["relevance_score"] = round(float(c_comb_score), 3)
                 c_copy["raw_vector_score"] = round(float(cos_sim), 3)
                 c_copy["retrieval_mode"] = f"qdrant+verified_precedents+{embedding_service.mode}"
+                c_copy["is_verified_ratio"] = True
+                c_copy["ratioLabel"] = "RATIO DECIDENDI / LEGAL PRINCIPLE"
                 candidates.append(c_copy)
 
         # (b) Evaluate Qdrant cloud hits
@@ -435,29 +674,38 @@ class QdrantService:
             case = dict(hit.payload or {})
 
             # Populate standard case fields BEFORE _matches_filters so court/bench filters don't drop valid SC cases
+            case["id"] = case.get("id") or case.get("case_id") or str(hit.id)
             if case.get("common_name"):
                 case["title"] = case.get("common_name")
             elif not case.get("title") and case.get("case_name"):
                 case["title"] = case.get("case_name")
             if not case.get("decisionYear") and case.get("year"):
                 case["decisionYear"] = case.get("year")
-            if not case.get("ratioSummary") and case.get("text"):
-                case["ratioSummary"] = case["text"][:450] + ("..." if len(case["text"]) > 450 else "")
             if not case.get("court"):
                 case["court"] = "Supreme Court of India"
             if not case.get("benchType"):
                 case["benchType"] = "Supreme Court Bench"
             if not case.get("benchSize"):
                 case["benchSize"] = 2
-            if not case.get("statutes"):
-                case["statutes"] = ["Constitution of India", "Supreme Court of India Jurisprudence"]
+
+            text_content = case.get("text", "") or case.get("ratioSummary", "") or ""
+            # Derive statutes strictly from text with NO default fake tags
+            case["statutes"] = extract_statutes_from_text(text_content)
+            passage, label, is_ratio = extract_relevant_passage(
+                query=query,
+                text=text_content,
+                is_verified_ratio=bool(case.get("landmark")),
+                verified_ratio=case.get("ratioSummary", "") if case.get("landmark") else ""
+            )
+            case["ratioSummary"] = passage
+            case["ratioLabel"] = label
+            case["is_verified_ratio"] = is_ratio
 
             if not self._matches_filters(case, court_filter, bench_filter):
                 continue
 
             case_name = case.get("case_name") or case.get("title") or ""
-            text = case.get("text") or case.get("ratioSummary") or ""
-            comb_text = f"{case_name} {text}".lower()
+            comb_text = f"{case_name} {text_content}".lower()
             name_lower = case_name.lower()
 
             v_score = float(hit.score)
@@ -474,20 +722,31 @@ class QdrantService:
             else:
                 topic_boost = 0.0
 
-            # Key-term overlap in case title and headnote:
+            # Title tokens & aliases for fuzzy matching
+            title_tokens = [t.lower() for t in re.findall(r'[a-zA-Z0-9]{3,}', name_lower) if t.lower() not in SEARCH_STOPWORDS]
+            common_tokens = [t.lower() for t in re.findall(r'[a-zA-Z0-9]{3,}', (case.get("common_name") or "").lower()) if t.lower() not in SEARCH_STOPWORDS]
+            alias_tokens = [t.lower() for a in case.get("aliases", []) for t in re.findall(r'[a-zA-Z0-9]{3,}', a.lower()) if t.lower() not in SEARCH_STOPWORDS]
+            all_name_tokens = set(title_tokens + common_tokens + alias_tokens)
+
+            # Substantive term overlap with title and text, including fuzzy matching
             title_matches = sum(1 for t in substantive_terms if t in name_lower)
             text_matches = sum(1 for t in substantive_terms if t in comb_text)
-            term_ratio = (text_matches / max(len(substantive_terms), 1)) if substantive_terms else 1.0
-            term_boost = min(0.35, title_matches * 0.15 + term_ratio * 0.15)
+            fuzzy_title_matches = sum(1 for st in substantive_terms if st in name_lower or any(fuzzy_word_match(st, nt) for nt in all_name_tokens))
+            effective_text_matches = text_matches + (fuzzy_title_matches * 2)
+
+            best_title_matches = max(title_matches, fuzzy_title_matches)
+            term_ratio = (effective_text_matches / max(len(substantive_terms), 1)) if substantive_terms else 1.0
+            term_boost = min(0.35, best_title_matches * 0.15 + term_ratio * 0.15)
 
             combined_score = v_score + topic_boost + term_boost
 
             # 3. Relevance Floor:
-            if v_score < 0.40:
+            # Drop any result that has no key-term match in its text/name AND a low semantic score:
+            if v_score < 0.38 and best_title_matches == 0:
                 continue
-            if combined_score < 0.50:
+            if combined_score < 0.48 and best_title_matches == 0:
                 continue
-            if substantive_terms and text_matches == 0:
+            if substantive_terms and effective_text_matches == 0:
                 continue
 
             # Specific everyday-rights filter for vehicle/bike stops:
@@ -513,12 +772,33 @@ class QdrantService:
                 if k:
                     seen_cases.add(k.strip().lower())
 
+        has_strong_exact_match = len(exact_boost_results) > 0
+        top_score = exact_boost_results[0]["relevance_score"] if has_strong_exact_match else (candidates[0]["relevance_score"] if candidates else 0.0)
+
         seen_parties = []
         max_to_return = max(limit, 3)
         for c in candidates:
             title_key = (c.get("title") or "").strip().lower()
             if title_key and title_key in seen_cases:
                 continue
+
+            # If we had a strong exact name or citation match, drop weak extras:
+            # - raw similarity below tuned threshold (0.45)
+            # - or score less than 65% of top score
+            # - must genuinely cite the case / contain its name terms, or share the detected topic
+            if has_strong_exact_match:
+                c_raw = c.get("raw_vector_score", 0.0)
+                c_score = c.get("relevance_score", 0.0)
+                if c_score < (top_score * 0.65) or c_raw < 0.45:
+                    continue
+                if topic and c.get("topic") != topic:
+                    continue
+                matched_case_terms = set(re.findall(r'[a-zA-Z0-9]{4,}', " ".join(matched_aliases).lower())) - SEARCH_STOPWORDS
+                matched_case_terms = {t for t in matched_case_terms if not re.match(r'^(?:19\d\d|20\d\d)$', t)}
+                c_full_text = f"{c.get('title', '')} {c.get('text', '')}".lower()
+                if matched_case_terms and not any(mct in c_full_text for mct in matched_case_terms):
+                    continue
+
             party_tokens = set(re.findall(r'[a-z]{4,}', title_key)) - {
                 "versus", "state", "union", "india", "court", "limited", "authority", "corporation", "company"
             }
@@ -600,6 +880,14 @@ class QdrantService:
                         score = round(min(float(sim_score) + min(kw_matches * 0.05, 0.15), 0.98), 3)
                         citation_disp = chunk.get("citation") or chunk.get("neutral_citation") or f"[{chunk.get('year')}] SCR"
 
+                        text_content = chunk.get("text", "") or ""
+                        passage, label, is_ratio = extract_relevant_passage(
+                            query=query,
+                            text=text_content,
+                            is_verified_ratio=False,
+                            verified_ratio=""
+                        )
+
                         results.append({
                             "id": chunk.get("case_id"),
                             "title": c_name,
@@ -608,9 +896,12 @@ class QdrantService:
                             "benchType": "Supreme Court Bench",
                             "benchSize": 2,
                             "decisionYear": chunk.get("year"),
-                            "statutes": ["Indian Contract Act, 1872", "Constitution of India, Article 141"],
-                            "ratioSummary": chunk.get("text", "")[:450] + ("..." if len(chunk.get("text", "")) > 450 else ""),
+                            "statutes": extract_statutes_from_text(text_content),
+                            "ratioSummary": passage,
+                            "ratioLabel": label,
+                            "is_verified_ratio": is_ratio,
                             "relevance_score": score,
+                            "raw_vector_score": float(sim_score),
                             "retrieval_mode": f"local_index+sc_judgments+{embedding_service.mode}",
                             "source_link": chunk.get("source_link"),
                             "neutral_citation": chunk.get("neutral_citation"),
@@ -634,8 +925,17 @@ class QdrantService:
                         if not c_key or c_key in seen_boost:
                             continue
                         lc_aliases = [re.sub(r'[\s\W_]+', '', a).lower() for a in lc.get("aliases", [])]
+                        if lc.get("common_name"):
+                            lc_aliases.append(re.sub(r'[\s\W_]+', '', lc["common_name"]).lower())
                         if any(re.sub(r'[\s\W_]+', '', ma).lower() in lc_aliases for ma in matched_aliases):
                             seen_boost.add(c_key)
+                            text_content = lc.get("text", "") or ""
+                            passage, label, is_ratio = extract_relevant_passage(
+                                query=query,
+                                text=text_content,
+                                is_verified_ratio=True,
+                                verified_ratio=lc.get("ratioSummary", "")
+                            )
                             results.insert(0, {
                                 "id": lc.get("case_id"),
                                 "title": c_title,
@@ -644,9 +944,12 @@ class QdrantService:
                                 "benchType": "Supreme Court Bench",
                                 "benchSize": 5,
                                 "decisionYear": lc.get("year"),
-                                "statutes": ["Constitution of India", "Indian Precedents"],
-                                "ratioSummary": lc.get("text", "")[:450] + ("..." if len(lc.get("text", "")) > 450 else ""),
+                                "statutes": extract_statutes_from_text(text_content),
+                                "ratioSummary": passage,
+                                "ratioLabel": label,
+                                "is_verified_ratio": is_ratio,
                                 "relevance_score": 0.99,
+                                "raw_vector_score": 0.99,
                                 "retrieval_mode": f"local_exact_boost+landmark_cases+{embedding_service.mode}",
                                 "source_link": lc.get("source_link"),
                                 "neutral_citation": lc.get("neutral_citation"),

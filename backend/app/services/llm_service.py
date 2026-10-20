@@ -144,9 +144,28 @@ def extract_query_entities(query: str) -> Dict[str, Any]:
         "bommai", "s.r. bommai", "olga tellis", "dk basu", "d.k. basu", "arnesh kumar",
         "lalita kumari", "shreya singhal", "indra sawhney"
     ]
+    try:
+        from app.services.qdrant_service import fuzzy_word_match
+    except Exception:
+        fuzzy_word_match = lambda a, b: a.lower() == b.lower()
+
+    q_tokens = [t.lower() for t in re.findall(r'[a-zA-Z0-9]{3,}', q)]
     for kn in known_landmarks:
-        if kn in q.lower() and not any(kn in cn.lower() for cn in case_names):
-            case_names.append(kn)
+        kn_lower = kn.lower()
+        if kn_lower in q.lower():
+            if not any(kn_lower in cn.lower() for cn in case_names):
+                case_names.append(kn)
+        else:
+            kn_tokens = [t.lower() for t in re.findall(r'[a-zA-Z0-9]{3,}', kn_lower)]
+            if len(kn_tokens) == 1:
+                if any(fuzzy_word_match(qt, kn_tokens[0]) for qt in q_tokens):
+                    if not any(kn_lower in cn.lower() for cn in case_names):
+                        case_names.append(kn)
+            else:
+                matches = sum(1 for kt in kn_tokens if any(fuzzy_word_match(qt, kt) for qt in q_tokens))
+                if matches >= min(len(kn_tokens), 2) and (matches / len(kn_tokens)) >= 0.5:
+                    if not any(kn_lower in cn.lower() for cn in case_names):
+                        case_names.append(kn)
             
     has_specific = bool(sections or articles or citations or case_names or needs_specific_source(query))
     
@@ -163,8 +182,13 @@ def match_case_to_query_entities(entities: Dict[str, Any], case: Dict[str, Any])
     """
     Rule (1): The fallback must never return a retrieved case as an answer unless the query's
     case name, party names, citation, section or article actually appear in that case's metadata or text.
-    A similarity score alone is not enough.
+    A similarity score alone is not enough. Supports typo-tolerant fuzzy matching on case names.
     """
+    try:
+        from app.services.qdrant_service import fuzzy_word_match
+    except Exception:
+        fuzzy_word_match = lambda a, b: a.lower() == b.lower()
+
     case_title = (case.get("title") or case.get("case_name") or "").lower()
     case_common = (case.get("common_name") or "").lower()
     case_aliases = " ".join(case.get("aliases") or []).lower()
@@ -174,6 +198,7 @@ def match_case_to_query_entities(entities: Dict[str, Any], case: Dict[str, Any])
     case_body = (case.get("text") or "").lower()
     case_keywords = " ".join(case.get("keywords", [])).lower()
     case_full = f"{case_title} {case_common} {case_aliases} {case_cit} {case_statutes} {case_keywords} {case_ratio} {case_body}"
+    target_tokens = set(re.findall(r'[a-zA-Z0-9]{3,}', f"{case_title} {case_common} {case_aliases} {case_keywords}"))
 
     # If query specified case names / party names, the case MUST match at least one
     if entities["case_names"]:
@@ -201,8 +226,8 @@ def match_case_to_query_entities(entities: Dict[str, Any], case: Dict[str, Any])
                 }
                 p1_tokens = [t for t in re.findall(r'[a-zA-Z0-9]{3,}', parts[0]) if t not in side_stopwords]
                 p2_tokens = [t for t in re.findall(r'[a-zA-Z0-9]{3,}', parts[1]) if t not in side_stopwords]
-                m1 = any(re.search(rf'\b{re.escape(tok)}\b', case_title) for tok in p1_tokens) if p1_tokens else True
-                m2 = any(re.search(rf'\b{re.escape(tok)}\b', case_title) for tok in p2_tokens) if p2_tokens else True
+                m1 = any(re.search(rf'\b{re.escape(tok)}\b', case_title) or any(fuzzy_word_match(tok, tt) for tt in target_tokens) for tok in p1_tokens) if p1_tokens else True
+                m2 = any(re.search(rf'\b{re.escape(tok)}\b', case_title) or any(fuzzy_word_match(tok, tt) for tt in target_tokens) for tok in p2_tokens) if p2_tokens else True
                 if m1 and m2:
                     name_matched = True
                     break
@@ -210,7 +235,8 @@ def match_case_to_query_entities(entities: Dict[str, Any], case: Dict[str, Any])
                 tokens = [t for t in re.findall(r'[a-zA-Z0-9]{3,}', cn_lower) if t not in stopwords]
                 if tokens and any(
                     re.search(rf'\b{re.escape(tok)}\b', case_title) or 
-                    re.search(rf'\b{re.escape(tok)}\b', case_keywords)
+                    re.search(rf'\b{re.escape(tok)}\b', case_keywords) or
+                    any(fuzzy_word_match(tok, tt) for tt in target_tokens)
                     for tok in tokens
                 ):
                     name_matched = True

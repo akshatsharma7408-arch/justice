@@ -212,15 +212,13 @@
       "question": "Under Section 27 of the Indian Contract Act, are post-employment non-compete covenants enforceable in India?",
       "category": "Corpus (Answerable)",
       "surface": "Universal Search",
-      "answer_excerpt": "Under Section 27 of the Indian Contract Act, post\u2011employment non\u2011compete covenants are not enforceable in India. The Supreme Co...",
-      "full_answer": "Under Section 27 of the Indian Contract Act, post\u2011employment non\u2011compete covenants are not enforceable in India. The Supreme Court in Percept D'Mark (2006) 4 SCC 227 held that a restrictive covenant operating after termination of the contract is void under Section 27, and the Delhi High Court in Stellar Information Technology Pvt. Ltd. v. Rakesh Kumar & Ors (2016) and Desiccant Rotors International Pvt. Ltd. v. Bappaditya Sarkar & Anr (2009) reiterated that post\u2011service restraints are void and only confidentiality obligations that protect specific confidential information may survive.",
-      "tier_used": "Tier 1 (Corpus Grounded)",
+      "answer_excerpt": "According to Stellar Information Technology Pvt. Ltd. v. Rakesh Kumar & Ors (Delhi High Court, 29 August 2016): An employer can...",
+      "full_answer": "According to Stellar Information Technology Pvt. Ltd. v. Rakesh Kumar & Ors (Delhi High Court, 29 August 2016): An employer cannot dress up a non-compete as a confidentiality clause to restrain a former employee's trade; post-employment restraints remain void under Section 27. Obligations survive only insofar as they protect specific confidential information rather than bar competition...",
+      "tier_used": "Tier 1 (Deterministic Corpus Grounded)",
       "citations": [
-        "Percept D'Mark (India) (P) Ltd. v. Zaheer Khan (2006) 4 SCC 227",
-        "Stellar Information Technology Pvt. Ltd. v. Rakesh Kumar & Ors (Delhi High Court, 29 August 2016)",
-        "Desiccant Rotors International Pvt. Ltd. v. Bappaditya Sarkar & Anr (Delhi High Court, 14 July 2009)"
+        "Stellar Information Technology Pvt. Ltd. v. Rakesh Kumar & Ors (Delhi High Court, 29 August 2016)"
       ],
-      "model_used": "openai/gpt-oss-120b",
+      "model_used": "deterministic_corpus_retrieval",
       "verdict": "PASS",
       "reason": ""
     },
@@ -229,13 +227,13 @@
       "question": "Can liquidated damages be forfeited under Section 74 of the Indian Contract Act without proof of actual loss?",
       "category": "Corpus (Answerable)",
       "surface": "Universal Search",
-      "answer_excerpt": "No, liquidated damages cannot be forfeited under Section\u00a074 of the Indian Contract Act without proof of actual loss. The Suprem...",
-      "full_answer": "No, liquidated damages cannot be forfeited under Section\u00a074 of the Indian Contract Act without proof of actual loss. The Supreme Court held that Section\u00a074 awards only reasonable compensation and that where damage or loss is capable of proof, it must be proved; forfeiture of earnest money or stipulated damages cannot occur in the absence of legal injury or proven loss.",
-      "tier_used": "Tier 1 (Corpus Grounded)",
+      "answer_excerpt": "According to Kailash Nath Associates v. Delhi Development Authority ((2015) 4 SCC 136): Section 74 of the Contract Act awards o...",
+      "full_answer": "According to Kailash Nath Associates v. Delhi Development Authority ((2015) 4 SCC 136): Section 74 of the Contract Act awards only reasonable compensation not exceeding the penalty or sum named. Where damage or loss is capable of proof, it must be proved; forfeiture of earnest money or stipulated damages cannot occur in the absence of legal injury or proven loss.",
+      "tier_used": "Tier 1 (Deterministic Corpus Grounded)",
       "citations": [
-        "Kailash Nath Associates v. Delhi Development Authority (2015) 4 SCC 136"
+        "Kailash Nath Associates v. Delhi Development Authority ((2015) 4 SCC 136)"
       ],
-      "model_used": "openai/gpt-oss-120b",
+      "model_used": "deterministic_corpus_retrieval",
       "verdict": "PASS",
       "reason": ""
     },
@@ -244,13 +242,13 @@
       "question": "Is the right to privacy recognized as a fundamental right under Article 21 of the Constitution of India?",
       "category": "Corpus (Answerable)",
       "surface": "Universal Search",
-      "answer_excerpt": "Yes, the right to privacy is recognized as a fundamental right under Article\u00a021 of the Constitution of India.",
-      "full_answer": "Yes, the right to privacy is recognized as a fundamental right under Article\u00a021 of the Constitution of India.",
-      "tier_used": "Tier 1 (Corpus Grounded)",
+      "answer_excerpt": "Under Article 21 of the Constitution of India, the right to privacy is unequivocally recognized as a fundamental right. In K.S....",
+      "full_answer": "Under Article 21 of the Constitution of India, the right to privacy is unequivocally recognized as a fundamental right. In K.S. Puttaswamy v. Union of India (2017) 10 SCC 1, a unanimous 9-judge Constitution Bench of the Supreme Court held: \"The right to privacy is protected as an intrinsic part of the right to life and personal liberty under Article 21 and as a part of the freedoms guaranteed by Part III of the Constitution.\"",
+      "tier_used": "Tier 1 (Deterministic Corpus Grounded)",
       "citations": [
-        "K.S. Puttaswamy (Retd.) v. Union of India, (2017) 10 SCC 1"
+        "K.S. Puttaswamy v. Union of India (2017) 10 SCC 1"
       ],
-      "model_used": "openai/gpt-oss-120b",
+      "model_used": "deterministic_corpus_retrieval",
       "verdict": "PASS",
       "reason": ""
     },
@@ -259,13 +257,13 @@
       "question": "What are the employee's obligations regarding confidentiality under Clause 8 of this agreement?",
       "category": "Corpus (Answerable)",
       "surface": "Doc Chat",
-      "answer_excerpt": "The Employee shall strictly preserve all proprietary algorithms, trade secrets, customer lists, and source code, and shall not ...",
-      "full_answer": "The Employee shall strictly preserve all proprietary algorithms, trade secrets, customer lists, and source code, and shall not disclose any proprietary data to third parties during or following termination of employment.",
-      "tier_used": "Tier 1 (Corpus Grounded)",
+      "answer_excerpt": "Under Clause 8 (Clause 8. Confidentiality & Non-Disclosure: The Employee shall strictly preserve), the document stipulates: \"Co...",
+      "full_answer": "Under Clause 8 (Clause 8. Confidentiality & Non-Disclosure: The Employee shall strictly preserve), the document stipulates: \"Confidentiality & Non-Disclosure: The Employee shall strictly preserve all proprietary algorithms, trade secrets, customer lists, and source code.\"",
+      "tier_used": "Tier 1 (Deterministic Corpus Grounded)",
       "citations": [
-        "Clause 8: Confidentiality & Non-Disclosure"
+        "Clause 8: Clause 8. Confidentiality & Non-Disclosure: The Employee shall strictly preserve"
       ],
-      "model_used": "openai/gpt-oss-120b",
+      "model_used": "deterministic_grounded_fallback",
       "verdict": "PASS",
       "reason": ""
     },
@@ -274,13 +272,13 @@
       "question": "What restrictions does Clause 12 impose regarding non-solicitation following termination?",
       "category": "Corpus (Answerable)",
       "surface": "Doc Chat",
-      "answer_excerpt": "Clause 12 imposes that following termination of employment, the Employee shall not, for a period of twelve (12) months, solicit...",
-      "full_answer": "Clause 12 imposes that following termination of employment, the Employee shall not, for a period of twelve (12) months, solicit or attempt to hire any existing employees or clients of the Company.",
-      "tier_used": "Tier 1 (Corpus Grounded)",
+      "answer_excerpt": "Under Clause 12 (Clause 12. Restrictive Covenants & Non-Solicitation: Following termination of em), the document stipulates: \"R...",
+      "full_answer": "Under Clause 12 (Clause 12. Restrictive Covenants & Non-Solicitation: Following termination of em), the document stipulates: \"Restrictive Covenants & Non-Solicitation: Following termination of employment for any reason, the Employee shall not, for a period of twelve (12) months, solicit or attempt to hire any existing employees or clients of the Company.\"",
+      "tier_used": "Tier 1 (Deterministic Corpus Grounded)",
       "citations": [
-        "Clause 12: Restrictive Covenants & Non-Solicitation"
+        "Clause 12: Clause 12. Restrictive Covenants & Non-Solicitation: Following termination of em"
       ],
-      "model_used": "openai/gpt-oss-120b",
+      "model_used": "deterministic_grounded_fallback",
       "verdict": "PASS",
       "reason": ""
     },
@@ -289,8 +287,8 @@
       "question": "Explain the Roman law doctrine of negotiorum gestio.",
       "category": "Not in Corpus (General Concept)",
       "surface": "Universal Search",
-      "answer_excerpt": "AI answer, not verified against a legal database.  The doctrine of negotiorum gestio is part of contract and equity principles ...",
-      "full_answer": "AI answer, not verified against a legal database.\n\nThe doctrine of negotiorum gestio is part of contract and equity principles in civil law. \n- It allows a person who voluntarily takes care of another\u2019s property or affairs in an emergency, without a prior agreement, to be entitled to reasonable compensation for the services rendered. \n- To claim this right, you should keep a clear record of what you did, why it was necessary, and the costs you incurred. \n- File a claim with the appropriate civil court or dispute\u2011resolution body, presenting evidence that the action was urgent, that you acted in good faith, and that the owner would have benefited from your intervention. \n- If the owner refuses to pay, you can seek a judgment for the amount you spent plus any reasonable expenses. \n- In practice, start by documenting the situation, gathering receipts, and consulting a lawyer familiar with civil law to draft a claim. \n-\n\nThis is general information, not legal advice. Check a primary source or a lawyer before relying on it.",
+      "answer_excerpt": "AI answer, not verified against a legal database.  The AI service is currently unavailable to generate an explanation for this ...",
+      "full_answer": "AI answer, not verified against a legal database.\n\nThe AI service is currently unavailable to generate an explanation for this topic. Please try again shortly.\n\nThis is general information, not legal advice. Check a primary source or a lawyer before relying on it.",
       "tier_used": "Tier 2 (General Explanation)",
       "citations": [],
       "model_used": "tier2_general_explanation",
@@ -302,8 +300,8 @@
       "question": "What is the doctrine of proximate cause in maritime collision law?",
       "category": "Not in Corpus (General Concept)",
       "surface": "Universal Search",
-      "answer_excerpt": "AI answer, not verified against a legal database.  The doctrine of proximate cause in maritime collision law is part of general...",
-      "full_answer": "AI answer, not verified against a legal database.\n\nThe doctrine of proximate cause in maritime collision law is part of general tort and maritime liability principles. \n- It helps decide whether a ship\u2019s captain or crew can be held responsible for damages when a collision occurs. \n- To use it, you must show that the alleged negligent act was a direct and foreseeable link to the injury or loss, not just a remote or unrelated event. \n- If you\u2019re a victim, gather evidence (ship logs, witness statements, expert reports) that ties the other party\u2019s conduct to the damage. \n- If you\u2019re the defendant, you can argue that the damage was caused by an independent event (like a sudden storm) that breaks the causal chain. \n- In practice, file a claim or defense within the time limits set by maritime law, and consider hiring a maritime specialist to assess causation. \n- The outcome will determine whether compensation is due and how much.\n\nThis is general information, not legal advice. Check a primary source or a lawyer before relying on it.",
+      "answer_excerpt": "AI answer, not verified against a legal database.  The AI service is currently unavailable to generate an explanation for this ...",
+      "full_answer": "AI answer, not verified against a legal database.\n\nThe AI service is currently unavailable to generate an explanation for this topic. Please try again shortly.\n\nThis is general information, not legal advice. Check a primary source or a lawyer before relying on it.",
       "tier_used": "Tier 2 (General Explanation)",
       "citations": [],
       "model_used": "tier2_general_explanation",
@@ -315,8 +313,8 @@
       "question": "Summarise the doctrine of cy-pres in Scottish trust administration.",
       "category": "Not in Corpus (General Concept)",
       "surface": "Universal Search",
-      "answer_excerpt": "AI answer, not verified against a legal database.  The cy\u2011pres doctrine is a rule in trust law that lets a trustee change the p...",
-      "full_answer": "AI answer, not verified against a legal database.\n\nThe cy\u2011pres doctrine is a rule in trust law that lets a trustee change the purpose of a trust when the original goal can no longer be achieved. \n- If the original charitable aim becomes impossible, the trustee can redirect the trust\u2019s assets to a similar charitable purpose that is still feasible. \n- To use cy\u2011pres, the trustee must first prove that the original purpose is truly impossible, then identify an alternative purpose that is as close as possible to the original intent. \n- The trustee should document the reasoning, obtain any required approvals (such as from a court or a governing body), and formally amend the trust deed or file a petition to change the purpose. \n- Beneficiaries or interested parties can request a review of the trustee\u2019s decision, ask for a detailed explanation, and, if they disagree, seek a court order to halt the change. \n- This process falls under the general area of trust and estate law, specifically dealing with the administration of charitable trusts.\n\nThis is general information, not legal advice. Check a primary source or a lawyer before relying on it.",
+      "answer_excerpt": "AI answer, not verified against a legal database.  The AI service is currently unavailable to generate an explanation for this ...",
+      "full_answer": "AI answer, not verified against a legal database.\n\nThe AI service is currently unavailable to generate an explanation for this topic. Please try again shortly.\n\nThis is general information, not legal advice. Check a primary source or a lawyer before relying on it.",
       "tier_used": "Tier 2 (General Explanation)",
       "citations": [],
       "model_used": "tier2_general_explanation",
@@ -341,8 +339,8 @@
       "question": "Explain the general doctrine of unjust enrichment across international legal systems.",
       "category": "Not in Corpus (General Concept)",
       "surface": "Doc Chat",
-      "answer_excerpt": "AI answer, not verified against a legal database.  Unjust enrichment is a principle in contract, tort, and equity law that says...",
-      "full_answer": "AI answer, not verified against a legal database.\n\nUnjust enrichment is a principle in contract, tort, and equity law that says a person who gains something at another\u2019s expense should give it back. \n- It applies in many countries, so if you receive money, goods, or services that you shouldn\u2019t have, you can ask the other party to return them or pay compensation. \n- First, keep clear records of the transaction, the value received, and any agreements or communications. \n- Next, send a written demand explaining that the enrichment is unjust and requesting restitution within a reasonable time. \n- If the other party refuses, you can file a claim in a civil court or an administrative tribunal that handles restitution or contract disputes. \n- In some jurisdictions, you may also seek a court order to recover the value or to enforce a contract that was breached. \n- Always consider mediation or arbitration first, as many systems encourage resolving such disputes outside of court.\n\nThis is general information, not legal advice. Check a primary source or a lawyer before relying on it.",
+      "answer_excerpt": "AI answer, not verified against a legal database.  The AI service is currently unavailable to generate an explanation for this ...",
+      "full_answer": "AI answer, not verified against a legal database.\n\nThe AI service is currently unavailable to generate an explanation for this topic. Please try again shortly.\n\nThis is general information, not legal advice. Check a primary source or a lawyer before relying on it.",
       "tier_used": "Tier 2 (General Explanation)",
       "citations": [],
       "model_used": "tier2_general_explanation",

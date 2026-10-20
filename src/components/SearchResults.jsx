@@ -203,9 +203,9 @@ export default function SearchResults({
         ) : results.length === 0 ? (
           <div className="results-empty-state">
             <Scale size={32} className="empty-state-icon" />
-            <h3 className="empty-title font-serif">No Precedents Found</h3>
+            <h3 className="empty-title font-serif">No strong match found, try rephrasing</h3>
             <p className="empty-desc">
-              No matching judgments met the strict verification threshold. Try broadening your bench filters or searching by statutory sections.
+              No matching judgments met the strict verification threshold. Try rephrasing your query, searching by case name or citation, or using broader legal terms.
             </p>
           </div>
         ) : (
@@ -218,14 +218,15 @@ export default function SearchResults({
             </div>
 
             {results.map((precedent, index) => {
-              const isExpanded = expandedCaseId === precedent.id;
+              const caseIdKey = precedent.id || precedent.case_id || `case-${index}`;
+              const isExpanded = expandedCaseId === caseIdKey;
               const relevancePercent = precedent.relevance_score
                 ? Math.round(precedent.relevance_score * 100)
                 : 95;
 
               return (
                 <article
-                  key={precedent.id || index}
+                  key={caseIdKey}
                   className="precedent-editorial-card animate-stagger"
                   style={{ animationDelay: `${index * 60}ms` }}
                 >
@@ -276,9 +277,11 @@ export default function SearchResults({
                     </div>
                   )}
 
-                  {/* Ratio Decidendi Box */}
+                  {/* Ratio Decidendi / Relevant Passage Box */}
                   <div className="card-ratio-box">
-                    <div className="ratio-kicker mono">RATIO DECIDENDI / LEGAL PRINCIPLE</div>
+                    <div className="ratio-kicker mono">
+                      {precedent.ratioLabel || (precedent.is_verified_ratio ? 'RATIO DECIDENDI / LEGAL PRINCIPLE' : 'RELEVANT PASSAGE')}
+                    </div>
                     <p className="ratio-quote font-serif">
                       "{precedent.ratioSummary}"
                     </p>
@@ -328,10 +331,10 @@ export default function SearchResults({
                         type="button"
                         className={`btn-card-chat ${isExpanded ? 'is-active' : ''}`}
                         onClick={() => {
-                          const nextId = isExpanded ? null : precedent.id;
+                          const nextId = isExpanded ? null : caseIdKey;
                           setExpandedCaseId(nextId);
                           if (onOpenCaseChat) {
-                            onOpenCaseChat(nextId ? precedent : null);
+                            onOpenCaseChat(nextId ? { ...precedent, id: caseIdKey } : null);
                           }
                         }}
                         aria-label="Ask about this case in Case Chat"
