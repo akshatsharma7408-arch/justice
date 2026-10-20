@@ -496,8 +496,16 @@ export default function SearchResults({
                         <span className="meta-chip bench">
                           {precedent.benchType || 'Bench'} ({precedent.benchSize || 2} Judges)
                         </span>
+                        {precedent.leadJudge ? (
+                          <>
+                            <span className="meta-sep">&bull;</span>
+                            <span className="meta-chip lead-judge" title={`Lead Judge: ${precedent.leadJudge}`}>
+                              Lead: {precedent.leadJudge}
+                            </span>
+                          </>
+                        ) : null}
                         <span className="meta-sep">&bull;</span>
-                        <span className="meta-chip year">{precedent.decisionYear}</span>
+                        <span className="meta-chip year">{precedent.decisionYear || precedent.year}</span>
 
                         {/* Relevance Score Bar */}
                         <span className="meta-sep">&bull;</span>

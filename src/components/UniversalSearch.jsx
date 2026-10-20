@@ -296,9 +296,15 @@ export default function UniversalSearch({ onSelectCaseForCitator, onOpenCaseChat
                 <div className="card-meta-left">
                   <span className="court-chip">{precedent.court}</span>
                   <span className="meta-dot">&bull;</span>
-                  <span className="bench-chip">{precedent.benchType} ({precedent.benchSize} Judges)</span>
+                  <span className="bench-chip">{precedent.benchType || 'Bench'} ({precedent.benchSize || 2} Judges)</span>
+                  {precedent.leadJudge ? (
+                    <>
+                      <span className="meta-dot">&bull;</span>
+                      <span className="lead-judge-chip" title={`Lead Judge: ${precedent.leadJudge}`}>Lead: {precedent.leadJudge}</span>
+                    </>
+                  ) : null}
                   <span className="meta-dot">&bull;</span>
-                  <span className="year-chip">{precedent.decisionYear}</span>
+                  <span className="year-chip">{precedent.decisionYear || precedent.year}</span>
 
                   {/* Subtle Relevance Indicator */}
                   {precedent.relevance_score && (

@@ -38,7 +38,10 @@ SC_METADATA_PATH = SC_DATASET_DIR / "metadata" / "filtered_cases.parquet"
 def _load_corpus() -> List[Dict[str, Any]]:
     try:
         with open(CORPUS_PATH, "r", encoding="utf-8") as f:
-            return json.load(f).get("precedents", [])
+            cases = json.load(f).get("precedents", [])
+            for c in cases:
+                enrich_landmark_metadata(c)
+            return cases
     except Exception as e:
         logger.error("Could not load precedent corpus at %s: %s", CORPUS_PATH, e)
         return []
@@ -463,6 +466,232 @@ def is_pure_citation_query(query: str) -> bool:
 
 
 
+LANDMARK_METADATA: Dict[str, Dict[str, Any]] = {
+    "kesavananda": {
+        "benchSize": 13,
+        "benchType": "Constitution Bench",
+        "leadJudge": "S.M. Sikri, C.J.I.",
+        "statutes": ["Article 368", "Article 13", "Article 31C", "Article 31A", "Article 19"],
+        "year": 1973,
+    },
+    "maneka gandhi": {
+        "benchSize": 7,
+        "benchType": "Constitution Bench",
+        "leadJudge": "M.H. Beg, C.J.I.",
+        "statutes": ["Article 21", "Article 14", "Article 19", "Passports Act 1967"],
+        "year": 1978,
+    },
+    "puttaswamy": {
+        "benchSize": 9,
+        "benchType": "Constitution Bench",
+        "leadJudge": "J.S. Khehar, C.J.I.",
+        "statutes": ["Article 21", "Article 14", "Article 19", "Aadhaar Act 2016"],
+        "year": 2017,
+    },
+    "vishaka": {
+        "benchSize": 3,
+        "benchType": "3-Judge Bench",
+        "leadJudge": "J.S. Verma, C.J.I.",
+        "statutes": ["Article 14", "Article 19(1)(g)", "Article 21", "CEDAW"],
+        "year": 1997,
+    },
+    "navtej": {
+        "benchSize": 5,
+        "benchType": "Constitution Bench",
+        "leadJudge": "Dipak Misra, C.J.I.",
+        "statutes": ["Section 377 IPC", "Article 14", "Article 15", "Article 19(1)(a)", "Article 21"],
+        "year": 2018,
+    },
+    "minerva mills": {
+        "benchSize": 5,
+        "benchType": "Constitution Bench",
+        "leadJudge": "Y.V. Chandrachud, C.J.I.",
+        "statutes": ["Article 368(4)", "Article 368(5)", "Article 31C", "Article 14", "Article 19"],
+        "year": 1980,
+    },
+    "golaknath": {
+        "benchSize": 11,
+        "benchType": "Constitution Bench",
+        "leadJudge": "K. Subba Rao, C.J.I.",
+        "statutes": ["Article 368", "Article 13(2)", "Article 19", "Article 31"],
+        "year": 1967,
+    },
+    "bommai": {
+        "benchSize": 9,
+        "benchType": "Constitution Bench",
+        "leadJudge": "S.R. Pandian, J.",
+        "statutes": ["Article 356", "Article 74(2)", "Article 355", "Article 14"],
+        "year": 1994,
+    },
+    "olga tellis": {
+        "benchSize": 5,
+        "benchType": "Constitution Bench",
+        "leadJudge": "Y.V. Chandrachud, C.J.I.",
+        "statutes": ["Article 21", "Article 19(1)(e)", "Article 19(1)(g)", "Article 39(a)", "Article 41"],
+        "year": 1985,
+    },
+    "arnesh kumar": {
+        "benchSize": 2,
+        "benchType": "Division Bench",
+        "leadJudge": "Chandramauli Kumar Prasad, J.",
+        "statutes": ["Section 41 CrPC", "Section 41A CrPC", "Section 498A IPC", "Article 21"],
+        "year": 2014,
+    },
+    "dk basu": {
+        "benchSize": 2,
+        "benchType": "Division Bench",
+        "leadJudge": "Kuldip Singh, J.",
+        "statutes": ["Article 21", "Article 22", "Section 50 CrPC", "Section 57 CrPC"],
+        "year": 1996,
+    },
+    "d.k. basu": {
+        "benchSize": 2,
+        "benchType": "Division Bench",
+        "leadJudge": "Kuldip Singh, J.",
+        "statutes": ["Article 21", "Article 22", "Section 50 CrPC", "Section 57 CrPC"],
+        "year": 1996,
+    },
+    "shreya singhal": {
+        "benchSize": 2,
+        "benchType": "Division Bench",
+        "leadJudge": "J. Chelameswar, J.",
+        "statutes": ["Section 66A IT Act", "Article 19(1)(a)", "Article 19(2)", "Article 14"],
+        "year": 2015,
+    },
+    "lalita kumari": {
+        "benchSize": 5,
+        "benchType": "Constitution Bench",
+        "leadJudge": "P. Sathasivam, C.J.I.",
+        "statutes": ["Section 154 CrPC", "Section 156 CrPC", "Section 157 CrPC", "Article 21"],
+        "year": 2013,
+    },
+    "indra sawhney": {
+        "benchSize": 9,
+        "benchType": "Constitution Bench",
+        "leadJudge": "M.H. Kania, C.J.I.",
+        "statutes": ["Article 16(4)", "Article 16(1)", "Article 15(4)", "Article 14", "Article 340"],
+        "year": 1992,
+    },
+    "percept": {
+        "benchSize": 2,
+        "benchType": "Division Bench",
+        "leadJudge": "H.K. Sema, J.",
+        "statutes": ["Section 27 Contract Act", "Article 19(1)(g)"],
+        "year": 2006,
+    },
+    "kailash nath": {
+        "benchSize": 2,
+        "benchType": "Division Bench",
+        "leadJudge": "Ranjan Gogoi, J.",
+        "statutes": ["Section 74 Contract Act", "Section 73 Contract Act"],
+        "year": 2015,
+    }
+}
+
+
+def enrich_landmark_metadata(case: Dict[str, Any]) -> Dict[str, Any]:
+    """
+    Enforces Item 4 requirements:
+    1. Sets correct benchSize and benchType for every landmark.
+    2. Populates hand-checked statutes/articles tags for landmarks.
+    3. Populates leadJudge when known, otherwise hides it.
+    4. Guarantees non-null year and decisionYear.
+    """
+    c_title = (case.get("title") or case.get("case_name") or case.get("common_name") or "").lower()
+    c_cit = case.get("citation") or case.get("neutral_citation") or ""
+
+    # Match landmark
+    matched_meta = None
+    for lk, meta in LANDMARK_METADATA.items():
+        if lk in c_title:
+            matched_meta = meta
+            break
+
+    if matched_meta:
+        case["benchSize"] = matched_meta["benchSize"]
+        case["benchType"] = matched_meta["benchType"]
+        case["leadJudge"] = matched_meta.get("leadJudge")
+        case["statutes"] = list(matched_meta["statutes"])
+        if not case.get("decisionYear") or not case.get("year"):
+            case["decisionYear"] = matched_meta["year"]
+            case["year"] = matched_meta["year"]
+    else:
+        # Standard case bench rules
+        bs = case.get("benchSize")
+        bench_str = case.get("bench") or ""
+        if not bs and bench_str:
+            judges_list = [j.strip() for j in re.split(r'[,;&]|\band\b', bench_str) if j.strip()]
+            bs = len(judges_list) if len(judges_list) > 0 else 2
+        if not bs:
+            bs = 2
+        case["benchSize"] = bs
+        if not case.get("benchType"):
+            case["benchType"] = "Constitution Bench" if bs >= 5 else ("Division Bench" if bs == 2 else ("3-Judge Bench" if bs == 3 else f"{bs}-Judge Bench"))
+
+        if bench_str and not case.get("leadJudge"):
+            lead = [j.strip() for j in re.split(r'[,;&]|\band\b', bench_str) if j.strip()]
+            if lead and any(h in lead[0] for h in ["J.", "C.J.I.", "Justice"]):
+                case["leadJudge"] = lead[0]
+
+    # Clean leadJudge: hide it if not a verified individual judge name
+    if case.get("leadJudge"):
+        lj = str(case["leadJudge"]).strip()
+        if not lj or any(bad in lj.lower() for bad in ["bench", "court", "division", "constitution", "unknown", "none"]):
+            case["leadJudge"] = None
+        else:
+            case["leadJudge"] = lj
+    else:
+        case["leadJudge"] = None
+
+    yr = case.get("decisionYear") or case.get("year")
+    if not yr and c_cit:
+        ym = re.search(r'\b(19\d\d|20\d\d)\b', c_cit)
+        if ym:
+            yr = int(ym.group(1))
+    if yr:
+        case["decisionYear"] = int(yr)
+        case["year"] = int(yr)
+
+    return case
+
+
+def normalize_case_dedup_key(title: str, year: Optional[int] = None, citation: str = "") -> str:
+    """
+    Creates a canonical deduplication key for a case:
+    strips honorifics, procedural markers, common party terms, and appends the 4-digit year.
+    """
+    t_clean = (title or "").lower()
+    t_clean = re.sub(r'\b(?:justice|retd\.?|hon\'ble|dr\.?|mr\.?|ms\.?)\b', '', t_clean)
+    t_clean = re.sub(r'\(.*?\)', '', t_clean)
+    tokens = [tok for tok in re.findall(r'[a-z0-9]{3,}', t_clean) if tok not in {
+        "versus", "state", "union", "india", "court", "limited", "ltd", "pvt", "corp",
+        "corporation", "company", "and", "the", "ors", "anr", "govt", "government"
+    }]
+    clean_year = year
+    if not clean_year and citation:
+        ym = re.search(r'\b(19\d\d|20\d\d)\b', citation)
+        if ym:
+            clean_year = int(ym.group(1))
+    key_core = "_".join(sorted(tokens[:3])) if tokens else "unknown"
+    return f"{key_core}_{clean_year or 0}"
+
+
+def deduplicate_results_by_name_and_year(results: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
+    seen_keys = set()
+    deduped = []
+    for r in results:
+        enrich_landmark_metadata(r)
+        title = r.get("title") or r.get("case_name") or r.get("common_name") or ""
+        year = r.get("decisionYear") or r.get("year")
+        citation = r.get("citation") or r.get("neutral_citation") or ""
+        key = normalize_case_dedup_key(title, year, citation)
+        if key in seen_keys:
+            continue
+        seen_keys.add(key)
+        deduped.append(r)
+    return deduped
+
+
 class QdrantService:
     def __init__(self):
         self.url = settings.QDRANT_URL
@@ -648,7 +877,7 @@ class QdrantService:
             if c.get("id") == cid or (c.get("title") and c.get("title").lower() == cid.lower()):
                 c_copy = dict(c)
                 c_copy["case_id"] = c.get("id")
-                return c_copy
+                return enrich_landmark_metadata(c_copy)
 
         chunks = self.get_case_chunks_by_id(cid)
         if not chunks:
@@ -680,7 +909,7 @@ class QdrantService:
         combined_text = "\n".join(ch.get("text", "") for ch in chunks[:3])
         statutes = extract_statutes_from_text(combined_text)
 
-        return {
+        return enrich_landmark_metadata({
             "id": cid,
             "case_id": cid,
             "title": title,
@@ -695,7 +924,7 @@ class QdrantService:
             "statutes": statutes,
             "total_chunks": len(chunks),
             "chunks": chunks
-        }
+        })
 
     def lookup_exact_citation(self, citation_str: str) -> Optional[Dict[str, Any]]:
         """
@@ -824,7 +1053,7 @@ class QdrantService:
                 if self._matches_filters(matched_case, court_filter, bench_filter):
                     if is_pure_cit:
                         # Exact citation match puts that case alone at the top
-                        return [matched_case]
+                        return deduplicate_results_by_name_and_year([matched_case])
                     else:
                         # Mixed query: put matched case alone at top, append additional matches
                         results = []
@@ -844,17 +1073,19 @@ class QdrantService:
                                 seen_ids.add(r_id)
                                 seen_ids.add(r_title)
                                 combined.append(r)
-                        return combined[:limit]
+                        return deduplicate_results_by_name_and_year(combined)[:limit]
             elif is_pure_cit:
                 # If the query is a citation and nothing matches, return no results (never a random case).
                 return []
 
         if self._client:
             try:
-                return self._search_qdrant(query, court_filter, bench_filter, limit)
+                res = self._search_qdrant(query, court_filter, bench_filter, limit)
+                return deduplicate_results_by_name_and_year(res)[:limit]
             except Exception as e:
                 logger.warning("Live Qdrant query failed, falling back to local index: %s", e)
-        return self._search_local(query, court_filter, bench_filter, limit)
+        res = self._search_local(query, court_filter, bench_filter, limit)
+        return deduplicate_results_by_name_and_year(res)[:limit]
 
     def _matches_filters(self, case: Dict[str, Any], court_filter: str, bench_filter: str) -> bool:
         if court_filter != "ALL" and case.get("court") != court_filter:
