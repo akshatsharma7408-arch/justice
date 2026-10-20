@@ -90,7 +90,7 @@ async def get_citator_case_by_id(case_id: str, include_ai: bool = Query(True, de
         if not q_case:
             raise HTTPException(
                 status_code=404,
-                detail=f"Case '{case_id}' was not found in the verified dataset."
+                detail=f"Case '{case_id}' was not found in the verified dataset. I couldn't find a verified source for this."
             )
 
         bench_size = q_case.get("benchSize", 2)

@@ -414,6 +414,55 @@ def extract_query_aliases(query: str) -> List[str]:
     return list(dict.fromkeys(matched))
 
 
+CITATION_PATTERNS = [
+    # AIR patterns: AIR 1973 SC 1461, AIR 1978 SC 597, A.I.R. (1973) S.C. 1461, AIR 1967 SC 1098
+    r'\b(?:AIR|A\.I\.R\.)\s*(?:\(?\[?\d{4}\)?\]?)?\s*(?:SC|S\.C\.|SCC|S\.C\.C\.)?\s*\d+\b',
+    # SCC, SCR, SCALE, INSC with year: (1973) 4 SCC 225, 1973 4 SCC 225, (1978) 1 SCC 248, [1978] 2 SCR 621
+    r'\(?\[?\b\d{4}\)?\]?\s*(?:\(?\d+\)?|\(?Supp(?:l|\.|lementary)?\)?|\(?[A-Z]\)?)\s*(?:\d+)?\s*(?:SCC|S\.C\.C\.|SCR|S\.C\.R\.|SCALE|JT|AIR|A\.I\.R\.|INSC)\s*\d+\b',
+    # 1973INSC91, 2017INSC752, 1978 INSC 19
+    r'\b\d{4}\s*INSC\s*\d+\b',
+    # Supp SCR: [1973] Supp. 1 SCR 1, 1973 Supp 1 SCR 1, [1985] Supp 2 SCR 51, Supp (3) SCC 217
+    r'\(?\[?\b\d{4}\)?\]?\s*(?:Supp(?:l|\.|lementary)?)\s*(?:\(?\d+\)?|\d+)?\s*(?:SCR|S\.C\.R\.|SCC|S\.C\.C\.)\s*\d+\b',
+    # General reporter citation: 2014 8 SCC 273, (2006) 4 SCC 227, etc.
+    r'\(?\[?\b\d{4}\)?\]?\s*\d*\s*(?:SCC|S\.C\.C\.|SCR|S\.C\.R\.|SCALE|CompCas|ILR|PTC|DLT|JT)\s*\d+\b'
+]
+
+
+def detect_citation(query: str) -> Optional[str]:
+    """
+    Detects Indian legal citations in the query:
+    Patterns like AIR 1973 SC 1461, (1973) 4 SCC 225, 1973 4 SCC 225,
+    [1973] Supp. 1 SCR 1, 1973INSC91, (1978) 1 SCC 248, AIR 1978 SC 597,
+    with flexible spaces, dots and brackets.
+    """
+    if not query:
+        return None
+    for pattern in CITATION_PATTERNS:
+        m = re.search(pattern, query, re.IGNORECASE)
+        if m:
+            return m.group(0).strip()
+    return None
+
+
+def normalize_citation(cit: str) -> str:
+    """Normalizes citation for robust exact matching (strips brackets, dots, commas, spaces)."""
+    if not cit:
+        return ""
+    return re.sub(r'[\s\.\,\(\)\[\]\-_/]+', '', cit).lower()
+
+
+def is_pure_citation_query(query: str) -> bool:
+    """Returns True if the query is strictly or predominantly a citation lookup."""
+    cit = detect_citation(query)
+    if not cit:
+        return False
+    cleaned = re.sub(re.escape(cit), '', query, flags=re.IGNORECASE).strip()
+    cleaned = re.sub(r'\b(?:case|judgment|citation|ruling|decision|the|in|of|what|was|is)\b', '', cleaned, flags=re.IGNORECASE).strip()
+    cleaned = re.sub(r'[\s\.\,\(\)\[\]\-_/\?\:]+', '', cleaned)
+    return len(cleaned) == 0
+
+
+
 class QdrantService:
     def __init__(self):
         self.url = settings.QDRANT_URL
@@ -648,6 +697,113 @@ class QdrantService:
             "chunks": chunks
         }
 
+    def lookup_exact_citation(self, citation_str: str) -> Optional[Dict[str, Any]]:
+        """
+        Looks up a citation across:
+        1. All 14 landmark cases (checking extra_aliases, short_name, common_name)
+        2. All 12 verified corpus precedents (checking citation, altCitations)
+        3. Local SC chunks index and live Qdrant collection 'sc_judgments'
+        """
+        target_norm = normalize_citation(citation_str)
+        if not target_norm:
+            return None
+
+        # 1. Landmark cases
+        try:
+            from app.ingest.landmark_pipeline import LANDMARK_CASES
+        except Exception:
+            LANDMARK_CASES = []
+
+        for case_def in LANDMARK_CASES:
+            aliases = [case_def["common_name"], case_def["short_name"]] + case_def.get("extra_aliases", [])
+            for a in aliases:
+                if normalize_citation(a) == target_norm:
+                    case_obj = self.get_case_by_id(case_def["path"])
+                    if not case_obj:
+                        case_obj = {
+                            "id": case_def["path"],
+                            "case_id": case_def["path"],
+                            "title": case_def["common_name"],
+                            "citation": citation_str,
+                            "court": "Supreme Court of India",
+                            "decisionYear": case_def["year"],
+                            "year": case_def["year"],
+                            "benchType": "Constitution Bench" if case_def.get("benchSize", 5) >= 5 else "Division Bench",
+                            "benchSize": case_def.get("benchSize", 5),
+                            "statutes": [],
+                            "ratioSummary": f"{case_def['common_name']}: Authoritative Supreme Court decision.",
+                            "ratioLabel": "RATIO DECIDENDI / LEGAL PRINCIPLE",
+                            "is_verified_ratio": True,
+                        }
+                    case_obj["aliases"] = aliases
+                    case_obj["relevance_score"] = 0.99
+                    case_obj["raw_vector_score"] = 0.99
+                    case_obj["is_verified_ratio"] = True
+                    case_obj["retrieval_mode"] = "exact_citation_match"
+                    return case_obj
+
+        # 2. Verified Precedent Corpus
+        for c in self.corpus:
+            cits = [c.get("citation") or ""] + c.get("altCitations", [])
+            for c_cit in cits:
+                if normalize_citation(c_cit) == target_norm:
+                    c_copy = dict(c)
+                    c_copy["relevance_score"] = 0.99
+                    c_copy["raw_vector_score"] = 0.99
+                    c_copy["is_verified_ratio"] = True
+                    c_copy["retrieval_mode"] = "exact_citation_match"
+                    return c_copy
+
+        # 3. Local SC chunks index
+        self._ensure_sc_dataset_loaded()
+        if self._sc_chunks:
+            for ch in self._sc_chunks:
+                for k in ["citation", "neutral_citation"]:
+                    val = ch.get(k)
+                    if val and normalize_citation(val) == target_norm:
+                        cid = ch.get("case_id")
+                        c_obj = self.get_case_by_id(cid)
+                        if c_obj:
+                            c_obj["relevance_score"] = 0.99
+                            c_obj["raw_vector_score"] = 0.99
+                            c_obj["retrieval_mode"] = "exact_citation_match"
+                            return c_obj
+
+        # 4. Live Qdrant check if connected
+        if self._client:
+            try:
+                from qdrant_client.models import Filter, FieldCondition, MatchValue
+                target_collection = self.sc_collection_name
+                try:
+                    available = {col.name for col in self._client.get_collections().collections}
+                    if target_collection not in available:
+                        target_collection = self.collection_name
+                except Exception:
+                    pass
+
+                hits, _ = self._client.scroll(
+                    collection_name=target_collection,
+                    scroll_filter=Filter(should=[
+                        FieldCondition(key="citation", match=MatchValue(value=citation_str)),
+                        FieldCondition(key="aliases", match=MatchValue(value=citation_str))
+                    ]),
+                    limit=5,
+                    with_payload=True
+                )
+                if hits:
+                    p = dict(hits[0].payload or {})
+                    cid = p.get("case_id") or str(hits[0].id)
+                    c_obj = self.get_case_by_id(cid)
+                    if c_obj:
+                        c_obj["relevance_score"] = 0.99
+                        c_obj["raw_vector_score"] = 0.99
+                        c_obj["retrieval_mode"] = "exact_citation_match"
+                        return c_obj
+            except Exception as e:
+                logger.debug("Exact citation Qdrant scroll failed: %s", e)
+
+        return None
+
     # ------------------------------------------------------------------ #
     # Retrieval                                                           #
     # ------------------------------------------------------------------ #
@@ -658,6 +814,41 @@ class QdrantService:
         bench_filter: str = "ALL",
         limit: int = 5,
     ) -> List[Dict[str, Any]]:
+        # Item 3: Exact citation matching
+        det_cit = detect_citation(query)
+        is_pure_cit = is_pure_citation_query(query) if det_cit else False
+
+        if det_cit:
+            matched_case = self.lookup_exact_citation(det_cit)
+            if matched_case:
+                if self._matches_filters(matched_case, court_filter, bench_filter):
+                    if is_pure_cit:
+                        # Exact citation match puts that case alone at the top
+                        return [matched_case]
+                    else:
+                        # Mixed query: put matched case alone at top, append additional matches
+                        results = []
+                        if self._client:
+                            try:
+                                results = self._search_qdrant(query, court_filter, bench_filter, limit)
+                            except Exception:
+                                results = self._search_local(query, court_filter, bench_filter, limit)
+                        else:
+                            results = self._search_local(query, court_filter, bench_filter, limit)
+                        combined = [matched_case]
+                        seen_ids = {matched_case.get("id"), matched_case.get("case_id"), (matched_case.get("title") or "").lower()}
+                        for r in results:
+                            r_id = r.get("id") or r.get("case_id")
+                            r_title = (r.get("title") or "").lower()
+                            if r_id not in seen_ids and r_title not in seen_ids:
+                                seen_ids.add(r_id)
+                                seen_ids.add(r_title)
+                                combined.append(r)
+                        return combined[:limit]
+            elif is_pure_cit:
+                # If the query is a citation and nothing matches, return no results (never a random case).
+                return []
+
         if self._client:
             try:
                 return self._search_qdrant(query, court_filter, bench_filter, limit)

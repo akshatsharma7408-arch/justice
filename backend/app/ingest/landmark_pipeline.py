@@ -78,8 +78,15 @@ LANDMARK_CASES: List[Dict[str, Any]] = [
             "Kesavananda Bharati",
             "Kesavananda Bharati case",
             "AIR 1973 SC 1461",
+            "A.I.R. 1973 S.C. 1461",
             "(1973) 4 SCC 225",
             "1973 4 SCC 225",
+            "[1973] Supp. 1 SCR 1",
+            "[1973] Supp 1 SCR 1",
+            "1973 Supp 1 SCR 1",
+            "[1973] 1 SCR 1",
+            "1973INSC91",
+            "1973 INSC 91",
             "basic structure doctrine",
             "basic structure"
         ]
@@ -92,8 +99,13 @@ LANDMARK_CASES: List[Dict[str, Any]] = [
         "extra_aliases": [
             "Maneka Gandhi case",
             "AIR 1978 SC 597",
+            "A.I.R. 1978 S.C. 597",
             "(1978) 1 SCC 248",
             "1978 1 SCC 248",
+            "[1978] 2 SCR 621",
+            "1978 2 SCR 621",
+            "1978INSC19",
+            "1978 INSC 19",
             "right to travel abroad",
             "procedure established by law",
             "due process of law"
@@ -106,12 +118,19 @@ LANDMARK_CASES: List[Dict[str, Any]] = [
         "short_name": "Puttaswamy",
         "extra_aliases": [
             "K.S. Puttaswamy",
+            "Justice K.S. Puttaswamy",
+            "Justice K.S. Puttaswamy (Retd.) v. Union of India",
             "Puttaswamy case",
             "right to privacy",
             "right to privacy Puttaswamy",
             "(2017) 10 SCC 1",
             "2017 10 SCC 1",
-            "AIR 2017 SC 4161"
+            "AIR 2017 SC 4161",
+            "A.I.R. 2017 S.C. 4161",
+            "[2017] 10 SCR 569",
+            "2017 10 SCR 569",
+            "2017INSC752",
+            "2017 INSC 752"
         ]
     },
     {
@@ -123,8 +142,13 @@ LANDMARK_CASES: List[Dict[str, Any]] = [
             "Vishaka case",
             "Vishaka guidelines",
             "AIR 1997 SC 3011",
+            "A.I.R. 1997 S.C. 3011",
             "(1997) 6 SCC 241",
             "1997 6 SCC 241",
+            "[1997] Supp 3 SCR 404",
+            "1997 Supp 3 SCR 404",
+            "1997INSC665",
+            "1997 INSC 665",
             "sexual harassment at workplace"
         ]
     },
@@ -140,6 +164,11 @@ LANDMARK_CASES: List[Dict[str, Any]] = [
             "(2018) 10 SCC 1",
             "2018 10 SCC 1",
             "AIR 2018 SC 4321",
+            "A.I.R. 2018 S.C. 4321",
+            "[2018] 7 SCR 379",
+            "2018 7 SCR 379",
+            "2018INSC790",
+            "2018 INSC 790",
             "decriminalization of homosexuality"
         ]
     },
@@ -151,8 +180,13 @@ LANDMARK_CASES: List[Dict[str, Any]] = [
         "extra_aliases": [
             "Minerva Mills case",
             "AIR 1980 SC 1789",
+            "A.I.R. 1980 S.C. 1789",
             "(1980) 3 SCC 625",
             "1980 3 SCC 625",
+            "[1981] 1 SCR 206",
+            "1981 1 SCR 206",
+            "1980INSC141",
+            "1980 INSC 141",
             "balance between fundamental rights and directive principles"
         ]
     },
@@ -166,6 +200,11 @@ LANDMARK_CASES: List[Dict[str, Any]] = [
             "Golak Nath",
             "Golaknath case",
             "AIR 1967 SC 1643",
+            "A.I.R. 1967 S.C. 1643",
+            "(1967) 2 SCR 762",
+            "1967 2 SCR 762",
+            "1967INSC45",
+            "1967 INSC 45",
             "parliament cannot abridge fundamental rights"
         ]
     },
@@ -179,8 +218,13 @@ LANDMARK_CASES: List[Dict[str, Any]] = [
             "Bommai case",
             "Article 356",
             "AIR 1994 SC 1918",
+            "A.I.R. 1994 S.C. 1918",
             "(1994) 3 SCC 1",
             "1994 3 SCC 1",
+            "[1994] 2 SCR 644",
+            "1994 2 SCR 644",
+            "1994INSC173",
+            "1994 INSC 173",
             "secularism basic structure",
             "presidential rule guidelines"
         ]
@@ -195,8 +239,13 @@ LANDMARK_CASES: List[Dict[str, Any]] = [
             "pavement dwellers case",
             "right to livelihood",
             "AIR 1986 SC 180",
+            "A.I.R. 1986 S.C. 180",
             "(1985) 3 SCC 545",
-            "1985 3 SCC 545"
+            "1985 3 SCC 545",
+            "[1985] Supp 2 SCR 51",
+            "1985 Supp 2 SCR 51",
+            "1985INSC155",
+            "1985 INSC 155"
         ]
     },
     {
@@ -210,8 +259,13 @@ LANDMARK_CASES: List[Dict[str, Any]] = [
             "arrest guidelines",
             "custodial violence guidelines",
             "AIR 1997 SC 610",
+            "A.I.R. 1997 S.C. 610",
             "(1997) 1 SCC 416",
-            "1997 1 SCC 416"
+            "1997 1 SCC 416",
+            "[1996] Supp 10 SCR 284",
+            "1996 Supp 10 SCR 284",
+            "1996INSC1557",
+            "1996 INSC 1557"
         ]
     },
     {
@@ -226,7 +280,12 @@ LANDMARK_CASES: List[Dict[str, Any]] = [
             "arrest checklist",
             "(2014) 8 SCC 273",
             "2014 8 SCC 273",
-            "AIR 2014 SC 2756"
+            "AIR 2014 SC 2756",
+            "A.I.R. 2014 S.C. 2756",
+            "[2014] 8 SCR 128",
+            "2014 8 SCR 128",
+            "2014INSC504",
+            "2014 INSC 504"
         ]
     },
     {
@@ -240,7 +299,12 @@ LANDMARK_CASES: List[Dict[str, Any]] = [
             "Section 154 CrPC FIR",
             "(2014) 2 SCC 1",
             "2014 2 SCC 1",
-            "AIR 2014 SC 187"
+            "AIR 2014 SC 187",
+            "A.I.R. 2014 S.C. 187",
+            "[2013] 14 SCR 713",
+            "2013 14 SCR 713",
+            "2013INSC780",
+            "2013 INSC 780"
         ]
     },
     {
@@ -254,7 +318,12 @@ LANDMARK_CASES: List[Dict[str, Any]] = [
             "online freedom of speech",
             "(2015) 5 SCC 1",
             "2015 5 SCC 1",
-            "AIR 2015 SC 1523"
+            "AIR 2015 SC 1523",
+            "A.I.R. 2015 S.C. 1523",
+            "[2015] 5 SCR 963",
+            "2015 5 SCR 963",
+            "2015INSC244",
+            "2015 INSC 244"
         ]
     },
     {
@@ -269,7 +338,15 @@ LANDMARK_CASES: List[Dict[str, Any]] = [
             "50 percent reservation cap",
             "creamy layer",
             "AIR 1993 SC 477",
-            "Supp (3) SCC 217"
+            "A.I.R. 1993 S.C. 477",
+            "1992 Supp (3) SCC 217",
+            "(1992) Supp 3 SCC 217",
+            "1992 Supp 3 SCC 217",
+            "Supp (3) SCC 217",
+            "[1992] Supp 2 SCR 454",
+            "1992 Supp 2 SCR 454",
+            "1992INSC281",
+            "1992 INSC 281"
         ]
     }
 ]

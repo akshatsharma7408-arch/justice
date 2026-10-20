@@ -118,12 +118,22 @@ def extract_query_entities(query: str) -> Dict[str, Any]:
     # 2. Articles (e.g. Article 21, Art. 412, art 399)
     articles = re.findall(r'\b(?:articles?|arts?\.?)\s*(\d+[a-zA-Z]*)\b', q, re.IGNORECASE)
     
-    # 3. Judicial citations (e.g. (2021) 5 SCC 123, 2023 12 SCC 456, [2022] 4 SCR 382)
-    citations = re.findall(
-        r'\(?\[?\b\d{4}\)?\]?[ \t]*\d*[ \t]*(?:SCC|AIR|SCR|SCALE|CompCas|ILR|PTC|DLT|INSC|S\.C\.R\.)[ \t]*\d+[A-Za-z0-9\s]*',
-        q,
-        re.IGNORECASE
-    )
+    # 3. Judicial citations (e.g. AIR 1973 SC 1461, (1973) 4 SCC 225, [1973] Supp. 1 SCR 1, 1973INSC91)
+    try:
+        from app.services.qdrant_service import detect_citation, CITATION_PATTERNS
+        detected_cit = detect_citation(q)
+        citations = [detected_cit] if detected_cit else []
+        for p in CITATION_PATTERNS:
+            for m in re.finditer(p, q, re.IGNORECASE):
+                val = m.group(0).strip()
+                if val and val not in citations:
+                    citations.append(val)
+    except Exception:
+        citations = re.findall(
+            r'\(?\[?\b\d{4}\)?\]?[ \t]*\d*[ \t]*(?:SCC|AIR|SCR|SCALE|CompCas|ILR|PTC|DLT|INSC|S\.C\.R\.)[ \t]*\d+[A-Za-z0-9\s]*',
+            q,
+            re.IGNORECASE
+        )
     
     # 4. Case names / party names
     case_names = []
@@ -247,11 +257,29 @@ def match_case_to_query_entities(entities: Dict[str, Any], case: Dict[str, Any])
     # If query specified citations, the case citation MUST match
     if entities["citations"]:
         cit_matched = False
+        try:
+            from app.services.qdrant_service import normalize_citation
+        except Exception:
+            normalize_citation = lambda s: re.sub(r'[\s\.\,\(\)\[\]\-_/]+', '', s).lower()
+
+        case_cits = [
+            case.get("citation") or "",
+            case.get("neutral_citation") or "",
+        ] + case.get("altCitations", []) + case.get("aliases", [])
+        normalized_case_cits = [normalize_citation(c) for c in case_cits if c]
+
         for cit_str in entities["citations"]:
-            nums = re.findall(r'\b\d+\b', cit_str)
-            if nums and any(num in case_cit for num in nums):
+            norm_q_cit = normalize_citation(cit_str)
+            if not norm_q_cit:
+                continue
+            if any(norm_q_cit == ncc or (len(norm_q_cit) >= 6 and norm_q_cit in ncc) or (len(ncc) >= 6 and ncc in norm_q_cit) for ncc in normalized_case_cits):
                 cit_matched = True
                 break
+            nums = re.findall(r'\b\d+\b', cit_str)
+            if len(nums) >= 2 and any(all(num in ncc for num in nums) for ncc in normalized_case_cits):
+                cit_matched = True
+                break
+
         if not cit_matched:
             return False
 
@@ -369,8 +397,9 @@ def check_holding_direction(
             bool(re.search(r'\b(?:during\s+(?:employment|the\s+term|subsistence))\s+(?:is|are)\s+(?:void|unenforceable|prohibited)\b', combined_ans))
             or ("during the term" in combined_ans and "void under section 27" in combined_ans)
         )
-        if is_inverted or not any(w in combined_ans for w in ["valid", "enforceable", "permissible", "allowed", "not in restraint"]):
-            logger.warning("[HoldingSelfCheck] Inverted Section 27 during-term holding detected! Enforcing Niranjan Golikari holding.")
+        has_primary_during_term = any(c in combined_ans for c in ["golikari", "gujarat bottling"])
+        if is_inverted or not any(w in combined_ans for w in ["valid", "enforceable", "permissible", "allowed", "not in restraint"]) or not has_primary_during_term:
+            logger.warning("[HoldingSelfCheck] Inverted or incomplete Section 27 during-term holding detected! Enforcing Niranjan Golikari holding.")
             correct_case = next(
                 (c for c in retrieved_cases if "niranjan" in (c.get("title") or "").lower() or "gujarat" in (c.get("title") or "").lower()),
                 None

@@ -88,8 +88,13 @@ def is_pure_case_lookup_query(query: str) -> bool:
             return True
 
     # Citations
-    if re.search(r'\b(?:\d{4}\s+)?(?:scc|air|scr|scale|insc)\b', q_lower):
-        return True
+    try:
+        from app.services.qdrant_service import detect_citation, is_pure_citation_query
+        if detect_citation(q) and is_pure_citation_query(q):
+            return True
+    except Exception:
+        if re.search(r'\b(?:\d{4}\s+)?(?:scc|air|scr|scale|insc)\b', q_lower):
+            return True
 
     # Party v. Party format
     if re.search(r'\b[a-z0-9\.\']+\s+(?:v\.|vs\.?|versus)\s+[a-z0-9\.\']+', q_lower):
@@ -112,13 +117,13 @@ async def search_precedents_post(payload: SearchRequest):
         limit=payload.limit
     )
 
-    if not payload.enable_hyde:
+    if not payload.enable_hyde or is_pure_case_lookup_query(payload.query):
         return SearchResponse(
             query=payload.query,
-            hyde_synthetic_ratio=None,
+            hyde_synthetic_ratio=results[0].get("ratioSummary") if results else None,
             ai_answer=None,
-            citations=[],
-            model_used="retrieval_only",
+            citations=[f"{results[0].get('title')} ({results[0].get('citation')})"] if results else [],
+            model_used="case_lookup" if is_pure_case_lookup_query(payload.query) else "retrieval_only",
             results_count=len(results),
             results=results
         )
