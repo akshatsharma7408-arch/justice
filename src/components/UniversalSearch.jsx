@@ -311,7 +311,7 @@ export default function UniversalSearch({ onSelectCaseForCitator, onOpenCaseChat
                     <>
                       <span className="meta-dot">&bull;</span>
                       <span className="relevance-score-badge mono">
-                        Match {Math.round(precedent.relevance_score * 100)}%
+                        Match {Math.min(99, Math.max(0, Math.round(precedent.relevance_score * 100)))}%
                       </span>
                     </>
                   )}

@@ -22,7 +22,7 @@ class SearchRequest(BaseModel):
     court: Optional[str] = Field("ALL", description="Court filter: 'ALL', 'Supreme Court of India', 'Delhi High Court'")
     bench_type: Optional[str] = Field("ALL", description="Bench filter: 'ALL', 'CONSTITUTION', 'DIVISION'")
     enable_hyde: bool = Field(True, description="Whether to synthesize judicial ratio from retrieved precedents")
-    limit: int = Field(5, ge=1, le=50, description="Maximum number of precedents to return")
+    limit: int = Field(8, ge=1, le=8, description="Maximum number of precedents to return (at most 8)")
     force_fallback: bool = Field(False, description="Whether to force deterministic legal fallback")
 
 class SearchResponse(BaseModel):

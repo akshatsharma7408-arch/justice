@@ -128,7 +128,7 @@ export async function auditContractWithBackend(input, title = "Commercial Agreem
  * MODULE B: Universal Search
  * POST /api/v1/search
  */
-export async function searchPrecedentsWithBackend(query, court = "ALL", benchType = "ALL", enableHyde = true, limit = 5) {
+export async function searchPrecedentsWithBackend(query, court = "ALL", benchType = "ALL", enableHyde = true, limit = 8) {
   const res = await fetch(`${API_BASE}/search`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },

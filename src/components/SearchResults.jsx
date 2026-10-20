@@ -477,7 +477,7 @@ export default function SearchResults({
               const caseIdKey = precedent.id || precedent.case_id || `case-${index}`;
               const isExpanded = expandedCaseId === caseIdKey;
               const relevancePercent = precedent.relevance_score
-                ? Math.round(precedent.relevance_score * 100)
+                ? Math.min(99, Math.max(0, Math.round(precedent.relevance_score * 100)))
                 : 95;
 
               return (

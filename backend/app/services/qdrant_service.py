@@ -131,6 +131,202 @@ SEARCH_STOPWORDS = {
 }
 
 
+ACT_MAP: Dict[str, List[str]] = {
+    "crpc": ["crpc", "cr.p.c", "code of criminal procedure", "criminal procedure code"],
+    "ipc": ["ipc", "i.p.c", "indian penal code", "penal code"],
+    "bns": ["bns", "bharatiya nyaya sanhita"],
+    "bnss": ["bnss", "bharatiya nagarik suraksha sanhita"],
+    "cpc": ["cpc", "c.p.c", "code of civil procedure", "civil procedure code"],
+    "it act": ["it act", "information technology act", "it"],
+    "contract act": ["contract act", "indian contract act", "contract"],
+    "constitution": ["constitution", "constitution of india", "constitutional"],
+}
+
+EVERYDAY_RIGHTS_RULES: Dict[str, Dict[str, Any]] = {
+    "arrest": {
+        "triggers": ["arrest", "warrant", "custody", "remand", "handcuff", "detention without warrant"],
+        "required_case_keywords": ["arrest", "warrant", "custody", "section 41", "section 41a", "detention"],
+        "negative_keywords": ["land acquisition", "acquisition of land", "land acquisition act", "cheque", "dishonour of cheque", "section 138", "negotiable instruments", "promissory note"]
+    },
+    "eviction": {
+        "triggers": ["eviction", "evict", "tenant", "landlord", "tenancy", "rent control", "ejectment"],
+        "required_case_keywords": ["tenant", "landlord", "eviction", "rent control", "tenancy", "ejectment"],
+        "negative_keywords": ["land acquisition", "acquisition of land", "land acquisition act", "cheque", "dishonour of cheque", "section 138", "negotiable instruments"]
+    },
+    "bribe": {
+        "triggers": ["bribe", "bribery", "corruption", "gratification", "trap case"],
+        "required_case_keywords": ["bribe", "illegal gratification", "prevention of corruption", "corruption"],
+        "negative_keywords": ["land acquisition", "acquisition of land", "land acquisition act", "cheque", "dishonour of cheque", "section 138", "negotiable instruments"]
+    },
+    "traffic": {
+        "triggers": ["traffic", "challan", "motor vehicles", "bike stop", "traffic stop", "two-wheeler"],
+        "required_case_keywords": ["motor vehicles", "challan", "traffic", "vehicle"],
+        "negative_keywords": ["land acquisition", "acquisition of land", "land acquisition act", "cheque", "dishonour of cheque", "section 138", "negotiable instruments"]
+    }
+}
+
+
+def extract_section_or_article(query: str) -> Optional[Dict[str, Any]]:
+    """
+    Extracts the statutory section or constitutional article number and associated act
+    from queries such as 'Article 21', 'Section 41 CrPC', 'Section 498A', 'Section 27 Contract Act'.
+    """
+    q_lower = query.lower().strip()
+    detected_act = None
+    for act_key, aliases in ACT_MAP.items():
+        if any(re.search(r'\b' + re.escape(a) + r'\b', q_lower) for a in aliases):
+            detected_act = act_key
+            break
+
+    # Constitutional Article
+    art_m = re.search(r'\b(?:article|art\.?)\s*(\d+[a-z]*(?:\([0-9a-z]+\))*)', q_lower)
+    if art_m:
+        num = art_m.group(1).upper()
+        return {
+            "type": "article",
+            "number": num,
+            "act": "constitution",
+            "search_strings": [
+                f"article {num}".lower(),
+                f"art. {num}".lower(),
+                f"art {num}".lower(),
+                f"article {num}, constitution of india".lower(),
+                f"article {num} of the constitution".lower(),
+            ]
+        }
+
+    # Statutory Section
+    sec_m = re.search(r'\b(?:section|sec\.?)\s*(\d+[a-z]*)', q_lower)
+    if sec_m:
+        sec_num = sec_m.group(1).upper()
+        act = detected_act
+        if not act:
+            if sec_num in ("498A", "377", "302", "304B", "307", "420"):
+                act = "ipc"
+            elif sec_num in ("41", "41A", "154", "156", "161", "167", "437", "438", "439"):
+                act = "crpc"
+            elif sec_num in ("27", "74", "73", "56", "65", "23"):
+                act = "contract act"
+            elif sec_num in ("66A", "66", "43", "67", "79"):
+                act = "it act"
+            elif sec_num in ("138", "139", "141"):
+                act = "ni act"
+            elif sec_num in ("9", "11", "34", "37"):
+                act = "arbitration act"
+
+        search_strings = [
+            f"section {sec_num}".lower(),
+            f"sec. {sec_num}".lower(),
+            f"sec {sec_num}".lower(),
+        ]
+        if act:
+            act_names = ACT_MAP.get(act, [act])
+            for an in act_names:
+                search_strings.append(f"section {sec_num} {an}".lower())
+                search_strings.append(f"section {sec_num}, {an}".lower())
+                search_strings.append(f"section {sec_num} of the {an}".lower())
+
+        return {
+            "type": "section",
+            "number": sec_num,
+            "act": act or "statute",
+            "search_strings": search_strings
+        }
+
+    return None
+
+
+def detect_everyday_rights_topic(query: str) -> Tuple[Optional[str], Optional[Dict[str, Any]]]:
+    """Detects if a query belongs to one of the 4 everyday citizen rights topics."""
+    q_low = query.lower()
+    for topic_name, config in EVERYDAY_RIGHTS_RULES.items():
+        if any(tr in q_low for tr in config["triggers"]):
+            return topic_name, config
+    return None, None
+
+
+def compute_keyword_score(
+    query: str,
+    case: Dict[str, Any],
+    query_terms: List[str],
+    statute_info: Optional[Dict[str, Any]] = None
+) -> float:
+    """Computes BM25/term overlap lexical relevance score across title, aliases, statutes and text."""
+    c_title = (case.get("title") or case.get("case_name") or case.get("common_name") or "").lower()
+    c_aliases = [a.lower() for a in case.get("aliases", [])]
+    c_statutes = [s.lower() for s in case.get("statutes", [])]
+    c_text = (case.get("text", "") or case.get("ratioSummary", "") or "").lower()
+
+    score = 0.0
+    for term in query_terms:
+        if term in c_title:
+            score += 4.0
+        if any(term in a for a in c_aliases):
+            score += 4.0
+        if any(term in s for s in c_statutes):
+            score += 5.0
+        if term in c_text:
+            score += 1.0
+
+    if len(query.strip()) >= 5 and query.lower() in f"{c_title} {c_text}":
+        score += 8.0
+
+    if statute_info:
+        num = statute_info["number"].lower()
+        for st in c_statutes:
+            if statute_info["type"] == "article" and f"article {num}" in st:
+                score += 20.0
+                break
+            elif statute_info["type"] == "section" and (f"section {num}" in st or f"sec. {num}" in st or f"sec {num}" in st):
+                score += 20.0
+                break
+        for ss in statute_info["search_strings"]:
+            if ss in f"{c_title} {c_text}":
+                score += 10.0
+                break
+
+    return score
+
+
+def get_statute_boost(case: Dict[str, Any], statute_info: Optional[Dict[str, Any]]) -> float:
+    """Calculates boost score for cases matching extracted constitutional articles or statutory sections."""
+    if not statute_info:
+        return 0.0
+    boost = 0.0
+    num = statute_info["number"].lower()
+
+    c_statutes = [s.lower() for s in case.get("statutes", [])]
+    for st in c_statutes:
+        if statute_info["type"] == "article":
+            if f"article {num}" in st or f"art. {num}" in st or f"art {num}" in st:
+                boost += 0.35
+                break
+        elif statute_info["type"] == "section":
+            if f"section {num}" in st or f"sec. {num}" in st or f"sec {num}" in st:
+                boost += 0.35
+                break
+
+    c_text = f"{case.get('title', '')} {case.get('ratioSummary', '')} {case.get('text', '')}".lower()
+    for s_str in statute_info["search_strings"]:
+        if s_str in c_text:
+            boost += 0.15
+            break
+
+    c_title = (case.get("title") or case.get("common_name") or "").lower()
+    for lk, meta in LANDMARK_METADATA.items():
+        if lk in c_title:
+            meta_stats = [ms.lower() for ms in meta.get("statutes", [])]
+            for ms in meta_stats:
+                if statute_info["type"] == "article" and f"article {num}" in ms:
+                    boost += 0.30
+                    break
+                elif statute_info["type"] == "section" and (f"section {num}" in ms or f"sec. {num}" in ms):
+                    boost += 0.30
+                    break
+
+    return min(0.60, boost)
+
+
 def classify_query_topic(query: str) -> Optional[str]:
     """Classifies a user query into one of the 6 citizen rights topics or returns None."""
     q_lower = query.lower()
@@ -150,6 +346,7 @@ def classify_query_topic(query: str) -> Optional[str]:
         if best_score >= 1.0:
             return best_topic
     return None
+
 
 
 def levenshtein_distance(s1: str, s2: str) -> int:
@@ -807,6 +1004,7 @@ class QdrantService:
         self._client = None
         self.corpus = _load_corpus()
         self._corpus_vectors: Optional[List[List[float]]] = None
+        self._landmark_precedents: Optional[List[Dict[str, Any]]] = None
 
         # Local SC judgments dataset index cache
         self._sc_chunks: Optional[List[Dict[str, Any]]] = None
@@ -837,6 +1035,49 @@ class QdrantService:
             texts = [_case_to_text(c) for c in self.corpus]
             self._corpus_vectors = embedding_service.embed_texts(texts)
         return self._corpus_vectors
+
+    def _get_landmark_precedents(self) -> List[Dict[str, Any]]:
+        """Caches structured representation of all landmark precedent cases."""
+        if self._landmark_precedents is None:
+            cases = []
+            lm_file = SC_DATASET_DIR / "chunks" / "landmark_chunks.json"
+            if lm_file.exists():
+                try:
+                    with open(lm_file, "r", encoding="utf-8") as f:
+                        l_chunks = json.load(f)
+                    seen_titles = set()
+                    for ch in l_chunks:
+                        c_title = ch.get("common_name") or ch.get("case_name") or ""
+                        if not c_title or c_title in seen_titles:
+                            continue
+                        seen_titles.add(c_title)
+                        meta = {}
+                        for lk, m in LANDMARK_METADATA.items():
+                            if lk in c_title.lower():
+                                meta = m
+                                break
+                        cases.append({
+                            "id": ch.get("case_id"),
+                            "title": c_title,
+                            "citation": ch.get("citation") or ch.get("neutral_citation") or f"[{ch.get('year')}] SCR",
+                            "court": "Supreme Court of India",
+                            "benchType": meta.get("benchType") or ch.get("benchType", "Supreme Court Bench"),
+                            "benchSize": meta.get("benchSize") or ch.get("benchSize", 5),
+                            "leadJudge": meta.get("leadJudge") or ch.get("leadJudge"),
+                            "decisionYear": meta.get("year") or ch.get("year"),
+                            "statutes": meta.get("statutes") or ch.get("statutes", []),
+                            "ratioSummary": meta.get("holding") or ch.get("ratioSummary", ""),
+                            "ratioLabel": "RATIO DECIDENDI / LEGAL PRINCIPLE",
+                            "is_verified_ratio": True,
+                            "aliases": ch.get("aliases", []),
+                            "landmark": True,
+                            "text": ch.get("text", "")
+                        })
+                except Exception as e:
+                    logger.debug("Failed loading landmark chunks: %s", e)
+            self._landmark_precedents = cases
+        return self._landmark_precedents
+
 
     def _ensure_sc_dataset_loaded(self):
         """Loads and caches chunks and dense vectors from the SC dataset if local indexing is active."""
@@ -1153,8 +1394,11 @@ class QdrantService:
         query: str,
         court_filter: str = "ALL",
         bench_filter: str = "ALL",
-        limit: int = 5,
+        limit: int = 8,
     ) -> List[Dict[str, Any]]:
+        # Item 6: Return at most 8 results
+        effective_limit = min(limit or 8, 8)
+
         # Item 3: Exact citation matching
         det_cit = detect_citation(query)
         is_pure_cit = is_pure_citation_query(query) if det_cit else False
@@ -1171,11 +1415,11 @@ class QdrantService:
                         results = []
                         if self._client:
                             try:
-                                results = self._search_qdrant(query, court_filter, bench_filter, limit)
+                                results = self._search_qdrant(query, court_filter, bench_filter, effective_limit)
                             except Exception:
-                                results = self._search_local(query, court_filter, bench_filter, limit)
+                                results = self._search_local(query, court_filter, bench_filter, effective_limit)
                         else:
-                            results = self._search_local(query, court_filter, bench_filter, limit)
+                            results = self._search_local(query, court_filter, bench_filter, effective_limit)
                         combined = [matched_case]
                         seen_ids = {matched_case.get("id"), matched_case.get("case_id"), (matched_case.get("title") or "").lower()}
                         for r in results:
@@ -1185,19 +1429,19 @@ class QdrantService:
                                 seen_ids.add(r_id)
                                 seen_ids.add(r_title)
                                 combined.append(r)
-                        return deduplicate_results_by_name_and_year(combined)[:limit]
+                        return deduplicate_results_by_name_and_year(combined)[:effective_limit]
             elif is_pure_cit:
                 # If the query is a citation and nothing matches, return no results (never a random case).
                 return []
 
         if self._client:
             try:
-                res = self._search_qdrant(query, court_filter, bench_filter, limit)
-                return deduplicate_results_by_name_and_year(res)[:limit]
+                res = self._search_qdrant(query, court_filter, bench_filter, effective_limit)
+                return deduplicate_results_by_name_and_year(res)[:effective_limit]
             except Exception as e:
                 logger.warning("Live Qdrant query failed, falling back to local index: %s", e)
-        res = self._search_local(query, court_filter, bench_filter, limit)
-        return deduplicate_results_by_name_and_year(res)[:limit]
+        res = self._search_local(query, court_filter, bench_filter, effective_limit)
+        return deduplicate_results_by_name_and_year(res)[:effective_limit]
 
     def _matches_filters(self, case: Dict[str, Any], court_filter: str, bench_filter: str) -> bool:
         if court_filter != "ALL" and case.get("court") != court_filter:
@@ -1208,8 +1452,114 @@ class QdrantService:
             return False
         return True
 
+    def _fuse_and_rank_hybrid(
+        self,
+        query: str,
+        candidates: List[Dict[str, Any]],
+        court_filter: str,
+        bench_filter: str,
+        limit: int,
+        matched_aliases: List[str]
+    ) -> List[Dict[str, Any]]:
+        statute_info = extract_section_or_article(query)
+        rights_topic, topic_config = detect_everyday_rights_topic(query)
+        query_terms = [t for t in re.findall(r'[a-zA-Z0-9]{3,}', query.lower()) if t not in SEARCH_STOPWORDS]
+
+        # 1. Court and Bench filtering
+        filtered: List[Dict[str, Any]] = []
+        for c in candidates:
+            if not self._matches_filters(c, court_filter, bench_filter):
+                continue
+
+            # 2. Everyday-rights topic filtering
+            comb_text = f"{c.get('title', '')} {c.get('ratioSummary', '')} {c.get('text', '')}".lower()
+            if topic_config:
+                # Drop land acquisition and cheque-bounce style cases
+                if any(nk in comb_text for nk in topic_config["negative_keywords"]):
+                    continue
+                # Require at least one topic keyword
+                if not any(rk in comb_text for rk in topic_config["required_case_keywords"]):
+                    continue
+
+            filtered.append(c)
+
+        if not filtered:
+            return []
+
+        # 3. Compute keyword score for all filtered candidates
+        for c in filtered:
+            c["keyword_score"] = compute_keyword_score(query, c, query_terms, statute_info)
+
+        # Check for pure nonsense queries (terms in query, but 0 matches across all candidates)
+        has_substantive_match = any(c["keyword_score"] > 0 for c in filtered)
+        if query_terms and not has_substantive_match and not matched_aliases and not statute_info:
+            return []
+
+        # 4. Dense ranking & Keyword ranking
+        sorted_dense = sorted(filtered, key=lambda x: x.get("raw_vector_score", 0.0), reverse=True)
+        dense_ranks = {c["id"]: idx + 1 for idx, c in enumerate(sorted_dense)}
+
+        sorted_kw = sorted(filtered, key=lambda x: x.get("keyword_score", 0.0), reverse=True)
+        kw_ranks = {c["id"]: idx + 1 for idx, c in enumerate(sorted_kw)}
+
+        N = len(filtered)
+        final_candidates: List[Dict[str, Any]] = []
+
+        for c in filtered:
+            r_dense = dense_ranks.get(c["id"], N + 1)
+            r_kw = kw_ranks.get(c["id"], N + 1)
+
+            # Reciprocal Rank Fusion with standard k=60
+            rrf = (1.0 / (60.0 + r_dense)) + (1.0 / (60.0 + r_kw))
+            rrf_norm = rrf / (2.0 / 61.0)  # Normalized to 0.0 - 1.0
+
+            v_score = c.get("raw_vector_score", 0.0)
+            kw_score = c.get("keyword_score", 0.0)
+
+            statute_boost = get_statute_boost(c, statute_info)
+            topic_boost = 0.15 if (rights_topic and topic_config) else 0.0
+
+            is_alias_match = False
+            if matched_aliases:
+                c_name = (c.get("title") or c.get("common_name") or "").lower()
+                c_als = [a.lower() for a in c.get("aliases", [])]
+                if any(ma.lower() in c_name or any(ma.lower() in ca for ca in c_als) for ma in matched_aliases):
+                    is_alias_match = True
+
+            alias_boost = 0.40 if is_alias_match else 0.0
+
+            # Relevance floor: reject if query has substantive terms and no term matches, no statute, no alias
+            if query_terms and kw_score == 0 and not is_alias_match and not statute_info:
+                continue
+
+            combined = rrf_norm * 0.45 + max(0.0, v_score) * 0.25 + statute_boost + topic_boost + alias_boost
+
+            if is_alias_match:
+                combined = max(combined, 0.99)
+
+            # Match percent shown to the user must never exceed 99
+            final_score = min(0.99, max(0.0, round(float(combined), 3)))
+
+            # Minimum score threshold; below it return nothing
+            if final_score < 0.45:
+                continue
+            if v_score < 0.40 and kw_score == 0 and not is_alias_match and not statute_info:
+                continue
+
+            t_matches = sum(1 for t in query_terms if t in f"{c.get('title', '')} {c.get('ratioSummary', '')} {c.get('text', '')}".lower())
+            if len(query_terms) >= 2 and t_matches < 2 and v_score < 0.42 and not is_alias_match and not statute_info:
+                continue
+
+            c["relevance_score"] = final_score
+            final_candidates.append(c)
+
+        final_candidates.sort(key=lambda x: x.get("relevance_score", 0.0), reverse=True)
+        deduped = deduplicate_results_by_name_and_year(final_candidates)
+        return deduped[:min(limit or 8, 8)]
+
     def _search_qdrant(self, query: str, court_filter: str, bench_filter: str, limit: int) -> List[Dict[str, Any]]:
         vector = embedding_service.embed_query(query)
+        norm_v = math.sqrt(sum(q * q for q in vector)) or 1.0
         target_collection = self.collection_name
 
         try:
@@ -1219,9 +1569,12 @@ class QdrantService:
         except Exception:
             pass
 
-        # Exact or fuzzy-match boost for landmark aliases and citations
-        exact_boost_results: List[Dict[str, Any]] = []
         matched_aliases = extract_query_aliases(query)
+        exact_boost_results: List[Dict[str, Any]] = []
+        candidates: List[Dict[str, Any]] = []
+        seen_ids = set()
+
+        # 1. Exact or fuzzy-match boost for landmark aliases and citations via Qdrant scroll
         if matched_aliases:
             try:
                 from qdrant_client.models import Filter, FieldCondition, MatchValue
@@ -1245,18 +1598,24 @@ class QdrantService:
                         continue
                     seen_boost.add(c_key)
 
-                    p["id"] = p.get("id") or p.get("case_id") or str(hit.id)
+                    cid = p.get("id") or p.get("case_id") or str(hit.id)
+                    p["id"] = cid
                     p["title"] = c_title
                     p["decisionYear"] = p.get("year")
+                    p["court"] = "Supreme Court of India"
+                    p["benchType"] = p.get("benchType", "Supreme Court Bench")
+                    p["benchSize"] = p.get("benchSize", 5 if p.get("landmark") else 2)
+                    p["relevance_score"] = 0.99
+                    p["raw_vector_score"] = 0.99
+                    p["retrieval_mode"] = f"qdrant_exact_boost+{target_collection}"
                     
                     text_content = p.get("text", "") or ""
-                    cid = p.get("case_id") or p.get("id")
                     c_chunks = self.get_case_chunks_by_id(cid) if cid else None
                     passage, label, is_ratio = extract_relevant_passage(
                         query=query,
                         text=text_content,
                         is_verified_ratio=bool(p.get("landmark")),
-                        verified_ratio=p.get("ratioSummary", ""),
+                        verified_ratio=p.get("ratioSummary", "") if p.get("landmark") else "",
                         chunks=c_chunks,
                         case_name=c_title
                     )
@@ -1264,27 +1623,37 @@ class QdrantService:
                     p["ratioLabel"] = label
                     p["is_verified_ratio"] = is_ratio
                     p["statutes"] = extract_statutes_from_text(text_content)
-                    p["court"] = "Supreme Court of India"
-                    p["benchType"] = "Supreme Court Bench"
-                    p["benchSize"] = p.get("benchSize", 5 if p.get("landmark") else 2)
-                    p["relevance_score"] = 0.99
-                    p["raw_vector_score"] = 0.99
-                    p["retrieval_mode"] = f"qdrant_exact_boost+{target_collection}"
                     exact_boost_results.append(p)
+                    seen_ids.add(cid)
                     if len(exact_boost_results) >= limit:
                         break
             except Exception as e:
-                logger.debug("Exact match boost failed: %s", e)
+                logger.debug("Alias scroll failed: %s", e)
 
+        # 2. Evaluate verified landmark precedents from self.corpus if configured
+        if self.corpus:
+            corpus_vecs = self._get_corpus_vectors()
+            for case_item, c_vec in zip(self.corpus, corpus_vecs):
+                cid = case_item.get("id") or case_item.get("case_id")
+                if cid in seen_ids:
+                    continue
+                c_copy = dict(case_item)
+                dot = sum(q * c for q, c in zip(vector, c_vec))
+                norm_c = math.sqrt(sum(c * c for c in c_vec)) or 1.0
+                cos_sim = dot / (norm_v * norm_c)
+                c_copy["raw_vector_score"] = float(cos_sim)
+                c_copy["id"] = cid
+                c_copy["is_verified_ratio"] = True
+                c_copy["ratioLabel"] = "RATIO DECIDENDI / LEGAL PRINCIPLE"
+                candidates.append(c_copy)
+                if cid:
+                    seen_ids.add(cid)
+
+        # 3. Topic filtered retrieval in Qdrant if topic exists
         topic = classify_query_topic(query)
-        substantive_terms = extract_substantive_terms(query)
-
-        from qdrant_client.models import Filter, FieldCondition, MatchValue
-        hits = []
-
-        # 1. Topic-filtered retrieval if a citizen rights topic is detected
         if topic:
             try:
+                from qdrant_client.models import Filter, FieldCondition, MatchValue
                 topic_filter = Filter(must=[FieldCondition(key="topic", match=MatchValue(value=topic))])
                 topic_hits = self._client.search(
                     collection_name=target_collection,
@@ -1292,365 +1661,189 @@ class QdrantService:
                     query_filter=topic_filter,
                     limit=25
                 )
-                hits.extend(topic_hits)
+                for h in topic_hits:
+                    p = dict(h.payload or {})
+                    cid = p.get("case_id") or p.get("id") or str(h.id)
+                    if cid in seen_ids:
+                        continue
+                    seen_ids.add(cid)
+                    p["id"] = cid
+                    p["title"] = p.get("common_name") or p.get("case_name") or p.get("title")
+                    p["decisionYear"] = p.get("year")
+                    p["court"] = "Supreme Court of India"
+                    p["benchType"] = p.get("benchType", "Supreme Court Bench")
+                    p["benchSize"] = p.get("benchSize", 2)
+                    p["raw_vector_score"] = float(h.score)
+                    text_content = p.get("text", "") or ""
+                    p["statutes"] = extract_statutes_from_text(text_content)
+                    passage, label, is_ratio = extract_relevant_passage(
+                        query=query,
+                        text=text_content,
+                        is_verified_ratio=bool(p.get("landmark")),
+                        verified_ratio=p.get("ratioSummary", "") if p.get("landmark") else "",
+                        case_name=p["title"]
+                    )
+                    p["ratioSummary"] = passage
+                    p["ratioLabel"] = label
+                    p["is_verified_ratio"] = is_ratio
+                    candidates.append(p)
             except Exception as e:
-                logger.debug("Topic filtered search failed: %s", e)
+                logger.debug("Topic search failed: %s", e)
 
-        # Also get general hits across the collection to merge and re-rank top candidates
-        general_hits = self._client.search(
-            collection_name=target_collection,
-            query_vector=vector,
-            limit=25
-        )
-        hits.extend(general_hits)
-
-        # Deduplicate hits by point ID
-        unique_hits = []
-        seen_hit_ids = set()
-        for h in hits:
-            if h.id not in seen_hit_ids:
-                seen_hit_ids.add(h.id)
-                unique_hits.append(h)
-
-        # 2. Re-rank candidates combining vector score, topic match, and key-term overlap
-        candidates = []
-
-        # (a) First evaluate verified landmark precedents from self.corpus (e.g. Kailash Nath, Percept D'Mark, Puttaswamy)
-        corpus_vecs = self._get_corpus_vectors()
-        norm_v = math.sqrt(sum(q * q for q in vector)) or 1.0
-        for case_item, c_vec in zip(self.corpus, corpus_vecs):
-            c_copy = dict(case_item)
-            if not self._matches_filters(c_copy, court_filter, bench_filter):
-                continue
-
-            dot = sum(q * c for q, c in zip(vector, c_vec))
-            norm_c = math.sqrt(sum(c * c for c in c_vec)) or 1.0
-            cos_sim = dot / (norm_v * norm_c)
-
-            c_title = c_copy.get("title", "")
-            c_text = f"{c_title} {c_copy.get('citation', '')} {c_copy.get('ratioSummary', '')} {' '.join(c_copy.get('statutes', []))} {' '.join(c_copy.get('keywords', []))}".lower()
-            t_matches = sum(1 for t in substantive_terms if t in c_title.lower())
-            tx_matches = sum(1 for t in substantive_terms if t in c_text)
-            t_ratio = (tx_matches / max(len(substantive_terms), 1)) if substantive_terms else 1.0
-            t_boost = min(0.35, t_matches * 0.15 + t_ratio * 0.15)
-            c_keywords = [k.lower() for k in c_copy.get("keywords", [])]
-            kw_matches = sum(1 for k in c_keywords if k in query.lower())
-            landmark_boost = min(0.35, kw_matches * 0.15)
-            c_comb_score = cos_sim + t_boost + landmark_boost + 0.15
-
-            if (cos_sim >= 0.45) or (cos_sim >= 0.35 and (len(substantive_terms) == 0 or tx_matches > 0)):
-                c_copy["relevance_score"] = round(float(c_comb_score), 3)
-                c_copy["raw_vector_score"] = round(float(cos_sim), 3)
-                c_copy["retrieval_mode"] = f"qdrant+verified_precedents+{embedding_service.mode}"
-                c_copy["is_verified_ratio"] = True
-                c_copy["ratioLabel"] = "RATIO DECIDENDI / LEGAL PRINCIPLE"
-                candidates.append(c_copy)
-
-        # (b) Evaluate Qdrant cloud hits
-        for hit in unique_hits:
-            case = dict(hit.payload or {})
-
-            # Populate standard case fields BEFORE _matches_filters so court/bench filters don't drop valid SC cases
-            case["id"] = case.get("id") or case.get("case_id") or str(hit.id)
-            if case.get("common_name"):
-                case["title"] = case.get("common_name")
-            elif not case.get("title") and case.get("case_name"):
-                case["title"] = case.get("case_name")
-            if not case.get("decisionYear") and case.get("year"):
-                case["decisionYear"] = case.get("year")
-            if not case.get("court"):
-                case["court"] = "Supreme Court of India"
-            if not case.get("benchType"):
-                case["benchType"] = "Supreme Court Bench"
-            if not case.get("benchSize"):
-                case["benchSize"] = 2
-
-            text_content = case.get("text", "") or case.get("ratioSummary", "") or ""
-            c_name = case.get("case_name") or case.get("title") or ""
-            # Derive statutes strictly from text with NO default fake tags
-            case["statutes"] = extract_statutes_from_text(text_content)
-            passage, label, is_ratio = extract_relevant_passage(
-                query=query,
-                text=text_content,
-                is_verified_ratio=bool(case.get("landmark")),
-                verified_ratio=case.get("ratioSummary", "") if case.get("landmark") else "",
-                case_name=c_name
+        # 4. General vector hits across Qdrant
+        try:
+            general_hits = self._client.search(
+                collection_name=target_collection,
+                query_vector=vector,
+                limit=35
             )
-            case["ratioSummary"] = passage
-            case["ratioLabel"] = label
-            case["is_verified_ratio"] = is_ratio
-
-            if not self._matches_filters(case, court_filter, bench_filter):
-                continue
-
-            case_name = case.get("case_name") or case.get("title") or ""
-            comb_text = f"{case_name} {text_content}".lower()
-            name_lower = case_name.lower()
-
-            v_score = float(hit.score)
-
-            # Topic match boost:
-            if topic:
-                case_topic = case.get("topic")
-                if case_topic == topic:
-                    topic_boost = 0.20
-                elif case_topic is None:
-                    topic_boost = -0.15
-                else:
-                    topic_boost = 0.0
-            else:
-                topic_boost = 0.0
-
-            # Title tokens & aliases for fuzzy matching
-            title_tokens = [t.lower() for t in re.findall(r'[a-zA-Z0-9]{3,}', name_lower) if t.lower() not in SEARCH_STOPWORDS]
-            common_tokens = [t.lower() for t in re.findall(r'[a-zA-Z0-9]{3,}', (case.get("common_name") or "").lower()) if t.lower() not in SEARCH_STOPWORDS]
-            alias_tokens = [t.lower() for a in case.get("aliases", []) for t in re.findall(r'[a-zA-Z0-9]{3,}', a.lower()) if t.lower() not in SEARCH_STOPWORDS]
-            all_name_tokens = set(title_tokens + common_tokens + alias_tokens)
-
-            # Substantive term overlap with title and text, including fuzzy matching
-            title_matches = sum(1 for t in substantive_terms if t in name_lower)
-            text_matches = sum(1 for t in substantive_terms if t in comb_text)
-            fuzzy_title_matches = sum(1 for st in substantive_terms if st in name_lower or any(fuzzy_word_match(st, nt) for nt in all_name_tokens))
-            effective_text_matches = text_matches + (fuzzy_title_matches * 2)
-
-            best_title_matches = max(title_matches, fuzzy_title_matches)
-            term_ratio = (effective_text_matches / max(len(substantive_terms), 1)) if substantive_terms else 1.0
-            term_boost = min(0.35, best_title_matches * 0.15 + term_ratio * 0.15)
-
-            combined_score = v_score + topic_boost + term_boost
-
-            # 3. Relevance Floor:
-            # Drop any result that has no key-term match in its text/name AND a low semantic score:
-            if v_score < 0.38 and best_title_matches == 0:
-                continue
-            if combined_score < 0.48 and best_title_matches == 0:
-                continue
-            if substantive_terms and effective_text_matches == 0:
-                continue
-
-            # Specific everyday-rights filter for vehicle/bike stops:
-            if "bike" in substantive_terms:
-                has_bike = any(bt in comb_text for bt in ["bike", "motorcycle", "scooter", "two-wheeler", "two wheeler"])
-                has_stop = any(st in comb_text for st in ["stop", "stopped", "police", "challan", "search", "seizure", "inspection", "officer"])
-                if not (has_bike and has_stop):
+            for h in general_hits:
+                p = dict(h.payload or {})
+                cid = p.get("case_id") or p.get("id") or str(h.id)
+                if cid in seen_ids:
                     continue
+                seen_ids.add(cid)
+                p["id"] = cid
+                p["title"] = p.get("common_name") or p.get("case_name") or p.get("title")
+                p["decisionYear"] = p.get("year")
+                p["court"] = "Supreme Court of India"
+                p["benchType"] = p.get("benchType", "Supreme Court Bench")
+                p["benchSize"] = p.get("benchSize", 2)
+                p["raw_vector_score"] = float(h.score)
+                text_content = p.get("text", "") or ""
+                p["statutes"] = extract_statutes_from_text(text_content)
+                passage, label, is_ratio = extract_relevant_passage(
+                    query=query,
+                    text=text_content,
+                    is_verified_ratio=bool(p.get("landmark")),
+                    verified_ratio=p.get("ratioSummary", "") if p.get("landmark") else "",
+                    case_name=p["title"]
+                )
+                p["ratioSummary"] = passage
+                p["ratioLabel"] = label
+                p["is_verified_ratio"] = is_ratio
+                candidates.append(p)
+        except Exception as e:
+            logger.debug("General Qdrant search failed: %s", e)
 
-            case["relevance_score"] = round(float(combined_score), 3)
-            case["raw_vector_score"] = round(float(v_score), 3)
-            case["retrieval_mode"] = f"qdrant+{target_collection}+{embedding_service.mode}"
-            candidates.append(case)
+        # 5. Fuse and rank hybrid
+        fused = self._fuse_and_rank_hybrid(
+            query=query,
+            candidates=candidates,
+            court_filter=court_filter,
+            bench_filter=bench_filter,
+            limit=limit,
+            matched_aliases=matched_aliases
+        )
 
-        # Re-rank by combined score descending
-        candidates.sort(key=lambda x: x["relevance_score"], reverse=True)
+        if exact_boost_results:
+            combined_final = list(exact_boost_results)
+            seen_final_ids = {c.get("id") for c in exact_boost_results}
+            for c in fused:
+                if c.get("id") not in seen_final_ids:
+                    seen_final_ids.add(c.get("id"))
+                    combined_final.append(c)
+            return deduplicate_results_by_name_and_year(combined_final)[:limit]
 
-        # Prepend exact match boost results and deduplicate
-        results: List[Dict[str, Any]] = list(exact_boost_results)
-        seen_cases = set()
-        for r in exact_boost_results:
-            for k in [r.get("title"), r.get("case_name"), r.get("common_name")]:
-                if k:
-                    seen_cases.add(k.strip().lower())
-
-        has_strong_exact_match = len(exact_boost_results) > 0
-        top_score = exact_boost_results[0]["relevance_score"] if has_strong_exact_match else (candidates[0]["relevance_score"] if candidates else 0.0)
-
-        seen_parties = []
-        max_to_return = max(limit, 3)
-        for c in candidates:
-            title_key = (c.get("title") or "").strip().lower()
-            if title_key and title_key in seen_cases:
-                continue
-
-            # If we had a strong exact name or citation match, drop weak extras:
-            # - raw similarity below tuned threshold (0.45)
-            # - or score less than 65% of top score
-            # - must genuinely cite the case / contain its name terms, or share the detected topic
-            if has_strong_exact_match:
-                c_raw = c.get("raw_vector_score", 0.0)
-                c_score = c.get("relevance_score", 0.0)
-                if c_score < (top_score * 0.65) or c_raw < 0.45:
-                    continue
-                if topic and c.get("topic") != topic:
-                    continue
-                matched_case_terms = set(re.findall(r'[a-zA-Z0-9]{4,}', " ".join(matched_aliases).lower())) - SEARCH_STOPWORDS
-                matched_case_terms = {t for t in matched_case_terms if not re.match(r'^(?:19\d\d|20\d\d)$', t)}
-                c_full_text = f"{c.get('title', '')} {c.get('text', '')}".lower()
-                if matched_case_terms and not any(mct in c_full_text for mct in matched_case_terms):
-                    continue
-
-            party_tokens = set(re.findall(r'[a-z]{4,}', title_key)) - {
-                "versus", "state", "union", "india", "court", "limited", "authority", "corporation", "company"
-            }
-            if party_tokens and any(len(party_tokens & prev) >= 2 for prev in seen_parties):
-                continue
-            if title_key:
-                seen_cases.add(title_key)
-                if party_tokens:
-                    seen_parties.append(party_tokens)
-            results.append(c)
-            if len(results) >= max_to_return:
-                break
-
-        return results[:limit]
+        return fused
 
     def _search_local(self, query: str, court_filter: str, bench_filter: str, limit: int) -> List[Dict[str, Any]]:
         query_vec = embedding_service.embed_query(query)
-        corpus_vecs = self._get_corpus_vectors()
         norm_q = math.sqrt(sum(q * q for q in query_vec)) or 1.0
 
-        stopwords = {
-            "the", "and", "for", "with", "from", "that", "this", "what", "which", "where", "when", "who", "whom",
-            "how", "why", "are", "was", "were", "has", "have", "had", "been", "does", "did", "can", "could", "shall",
-            "will", "would", "should", "about", "tell", "show", "give", "explain", "under", "over", "into", "than",
-            "then", "also", "any", "all", "its", "our", "your", "law", "legal", "court", "judgment", "ruling", "holding",
-            "case", "matter", "concept", "doctrine", "principle", "rule", "bench", "act", "india", "state"
-        }
-        terms = [t.lower() for t in re.findall(r'[a-zA-Z0-9]{3,}', query) if t.lower() not in stopwords]
-        min_required = 1 if len(terms) <= 2 else 2
+        candidates: List[Dict[str, Any]] = []
+        seen_ids = set()
 
-        results: List[Dict[str, Any]] = []
+        # 1. Landmark precedents
+        for lm in self._get_landmark_precedents():
+            c_copy = dict(lm)
+            c_text = f"{c_copy.get('title', '')} {c_copy.get('ratioSummary', '')} {' '.join(c_copy.get('statutes', []))} {c_copy.get('citation', '')}"
+            lm_vec = embedding_service.embed_query(c_text)
+            dot = sum(q * c for q, c in zip(query_vec, lm_vec))
+            norm_c = math.sqrt(sum(c * c for c in lm_vec)) or 1.0
+            c_copy["raw_vector_score"] = float(dot / (norm_q * norm_c))
+            cid = c_copy.get("id") or c_copy.get("case_id")
+            c_copy["id"] = cid
+            candidates.append(c_copy)
+            if cid:
+                seen_ids.add(cid)
 
+        # 2. Verified Section 27 precedents from self.corpus
+        corpus_vecs = self._get_corpus_vectors()
         for case, c_vec in zip(self.corpus, corpus_vecs):
-            if not self._matches_filters(case, court_filter, bench_filter):
+            cid = case.get("id") or case.get("case_id")
+            if cid in seen_ids:
                 continue
-
             dot = sum(q * c for q, c in zip(query_vec, c_vec))
             norm_c = math.sqrt(sum(c * c for c in c_vec)) or 1.0
             cos_sim = dot / (norm_q * norm_c)
+            item = dict(case)
+            item["id"] = cid
+            item["raw_vector_score"] = float(cos_sim)
+            item["is_verified_ratio"] = True
+            item["ratioLabel"] = "RATIO DECIDENDI / LEGAL PRINCIPLE"
+            candidates.append(item)
+            if cid:
+                seen_ids.add(cid)
 
-            text_blob = (
-                f"{case.get('title', '')} {case.get('citation', '')} "
-                f"{case.get('ratioSummary', '')} "
-                f"{' '.join(case.get('statutes', []))} {' '.join(case.get('keywords', []))}"
-            ).lower()
-            matches = sum(1 for term in terms if term in text_blob)
-
-            if (cos_sim >= 0.35 and (len(terms) == 0 or matches >= min_required)) or (cos_sim >= 0.48):
-                item = dict(case)
-                final_score = round(max(float(cos_sim), min(0.45 + matches * 0.1, 0.98)), 3)
-                item["relevance_score"] = final_score
-                item["retrieval_mode"] = f"local_index+12_precedents+{embedding_service.mode}"
-                results.append(item)
-
+        # 3. Local SC chunks index
         self._ensure_sc_dataset_loaded()
         if self._sc_vectors is not None and self._sc_chunks:
             q_arr = np.array(query_vec, dtype=np.float32)
             q_arr_norm = q_arr / (np.linalg.norm(q_arr) or 1.0)
-
             sims = np.dot(self._sc_vectors, q_arr_norm)
-            candidate_indices = np.where(sims >= 0.30)[0]
+            candidate_indices = np.where(sims >= 0.25)[0]
 
             if len(candidate_indices) > 0:
                 top_order = candidate_indices[np.argsort(sims[candidate_indices])[::-1]]
-                seen_cases = {r.get("title", "").lower() for r in results}
-
-                for idx in top_order:
+                for idx in top_order[:40]:
                     chunk = self._sc_chunks[idx]
-                    c_name = chunk.get("case_name", "").strip()
-                    if not c_name or c_name.lower() in seen_cases:
+                    cid = chunk.get("case_id")
+                    if cid in seen_ids:
                         continue
+                    seen_ids.add(cid)
 
-                    c_text_lower = (c_name + " " + chunk.get("text", "")).lower()
-                    kw_matches = sum(1 for t in terms if t in c_text_lower)
-                    sim_score = float(sims[idx])
+                    c_name = chunk.get("case_name", "").strip()
+                    citation_disp = chunk.get("citation") or chunk.get("neutral_citation") or f"[{chunk.get('year')}] SCR"
+                    text_content = chunk.get("text", "") or ""
+                    c_chunks = self._sc_chunks_by_case_id.get(cid, [chunk]) if self._sc_chunks_by_case_id else [chunk]
+                    passage, label, is_ratio = extract_relevant_passage(
+                        query=query,
+                        text=text_content,
+                        is_verified_ratio=False,
+                        verified_ratio="",
+                        chunks=c_chunks,
+                        case_name=c_name
+                    )
 
-                    if (sim_score >= 0.45) or (sim_score >= 0.30 and (len(terms) == 0 or kw_matches >= min_required)):
-                        seen_cases.add(c_name.lower())
-                        score = round(min(float(sim_score) + min(kw_matches * 0.05, 0.15), 0.98), 3)
-                        citation_disp = chunk.get("citation") or chunk.get("neutral_citation") or f"[{chunk.get('year')}] SCR"
-
-                        text_content = chunk.get("text", "") or ""
-                        cid = chunk.get("case_id")
-                        c_chunks = self._sc_chunks_by_case_id.get(cid, [chunk]) if self._sc_chunks_by_case_id else [chunk]
-                        passage, label, is_ratio = extract_relevant_passage(
-                            query=query,
-                            text=text_content,
-                            is_verified_ratio=False,
-                            verified_ratio="",
-                            chunks=c_chunks,
-                            case_name=c_name
-                        )
-
-                        results.append({
-                            "id": chunk.get("case_id"),
-                            "title": c_name,
-                            "citation": citation_disp,
-                            "court": "Supreme Court of India",
-                            "benchType": "Supreme Court Bench",
-                            "benchSize": 2,
-                            "decisionYear": chunk.get("year"),
-                            "statutes": extract_statutes_from_text(text_content),
-                            "ratioSummary": passage,
-                            "ratioLabel": label,
-                            "is_verified_ratio": is_ratio,
-                            "relevance_score": score,
-                            "raw_vector_score": float(sim_score),
-                            "retrieval_mode": f"local_index+sc_judgments+{embedding_service.mode}",
-                            "source_link": chunk.get("source_link"),
-                            "neutral_citation": chunk.get("neutral_citation"),
-                            "bench": chunk.get("bench")
-                        })
-
-                    if len(results) >= limit * 3:
-                        break
+                    candidates.append({
+                        "id": cid,
+                        "title": c_name,
+                        "citation": citation_disp,
+                        "court": "Supreme Court of India",
+                        "benchType": "Supreme Court Bench",
+                        "benchSize": 2,
+                        "decisionYear": chunk.get("year"),
+                        "statutes": extract_statutes_from_text(text_content),
+                        "ratioSummary": passage,
+                        "ratioLabel": label,
+                        "is_verified_ratio": is_ratio,
+                        "raw_vector_score": float(sims[idx]),
+                        "retrieval_mode": f"local_index+sc_judgments+{embedding_service.mode}",
+                        "source_link": chunk.get("source_link"),
+                        "neutral_citation": chunk.get("neutral_citation"),
+                        "bench": chunk.get("bench")
+                    })
 
         matched_aliases = extract_query_aliases(query)
-        if matched_aliases:
-            landmark_chunks_file = SC_DATASET_DIR / "chunks" / "landmark_chunks.json"
-            if landmark_chunks_file.exists():
-                try:
-                    with open(landmark_chunks_file, "r", encoding="utf-8") as f:
-                        l_chunks = json.load(f)
-
-                    landmark_case_chunks: Dict[str, List[Dict[str, Any]]] = {}
-                    for lc in l_chunks:
-                        c_title = lc.get("common_name") or lc.get("case_name") or ""
-                        if c_title:
-                            landmark_case_chunks.setdefault(c_title, []).append(lc)
-
-                    seen_boost = {r.get("title", "").strip().lower() for r in results}
-                    for c_title, c_chunks in landmark_case_chunks.items():
-                        c_key = c_title.strip().lower()
-                        if not c_key or c_key in seen_boost:
-                            continue
-                        first_chunk = c_chunks[0]
-                        lc_aliases = [re.sub(r'[\s\W_]+', '', a).lower() for a in first_chunk.get("aliases", [])]
-                        if first_chunk.get("common_name"):
-                            lc_aliases.append(re.sub(r'[\s\W_]+', '', first_chunk["common_name"]).lower())
-                        if any(re.sub(r'[\s\W_]+', '', ma).lower() in lc_aliases for ma in matched_aliases):
-                            seen_boost.add(c_key)
-                            passage, label, is_ratio = extract_relevant_passage(
-                                query=query,
-                                text=first_chunk.get("text", "") or "",
-                                is_verified_ratio=True,
-                                verified_ratio=first_chunk.get("ratioSummary", ""),
-                                chunks=c_chunks,
-                                case_name=c_title
-                            )
-                            results.insert(0, {
-                                "id": first_chunk.get("case_id"),
-                                "title": c_title,
-                                "citation": first_chunk.get("citation") or first_chunk.get("neutral_citation") or f"[{first_chunk.get('year')}] SCR",
-                                "court": "Supreme Court of India",
-                                "benchType": "Supreme Court Bench",
-                                "benchSize": 5,
-                                "decisionYear": first_chunk.get("year"),
-                                "statutes": extract_statutes_from_text(passage),
-                                "ratioSummary": passage,
-                                "ratioLabel": label,
-                                "is_verified_ratio": is_ratio,
-                                "relevance_score": 0.99,
-                                "raw_vector_score": 0.99,
-                                "retrieval_mode": f"local_exact_boost+landmark_cases+{embedding_service.mode}",
-                                "source_link": first_chunk.get("source_link"),
-                                "neutral_citation": first_chunk.get("neutral_citation"),
-                                "bench": first_chunk.get("bench")
-                            })
-                except Exception as e:
-                    logger.debug("Local landmark boost failed: %s", e)
-
-        results.sort(key=lambda x: x.get("relevance_score", 0), reverse=True)
-        return results[:limit]
+        return self._fuse_and_rank_hybrid(
+            query=query,
+            candidates=candidates,
+            court_filter=court_filter,
+            bench_filter=bench_filter,
+            limit=limit,
+            matched_aliases=matched_aliases
+        )
 
     # ------------------------------------------------------------------ #
     # Citation Verification                                               #
