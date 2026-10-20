@@ -32,8 +32,7 @@ const EVERYDAY_CHIPS = [
 const MODULE_LINKS = [
   { id: 'search', label: 'Search Precedents, Statutes and Citations' },
   { id: 'citator', label: 'Smart Citator' },
-  { id: 'analyzer', label: 'Document Analyser' },
-  { id: 'docchat', label: 'Document Chat' },
+  { id: 'documents', label: 'Documents' },
   { id: 'comparison', label: 'Comparison' },
   { id: 'maxims', label: 'Legal Maxims' },
 ];

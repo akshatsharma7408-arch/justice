@@ -100,7 +100,7 @@ class SearchAnswerResponse(BaseModel):
     ratio_decidendi: Optional[str] = None
     citations: Optional[List[str]] = []
     tier: str = Field("tier2", description="'tier1', 'tier2', 'case_lookup', 'unreliable', or 'not_found'")
-    tier_label: str = Field("AI answer, not verified, not legal advice", description="Human-readable badge label")
+    tier_label: str = Field("AI summary based on the cases below", description="Human-readable badge label")
     model_used: str
     is_case_lookup: bool = False
     source_cases: Optional[List[Dict[str, Any]]] = []
@@ -342,9 +342,10 @@ async def search_answer_post(payload: SearchAnswerRequest):
     hide_badge = False
     if is_not_found:
         tier = "not_found"
-        tier_label = "AI answer, not verified"
+        tier_label = ""
         source_cases = []
         no_strong = True
+        hide_badge = True
     elif is_tier2:
         if synthesis.get("hide_badge") or ai_ans == UNRELIABLE_TIER2_MSG or "unreliable" in model_used.lower():
             tier = "unreliable"
@@ -352,13 +353,13 @@ async def search_answer_post(payload: SearchAnswerRequest):
             hide_badge = True
         else:
             tier = "tier2"
-            tier_label = "AI answer, not verified"
+            tier_label = "AI summary, check the cases below"
             hide_badge = False
         source_cases = synthesis.get("results", []) or []
         no_strong = len(source_cases) == 0
     else:
         tier = "tier1"
-        tier_label = "Verified citations"
+        tier_label = "AI summary based on the cases below"
         source_cases = synthesis.get("results", []) or results or []
         no_strong = len(source_cases) == 0
 

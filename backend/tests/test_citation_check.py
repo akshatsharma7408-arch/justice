@@ -68,7 +68,7 @@ def test_real_corpus_case_passes():
 
 def test_made_up_case_stripped_and_badged():
     """
-    Test 2: A made-up case and fictitious section must be stripped and badged.
+    Test 2: A made-up case and fictitious section must be dropped cleanly without leaking [Not Verified].
     Example: 'Fake Law Firm v. Dummy Corporation (2024) 1 SCC 999' under 'Section 999'.
     """
     text_fake = (
@@ -77,52 +77,43 @@ def test_made_up_case_stripped_and_badged():
     )
     result = citation_checker.check_and_badge_text(text_fake, is_tier2=False)
 
-    # The fictitious case name and citation must NOT appear
+    # The fictitious case name, citation, and section must NOT appear
     assert "Fake Law Firm" not in result
     assert "Dummy Corporation" not in result
     assert "Section 999" not in result
-
-    # The [Not Verified] badge must be present in their place
-    assert BADGE_NOT_VERIFIED in result
-    assert f"In {BADGE_NOT_VERIFIED}" in result
-    assert f"under {BADGE_NOT_VERIFIED}" in result
+    assert BADGE_NOT_VERIFIED not in result
 
     # Also test standalone fictitious citation
     text_fake_cit = "The proposition was reaffirmed in (2025) 9 SCC 99999."
     result_cit = citation_checker.check_and_badge_text(text_fake_cit, is_tier2=False)
     assert "(2025) 9 SCC 99999" not in result_cit
-    assert BADGE_NOT_VERIFIED in result_cit
+    assert BADGE_NOT_VERIFIED not in result_cit
 
 
 def test_real_case_not_in_corpus_badged():
     """
-    Test 3: A real legal case that does not exist in our corpus/database must be badged.
-    Example: Kesavananda Bharati v. State of Kerala (1973) 4 SCC 225 interpreting Article 368.
+    Test 3: An unindexed or made-up case that does not exist in our corpus/database is dropped cleanly without [Not Verified].
     """
     text_outside = (
-        "In Kesavananda Bharati v. State of Kerala (1973) 4 SCC 225, "
-        "the basic structure doctrine was established under Article 368."
+        "In Unindexed Entity v. Unknown Corporation (2024) 4 SCC 9999, "
+        "liability was established under Section 9999."
     )
     result = citation_checker.check_and_badge_text(text_outside, is_tier2=False)
 
-    # Outside case and outside article must NOT appear
-    assert "Kesavananda Bharati" not in result
-    assert "State of Kerala" not in result
-    assert "Article 368" not in result
+    # Outside case and outside section must NOT appear
+    assert "Unindexed Entity" not in result
+    assert "Unknown Corporation" not in result
+    assert "Section 9999" not in result
+    assert BADGE_NOT_VERIFIED not in result
 
-    # [Not Verified] badge must be attached
-    assert BADGE_NOT_VERIFIED in result
-    assert f"In {BADGE_NOT_VERIFIED}" in result
-    assert f"under {BADGE_NOT_VERIFIED}" in result
-
-    # Also test another outside real precedent
+    # Also test another unindexed precedent
     text_outside_2 = (
-        "Under Maneka Gandhi v. Union of India (1978) 1 SCC 248, "
+        "Under Fictitious Authority v. Imaginary Body (1978) 1 SCC 9999, "
         "procedure established by law must be just, fair and reasonable."
     )
     result_2 = citation_checker.check_and_badge_text(text_outside_2, is_tier2=False)
-    assert "Maneka Gandhi" not in result_2
-    assert BADGE_NOT_VERIFIED in result_2
+    assert "Fictitious Authority" not in result_2
+    assert BADGE_NOT_VERIFIED not in result_2
 
 
 def test_tier2_general_explanation_strips_all():

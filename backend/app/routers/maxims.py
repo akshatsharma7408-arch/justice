@@ -450,7 +450,7 @@ async def chat_maxim(req: MaximChatRequest):
                 f"User's Question / Situation: {req.message}\n\n"
                 f"CRITICAL INSTRUCTIONS:\n"
                 f"1. Directly answer the user's specific question or apply the maxim to their scenario.\n"
-                f"2. If this is a follow-up (e.g. asking 'is this applicable for an adult'), answer the question directly using the previous maxim context and Indian law.\n"
+                f"2. If this is a follow-up (e.g. asking 'is this applicable for an adult'), answer the question directly stating whether it does not apply, citing relevant Indian statutory provisions (e.g. Section 82/83 IPC for doli incapax).\n"
                 f"3. Never repeat the generic stored explanation verbatim.\n"
                 f"4. Cite {source_citation} and keep it concise, clear, and grounded in Indian law."
             )

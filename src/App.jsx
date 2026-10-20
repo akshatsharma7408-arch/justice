@@ -11,6 +11,7 @@ const SearchResults = lazy(() => import('./components/SearchResults'));
 const SmartCitator = lazy(() => import('./components/SmartCitator'));
 const DocumentAnalyzer = lazy(() => import('./components/DocumentAnalyzer'));
 const DocumentChat = lazy(() => import('./components/DocumentChat'));
+const Documents = lazy(() => import('./components/Documents'));
 const PrecedentComparison = lazy(() => import('./components/PrecedentComparison'));
 const LegalMaxims = lazy(() => import('./components/LegalMaxims'));
 const CaseChatPanel = lazy(() => import('./components/CaseChatPanel'));
@@ -118,9 +119,9 @@ export default function App() {
       return;
     }
 
-    if (activeView === 'analyzer' || activeView === 'docchat') {
+    if (activeView === 'documents' || activeView === 'analyzer' || activeView === 'docchat') {
       setStandaloneExplainCaseId(null);
-      setStandaloneExplainContext("Contract & Clause Audit Context");
+      setStandaloneExplainContext("Document & Clause Audit Context");
       setIsExplainModalOpen(true);
       return;
     }
@@ -257,22 +258,17 @@ export default function App() {
                   />
                 )}
 
-                {/* 4. DOCUMENT ANALYSER MODULE */}
-                {activeView === 'analyzer' && (
-                  <DocumentAnalyzer
+                {/* 4. DOCUMENTS UNIFIED WORKSPACE (Analysis, Multi-image OCR, & Document Chat) */}
+                {(activeView === 'documents' || activeView === 'analyzer' || activeView === 'docchat') && (
+                  <Documents
                     onTriggerAgentAnalysis={handleTriggerAgentAnalysis}
                   />
                 )}
 
-                {/* 5. DOCUMENT CHAT MODULE */}
-                {activeView === 'docchat' && (
-                  <DocumentChat />
-                )}
-
-                {/* 6. COMPARISON MODULE */}
+                {/* 5. COMPARISON MODULE */}
                 {activeView === 'comparison' && (
                   <PrecedentComparison
-                    onSwitchToWorkspace={() => handleNavigate('analyzer')}
+                    onSwitchToWorkspace={() => handleNavigate('documents')}
                   />
                 )}
 

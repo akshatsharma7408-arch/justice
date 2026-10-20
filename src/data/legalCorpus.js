@@ -15,8 +15,8 @@ export const LANDMARK_PRECEDENTS = [
     decisionYear: 2006,
     statutes: ["Indian Contract Act, 1872 - Section 27"],
     status: "GREEN",
-    statusLabel: "Good Law (Affirmed)",
-    statusDescription: "Consistently affirmed. Conclusively settled that Section 27 leaves no room for any test of 'reasonableness' regarding post-service non-compete covenants.",
+    statusLabel: "Binding Precedent (Division Bench)",
+    statusDescription: "Conclusively settled that Section 27 leaves no room for any test of 'reasonableness' regarding post-service non-compete covenants.",
     ratioSummary: "Under Section 27 of the Indian Contract Act, 1872, any covenant in restraint of trade that extends beyond the term of the agreement is void ab initio. The doctrine applies without exception to post-contractual covenants.",
     treatmentHistory: [
       { court: "Supreme Court of India", case: "Wipro Ltd. v. Beckman Coulter International (2006)", treatment: "AFFIRMED", year: 2006 },
@@ -27,8 +27,8 @@ export const LANDMARK_PRECEDENTS = [
     overruledCases: []
   },
   {
-    id: "sc-1981-super-superintendence",
-    title: "Super Superintendence Company of India v. Krishan Murgai",
+    id: "sc-1981-superintendence",
+    title: "Superintendence Company of India (P) Ltd. v. Krishan Murgai",
     citation: "(1981) 2 SCC 246",
     court: "Supreme Court of India",
     benchSize: 3,
@@ -37,7 +37,7 @@ export const LANDMARK_PRECEDENTS = [
     decisionYear: 1981,
     statutes: ["Indian Contract Act, 1872 - Section 27"],
     status: "GREEN",
-    statusLabel: "Good Law (Binding 3-Judge Precedent)",
+    statusLabel: "Binding Precedent (3-Judge Bench)",
     statusDescription: "Binding 3-Judge precedent. Confirmed that Indian law does not follow English Common Law rule of reasonable restraints post-service.",
     ratioSummary: "A post-service restrictive covenant operating after termination of employment is void in toto under Section 27 of the Contract Act. The doctrine of restraint of trade admits of no exceptions other than sale of goodwill.",
     treatmentHistory: [
@@ -82,7 +82,7 @@ export const LANDMARK_PRECEDENTS = [
     year: 2017,
     statutes: ["Constitution of India - Article 21, Part III"],
     status: "GREEN",
-    statusLabel: "Good Law (Foundational 9-Judge Precedent)",
+    statusLabel: "Foundational Precedent (9-Judge Bench)",
     statusDescription: "Monumental unanimous 9-judge ruling. Holds the Right to Privacy as a fundamental right intrinsic to Article 21. Explicitly overruled ADM Jabalpur (1976) and M.P. Sharma (1954).",
     ratioSummary: "Privacy is a constitutionally protected fundamental right emerging primarily from the guarantee of life and personal liberty under Article 21. Any encroachment must satisfy the threefold test of legality, legitimate state aim, and proportionality.",
     treatmentHistory: [
@@ -124,7 +124,7 @@ export const LANDMARK_PRECEDENTS = [
     decisionYear: 2018,
     statutes: ["Indian Penal Code, 1860 - Section 377", "Constitution of India - Articles 14, 15, 19, 21"],
     status: "GREEN",
-    statusLabel: "Good Law (Constitution Bench)",
+    statusLabel: "Binding Precedent (5-Judge Bench)",
     statusDescription: "Decriminalized consensual sexual acts between adults under Section 377. Overruled the earlier 2-judge bench decision in Suresh Kumar Koushal (2014).",
     ratioSummary: "Section 377 IPC, so far as it penalizes any consensual sexual activity between two adults, is unconstitutional and violative of Articles 14, 15, 19 and 21 of the Constitution.",
     treatmentHistory: [
@@ -164,7 +164,7 @@ export const LANDMARK_PRECEDENTS = [
     decisionYear: 2015,
     statutes: ["Indian Contract Act, 1872 - Section 74"],
     status: "GREEN",
-    statusLabel: "Good Law (Liquidated Damages Authority)",
+    statusLabel: "Binding Precedent (Division Bench)",
     statusDescription: "Authoritative precedent on forfeiture of earnest money and liquidated damages under Section 74 ICA.",
     ratioSummary: "Compensation under Section 74 is awarded for damage or loss proved to have been suffered. Where it is possible to prove actual damage, such proof is not dispensed with. Forfeiture of earnest money without proving damage is punitive and unlawful.",
     treatmentHistory: [
@@ -194,94 +194,47 @@ export const LANDMARK_PRECEDENTS = [
     ],
     citationCount: 1530,
     overruledCases: []
+  },
+  {
+    id: "sc-1979-dhanapal-chettiar",
+    title: "V. Dhanapal Chettiar v. Yesodai Ammal",
+    citation: "(1979) 4 SCC 214",
+    court: "Supreme Court of India",
+    benchSize: 7,
+    benchType: "Constitution Bench",
+    judges: ["Y.V. Chandrachud, CJI", "P.N. Bhagwati, J.", "V.R. Krishna Iyer, J.", "V.D. Tulzapurkar, J.", "D.A. Desai, J.", "R.S. Pathak, J.", "E.S. Venkataramiah, J."],
+    decisionYear: 1979,
+    statutes: ["Transfer of Property Act, 1882 - Section 106", "State Rent Control Acts"],
+    status: "GREEN",
+    statusLabel: "Foundational Precedent (7-Judge Bench)",
+    statusDescription: "7-Judge Constitution Bench ruling settling relationship between Section 106 TPA notice and statutory grounds under State Rent Control Acts.",
+    ratioSummary: "Notice to quit under Section 106 Transfer of Property Act is not a condition precedent for maintaining eviction petition under State Rent Control Acts; landlord must establish statutory grounds for eviction.",
+    treatmentHistory: [
+      { court: "Supreme Court of India", case: "Atma Ram Properties v. Federal Motors (2005)", treatment: "RELIED_ON", year: 2005 }
+    ],
+    citationCount: 1650,
+    overruledCases: []
+  },
+  {
+    id: "sc-2005-atma-ram",
+    title: "Atma Ram Properties (P) Ltd. v. Federal Motors (P) Ltd.",
+    citation: "(2005) 1 SCC 705",
+    court: "Supreme Court of India",
+    benchSize: 2,
+    benchType: "Division Bench",
+    judges: ["R.C. Lahoti, CJI", "G.P. Mathur, J."],
+    decisionYear: 2005,
+    statutes: ["Delhi Rent Control Act, 1958", "Code of Civil Procedure, 1908 - Order 41 Rule 5"],
+    status: "GREEN",
+    statusLabel: "Binding Precedent (Division Bench)",
+    statusDescription: "Settled that upon passing of eviction decree, tenant cannot remain rent-free and appellate court may condition stay of eviction on payment of mesne profits.",
+    ratioSummary: "Tenant against whom eviction decree is passed is liable to pay reasonable mesne profits or market rent as condition for stay of execution pending appeal.",
+    treatmentHistory: [
+      { court: "Supreme Court of India", case: "State of Maharashtra v. Super Max (2009)", treatment: "AFFIRMED", year: 2009 }
+    ],
+    citationCount: 920,
+    overruledCases: []
   }
 ];
 
-export const CONTRACT_PRESETS = [
-  {
-    id: "preset-tech-consultant",
-    title: "Senior Tech Consultant Agreement (Predatory Non-Compete)",
-    category: "Employment & Consultancy",
-    clauses: [
-      {
-        id: "cl-1",
-        number: "1.0",
-        title: "Term & Scope of Engagement",
-        text: "The Consultant is engaged as Principal AI Systems Architect for a fixed tenure of twenty-four (24) months, commencing from the Effective Date, subject to early termination as stipulated under Clause 8.",
-        riskLevel: "LOW",
-        statutoryIssue: null,
-        layman: "You are hired as a principal architect for 2 years unless let go earlier under Section 8.",
-        redline: null
-      },
-      {
-        id: "cl-4",
-        number: "4.2",
-        title: "Intellectual Property Assignment & Prior Moral Rights",
-        text: "The Consultant hereby irrevocably assigns to the Company all worldwide rights, title, and interest in and to all Works, Inventions, models, and code developed, including moral rights, whether created during or outside business hours, using Company resources or personal equipment.",
-        riskLevel: "MODERATE",
-        statutoryIssue: "Section 57, Copyright Act, 1957 (Moral rights cannot be completely assigned or waived under Indian law)",
-        layman: "The company claims ownership of everything you code—even projects you build at home on your own laptop on weekends. Under Indian copyright law, your moral rights as an author cannot be completely stripped.",
-        redline: "The Consultant hereby assigns to the Company all proprietary rights in Works and Inventions created strictly in the direct scope of Company engagement and utilizing Company resources, excluding prior personal works and non-competing independent projects."
-      },
-      {
-        id: "cl-9-3",
-        number: "9.3",
-        title: "Post-Termination Non-Compete Restriction",
-        text: "The Consultant agrees that for a period of twenty-four (24) months following termination of this Agreement for any reason whatsoever, the Consultant shall not, directly or indirectly, engage in, advise, establish, or consult for any business operating in direct or indirect competition with the Company anywhere within the territory of India.",
-        riskLevel: "CRITICAL",
-        statutoryIssue: "Section 27, Indian Contract Act, 1872 (Restraint of trade - Void ab initio under Indian Law)",
-        layman: "The company is trying to ban you from working for any competitor anywhere in India for 2 whole years after you leave. UNDER INDIAN LAW, THIS IS 100% UNENFORCEABLE AND VOID AB INITIO. Indian courts do not allow companies to restrict your right to earn a livelihood once employment ends.",
-        precedents: ["Percept D'Mark v. Zaheer Khan (2006) 4 SCC 227", "Super Superintendence v. Krishan Murgai (1981) 2 SCC 246"],
-        redline: "The Consultant agrees that for a period of twelve (12) months following termination, the Consultant shall not knowingly solicit, canvas, or induce away any existing client of the Company with whom the Consultant personally had material dealings during the last 6 months of engagement, nor disclose any confidential proprietary trade secrets."
-      },
-      {
-        id: "cl-11",
-        number: "11.1",
-        title: "Governing Law & Exclusive Judicial Forum",
-        text: "This Agreement shall be governed by the laws of India. Any dispute arising out of or in connection with this Agreement shall be subject to the exclusive jurisdiction of the Courts in Bangalore, and Consultant waives any right to invoke statutory appellate or consumer remedies in any other forum.",
-        riskLevel: "MODERATE",
-        statutoryIssue: "Section 28, Indian Contract Act, 1872 (Agreements in restraint of legal proceedings void to the extent of curtailing statutory jurisdiction)",
-        layman: "All disputes must go to Bangalore courts, and they want you to give up other statutory rights. While parties can pick one competent court, clauses that strip statutory legal remedies are void.",
-        redline: "This Agreement shall be governed by and construed in accordance with the laws of India. Courts of Bangalore shall have competent jurisdiction, subject to mandatory statutory consumer and labor remedies."
-      }
-    ]
-  },
-  {
-    id: "preset-saas-msa",
-    title: "Enterprise SaaS Master Services Agreement (Unilateral Liability)",
-    category: "Software & Technology",
-    clauses: [
-      {
-        id: "cl-msa-1",
-        number: "3.1",
-        title: "Service Availability & Maintenance Windows",
-        text: "The Provider guarantees 99.9% uptime per calendar month, excluding scheduled maintenance windows notified at least 48 hours in advance.",
-        riskLevel: "LOW",
-        statutoryIssue: null,
-        layman: "Standard 99.9% uptime commitment with a requirement to notify you 2 days before scheduled maintenance.",
-        redline: null
-      },
-      {
-        id: "cl-msa-5",
-        number: "8.2",
-        title: "Liquidated Damages as Penalty in Terrorem",
-        text: "In the event of any material breach or service interruption exceeding 4 continuous hours, Provider shall immediately forfeit and pay to Customer liquidated damages equivalent to 100% of the entire annual contract value, irrespective of whether actual monetary injury occurred.",
-        riskLevel: "CRITICAL",
-        statutoryIssue: "Section 74, Indian Contract Act, 1872 (Penal liquidated damages vs genuine pre-estimate of loss - Kailash Nath v. DDA)",
-        layman: "If the server goes down for 4 hours, the client wants 100% of the whole year's fees as penalty without proving they lost any money. Under Indian law (Kailash Nath case), courts will not enforce punitive penalties; damages must reflect genuine pre-estimated losses.",
-        precedents: ["Kailash Nath Associates v. DDA (2015) 4 SCC 136"],
-        redline: "In the event of service interruption exceeding 4 continuous hours attributable solely to Provider, Customer shall be entitled to pro-rated Service Credits capped at 15% of the monthly billing, as a mutually agreed genuine pre-estimate of liquidated damages."
-      },
-      {
-        id: "cl-msa-7",
-        number: "12.4",
-        title: "Unilateral Indemnity & Limitation of Liability Exemption",
-        text: "Customer's liability under this Agreement shall in all cases be capped at INR 10,000, whereas Provider's indemnity obligations for any claim, including third-party software claims, shall be unlimited, unconditional, and survive perpetual termination.",
-        riskLevel: "CRITICAL",
-        statutoryIssue: "Unconscionable contractual covenant & imbalance under Indian Contract jurisprudence",
-        layman: "Massively one-sided: If the customer breaches, their maximum penalty is ₹10,000. But if you have an issue, your liability is unlimited forever. This creates huge commercial exposure.",
-        redline: "Each party's aggregate liability under this Agreement, whether in contract, tort, or indemnity, shall be capped at the total fees paid or payable by Customer to Provider in the preceding twelve (12) months, excluding breaches of confidentiality or gross negligence."
-      }
-    ]
-  }
-];
+export const CONTRACT_PRESETS = [];

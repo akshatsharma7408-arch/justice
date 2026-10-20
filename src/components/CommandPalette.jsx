@@ -113,12 +113,12 @@ export default function CommandPalette({ isOpen, onClose, onNavigate }) {
       }
     },
     {
-      id: 'analyzer-contract',
-      title: "Audit Technology Consultant Agreement & Auto-Redline Clause 9.3",
-      category: "Document Analyzer",
+      id: 'documents-workspace',
+      title: "Open Documents: Multi-image OCR, Clause Audit & Document Chat",
+      category: "Documents",
       icon: FileText,
       action: () => {
-        onNavigate('analyzer');
+        onNavigate('documents');
         onClose();
       }
     },

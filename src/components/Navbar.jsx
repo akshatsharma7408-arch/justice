@@ -6,8 +6,7 @@ import { BACKEND_URL } from '../config/gemini';
 const MODULES = [
   { id: 'search', label: 'Search Precedents, Statutes and Citations' },
   { id: 'citator', label: 'Smart Citator' },
-  { id: 'analyzer', label: 'Document Analyser' },
-  { id: 'docchat', label: 'Document Chat' },
+  { id: 'documents', label: 'Documents' },
   { id: 'comparison', label: 'Comparison' },
   { id: 'maxims', label: 'Legal Maxims' },
 ];
@@ -124,7 +123,7 @@ export default function Navbar({
         <nav className="navbar-modules-nav" aria-label="Workspace Modules">
           <div className="modules-row">
             {MODULES.map((m) => {
-              const isActive = activeView === m.id;
+              const isActive = activeView === m.id || (m.id === 'documents' && (activeView === 'analyzer' || activeView === 'docchat'));
               return (
                 <motion.button
                   key={m.id}
@@ -192,20 +191,23 @@ export default function Navbar({
           <div className="mobile-drawer-inner">
             <div className="mobile-drawer-label mono">WORKSPACE MODULES</div>
             <div className="mobile-drawer-list">
-              {MODULES.map((m) => (
-                <button
-                  key={m.id}
-                  type="button"
-                  className={`mobile-drawer-item ${activeView === m.id ? 'is-active' : ''}`}
-                  onClick={() => {
-                    onNavigate(m.id);
-                    setMobileMenuOpen(false);
-                  }}
-                >
-                  <span>{m.label}</span>
-                  {activeView === m.id && <span className="mobile-active-dot" />}
-                </button>
-              ))}
+              {MODULES.map((m) => {
+                const isActive = activeView === m.id || (m.id === 'documents' && (activeView === 'analyzer' || activeView === 'docchat'));
+                return (
+                  <button
+                    key={m.id}
+                    type="button"
+                    className={`mobile-drawer-item ${isActive ? 'is-active' : ''}`}
+                    onClick={() => {
+                      onNavigate(m.id);
+                      setMobileMenuOpen(false);
+                    }}
+                  >
+                    <span>{m.label}</span>
+                    {isActive && <span className="mobile-active-dot" />}
+                  </button>
+                );
+              })}
             </div>
           </div>
         </div>

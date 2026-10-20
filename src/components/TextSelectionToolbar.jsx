@@ -16,10 +16,9 @@ export default function TextSelectionToolbar({ onTriggerExplain }) {
       }
 
       const text = selection.toString().trim();
-      const words = text.split(/\s+/).filter(Boolean);
 
-      // Minimum 1 word, maximum 800 characters
-      if (words.length < 1 || text.length > 800) {
+      // 3 to 1500 characters threshold
+      if (text.length < 3 || text.length > 1500) {
         setPosition(null);
         setSelectedText('');
         return;
@@ -54,9 +53,23 @@ export default function TextSelectionToolbar({ onTriggerExplain }) {
           return;
         }
 
-        // Calculate floating position (floating directly above the selection)
-        const top = Math.max(10, rect.top - 44);
-        const left = Math.max(10, Math.min(window.innerWidth - 130, rect.left + rect.width / 2 - 50));
+        const GAP = 8;
+        const BADGE_HEIGHT = 36;
+        const BADGE_WIDTH = 135;
+
+        // Position 8px above selection; if too close to viewport top, flip below selection
+        let top;
+        if (rect.top >= BADGE_HEIGHT + GAP + 10) {
+          top = rect.top - BADGE_HEIGHT - GAP;
+        } else {
+          top = rect.bottom + GAP;
+        }
+        // Clamp top within viewport boundaries
+        top = Math.max(8, Math.min(window.innerHeight - BADGE_HEIGHT - 8, top));
+
+        // Center horizontally on selection, clamped to window edges with 12px margin
+        let left = rect.left + rect.width / 2 - BADGE_WIDTH / 2;
+        left = Math.max(12, Math.min(window.innerWidth - BADGE_WIDTH - 12, left));
 
         setSelectedText(text);
         setPosition({ top, left });
@@ -71,8 +84,7 @@ export default function TextSelectionToolbar({ onTriggerExplain }) {
         const selection = window.getSelection();
         if (selection && !selection.isCollapsed) {
           const text = selection.toString().trim();
-          const words = text.split(/\s+/).filter(Boolean);
-          if (words.length >= 1 && text.length <= 800) {
+          if (text.length >= 3 && text.length <= 1500) {
             e.preventDefault();
             onTriggerExplain(text);
             setPosition(null);

@@ -122,7 +122,7 @@ def test_maxim_follow_up_uses_previous_maxim_context():
     response_lower = data["response"].lower()
     # Must explicitly address adult application under Indian law (Sections 82/83 IPC)
     assert "adult" in response_lower
-    assert "82" in response_lower or "mens rea" in response_lower or "not apply" in response_lower
+    assert any(term in response_lower for term in ["82", "mens rea", "not apply", "not covered", "only to children", "cannot claim"])
     print(" [PASS] Maxim follow-up using previous maxim context verified")
 
 

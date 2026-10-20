@@ -27,6 +27,12 @@ from app.services.answer_tiers import (
     NOT_FOUND_SPECIFIC_MSG
 )
 from app.services.citation_checker import citation_checker
+from app.services.audit_service import audit_service
+from app.services.ocr_service import (
+    process_multi_images,
+    process_image_bytes,
+    extract_text_from_pdf_with_ocr_fallback
+)
 from app.routers.audit import (
     extract_text_from_pdf, 
     extract_text_from_docx, 
@@ -48,7 +54,12 @@ class DocUploadResponse(BaseModel):
     title: str
     chunks_count: int
     message: str
+    raw_text: Optional[str] = None
     clauses: Optional[List[Dict[str, Any]]] = None
+    audit_results: Optional[Dict[str, Any]] = None
+    warnings: Optional[List[str]] = []
+    page_count: Optional[int] = 1
+    char_count: Optional[int] = 0
 
 class DocChatRequest(BaseModel):
     doc_id: str
@@ -211,70 +222,121 @@ def retrieve_top_chunks(doc: DocumentRecord, query: str, top_k: int = 5) -> List
 async def upload_document_endpoint(
     request: Request,
     file: Optional[UploadFile] = File(None),
+    files: Optional[List[UploadFile]] = File(None),
     text: Optional[str] = Form(None),
-    title: Optional[str] = Form("Uploaded Agreement")
+    raw_text: Optional[str] = Form(None),
+    title: Optional[str] = Form("Uploaded Agreement"),
+    doc_id: Optional[str] = Form(None)
 ):
     """
     POST /api/v1/doc/upload
-    Accepts a PDF or DOCX file (or raw text), splits it into clause-aware chunks,
-    embeds each chunk with Gemini embeddings through the google-genai SDK,
-    and stores the vectors in an in-memory store keyed by a returned doc_id.
+    Accepts:
+    - Single or multiple files (PDF, DOCX, TXT, JPG, PNG, WEBP, HEIC; up to 10 images, max 10MB each)
+    - Raw or edited text (with optional existing doc_id to re-run analysis)
+    Performs OCR, clause segmentation, vector indexing, and Section 27 compliance audit.
     """
+    if isinstance(raw_text, str) and raw_text.strip() and not (isinstance(text, str) and text.strip()):
+        text = raw_text.strip()
     extracted_text = ""
     doc_title = title or "Commercial Contract"
+    warnings: List[str] = []
+    page_count = 1
+    IMAGE_EXTS = {".jpg", ".jpeg", ".png", ".webp", ".heic"}
+
+    # 1. Collect all uploaded files (from 'files' list, single 'file', or multipart form)
+    all_files: List[UploadFile] = []
+    if files and isinstance(files, list):
+        all_files.extend([f for f in files if isinstance(f, UploadFile) and hasattr(f, "filename") and f.filename])
+    if isinstance(file, UploadFile) and hasattr(file, "filename") and file.filename and file not in all_files:
+        all_files.append(file)
 
     content_type = request.headers.get("content-type", "")
 
-    # Priority 1: FastAPI injected form/file parameters
-    if file and hasattr(file, "filename") and file.filename:
-        filename = file.filename.lower()
-        doc_title = file.filename
-        contents = await file.read()
-        if filename.endswith(".pdf"):
-            extracted_text = extract_text_from_pdf(contents)
-        elif filename.endswith(".docx"):
-            extracted_text = extract_text_from_docx(contents)
-        else:
-            try:
-                extracted_text = contents.decode("utf-8")
-            except UnicodeDecodeError:
-                extracted_text = contents.decode("latin-1")
-    elif text and isinstance(text, str) and text.strip():
-        extracted_text = text.strip()
-    elif "multipart/form-data" in content_type:
+    if "multipart/form-data" in content_type and not all_files and not (isinstance(text, str) and text.strip()):
         try:
             form = await request.form()
-            uploaded_file = form.get("file")
-            form_text = form.get("text")
+            form_file = form.get("file")
+            form_files = form.getlist("files")
+            form_text = form.get("text") or form.get("raw_text")
             form_title = form.get("title")
+            form_doc_id = form.get("doc_id")
 
             if form_title and isinstance(form_title, str) and form_title.strip():
                 doc_title = form_title.strip()
+            if form_doc_id and isinstance(form_doc_id, str) and form_doc_id.strip():
+                doc_id = form_doc_id.strip()
 
-            if uploaded_file and hasattr(uploaded_file, "filename") and uploaded_file.filename:
-                filename = uploaded_file.filename.lower()
-                doc_title = uploaded_file.filename
-                contents = await uploaded_file.read()
-
-                if filename.endswith(".pdf"):
-                    extracted_text = extract_text_from_pdf(contents)
-                elif filename.endswith(".docx"):
-                    extracted_text = extract_text_from_docx(contents)
-                else:
-                    try:
-                        extracted_text = contents.decode("utf-8")
-                    except UnicodeDecodeError:
-                        extracted_text = contents.decode("latin-1")
-            elif form_text and isinstance(form_text, str):
-                extracted_text = form_text
+            if form_files:
+                for ff in form_files:
+                    if hasattr(ff, "filename") and ff.filename:
+                        all_files.append(ff)
+            elif form_file and hasattr(form_file, "filename") and form_file.filename:
+                all_files.append(form_file)
+            if form_text and isinstance(form_text, str) and form_text.strip():
+                text = form_text.strip()
         except Exception as e:
             logger.warning(f"Error reading multipart form: {e}")
+
+    # Priority A: Raw/edited text passed directly
+    if isinstance(text, str) and text.strip():
+        extracted_text = text.strip()
+        if not title or not isinstance(title, str) or title == "Uploaded Agreement":
+            doc_title = "Commercial Contract"
+        else:
+            doc_title = title
+
+    # Priority B: Uploaded files
+    elif all_files:
+        if len(all_files) > 10:
+            raise HTTPException(status_code=400, detail="Maximum 10 files allowed per upload.")
+
+        # Check if files are images
+        image_items: List[Tuple[str, bytes]] = []
+        is_all_images = all(any(f.filename.lower().endswith(ext) for ext in IMAGE_EXTS) for f in all_files)
+
+        for f in all_files:
+            f_bytes = await f.read()
+            if len(f_bytes) > 10 * 1024 * 1024:
+                raise HTTPException(
+                    status_code=400,
+                    detail=f"File '{f.filename}' exceeds 10MB limit ({len(f_bytes) / (1024 * 1024):.1f}MB)."
+                )
+            if any(f.filename.lower().endswith(ext) for ext in IMAGE_EXTS):
+                image_items.append((f.filename, f_bytes))
+            elif f.filename.lower().endswith(".pdf"):
+                doc_title = f.filename
+                extracted_text, pdf_warns = extract_text_from_pdf_with_ocr_fallback(f_bytes)
+                warnings.extend(pdf_warns)
+                page_count = len(re.findall(r'--- Page \d+ ---', extracted_text)) or 1
+                break
+            elif f.filename.lower().endswith(".docx"):
+                doc_title = f.filename
+                extracted_text = extract_text_from_docx(f_bytes)
+                page_count = 1
+                break
+            else:
+                doc_title = f.filename
+                try:
+                    extracted_text = f_bytes.decode("utf-8")
+                except UnicodeDecodeError:
+                    extracted_text = f_bytes.decode("latin-1")
+                page_count = 1
+                break
+
+        # Process multi-images if uploaded
+        if image_items and not extracted_text:
+            doc_title = f"{len(image_items)} Uploaded Page{'s' if len(image_items) > 1 else ''}"
+            full_img_text, meta_list, img_warns = process_multi_images(image_items)
+            extracted_text = full_img_text
+            warnings.extend(img_warns)
+            page_count = len(image_items)
 
     elif "application/json" in content_type:
         try:
             body = await request.json()
             extracted_text = body.get("text", "")
             doc_title = body.get("title", doc_title)
+            doc_id = body.get("doc_id", doc_id)
         except Exception as e:
             raise HTTPException(status_code=400, detail=f"Invalid JSON payload: {e}")
     else:
@@ -288,17 +350,20 @@ async def upload_document_endpoint(
     if not extracted_text or not extracted_text.strip():
         raise HTTPException(
             status_code=400, 
-            detail="No document text could be extracted. Please upload a valid PDF, DOCX, or text file."
+            detail="No document text could be extracted. Please upload a valid PDF, DOCX, image, or text file."
         )
 
-    # 1. Segment text into clause-aware chunks
+    # 2. Segment text into clause-aware chunks
     raw_clauses = segment_into_clauses(extracted_text)
     if not raw_clauses:
         raise HTTPException(status_code=400, detail="Could not segment document into valid clauses.")
 
-    # 2. Extract clause numbers and headings
+    # 3. Extract clause numbers and headings + run statutory Section 27 compliance audit
     chunk_objects: List[ClauseChunk] = []
     chunk_texts_to_embed: List[str] = []
+    evaluated_clauses: List[Dict[str, Any]] = []
+    void_count = 0
+    has_moderate = False
 
     for idx, c in enumerate(raw_clauses):
         title_str = c.get("title", f"Clause {idx + 1}")
@@ -317,35 +382,117 @@ async def upload_document_endpoint(
         chunk_objects.append(chunk)
         chunk_texts_to_embed.append(f"{title_str}\n{text_str}")
 
-    # 3. Embed chunks with Gemini embeddings
+        # Run statutory Section 27 evaluation
+        audit_eval = audit_service.evaluate_clause_heuristics(text_str, title_str)
+        is_viol = audit_eval.get("is_violation", False)
+        risk_lvl = audit_eval.get("risk_level", "LOW")
+
+        if is_viol or "CRITICAL" in risk_lvl.upper():
+            void_count += 1
+        elif "MODERATE" in risk_lvl.upper():
+            has_moderate = True
+
+        clause_dict = {
+            "chunk_id": idx + 1,
+            "clause_index": idx + 1,
+            "clause_number": clause_num,
+            "heading": title_str,
+            "title": title_str,
+            "text": text_str,
+            "original_text": text_str,
+            "is_violation": is_viol,
+            "status": audit_eval.get("status", "COMPLIANT"),
+            "risk_level": risk_lvl,
+            "severity": "VOID_AB_INITIO" if is_viol else ("MEDIUM" if has_moderate else "CLEAN"),
+            "statute": audit_eval.get("statute", "Indian Contract Act, 1872"),
+            "section": audit_eval.get("section", "27"),
+            "statutory_issue": audit_eval.get("statutory_issue"),
+            "statutory_violation": audit_eval.get("statutory_issue") if is_viol else None,
+            "statutory_heading": audit_eval.get("heading", ""),
+            "binding_precedent": audit_eval.get("binding_precedent", ""),
+            "precedents": audit_eval.get("precedents", []),
+            "governing_authorities": audit_eval.get("governing_authorities", []),
+            "legal_doctrine": audit_eval.get("legal_doctrine", ""),
+            "legal_assessment": audit_eval.get("legal_doctrine", ""),
+            "layman_translation": audit_eval.get("layman_translation", ""),
+            "practical_impact": audit_eval.get("practical_impact", ""),
+            "balanced_redline": audit_eval.get("balanced_redline", None)
+        }
+        evaluated_clauses.append(clause_dict)
+
+    # 4. Overall risk level calculation
+    overall_risk = "CRITICAL_VOID_TERMS" if void_count > 0 else ("MODERATE" if has_moderate else "LOW")
+
+    audit_summary = (
+        f"Analyzed {len(chunk_objects)} clauses. Found {void_count} clause(s) with critical statutory risk under Section 27 ICA."
+        if void_count > 0 else
+        f"Analyzed {len(chunk_objects)} clauses. No critical Section 27 non-compete violations detected."
+    )
+
+    audit_results = {
+        "document_title": doc_title,
+        "total_clauses_analyzed": len(chunk_objects),
+        "void_clauses_count": void_count,
+        "risk_level": overall_risk,
+        "statutory_framework": ["Indian Contract Act, 1872 - Section 27", "Article 141 Supreme Court Precedents"],
+        "clauses": evaluated_clauses,
+        "audit_summary": audit_summary
+    }
+
+    # 5. Embed chunks with Gemini embeddings
     embeddings = embed_texts(chunk_texts_to_embed)
     for i, emb in enumerate(embeddings):
         chunk_objects[i].embedding = emb
 
-    # 4. Generate doc_id and store in in-memory store
-    doc_id = f"doc_{uuid.uuid4().hex[:12]}"
+    # 6. Generate or reuse doc_id and store in in-memory store
+    final_doc_id = doc_id if (doc_id and doc_id.startswith("doc_")) else f"doc_{uuid.uuid4().hex[:12]}"
     record = DocumentRecord(
-        doc_id=doc_id,
+        doc_id=final_doc_id,
         title=doc_title,
         raw_text=extracted_text,
         chunks=chunk_objects
     )
-    DOC_STORE[doc_id] = record
+    DOC_STORE[final_doc_id] = record
 
-    # 5. Mirror to Qdrant if reachable
+    # 7. Mirror to Qdrant if reachable
     if is_qdrant_reachable():
-        mirror_to_qdrant_if_available(doc_id, chunk_objects)
+        mirror_to_qdrant_if_available(final_doc_id, chunk_objects)
 
     qdrant_note = " (Qdrant reachable & mirrored)" if is_qdrant_reachable() else ""
-
-    logger.info(f"Indexed document '{doc_title}' ({doc_id}) with {len(chunk_objects)} chunks{qdrant_note}.")
+    logger.info(f"Indexed document '{doc_title}' ({final_doc_id}) with {len(chunk_objects)} chunks{qdrant_note}.")
 
     return DocUploadResponse(
-        doc_id=doc_id,
+        doc_id=final_doc_id,
         title=doc_title,
         chunks_count=len(chunk_objects),
         message=f"Document successfully parsed and indexed into {len(chunk_objects)} clause-aware chunks{qdrant_note}.",
-        clauses=[c.to_dict() for c in chunk_objects]
+        raw_text=extracted_text,
+        clauses=evaluated_clauses,
+        audit_results=audit_results,
+        warnings=warnings,
+        page_count=page_count,
+        char_count=len(extracted_text)
+    )
+
+
+@router.post("/upload-images", response_model=DocUploadResponse)
+async def upload_images_endpoint(
+    request: Request,
+    files: List[UploadFile] = File(...),
+    title: Optional[str] = Form("Uploaded Agreement Pages")
+):
+    """
+    POST /api/v1/doc/upload-images
+    Dedicated convenience endpoint for multi-page image contract uploads (up to 10 images).
+    """
+    return await upload_document_endpoint(
+        request=request,
+        file=None,
+        files=files,
+        text=None,
+        raw_text=None,
+        title=title,
+        doc_id=None
     )
 
 

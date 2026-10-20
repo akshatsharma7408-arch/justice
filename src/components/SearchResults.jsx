@@ -426,22 +426,13 @@ export default function SearchResults({
                   {/* Card Top Strip: Kicker + Tier Badge */}
                   <div className="answer-card-top-strip">
                     <span className="answer-kicker mono">
-                      {answerData.tier === 'tier1'
-                        ? 'VERIFIED LEGAL SYNTHESIS'
-                        : answerData.tier === 'unreliable'
-                        ? 'LEGAL NOTICE'
-                        : 'PLAIN-LANGUAGE CITIZEN SUMMARY'}
+                      {answerData.tier === 'unreliable' ? 'LEGAL NOTICE' : 'AI SUMMARY'}
                     </span>
                     <div className="answer-badge-wrap">
-                      {answerData.hide_badge || answerData.tier === 'unreliable' ? null : answerData.tier === 'tier1' ? (
-                        <span className="badge-answer-tier1 mono">
-                          <ShieldCheck size={13} />
-                          <span>Verified citations</span>
-                        </span>
-                      ) : (
-                        <span className="badge-answer-tier2 mono">
-                          <Sparkles size={13} />
-                          <span>AI answer, not verified</span>
+                      {answerData.hide_badge || answerData.tier === 'unreliable' || answerData.tier === 'not_found' ? null : (
+                        <span className={`badge-answer-${answerData.tier === 'tier1' ? 'tier1' : 'tier2'} mono`}>
+                          {answerData.tier === 'tier1' ? <ShieldCheck size={13} /> : <Sparkles size={13} />}
+                          <span>{answerData.tier_label || (answerData.tier === 'tier1' ? 'AI summary based on the cases below' : 'AI summary, check the cases below')}</span>
                         </span>
                       )}
                     </div>
@@ -503,7 +494,7 @@ export default function SearchResults({
 
                     <span className="answer-disclaimer-text mono">
                       {answerData.tier === 'tier1'
-                        ? 'Grounded directly in Indian Supreme Court jurisprudence'
+                        ? 'AI summary based on the cases below \u2022 Not formal legal advice'
                         : answerData.tier === 'unreliable'
                         ? 'Authoritative Supreme Court precedents are indexed below'
                         : 'General legal information \u2022 Not legal advice \u2022 Verify with a lawyer or primary statute'}
@@ -596,9 +587,6 @@ export default function SearchResults({
           <div className="results-cards-list">
             <div className="results-count-banner mono">
               <span>{results.length} VERIFIED PRECEDENT{results.length !== 1 ? 'S' : ''} RETRIEVED</span>
-              {hydeRatio && (
-                <span className="hyde-badge">HYDE NEURAL EXPANSION: ACTIVE</span>
-              )}
             </div>
 
             {results.map((precedent, index) => {

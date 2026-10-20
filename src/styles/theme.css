@@ -129,7 +129,10 @@
   }
 }
 
-/* Base Document Setup */
+html {
+  overflow-x: clip;
+}
+
 html, body {
   background-color: var(--bg-base);
   color: var(--text-body);
@@ -138,7 +141,6 @@ html, body {
   font-size: 15px;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
-  overflow-x: hidden;
   margin: 0;
   padding: 0;
 }

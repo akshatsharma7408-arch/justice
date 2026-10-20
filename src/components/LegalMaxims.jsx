@@ -21,9 +21,34 @@ export default function LegalMaxims() {
   const [selectedLetter, setSelectedLetter] = useState('ALL');
   const [expandedCardId, setExpandedCardId] = useState('audi-alteram-partem');
   
-  // Backend data + Fallback
-  const [maximsList, setMaximsList] = useState(LEGAL_MAXIMS);
-  const [maximOfTheDay, setMaximOfTheDay] = useState(null);
+  // Backend data + Cached Fallback
+  const [maximsList, setMaximsList] = useState(() => {
+    try {
+      const cached = localStorage.getItem('justice_legal_maxims_cache');
+      return cached ? JSON.parse(cached) : LEGAL_MAXIMS;
+    } catch {
+      return LEGAL_MAXIMS;
+    }
+  });
+
+  const [maximOfTheDay, setMaximOfTheDay] = useState(() => {
+    try {
+      const cached = localStorage.getItem('justice_maxim_of_day_cache');
+      if (cached) {
+        const parsed = JSON.parse(cached);
+        const todayStr = new Date().toISOString().split('T')[0];
+        if (parsed.date === todayStr && parsed.maxim) return parsed.maxim;
+      }
+    } catch (e) {}
+    const todayStr = new Date().toISOString().split('T')[0];
+    let hash = 0;
+    for (let i = 0; i < todayStr.length; i++) {
+      hash = (hash << 5) - hash + todayStr.charCodeAt(i);
+      hash |= 0;
+    }
+    const idx = Math.abs(hash) % LEGAL_MAXIMS.length;
+    return LEGAL_MAXIMS[idx];
+  });
   const [isLoading, setIsLoading] = useState(false);
 
   // Flashcards state
@@ -58,40 +83,34 @@ export default function LegalMaxims() {
     return ['ALL', ...Array.from(cats).sort()];
   }, []);
 
-  // Fetch Maxim of the Day & List from backend
+  // Fetch Maxim of the Day & List from backend silently in background
   useEffect(() => {
     let isMounted = true;
-    setIsLoading(true);
 
     fetchMaximOfTheDayWithBackend()
       .then(res => {
         if (!isMounted) return;
-        if (res && res.maxim) setMaximOfTheDay(res.maxim);
-      })
-      .catch(() => {
-        const todayStr = new Date().toISOString().split('T')[0];
-        let hash = 0;
-        for (let i = 0; i < todayStr.length; i++) {
-          hash = (hash << 5) - hash + todayStr.charCodeAt(i);
-          hash |= 0;
+        if (res && res.maxim) {
+          setMaximOfTheDay(res.maxim);
+          try {
+            const todayStr = new Date().toISOString().split('T')[0];
+            localStorage.setItem('justice_maxim_of_day_cache', JSON.stringify({ date: todayStr, maxim: res.maxim }));
+          } catch (e) {}
         }
-        const idx = Math.abs(hash) % LEGAL_MAXIMS.length;
-        if (isMounted) setMaximOfTheDay(LEGAL_MAXIMS[idx]);
-      });
+      })
+      .catch(() => {});
 
     fetchMaximsWithBackend(searchQuery, selectedCategory, selectedLetter, 1, 300)
       .then(res => {
         if (!isMounted) return;
         if (res && res.results && res.results.length > 0) {
           setMaximsList(res.results);
+          try {
+            localStorage.setItem('justice_legal_maxims_cache', JSON.stringify(res.results));
+          } catch (e) {}
         }
       })
-      .catch(() => {
-        if (isMounted) setMaximsList(LEGAL_MAXIMS);
-      })
-      .finally(() => {
-        if (isMounted) setIsLoading(false);
-      });
+      .catch(() => {});
 
     return () => {
       isMounted = false;

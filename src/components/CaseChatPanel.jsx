@@ -187,16 +187,51 @@ export default function CaseChatPanel({
     );
   }
 
+  const openerRef = useRef(null);
+
+  useEffect(() => {
+    if (isOpen) {
+      if (!openerRef.current && document.activeElement) {
+        openerRef.current = document.activeElement;
+      }
+    } else {
+      if (openerRef.current && typeof openerRef.current.focus === 'function') {
+        try { openerRef.current.focus(); } catch (e) {}
+        openerRef.current = null;
+      }
+    }
+  }, [isOpen]);
+
+  useEffect(() => {
+    const handleKeyDown = (e) => {
+      if (e.key === 'Escape' && isOpen) {
+        if (openerRef.current && typeof openerRef.current.focus === 'function') {
+          try { openerRef.current.focus(); } catch (e) {}
+        }
+        onToggle?.();
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [isOpen, onToggle]);
+
   return (
-    <motion.aside 
-      className="case-chat-panel-container" 
-      aria-label="Ask about this case chat panel"
-      id="case-chat-panel"
-      initial={{ opacity: 0, x: 28, scale: 0.98 }}
-      animate={{ opacity: 1, x: 0, scale: 1 }}
-      exit={{ opacity: 0, x: 28, scale: 0.98 }}
-      transition={{ duration: 0.28, ease: [0.16, 1, 0.3, 1] }}
-    >
+    <>
+      <div 
+        className="case-chat-backdrop" 
+        onClick={onToggle} 
+        aria-hidden="true" 
+      />
+      <motion.aside 
+        className="case-chat-panel-container" 
+        aria-label="Ask about this case chat panel"
+        id="case-chat-panel"
+        initial={{ opacity: 0, x: 28, scale: 0.98 }}
+        animate={{ opacity: 1, x: 0, scale: 1 }}
+        exit={{ opacity: 0, x: 28, scale: 0.98 }}
+        transition={{ duration: 0.28, ease: [0.16, 1, 0.3, 1] }}
+      >
+        <div className="case-chat-drag-handle" aria-hidden="true" />
       {/* Panel Top Header */}
       <div className="case-chat-header">
         <div className="chat-header-main">
@@ -424,5 +459,6 @@ export default function CaseChatPanel({
         </div>
       </div>
     </motion.aside>
+    </>
   );
 }

@@ -27,31 +27,31 @@ const CITATION_GRAPH_NODES = [
   },
   {
     id: 'node-affirmed',
+    name: "Superintendence Co. v. Krishan Murgai",
+    citation: "(1981) 2 SCC 246",
+    court: "Supreme Court of India",
+    bench: "3 Judges Bench",
+    benchSize: 3,
+    year: 1981,
+    status: "AFFIRMED",
+    statusLabel: "Affirmed",
+    x: 640,
+    y: 80,
+    ratio: "Restraints post-service cannot be justified by reasonableness under Indian law; Section 27 admits no exception except sale of goodwill."
+  },
+  {
+    id: 'node-distinguished-golikari',
     name: "Niranjan Shankar Golikari v. Century Spg.",
     citation: "(1967) 2 SCR 378",
     court: "Supreme Court of India",
     bench: "2 Judges Bench",
     benchSize: 2,
     year: 1967,
-    status: "AFFIRMED",
-    statusLabel: "Affirmed (Good Law)",
+    status: "DISTINGUISHED",
+    statusLabel: "Distinguished (In-Service Only)",
     x: 160,
     y: 80,
     ratio: "Negative covenants operating during the period of employment do not attract Section 27, whereas post-service covenants are void."
-  },
-  {
-    id: 'node-relied',
-    name: "Superintendence Co. v. Krishan Murgai",
-    citation: "(1980) 2 SCC 246",
-    court: "Supreme Court of India",
-    bench: "3 Judges Bench",
-    benchSize: 3,
-    year: 1980,
-    status: "RELIED_ON",
-    statusLabel: "Relied Upon",
-    x: 640,
-    y: 80,
-    ratio: "Restraints post-service cannot be justified by reasonableness under Indian law; Section 27 admits no exception except sale of goodwill."
   },
   {
     id: 'node-distinguished',
@@ -76,7 +76,7 @@ const CITATION_GRAPH_NODES = [
     benchSize: 1,
     year: 1876,
     status: "OVERRULED",
-    statusLabel: "Overruled / Void Precedent",
+    statusLabel: "Overruled",
     x: 600,
     y: 270,
     ratio: "Earlier colonial rulings attempting to inject English common law reasonableness exceptions into Section 27 were overruled."
@@ -298,65 +298,7 @@ export default function SmartCitator({ initialCaseId, onActiveCaseChange }) {
       return [target, ...related];
     }
 
-    return [
-      target,
-      {
-        id: 'node-coord',
-        name: `Coordinate Bench (${currentCase.benchSize || 2} Judges)`,
-        citation: 'Article 141 Doctrine',
-        court: 'Supreme Court of India',
-        bench: `Coordinate ${currentCase.benchSize || 2} Judges`,
-        benchSize: currentCase.benchSize || 2,
-        year: currentCase.decisionYear || currentCase.year || 2024,
-        status: 'AFFIRMED',
-        statusLabel: 'Coordinate Bench (Bound)',
-        x: 160,
-        y: 80,
-        ratio: 'A bench of coordinate strength is strictly bound by this ratio. If in disagreement, it must refer the question to the Chief Justice for a larger bench.'
-      },
-      {
-        id: 'node-larger',
-        name: `Larger Constitutional Bench (${(currentCase.benchSize || 2) + 1}+ Judges)`,
-        citation: 'Plenary Jurisdiction',
-        court: 'Supreme Court of India',
-        bench: `Larger Bench (${(currentCase.benchSize || 2) + 1}+ Judges)`,
-        benchSize: (currentCase.benchSize || 2) + 1,
-        year: (currentCase.decisionYear || currentCase.year || 2024) + 1,
-        status: 'RELIED_ON',
-        statusLabel: 'Competent to Overrule',
-        x: 640,
-        y: 80,
-        ratio: 'Only a bench of higher numerical strength possesses the constitutional authority under Article 141 to reconsider, modify, or overrule this precedent.'
-      },
-      {
-        id: 'node-hc',
-        name: 'All High Courts of India',
-        citation: 'Art. 141 Mandate',
-        court: 'All 25 High Courts',
-        bench: 'Constitutional Courts',
-        benchSize: 1,
-        year: 2024,
-        status: 'AFFIRMED',
-        statusLabel: 'Strictly Bound',
-        x: 200,
-        y: 270,
-        ratio: 'The law declared by the Supreme Court is binding on all courts within the territory of India. High Courts have zero discretion to depart from this ratio.'
-      },
-      {
-        id: 'node-subordinate',
-        name: 'District & Subordinate Courts',
-        citation: 'Territorial Application',
-        court: 'Subordinate Judiciary',
-        bench: 'Trial Courts',
-        benchSize: 1,
-        year: 2024,
-        status: 'DISTINGUISHED',
-        statusLabel: 'Binding Authority',
-        x: 600,
-        y: 270,
-        ratio: 'Subordinate courts must apply this precedent as mandatory law in all pending civil and criminal proceedings.'
-      }
-    ];
+    return [target];
   }, [selectedCaseId, currentCase]);
 
   const activeGraphEdges = useMemo(() => {
@@ -522,7 +464,7 @@ export default function SmartCitator({ initialCaseId, onActiveCaseChange }) {
           <div className="citator-graph-card animate-fade-in">
             <div className="graph-header-row">
               <div>
-                <span className="graph-kicker mono">ARTICLE 141 TOPOLOGICAL LINEAGE</span>
+                <span className="graph-kicker mono">PRECEDENT CITATION & TREATMENT GRAPH</span>
                 <h3 className="graph-title font-serif">
                   Precedent Citation Topology: {currentCase.title}
                 </h3>
@@ -535,121 +477,129 @@ export default function SmartCitator({ initialCaseId, onActiveCaseChange }) {
               </span>
             </div>
 
-            {/* SVG Interactive Canvas */}
-            <div className="graph-canvas-wrap">
-              <svg className="graph-svg-canvas" viewBox="0 0 800 350">
-                <defs>
-                  <marker id="arrow-copper" viewBox="0 0 10 10" refX="22" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
-                    <path d="M 0 0 L 10 5 L 0 10 z" fill="#E0955A" />
-                  </marker>
-                  <marker id="arrow-muted" viewBox="0 0 10 10" refX="22" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
-                    <path d="M 0 0 L 10 5 L 0 10 z" fill="#24403A" />
-                  </marker>
-                  <filter id="copper-glow" x="-20%" y="-20%" width="140%" height="140%">
-                    <feGaussianBlur stdDeviation="3" result="blur" />
-                    <feComposite in="SourceGraphic" in2="blur" operator="over" />
-                  </filter>
-                </defs>
+            {/* Check if verified relationship data exists */}
+            {activeGraphNodes.length <= 1 ? (
+              <div className="citator-empty-treatment-card">
+                <div className="empty-treatment-icon-wrap">
+                  <Info size={24} className="text-muted" />
+                </div>
+                <h4 className="empty-treatment-title font-serif">
+                  No direct treatment relationship recorded in current archive
+                </h4>
+                <p className="empty-treatment-text font-serif">
+                  While <em>{currentCase.title}</em> is an indexed decision, no downstream treatment links (affirmations, distinctions, or overrulings) have been entered into the active index for this precedent yet.
+                </p>
+              </div>
+            ) : (
+              /* SVG Interactive Canvas */
+              <div className="graph-canvas-wrap">
+                <svg className="graph-svg-canvas" viewBox="0 0 800 350">
+                  <defs>
+                    <marker id="arrow-copper" viewBox="0 0 10 10" refX="22" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+                      <path d="M 0 0 L 10 5 L 0 10 z" fill="#E0955A" />
+                    </marker>
+                    <marker id="arrow-muted" viewBox="0 0 10 10" refX="22" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+                      <path d="M 0 0 L 10 5 L 0 10 z" fill="#24403A" />
+                    </marker>
+                  </defs>
 
-                {/* Connecting Edges */}
-                {activeGraphEdges.map((edge) => {
-                  const isHighlighted = hoveredNodeId === edge.to || hoveredNodeId === 'node-target' || selectedGraphNode?.id === edge.to;
-                  return (
-                    <line
-                      key={edge.id}
-                      x1={edge.x1}
-                      y1={edge.y1}
-                      x2={edge.x2}
-                      y2={edge.y2}
-                      stroke={isHighlighted ? '#E0955A' : edge.stroke}
-                      strokeWidth={isHighlighted ? 2.5 : 1.25}
-                      strokeDasharray={edge.dash || 'none'}
-                      opacity={hoveredNodeId && !isHighlighted ? 0.25 : 0.8}
-                      markerEnd={isHighlighted ? 'url(#arrow-copper)' : 'url(#arrow-muted)'}
-                      style={{ transition: 'all 250ms ease' }}
-                    />
-                  );
-                })}
-
-                {/* Nodes */}
-                {activeGraphNodes.map((node) => {
-                  const isTarget = node.id === 'node-target';
-                  const isHovered = hoveredNodeId === node.id;
-                  const isSelected = selectedGraphNode?.id === node.id;
-                  const isDimmed = hoveredNodeId && hoveredNodeId !== node.id && !isTarget;
-
-                  let borderColor = '#24403A';
-                  let statusBg = '#12261F';
-                  let statusColor = '#EFE8D6';
-
-                  if (node.status === 'TARGET') {
-                    borderColor = '#C77B3A';
-                    statusBg = '#17302A';
-                    statusColor = '#E0955A';
-                  } else if (node.status === 'AFFIRMED') {
-                    borderColor = '#4CAF7D';
-                    statusColor = '#4CAF7D';
-                  } else if (node.status === 'RELIED_ON') {
-                    borderColor = '#9AA79F';
-                    statusColor = '#D9D3C2';
-                  } else if (node.status === 'DISTINGUISHED') {
-                    borderColor = '#E0A030';
-                    statusColor = '#E0A030';
-                  } else if (node.status === 'OVERRULED') {
-                    borderColor = '#D9534F';
-                    statusColor = '#D9534F';
-                  }
-
-                  return (
-                    <motion.g
-                      key={node.id}
-                      transform={`translate(${node.x}, ${node.y})`}
-                      className="graph-node-group"
-                      onMouseEnter={() => setHoveredNodeId(node.id)}
-                      onMouseLeave={() => setHoveredNodeId(null)}
-                      onClick={() => setSelectedGraphNode(node)}
-                      whileHover={{ scale: 1.06 }}
-                      transition={{ type: 'spring', stiffness: 360, damping: 22 }}
-                      style={{
-                        cursor: 'pointer',
-                        opacity: isDimmed ? 0.35 : 1,
-                        transition: 'opacity 250ms ease'
-                      }}
-                    >
-                      <rect
-                        x="-70"
-                        y="-30"
-                        width="140"
-                        height="60"
-                        rx="18"
-                        fill={isHovered || isSelected ? '#17302A' : statusBg}
-                        stroke={isHovered || isSelected ? '#E0955A' : borderColor}
-                        strokeWidth={isHovered || isSelected ? 2.5 : 1}
-                        filter={isHovered ? 'url(#copper-glow)' : 'none'}
+                  {/* Connecting Edges */}
+                  {activeGraphEdges.map((edge) => {
+                    const isHighlighted = hoveredNodeId === edge.to || hoveredNodeId === 'node-target' || selectedGraphNode?.id === edge.to;
+                    return (
+                      <line
+                        key={edge.id}
+                        x1={edge.x1}
+                        y1={edge.y1}
+                        x2={edge.x2}
+                        y2={edge.y2}
+                        stroke={isHighlighted ? '#E0955A' : edge.stroke}
+                        strokeWidth={isHighlighted ? 2.5 : 1.25}
+                        strokeDasharray={edge.dash || 'none'}
+                        opacity={hoveredNodeId && !isHighlighted ? 0.25 : 0.8}
+                        markerEnd={isHighlighted ? 'url(#arrow-copper)' : 'url(#arrow-muted)'}
                         style={{ transition: 'all 200ms ease' }}
                       />
-                      <text textAnchor="middle" y="-8" fill={statusColor} fontSize="9.5" fontWeight="600" letterSpacing="0.04em" fontFamily="Inter">
-                        {node.statusLabel.toUpperCase()}
-                      </text>
-                      <text textAnchor="middle" y="10" fill="#EFE8D6" fontSize="9" fontFamily="JetBrains Mono, monospace">
-                        {node.citation.split(' ')[0]}
-                      </text>
-                      <text textAnchor="middle" y="22" fill="#9AA79F" fontSize="8" fontFamily="Inter">
-                        {node.court.split(' ')[0]} {node.year}
-                      </text>
-                    </motion.g>
-                  );
-                })}
-              </svg>
+                    );
+                  })}
 
-              {/* Legend Strip */}
-              <div className="graph-legend-bar">
-                <span className="legend-entry"><span className="legend-dot green" /> Affirmed (Good Law)</span>
-                <span className="legend-entry"><span className="legend-dot grey" /> Relied Upon</span>
-                <span className="legend-entry"><span className="legend-dot amber" /> Distinguished</span>
-                <span className="legend-entry"><span className="legend-dot red" /> Overruled</span>
+                  {/* Nodes */}
+                  {activeGraphNodes.map((node) => {
+                    const isTarget = node.id === 'node-target';
+                    const isHovered = hoveredNodeId === node.id;
+                    const isSelected = selectedGraphNode?.id === node.id;
+                    const isDimmed = hoveredNodeId && hoveredNodeId !== node.id && !isTarget;
+
+                    let borderColor = '#24403A';
+                    let statusBg = '#12261F';
+                    let statusColor = '#EFE8D6';
+
+                    if (node.status === 'TARGET') {
+                      borderColor = '#C77B3A';
+                      statusBg = '#17302A';
+                      statusColor = '#E0955A';
+                    } else if (node.status === 'AFFIRMED') {
+                      borderColor = '#4CAF7D';
+                      statusColor = '#4CAF7D';
+                    } else if (node.status === 'RELIED_ON') {
+                      borderColor = '#9AA79F';
+                      statusColor = '#D9D3C2';
+                    } else if (node.status === 'DISTINGUISHED') {
+                      borderColor = '#E0A030';
+                      statusColor = '#E0A030';
+                    } else if (node.status === 'OVERRULED') {
+                      borderColor = '#D9534F';
+                      statusColor = '#D9534F';
+                    }
+
+                    return (
+                      <g
+                        key={node.id}
+                        transform={`translate(${node.x}, ${node.y})`}
+                        className={`graph-node-group ${isHovered ? 'is-hovered' : ''}`}
+                        onMouseEnter={() => setHoveredNodeId(node.id)}
+                        onMouseLeave={() => setHoveredNodeId(null)}
+                        onClick={() => setSelectedGraphNode(node)}
+                        style={{
+                          cursor: 'pointer',
+                          opacity: isDimmed ? 0.35 : 1,
+                          transition: 'opacity 200ms ease'
+                        }}
+                      >
+                        <rect
+                          x="-70"
+                          y="-30"
+                          width="140"
+                          height="60"
+                          rx="18"
+                          fill={isHovered || isSelected ? '#17302A' : statusBg}
+                          stroke={isHovered || isSelected ? '#E0955A' : borderColor}
+                          strokeWidth={isHovered || isSelected ? 2.5 : 1}
+                          style={{ transition: 'stroke 150ms ease, fill 150ms ease, stroke-width 150ms ease' }}
+                        />
+                        <text textAnchor="middle" y="-8" fill={statusColor} fontSize="9.5" fontWeight="600" letterSpacing="0.04em" fontFamily="Inter, sans-serif">
+                          {node.statusLabel.toUpperCase()}
+                        </text>
+                        <text textAnchor="middle" y="10" fill="#EFE8D6" fontSize="9" fontFamily="JetBrains Mono, monospace">
+                          {(node.citation || '').split(' ')[0]}
+                        </text>
+                        <text textAnchor="middle" y="22" fill="#9AA79F" fontSize="8" fontFamily="Inter, sans-serif">
+                          {(node.court || '').split(' ')[0]} {node.year}
+                        </text>
+                      </g>
+                    );
+                  })}
+                </svg>
+
+                {/* Legend Strip */}
+                <div className="graph-legend-bar">
+                  <span className="legend-entry"><span className="legend-dot green" /> Affirmed</span>
+                  <span className="legend-entry"><span className="legend-dot grey" /> Relied Upon</span>
+                  <span className="legend-entry"><span className="legend-dot amber" /> Distinguished</span>
+                  <span className="legend-entry"><span className="legend-dot red" /> Overruled</span>
+                </div>
               </div>
-            </div>
+            )}
 
             {/* Click-to-Open Case Detail Panel Drawer */}
             {selectedGraphNode && (
@@ -709,45 +659,56 @@ export default function SmartCitator({ initialCaseId, onActiveCaseChange }) {
         {activeTab === 'treatment' && (
           <div className="citator-treatment-panel animate-fade-in">
             <div className="treatment-panel-header">
-              <span className="treatment-kicker mono">ARTICLE 141 LINEAGE & PRECEDENT SHEPARDIZATION</span>
+              <span className="treatment-kicker mono">PRECEDENT CITATION & TREATMENT HISTORY</span>
               <h3 className="treatment-title font-serif">Judicial Treatment History</h3>
               <p className="treatment-desc">
-                How Subsequent High Court and Supreme Court benches have treated <em>{currentCase.title}</em>:
+                How subsequent High Court and Supreme Court benches have treated <em>{currentCase.title}</em>:
               </p>
             </div>
 
             <div className="treatment-items-list">
-              {((currentCase.subsequentTreatments && currentCase.subsequentTreatments.length > 0)
-                ? currentCase.subsequentTreatments
-                : (currentCase.treatmentHistory && currentCase.treatmentHistory.length > 0)
-                  ? currentCase.treatmentHistory.map(th => ({
-                      caseName: th.case,
-                      citation: `(${th.year})`,
-                      court: th.court || 'Supreme Court of India',
-                      treatmentType: (th.treatment || 'AFFIRMED').toUpperCase(),
-                      treatmentSummary: th.note || `Judicial treatment of precedent: ${th.treatment}`
-                    }))
-                  : [
-                      {
-                        caseName: `Article 141 Judicial Precedent Lineage (${currentCase.title})`,
-                        citation: currentCase.citation || 'Supreme Court Judgment',
-                        court: currentCase.court || 'Supreme Court of India',
-                        treatmentType: 'AFFIRMED',
-                        treatmentSummary: 'Declared law binding upon all subordinate and High Courts across India under Article 141 of the Constitution.'
-                      }
-                    ]
-              ).map((t, idx) => (
-                <div key={idx} className="treatment-card">
-                  <div className="treatment-card-header">
-                    <span className={`treatment-badge mono ${(t.treatmentType || 'AFFIRMED').toLowerCase()}`}>
-                      {(t.treatmentType || 'AFFIRMED').replace('_', ' ')}
-                    </span>
-                    <span className="treatment-citation mono">{t.citation}</span>
+              {(() => {
+                const treatments = (currentCase.subsequentTreatments && currentCase.subsequentTreatments.length > 0)
+                  ? currentCase.subsequentTreatments
+                  : (currentCase.treatmentHistory && currentCase.treatmentHistory.length > 0)
+                    ? currentCase.treatmentHistory.map(th => ({
+                        caseName: th.case,
+                        citation: `(${th.year})`,
+                        court: th.court || 'Supreme Court of India',
+                        treatmentType: (th.treatment || 'AFFIRMED').toUpperCase(),
+                        treatmentSummary: th.note || `Judicial treatment of precedent: ${th.treatment}`
+                      }))
+                    : [];
+
+                if (treatments.length === 0) {
+                  return (
+                    <div className="citator-empty-treatment-card">
+                      <div className="empty-treatment-icon-wrap">
+                        <Info size={24} className="text-muted" />
+                      </div>
+                      <h4 className="empty-treatment-title font-serif">
+                        No direct treatment relationship recorded in current archive
+                      </h4>
+                      <p className="empty-treatment-text font-serif">
+                        No downstream judicial treatment records are currently catalogued for <em>{currentCase.title}</em>. Verify primary law reports before citing.
+                      </p>
+                    </div>
+                  );
+                }
+
+                return treatments.map((t, idx) => (
+                  <div key={idx} className="treatment-card">
+                    <div className="treatment-card-header">
+                      <span className={`treatment-badge mono ${(t.treatmentType || 'AFFIRMED').toLowerCase()}`}>
+                        {(t.treatmentType || 'AFFIRMED').replace('_', ' ')}
+                      </span>
+                      <span className="treatment-citation mono">{t.citation}</span>
+                    </div>
+                    <h4 className="treatment-case-name font-serif">{t.caseName}</h4>
+                    <p className="treatment-case-summary font-serif">"{t.treatmentSummary}"</p>
                   </div>
-                  <h4 className="treatment-case-name font-serif">{t.caseName}</h4>
-                  <p className="treatment-case-summary font-serif">"{t.treatmentSummary}"</p>
-                </div>
-              ))}
+                ));
+              })()}
             </div>
           </div>
         )}

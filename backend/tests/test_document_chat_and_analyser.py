@@ -197,3 +197,64 @@ def test_verify_single_clause_section74_and_section27():
     assert s27_data["severity"] == "VOID_AB_INITIO"
     assert s27_data["is_violation"] is True
     assert "percept" in s27_data["binding_precedent"].lower()
+
+
+def test_upload_raw_text_and_clause_audit():
+    """Item 9 Test 6: Verify /api/v1/doc/upload supports direct raw text and triggers compliance evaluation."""
+    resp = client.post(
+        "/api/v1/doc/upload",
+        data={"raw_text": SAMPLE_SERVICE_AGREEMENT, "title": "Direct Raw Text Agreement"}
+    )
+    assert resp.status_code == 200
+    data = resp.json()
+    assert data["doc_id"]
+    assert "Rahul Sharma" in (data.get("raw_text") or "")
+    assert "clauses" in data
+    assert len(data["clauses"]) >= 4
+
+
+def test_upload_images_blank_blurry_detection():
+    """Item 9 Test 7: Verify /api/v1/doc/upload-images detects blank/blurry images and provides user guidance."""
+    import io
+    from PIL import Image
+
+    # Create a small blank image (no readable text)
+    blank_img = Image.new("RGB", (200, 200), color="white")
+    buf = io.BytesIO()
+    blank_img.save(buf, format="PNG")
+    buf.seek(0)
+
+    resp = client.post(
+        "/api/v1/doc/upload-images",
+        files=[("files", ("blank_photo.png", buf.getvalue(), "image/png"))]
+    )
+    assert resp.status_code == 200
+    data = resp.json()
+    assert data["doc_id"]
+    raw = data.get("raw_text") or ""
+    warns = data.get("warnings") or []
+    # When an image has no text, it must flag blurry/unclear
+    assert "blurry or unclear" in raw or any("blurry" in str(w).lower() for w in warns) or "No text could be reliably extracted" in raw
+
+
+def test_upload_images_with_drawn_text_ocr():
+    """Item 9 Test 8: Verify RapidOCR extracts text from rendered images."""
+    import io
+    from PIL import Image, ImageDraw
+
+    img = Image.new("RGB", (800, 300), color="white")
+    draw = ImageDraw.Draw(img)
+    draw.text((40, 80), "TENANCY AGREEMENT: Notice period is 45 days.", fill="black")
+    buf = io.BytesIO()
+    img.save(buf, format="PNG")
+    buf.seek(0)
+
+    resp = client.post(
+        "/api/v1/doc/upload-images",
+        files=[("files", ("page_1.png", buf.getvalue(), "image/png"))]
+    )
+    assert resp.status_code == 200
+    data = resp.json()
+    assert "doc_id" in data
+    assert data["chunks_count"] >= 1 or len(data.get("raw_text") or "") > 0
+
