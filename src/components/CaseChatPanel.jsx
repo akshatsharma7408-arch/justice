@@ -167,25 +167,35 @@ export default function CaseChatPanel({
   // Floating collapsed bar for desktop / mobile trigger
   if (!isOpen) {
     return (
-      <button
+      <motion.button
         type="button"
         className="case-chat-collapsed-trigger"
         onClick={onToggle}
         title="Open Case Chat (Ask about this case)"
         aria-label="Open Case Chat"
+        initial={{ opacity: 0, scale: 0.9, y: 10 }}
+        animate={{ opacity: 1, scale: 1, y: 0 }}
+        exit={{ opacity: 0, scale: 0.9, y: 10 }}
+        whileHover={{ scale: 1.04 }}
+        whileTap={{ scale: 0.96 }}
+        transition={{ duration: 0.22, ease: [0.16, 1, 0.3, 1] }}
       >
         <MessageSquare size={16} />
         <span className="collapsed-trigger-label">Ask about this case</span>
         <span className="collapsed-case-pill mono">{caseCitation || caseTitle.slice(0, 18)}</span>
-      </button>
+      </motion.button>
     );
   }
 
   return (
-    <aside 
+    <motion.aside 
       className="case-chat-panel-container" 
       aria-label="Ask about this case chat panel"
       id="case-chat-panel"
+      initial={{ opacity: 0, x: 28, scale: 0.98 }}
+      animate={{ opacity: 1, x: 0, scale: 1 }}
+      exit={{ opacity: 0, x: 28, scale: 0.98 }}
+      transition={{ duration: 0.28, ease: [0.16, 1, 0.3, 1] }}
     >
       {/* Panel Top Header */}
       <div className="case-chat-header">
@@ -413,6 +423,6 @@ export default function CaseChatPanel({
           <span>AI answer, not legal advice &bull; Strictly grounded in case records</span>
         </div>
       </div>
-    </aside>
+    </motion.aside>
   );
 }

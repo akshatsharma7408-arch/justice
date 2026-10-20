@@ -248,7 +248,7 @@ export function MagneticButton({
 export function CountUpNumber({ target = 100, suffix = '', prefix = '', duration = 1.6 }) {
   const [val, setVal] = useState(0);
   const ref = useRef(null);
-  const isInView = useInView(ref, { once: true, margin: '-40px' });
+  const isInView = useInView(ref, { once: true, amount: 0.1 });
 
   useEffect(() => {
     if (!isInView) return;
