@@ -78,3 +78,24 @@ def test_search_answer_post_too_long_returns_400():
     assert resp.status_code == 400
     detail = resp.json().get("detail", "")
     assert "shorten your question" in detail.lower()
+
+
+def test_search_post_ui_payload_limit():
+    """POST /api/v1/search with UI payload (limit=8 and limit=10) must return HTTP 200, not 422."""
+    payload_10 = {
+        "query": "Is right to privacy a fundamental right",
+        "court": "ALL",
+        "bench_type": "ALL",
+        "enable_hyde": True,
+        "limit": 10,
+        "force_fallback": False
+    }
+    resp_10 = client.post("/api/v1/search", json=payload_10)
+    assert resp_10.status_code == 200, f"Expected 200 for limit=10, got {resp_10.status_code}: {resp_10.text}"
+    data_10 = resp_10.json()
+    assert "results" in data_10
+
+    payload_8 = dict(payload_10, limit=8)
+    resp_8 = client.post("/api/v1/search", json=payload_8)
+    assert resp_8.status_code == 200, f"Expected 200 for limit=8, got {resp_8.status_code}: {resp_8.text}"
+

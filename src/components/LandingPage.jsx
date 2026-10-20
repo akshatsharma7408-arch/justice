@@ -259,8 +259,8 @@ export default function LandingPage({
                 <span className="stat-label-text">Indexed Chunks</span>
               </div>
               <div className="stat-card-box">
-                <span className="stat-number-val font-serif" style={{ fontSize: '1.25rem', lineHeight: 1.3 }}>Supreme Court</span>
-                <span className="stat-label-text">Every case shown comes from the Supreme Court dataset</span>
+                <span className="stat-number-val font-serif" style={{ fontSize: '1.25rem', lineHeight: 1.3 }}>Primary Law</span>
+                <span className="stat-label-text">Supreme Court of India and Delhi High Court judgments</span>
               </div>
             </div>
           </div>
@@ -352,10 +352,6 @@ export default function LandingPage({
             <TiltCard className="editorial-answer-card" maxTilt={6}>
               <div className="card-top-kicker">
                 <span className="kicker-tag mono">ARREST & DETENTION</span>
-                <span className="badge-verified">
-                  <ShieldCheck size={12} />
-                  <span>Verified Citation</span>
-                </span>
               </div>
               <h3 className="card-question font-serif">
                 "What are my rights if an officer arrests me without a warrant?"
@@ -366,7 +362,7 @@ export default function LandingPage({
               <div className="card-source-citation">
                 <span className="citation-title font-serif">D.K. Basu v. State of West Bengal</span>
                 <div className="citation-code-row">
-                  <span className="citation-pill mono">(1997) 1 SCC 416</span>
+                  <span className="citation-pill mono">Decided 1996, reported (1997) 1 SCC 416</span>
                   <button
                     type="button"
                     className="btn-copy-cite"
@@ -391,32 +387,28 @@ export default function LandingPage({
               </div>
             </TiltCard>
 
-            {/* Card 2: Biswabani / Landlord eviction (TiltCard with glossy highlight) */}
+            {/* Card 2: Heera Traders / Landlord eviction (TiltCard with glossy highlight) */}
             <TiltCard className="editorial-answer-card" maxTilt={6}>
               <div className="card-top-kicker">
                 <span className="kicker-tag mono">TENANCY & HOUSING</span>
-                <span className="badge-verified">
-                  <ShieldCheck size={12} />
-                  <span>Verified Citation</span>
-                </span>
               </div>
               <h3 className="card-question font-serif">
                 "Can my landlord evict me without notice?"
               </h3>
               <p className="card-answer-prose">
-                No. In India, a landlord cannot physically throw you out, cut off electricity or water, or change the locks. Even if your lease has expired or rent is delayed, Section 106 of the Transfer of Property Act and state Rent Control statutes mandate written statutory notice. A tenant can only be dispossessed pursuant to a formal eviction decree from a competent civil court.
+                No. In India, a landlord cannot physically throw you out, cut off essential amenities, or change the locks. Even when a lease expires or rent is delayed, Section 106 of the Transfer of Property Act and statutory rent control laws require formal written notice and proof of statutory grounds. A tenant can only be evicted under a lawful decree of a competent court.
               </p>
               <div className="card-source-citation">
-                <span className="citation-title font-serif">Biswabani (P) Ltd. v. Santosh Kumar Dutta</span>
+                <span className="citation-title font-serif">Heera Traders v. Kamla Jain</span>
                 <div className="citation-code-row">
-                  <span className="citation-pill mono">(1980) 1 SCC 185</span>
+                  <span className="citation-pill mono">[2022] 10 S.C.R. 291</span>
                   <button
                     type="button"
                     className="btn-copy-cite"
-                    onClick={() => copyCitation("(1980) 1 SCC 185", "biswabani")}
+                    onClick={() => copyCitation("[2022] 10 S.C.R. 291", "heera-traders")}
                     title="Copy citation"
                   >
-                    {copiedCitationId === "biswabani" ? (
+                    {copiedCitationId === "heera-traders" ? (
                       <span className="copy-success-badge"><Check size={12} /> Copied</span>
                     ) : (
                       "Copy"
@@ -425,7 +417,7 @@ export default function LandingPage({
                   <button
                     type="button"
                     className="btn-verify-cite"
-                    onClick={() => onNavigate('search', 'Biswabani landlord eviction notice rent control')}
+                    onClick={() => onNavigate('search', 'Heera Traders v. Kamla Jain landlord eviction')}
                   >
                     <span>View Judgment</span>
                     <ArrowUpRight size={13} />
@@ -438,10 +430,6 @@ export default function LandingPage({
             <TiltCard className="editorial-answer-card" maxTilt={6}>
               <div className="card-top-kicker">
                 <span className="kicker-tag mono">EMPLOYMENT & CONTRACTS</span>
-                <span className="badge-verified">
-                  <ShieldCheck size={12} />
-                  <span>Verified Citation</span>
-                </span>
               </div>
               <h3 className="card-question font-serif">
                 "Are non-compete clauses valid after I quit my job?"
@@ -497,9 +485,9 @@ export default function LandingPage({
                 <div className="source-feature-item">
                   <div className="feature-marker mono">01</div>
                   <div>
-                    <h4 className="feature-title font-serif">Paragraph-Level Grounding</h4>
+                    <h4 className="feature-title font-serif">Primary Precedent Grounding</h4>
                     <p className="feature-desc">
-                      Tap any citation tag to jump directly to the exact paragraph in the recorded Supreme Court judgment.
+                      Every statement links directly to verified judgment text from Supreme Court and High Court archives.
                     </p>
                   </div>
                 </div>
@@ -676,7 +664,7 @@ export default function LandingPage({
             <span className="section-eyebrow mono">TWO-TIER ARCHITECTURE OF TRUTH</span>
             <h2 className="section-heading font-serif">Verified Citations vs AI Answers.</h2>
             <p className="section-lead">
-              Artificial intelligence often hallucinates legal cases. Justice enforces rigorous boundaries: when an answer is certified from law books, we label it verified; when an answer is general conceptual reasoning, we tell you immediately.
+              Justice enforces rigorous verification boundaries: when an answer is grounded in primary law reports, we cite verified judgments; when an answer is general conceptual reasoning, we label it clearly.
             </p>
           </div>
 
@@ -691,15 +679,15 @@ export default function LandingPage({
               </div>
               <h3 className="tier-title font-serif">Primary Sourced Precedent</h3>
               <p className="tier-desc">
-                Derived directly from our indexed library of official Supreme Court judgments and bare acts. Includes exact paragraph numbers, neutral citations, and bench size metrics.
+                Derived directly from our indexed library of official Supreme Court and High Court judgments and statutory provisions. Includes neutral citations and bench strength details.
               </p>
               <ul className="tier-points-list">
                 <li><Check size={14} className="point-icon green" /> Verbatim text extracts from official Law Reports</li>
                 <li><Check size={14} className="point-icon green" /> Validated under Article 141 judicial discipline</li>
-                <li><Check size={14} className="point-icon green" /> Zero synthetic case numbers or imaginary precedents</li>
+                <li><Check size={14} className="point-icon green" /> Grounded in verified primary decisions</li>
               </ul>
               <div className="tier-sample-pill green mono">
-                Status: Good Law (Affirmed by Coordinate Bench)
+                Binding Precedent under Article 141
               </div>
             </TiltCard>
 
@@ -776,7 +764,7 @@ export default function LandingPage({
               Justice is an independent legal research instrument. It does not provide legal advice or create an attorney-client relationship. Consult an advocate enrolled with the Bar Council of India before acting on legal matters.
             </div>
             <div className="footer-meta-right mono">
-              <span>Jurisdiction: Republic of India</span> &bull; <span>FastAPI + Qdrant</span>
+              <span>Jurisdiction: Republic of India</span>
             </div>
           </div>
         </div>

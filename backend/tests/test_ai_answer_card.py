@@ -73,7 +73,8 @@ def test_tier2_no_repeated_start_label():
 def test_tier2_ratio_decidendi_is_none():
     """ratio_decidendi must be None for Tier 2 answers (kept only for verified Tier 1)."""
     resp = client.post("/api/v1/search/answer", json={
-        "query": "What are my rights if an officer arrests me without a warrant?",
+        "query": "Can a landlord evict a tenant without notice?",
+        "results": [],
         "force_fallback": True
     })
     assert resp.status_code == 200

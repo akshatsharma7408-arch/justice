@@ -65,7 +65,7 @@ class SearchRequest(BaseModel):
     court: Optional[str] = Field("ALL", description="Court filter: 'ALL', 'Supreme Court of India', 'Delhi High Court'")
     bench_type: Optional[str] = Field("ALL", description="Bench filter: 'ALL', 'CONSTITUTION', 'DIVISION'")
     enable_hyde: bool = Field(True, description="Whether to synthesize judicial ratio from retrieved precedents")
-    limit: int = Field(8, ge=1, le=8, description="Maximum number of precedents to return (at most 8)")
+    limit: int = Field(8, ge=1, le=20, description="Maximum number of precedents to return (up to 20)")
     force_fallback: bool = Field(False, description="Whether to force deterministic legal fallback")
 
 class SearchResponse(BaseModel):
@@ -116,17 +116,34 @@ def is_pure_case_lookup_query(query: str) -> bool:
     q = query.strip()
     q_lower = q.lower()
 
-    # Question or topic indicator words
+    # Question or conceptual topic indicator words (must trigger AI answer, not case lookup)
     topic_indicators = [
         "what", "why", "how", "when", "where", "can", "could", "should", "would",
         "is", "are", "do", "does", "did", "rights", "bribe", "bribes", "evict",
         "eviction", "liquidated damages", "arrest", "warrant", "valid", "validity",
         "enforce", "enforceability", "compensation", "explain", "meaning", "definition",
-        "penalty", "procedure", "remedy", "relief", "doctrine"
+        "penalty", "procedure", "remedy", "relief", "doctrine", "privacy", "basic structure",
+        "bail", "anticipatory bail", "murder", "culpable homicide", "homicide",
+        "non-compete", "non compete", "noncompete", "live-in", "live in", "relationship",
+        "landlord", "tenant", "tenancy", "article 21", "section 27", "section 74", "section 41", "section 498a"
     ]
-    words = re.findall(r'[a-zA-Z0-9]+', q_lower)
-    if any(ti in words for ti in topic_indicators):
+    if any(ti in q_lower for ti in topic_indicators):
         return False
+
+    # Check for conceptual comparisons like "murder vs culpable homicide"
+    if " vs " in q_lower or " versus " in q_lower or " v. " in q_lower:
+        concept_terms = ["murder", "homicide", "culpable", "theft", "bail", "tort", "contract", "eviction"]
+        if any(ct in q_lower for ct in concept_terms):
+            return False
+
+    # Citations
+    try:
+        from app.services.qdrant_service import detect_citation, is_pure_citation_query
+        if detect_citation(q) and is_pure_citation_query(q):
+            return True
+    except Exception:
+        if re.search(r'\b(?:\d{4}\s+)?(?:scc|air|scr|scale|insc)\b', q_lower):
+            return True
 
     # Landmark single names
     known_pure_landmarks = [
@@ -139,18 +156,11 @@ def is_pure_case_lookup_query(query: str) -> bool:
         if kpl in q_lower:
             return True
 
-    # Citations
-    try:
-        from app.services.qdrant_service import detect_citation, is_pure_citation_query
-        if detect_citation(q) and is_pure_citation_query(q):
-            return True
-    except Exception:
-        if re.search(r'\b(?:\d{4}\s+)?(?:scc|air|scr|scale|insc)\b', q_lower):
-            return True
-
-    # Party v. Party format
+    # Genuine Party v. Party format
+    party_markers = ["state", "union", "ltd", "pvt", "corp", "corporation", "commissioner", "commr", "ors", "anr", "bank", "board", "authority"]
     if re.search(r'\b[a-z0-9\.\']+\s+(?:v\.|vs\.?|versus)\s+[a-z0-9\.\']+', q_lower):
-        return True
+        if any(pm in q_lower for pm in party_markers):
+            return True
 
     return False
 

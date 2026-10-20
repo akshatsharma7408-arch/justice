@@ -207,7 +207,7 @@ export default function DocumentChat() {
         </div>
         <h1 className="module-title font-serif">Document Chat</h1>
         <p className="module-subtitle">
-          Clause-grounded conversational inquiry over contracts, leases, and agreements. Strictly quotes primary clauses; zero speculative hallucination.
+          Clause-grounded conversational inquiry over contracts, leases, and agreements. Strictly grounded in primary document clauses.
         </p>
 
         {/* Contract Switcher */}

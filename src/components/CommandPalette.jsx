@@ -123,8 +123,8 @@ export default function CommandPalette({ isOpen, onClose, onNavigate }) {
       }
     },
     {
-      id: 'compare-manupatra',
-      title: "Inspect Legacy Manupatra vs. Justice Workspace UI Critique",
+      id: 'compare-precedents',
+      title: "Compare Two Precedents Side-by-Side",
       category: "Comparison",
       icon: SlidersHorizontal,
       action: () => {

@@ -2,7 +2,7 @@
   "corpus_name": "JUSTICE Section 27 Contract Act Precedent Corpus",
   "jurisdiction": "Republic of India",
   "compiled_on": "2026-10-17",
-  "data_policy": "Every entry was verified against a free, public primary source (Indian Kanoon full-text judgments, Supreme Court of India judis portal). ratioSummary fields are editorial paraphrases for retrieval; the full judgment text lives at source.url. Never scraped from Manupatra or any paywalled database.",
+  "data_policy": "Every entry was verified against a free, public primary source (Indian Kanoon full-text judgments, Supreme Court of India judis portal). ratioSummary fields are editorial paraphrases for retrieval; the full judgment text lives at source.url. Never scraped from any paywalled database.",
   "precedents": [
     {
       "id": "sc-2006-percept",
@@ -240,6 +240,46 @@
       "judges": ["Ranjan Gogoi, J.", "R.F. Nariman, J."],
       "keywords": ["kailash nath", "section 74", "liquidated damages", "penalty", "earnest money forfeiture", "reasonable compensation"],
       "source": {"name": "Indian Kanoon (free)", "url": "https://indiankanoon.org/doc/195540306/", "accessed": "2026-10-18"}
+    },
+    {
+      "id": "sc-2010-velusamy",
+      "title": "D. Velusamy v. D. Patchaiammal",
+      "citation": "(2010) 10 SCC 469",
+      "altCitations": ["AIR 2011 SC 479", "2010 10 SCC 469", "2010INSC747"],
+      "court": "Supreme Court of India",
+      "benchType": "Division Bench",
+      "benchSize": 2,
+      "leadJudge": "Markandey Katju, J.",
+      "decisionYear": 2010,
+      "year": 2010,
+      "decisionDate": "2010-10-21",
+      "status": "GREEN",
+      "statusLabel": "GOOD LAW (ARTICLE 141 BINDING)",
+      "statutes": ["Section 2(f), Protection of Women from Domestic Violence Act 2005", "Article 21, Constitution of India"],
+      "ratioSummary": "The Supreme Court recognized live-in relationships under Section 2(f) of the Protection of Women from Domestic Violence Act, 2005 as 'relationships in the nature of marriage', provided the couple held themselves out to society as akin to spouses, were of legal age to marry, and cohabited voluntarily for a significant period.",
+      "judges": ["Markandey Katju, J.", "T.S. Thakur, J."],
+      "keywords": ["live-in relationship", "domestic violence", "relationship in the nature of marriage", "maintenance", "article 21", "cohabitation", "velusamy"],
+      "source": {"name": "Indian Kanoon (free)", "url": "https://indiankanoon.org/doc/1410141/", "accessed": "2026-10-20"}
+    },
+    {
+      "id": "sc-2010-khushboo",
+      "title": "S. Khushboo v. Kanniammal & Anr.",
+      "citation": "(2010) 5 SCC 600",
+      "altCitations": ["AIR 2010 SC 3196", "2010 5 SCC 600", "2010INSC281"],
+      "court": "Supreme Court of India",
+      "benchType": "Three-Judge Bench",
+      "benchSize": 3,
+      "leadJudge": "K.G. Balakrishnan, C.J.I.",
+      "decisionYear": 2010,
+      "year": 2010,
+      "decisionDate": "2010-04-28",
+      "status": "GREEN",
+      "statusLabel": "GOOD LAW (ARTICLE 141 BINDING)",
+      "statutes": ["Article 21, Constitution of India", "Article 19(1)(a), Constitution of India", "Section 499, Indian Penal Code 1860"],
+      "ratioSummary": "The Supreme Court held that two adult persons living together in a live-in relationship is not illegal and does not constitute any criminal offense. Consensual live-in relationships are constitutionally permissible and protected under Article 21 right to life and personal liberty.",
+      "judges": ["K.G. Balakrishnan, C.J.I.", "Deepak Verma, J.", "B.S. Chauhan, J."],
+      "keywords": ["live-in relationship", "legality", "article 21", "personal liberty", "consenting adults", "cohabitation", "khushboo"],
+      "source": {"name": "Indian Kanoon (free)", "url": "https://indiankanoon.org/doc/1789708/", "accessed": "2026-10-20"}
     }
   ]
 }

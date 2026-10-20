@@ -204,7 +204,7 @@ async def verify_clause_endpoint(payload: VerifyClauseRequest):
     """
     POST /api/v1/audit/verify-clause
     Inspects incoming clause text against Indian statutory provisions in justice_statutes.db.
-    Invokes Gemini 3.8 Flash with structured JSON output for authoritative compliance audit.
+    Invokes LLM service with structured JSON output for authoritative compliance audit.
     When a post-termination non-compete is detected:
     - status: 'NON-COMPLIANT'
     - risk_level: 'CRITICAL'

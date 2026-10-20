@@ -82,15 +82,22 @@ export default function TextSelectionToolbar({ onTriggerExplain }) {
       }
     };
 
+    const handleScroll = () => {
+      setPosition(null);
+      setSelectedText('');
+    };
+
     document.addEventListener('mouseup', handleSelectionChange);
     document.addEventListener('touchend', handleSelectionChange);
     document.addEventListener('selectionchange', handleSelectionChange);
+    window.addEventListener('scroll', handleScroll, { passive: true });
     window.addEventListener('keydown', handleKeyDown);
 
     return () => {
       document.removeEventListener('mouseup', handleSelectionChange);
       document.removeEventListener('touchend', handleSelectionChange);
       document.removeEventListener('selectionchange', handleSelectionChange);
+      window.removeEventListener('scroll', handleScroll);
       window.removeEventListener('keydown', handleKeyDown);
     };
   }, [onTriggerExplain]);

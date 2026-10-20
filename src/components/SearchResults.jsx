@@ -124,7 +124,7 @@ export default function SearchResults({
     }
 
     // Parallel execution of precedent search + AI answer synthesis
-    const searchPromise = searchPrecedentsWithBackend(trimmed, court, bench, true, 10, bypassCorrection)
+    const searchPromise = searchPrecedentsWithBackend(trimmed, court, bench, true, 8, bypassCorrection)
       .then(resp => {
         if (resp && resp.has_spelling_correction && resp.corrected_query) {
           setSpellingCorrection({
@@ -149,8 +149,12 @@ export default function SearchResults({
       })
       .catch(err => {
         setSpellingCorrection(null);
-        console.warn("[SearchResults] Backend search error:", err.message);
-        setSearchError(err.message || "Unable to reach legal database. Please check your connection or query.");
+        const errText = (typeof err === 'object' && err?.message) ? err.message : String(err || '');
+        const sanitized = (!errText || errText === '[object Object]') 
+          ? "Unable to reach legal database. Please check your connection or query." 
+          : errText;
+        console.warn("[SearchResults] Backend search error:", sanitized);
+        setSearchError(sanitized);
         setResults([]);
         return null;
       })
@@ -350,18 +354,18 @@ export default function SearchResults({
               </div>
               <div className="error-card-text">
                 <h3 className="error-card-title font-serif">
-                  {searchError.includes("300")
+                  {typeof searchError === 'string' && searchError.includes("300")
                     ? "Question is too long"
-                    : searchError.includes("empty")
+                    : typeof searchError === 'string' && searchError.includes("empty")
                     ? "Search query required"
                     : "Unable to retrieve precedents"}
                 </h3>
                 <p className="error-card-desc">
-                  {searchError.includes("300")
+                  {typeof searchError === 'string' && searchError.includes("300")
                     ? "Please shorten your question. Queries are limited to 300 characters."
-                    : searchError.includes("empty")
+                    : typeof searchError === 'string' && searchError.includes("empty")
                     ? "Please enter a legal question, bare act section, or case title to search."
-                    : `${searchError}. Click Retry to try connecting again.`}
+                    : `${searchError && searchError !== '[object Object]' ? searchError : 'Connection or query error'}. Click Retry to try connecting again.`}
                 </p>
               </div>
             </div>
@@ -577,9 +581,15 @@ export default function SearchResults({
         ) : results.length === 0 ? (
           <div className="results-empty-state">
             <Scale size={32} className="empty-state-icon" />
-            <h3 className="empty-title font-serif">No strong match found, try rephrasing</h3>
+            <h3 className="empty-title font-serif">
+              {Boolean(query && query.match(/\b(?:air\s*\d{4}|\(\d{4}\)|\d{4}\s*\d+\s*scc|\b\d{4}\s*insc\b|\bscr\b|\bscale\b|\b\d{4}\b.*\b(?:sc|scc|scr|del|bom)\b)/i))
+                ? "No case with this citation in our database"
+                : "No strong match found, try rephrasing"}
+            </h3>
             <p className="empty-desc">
-              No matching judgments met the strict verification threshold. Try rephrasing your query, searching by case name or citation, or using broader legal terms.
+              {Boolean(query && query.match(/\b(?:air\s*\d{4}|\(\d{4}\)|\d{4}\s*\d+\s*scc|\b\d{4}\s*insc\b|\bscr\b|\bscale\b|\b\d{4}\b.*\b(?:sc|scc|scr|del|bom)\b)/i))
+                ? "This specific citation is not present in our indexed archive of Supreme Court of India and Delhi High Court judgments."
+                : "No matching judgments met the strict verification threshold. Try rephrasing your query, searching by case name or citation, or using broader legal terms."}
             </p>
           </div>
         ) : (
@@ -624,20 +634,6 @@ export default function SearchResults({
                         ) : null}
                         <span className="meta-sep">&bull;</span>
                         <span className="meta-chip year">{precedent.decisionYear || precedent.year}</span>
-
-                        {/* Relevance Score Bar */}
-                        <span className="meta-sep">&bull;</span>
-                        <div className="relevance-indicator-wrap" title={`Relevance: ${relevancePercent}%`}>
-                          <span className="relevance-label mono">Match {relevancePercent}%</span>
-                          <div className="relevance-bar-track">
-                            <motion.div
-                              className="relevance-bar-fill"
-                              initial={{ width: 0 }}
-                              animate={{ width: `${relevancePercent}%` }}
-                              transition={{ duration: 0.7, delay: 0.1 + index * 0.04, ease: "easeOut" }}
-                            />
-                          </div>
-                        </div>
                       </div>
 
                       <div className="meta-right-cluster">
@@ -700,12 +696,12 @@ export default function SearchResults({
                         </div>
                         <div className="drawer-body">
                           <div className="drawer-para">
-                            <span className="para-num mono">{precedent.is_verified_ratio ? 'Para 1 (Holding)' : 'Para 1'}</span>
+                            <span className="para-num mono">Judicial Holding</span>
                             <p className="para-text font-serif">{precedent.ratioSummary}</p>
                           </div>
                           {precedent.text && precedent.text !== precedent.ratioSummary && (
                             <div className="drawer-para">
-                              <span className="para-num mono">Para 2 (Judicial Analysis)</span>
+                              <span className="para-num mono">Judicial Excerpt</span>
                               <p className="para-text font-serif">{precedent.text}</p>
                             </div>
                           )}

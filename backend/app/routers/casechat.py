@@ -101,6 +101,7 @@ class ExplainSelectionRequest(BaseModel):
 class ExplainSelectionResponse(BaseModel):
     model_config = {"protected_namespaces": ()}
     explanation: str
+    source: Optional[str] = None
     in_simple_words: Optional[str] = None
     legal_terms_explained: Optional[List[Dict[str, str]]] = None
     why_it_matters: Optional[str] = None
@@ -431,12 +432,11 @@ def retrieve_top_case_chunks(chunks: List[Dict[str, Any]], query: str, top_k: in
 
 def check_presence_in_case(chunks: List[Dict[str, Any]], query: str) -> bool:
     """
-    Checks if any content words from the query appear in the case chunks.
-    If the user asks about an entirely alien entity (e.g. 'bitcoin mining', 'cricket world cup', 'fifa'),
+    Checks if query words genuinely appear in the case chunks.
+    If the user asks about an out-of-domain entity or an alien crime/concept not in the case,
     returns False so we answer 'This case does not say that.'
     """
     q_lower = query.lower()
-    # High-signal entities that clearly indicate out-of-domain questions
     alien_topics = [
         "bitcoin", "cryptocurrency", "crypto", "blockchain", "ethereum", "dogecoin",
         "icc world cup", "fifa", "premier league", "super bowl", "mars rover",
@@ -451,8 +451,16 @@ def check_presence_in_case(chunks: List[Dict[str, Any]], query: str) -> bool:
         return True
 
     all_case_text = " ".join(c.get("text", "") for c in chunks).lower()
-    # Check if at least one substantive content word appears
+    # If the user asks about specific substantive concepts (e.g. murder, theft, eviction, cheque),
+    # that concept MUST actually appear in the case!
+    specific_check_terms = ["murder", "homicide", "cheque", "dishonour", "eviction", "tenant", "landlord", "patent", "copyright", "trademark", "insolvency", "arbitration"]
+    for sct in specific_check_terms:
+        if sct in q_words and sct not in all_case_text:
+            return False
+
     matches = sum(1 for w in q_words if w in all_case_text)
+    if len(q_words) >= 2:
+        return matches >= 2 or (matches / len(q_words)) >= 0.5
     return matches > 0
 
 
@@ -657,14 +665,17 @@ def generate_deterministic_case_answer(case_meta: Dict[str, Any], chunks: List[D
         target_idx = 1 if len(chunks) > 1 else 0
         return (ans, f"Paragraph {target_idx + 1}", f"chunk-{target_idx}")
 
-    # General chunk match
+    # General chunk match with strict thresholding
     top = retrieve_top_case_chunks(chunks, question, top_k=1)
     if top:
         best_chunk = top[0]
         c_text = best_chunk.get("text", "")[:350].strip()
         idx = best_chunk.get("chunk_index", 0)
         q_words = [w.lower() for w in re.findall(r'[a-zA-Z0-9]{4,}', question) if w.lower() not in STOPWORDS]
-        if any(w in c_text.lower() for w in q_words):
+        # Require substantive keyword overlap: at least 2 matching words, or all keywords if <= 2
+        matches = [w for w in q_words if w in c_text.lower()]
+        required_matches = min(len(q_words), 2)
+        if len(matches) >= required_matches and len(matches) > 0:
             ans = (
                 f"According to the judgment text: \"{c_text}...\" "
                 f"This addresses the query strictly within the boundaries of this case's recorded text."
@@ -810,22 +821,46 @@ LEGAL_GLOSSARY = {
     "habeas corpus": "A prerogative writ commanding a detaining authority to produce the prisoner in court to justify lawful detention.",
     "res judicata": "The rule that a final judgment by a competent court cannot be relitigated between the same parties.",
     "stare decisis": "The legal principle of adhering to established judicial precedents under Article 141.",
-    "locus standi": "The legal capacity of a party to initiate or participate in judicial proceedings before a court."
+    "locus standi": "The legal capacity of a party to initiate or participate in judicial proceedings before a court.",
+    "mens rea": "The mental element or culpable state of mind required to constitute a crime.",
+    "actus reus": "The physical act or unlawful conduct that constitutes the criminal act.",
+    "audi alteram partem": "The rule of natural justice requiring that no person shall be condemned unheard.",
+    "nemo judex in causa sua": "The fundamental rule against bias: no one should be a judge in their own cause.",
+    "res ipsa loquitur": "The evidentiary principle that the accident speaks for itself, implying negligence.",
+    "estoppel": "The legal rule that prevents a party from asserting something contrary to what they previously established.",
+    "promissory estoppel": "The doctrine holding a promisor to their promise when the other party reasonably relied on it.",
+    "quid pro quo": "An exchange of goods, services, or concessions of roughly equivalent value.",
+    "lis pendens": "The doctrine that property under ongoing litigation cannot be transferred to defeat the suit.",
+    "in limine": "A preliminary objection or motion raised at the threshold of a proceeding."
 }
 
-def generate_deterministic_explanation(selected_text: str, context: Optional[str] = None) -> Dict[str, Any]:
-    """Generates the fixed 3-section explanation deterministically, tailored to case vs contract context."""
+def generate_deterministic_explanation(
+    selected_text: str, 
+    context: Optional[str] = None,
+    is_case: Optional[bool] = None,
+    source_label: Optional[str] = None
+) -> Dict[str, Any]:
+    """Generates the structured explanation deterministically, tailored to case vs non-case context."""
     sel_lower = selected_text.lower().strip()
-    is_case = bool(context and ("case:" in context.lower() or "v." in context.lower() or "judgment" in context.lower() or "scc" in context.lower() or "air" in context.lower() or "court" in context.lower()))
+    if is_case is None:
+        is_case = bool(context and any(w in context.lower() for w in ["case:", "v.", "judgment", "scc", "air", "court"]))
+    if source_label is None:
+        source_label = "Source: Case Judgment" if is_case else "Source: Not from a case"
 
-    # Find any terms in glossary
+    # Find terms in glossary
     found_terms = []
     for term, meaning in LEGAL_GLOSSARY.items():
         if term in sel_lower:
             found_terms.append({"term": term, "meaning": meaning})
 
+    # Exact or near-exact match on legal term alone
+    glossary_match = None
+    for term, meaning in LEGAL_GLOSSARY.items():
+        if term == sel_lower or (len(sel_lower.split()) <= 4 and term in sel_lower):
+            glossary_match = (term, meaning)
+            break
+
     if not found_terms:
-        # Check specific legal / judicial concepts
         if any(w in sel_lower for w in ["basic structure", "basic structure doctrine"]):
             found_terms.append({"term": "basic structure doctrine", "meaning": "Constitutional doctrine limiting Parliament's power to amend core constitutional pillars."})
         elif any(w in sel_lower for w in ["due process", "procedure established"]):
@@ -846,7 +881,6 @@ def generate_deterministic_explanation(selected_text: str, context: Optional[str
     terms_formatted = "\n".join([f"- {item['term']}: {item['meaning']}" for item in found_terms])
 
     if is_case:
-        # Context-aware judicial explanation: NEVER reuse generic contract answer!
         case_name = ""
         if context:
             m = re.search(r'Case:\s*([^(\n.]+)', context)
@@ -862,15 +896,26 @@ def generate_deterministic_explanation(selected_text: str, context: Optional[str
         why_it_matters = (
             f"Under Article 141 of the Constitution, this judicial holding is binding precedent on all courts across India, preventing arbitrary enforcement and safeguarding individual rights."
         )
-    else:
-        # General / statutory / contract explanation
+    elif glossary_match:
+        # User selected a specific legal term
+        term_name, term_meaning = glossary_match
         in_simple_words = (
-            f"This legal text sets out the rule governing \"{selected_text[:120]}\".\n"
-            f"In practical terms, it means the parties are bound strictly by what is lawful under Indian statutes.\n"
-            f"Any restriction or obligation must remain within permissible legal boundaries."
+            f"\"{selected_text.strip()}\" is a legal term meaning {term_meaning.lower() if not term_meaning.endswith('.') else term_meaning[:-1].lower()}.\n"
+            f"In Indian legal practice, it establishes a defined standard used by courts and advocates to determine rights and obligations.\n"
+            f"When this concept arises, parties and adjudicators must adhere strictly to its settled legal criteria."
         )
         why_it_matters = (
-            "This ensures that legal obligations remain fair and enforceable, protecting both parties from unlawful overreach."
+            f"Understanding \"{term_name}\" determines whether an order, argument, or contractual condition is legally valid and enforceable."
+        )
+    else:
+        # General legal / non-case text (statutory, contract, general legal wording)
+        in_simple_words = (
+            f"The selected passage outlines the legal criteria governing \"{selected_text[:120]}\".\n"
+            f"In plain terms, any rights, restrictions, or duties stated here must conform to applicable Indian statutes and regulations.\n"
+            f"Clauses that impose disproportionate, vague, or unlawful burdens cannot be sustained when tested before an appropriate legal authority."
+        )
+        why_it_matters = (
+            "This ensures that legal obligations remain lawful and enforceable, protecting both parties against arbitrary overreach."
         )
 
     full_formatted = (
@@ -881,6 +926,7 @@ def generate_deterministic_explanation(selected_text: str, context: Optional[str
 
     return {
         "explanation": full_formatted,
+        "source": source_label,
         "in_simple_words": in_simple_words,
         "legal_terms_explained": found_terms,
         "why_it_matters": why_it_matters,
@@ -889,12 +935,23 @@ def generate_deterministic_explanation(selected_text: str, context: Optional[str
     }
 
 
-async def generate_explanation(selected_text: str, context: Optional[str] = None, force_fallback: bool = False) -> Dict[str, Any]:
+async def generate_explanation(
+    selected_text: str, 
+    context: Optional[str] = None, 
+    force_fallback: bool = False,
+    is_case: Optional[bool] = None,
+    source_label: Optional[str] = None
+) -> Dict[str, Any]:
     """Generates the explanation using Groq LLM or deterministic fallback."""
-    if force_fallback or not llm_service.is_active or not llm_service.client:
-        return generate_deterministic_explanation(selected_text, context)
+    if is_case is None:
+        is_case = bool(context and any(w in context.lower() for w in ["case:", "v.", "judgment", "scc", "air", "court"]))
+    if source_label is None:
+        source_label = "Source: Case Judgment" if is_case else "Source: Not from a case"
 
-    context_sec = f"Context:\n\"\"\"{context[:800]}\"\"\"" if context else ""
+    if force_fallback or not llm_service.is_active or not llm_service.client:
+        return generate_deterministic_explanation(selected_text, context, is_case=is_case, source_label=source_label)
+
+    context_sec = f"Context:\n\"\"\"{context[:800]}\"\"\"" if context else "Context: General legal / contractual text (not from a court case judgment)."
     prompt = EXPLAIN_PROMPT_TEMPLATE.format(
         selected_text=selected_text,
         context_section=context_sec
@@ -910,17 +967,24 @@ async def generate_explanation(selected_text: str, context: Optional[str] = None
             config=config
         )
         raw_text = res.text.strip() if res and res.text else ""
-        if "In simple words:" in raw_text and "Why it matters:" in raw_text:
+        if raw_text:
+            if "In simple words:" in raw_text and "Why it matters:" in raw_text:
+                formatted = raw_text
+            else:
+                formatted = (
+                    f"In simple words:\n{raw_text}\n\n"
+                    f"Why it matters:\nThis defines the legal scope and enforceability of rights under Indian law."
+                )
             return {
-                "explanation": raw_text,
+                "explanation": formatted,
+                "source": source_label,
                 "disclaimer": "AI explanation, not verified, not legal advice",
                 "model_used": llm_service.model
             }
-        logger.warning("LLM explanation output did not match expected structure; falling back.")
-        return generate_deterministic_explanation(selected_text, context)
+        return generate_deterministic_explanation(selected_text, context, is_case=is_case, source_label=source_label)
     except Exception as e:
         logger.error("Error calling LLM for explanation: %s; using deterministic fallback.", e)
-        return generate_deterministic_explanation(selected_text, context)
+        return generate_deterministic_explanation(selected_text, context, is_case=is_case, source_label=source_label)
 
 
 # ---------------------------------------------------------------------------
@@ -1051,19 +1115,31 @@ async def post_explain_selection(payload: ExplainSelectionRequest, request: Requ
         raise HTTPException(status_code=400, detail="Selection exceeds maximum length of 800 characters")
 
     context = payload.context
+    case_meta = None
     if payload.case_id:
         case_meta = get_case_record(payload.case_id)
         if case_meta:
             context = f"Case: {case_meta.get('title')} ({case_meta.get('citation')}). Context: {context or ''}"
 
+    is_case = bool(payload.case_id or (context and any(w in context.lower() for w in ["case:", "v.", "judgment", "scc", "air"])))
+    if payload.case_id and case_meta:
+        source_label = f"Source: {case_meta.get('title')}"
+    elif is_case:
+        source_label = "Source: Case Judgment"
+    else:
+        source_label = "Source: Not from a case"
+
     result = await generate_explanation(
         selected_text=sel,
         context=context,
-        force_fallback=payload.force_fallback
+        force_fallback=payload.force_fallback,
+        is_case=is_case,
+        source_label=source_label
     )
 
     return ExplainSelectionResponse(
         explanation=result["explanation"],
+        source=result.get("source", source_label),
         in_simple_words=result.get("in_simple_words"),
         legal_terms_explained=result.get("legal_terms_explained"),
         why_it_matters=result.get("why_it_matters"),

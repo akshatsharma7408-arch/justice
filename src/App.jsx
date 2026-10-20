@@ -11,7 +11,7 @@ const SearchResults = lazy(() => import('./components/SearchResults'));
 const SmartCitator = lazy(() => import('./components/SmartCitator'));
 const DocumentAnalyzer = lazy(() => import('./components/DocumentAnalyzer'));
 const DocumentChat = lazy(() => import('./components/DocumentChat'));
-const ManupatraComparison = lazy(() => import('./components/ManupatraComparison'));
+const PrecedentComparison = lazy(() => import('./components/PrecedentComparison'));
 const LegalMaxims = lazy(() => import('./components/LegalMaxims'));
 const CaseChatPanel = lazy(() => import('./components/CaseChatPanel'));
 const AgentVisualizerModal = lazy(() => import('./components/AgentVisualizerModal'));
@@ -59,6 +59,34 @@ export default function App() {
       return next;
     });
   };
+
+  // Global Keyboard Shortcuts: Ctrl+K focuses universal search; Esc dismisses modals/palette
+  useEffect(() => {
+    const handleGlobalKeyDown = (e) => {
+      if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'k') {
+        e.preventDefault();
+        const heroInput = document.querySelector('.hero-search-input');
+        const searchInput = document.querySelector('.module-search-input');
+        const navbarInput = document.querySelector('.navbar-search-input');
+        if (heroInput && document.activeElement !== heroInput) {
+          heroInput.focus();
+        } else if (searchInput && document.activeElement !== searchInput) {
+          searchInput.focus();
+        } else if (navbarInput && document.activeElement !== navbarInput) {
+          navbarInput.focus();
+        } else {
+          setIsCommandPaletteOpen(prev => !prev);
+        }
+      }
+      if (e.key === 'Escape') {
+        setIsCommandPaletteOpen(false);
+        setIsAgentModalOpen(false);
+        setIsExplainModalOpen(false);
+      }
+    };
+    window.addEventListener('keydown', handleGlobalKeyDown);
+    return () => window.removeEventListener('keydown', handleGlobalKeyDown);
+  }, []);
 
   const handleNavigate = (view, query = '') => {
     setActiveView(view);
@@ -243,7 +271,7 @@ export default function App() {
 
                 {/* 6. COMPARISON MODULE */}
                 {activeView === 'comparison' && (
-                  <ManupatraComparison
+                  <PrecedentComparison
                     onSwitchToWorkspace={() => handleNavigate('analyzer')}
                   />
                 )}

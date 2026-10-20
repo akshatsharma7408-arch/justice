@@ -196,7 +196,7 @@ export default function ExplainSelectionModal({
           <div className="explain-header-left">
             <div className="explain-header-badge">
               <Sparkles size={14} className="explain-sparkle-icon" />
-              <span>AI Legal Explanation</span>
+              <span>{explanationData?.source || (caseId ? 'Case Judgment' : 'Source: Not from a case')}</span>
             </div>
             <h3 id="explain-modal-heading" className="explain-modal-title font-judicial">
               Explain Selected Text

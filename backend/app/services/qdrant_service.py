@@ -183,17 +183,20 @@ def extract_section_or_article(query: str) -> Optional[Dict[str, Any]]:
     art_m = re.search(r'\b(?:article|art\.?)\s*(\d+[a-z]*(?:\([0-9a-z]+\))*)', q_lower)
     if art_m:
         num = art_m.group(1).upper()
+        s_strings = [
+            f"article {num}".lower(),
+            f"art. {num}".lower(),
+            f"art {num}".lower(),
+            f"article {num}, constitution of india".lower(),
+            f"article {num} of the constitution".lower(),
+        ]
+        if num == "141":
+            s_strings.extend(["dawoodi bohra", "precedent hierarchy", "larger bench", "coordinate bench", "binding"])
         return {
             "type": "article",
             "number": num,
             "act": "constitution",
-            "search_strings": [
-                f"article {num}".lower(),
-                f"art. {num}".lower(),
-                f"art {num}".lower(),
-                f"article {num}, constitution of india".lower(),
-                f"article {num} of the constitution".lower(),
-            ]
+            "search_strings": s_strings
         }
 
     # Statutory Section
@@ -232,6 +235,78 @@ def extract_section_or_article(query: str) -> Optional[Dict[str, Any]]:
             "number": sec_num,
             "act": act or "statute",
             "search_strings": search_strings
+        }
+
+    # Implicit concept-to-statute mappings
+    if any(k in q_lower for k in ["non-compete", "non compete", "noncompete", "restraint of trade"]):
+        return {
+            "type": "section",
+            "number": "27",
+            "act": "contract act",
+            "search_strings": [
+                "section 27", "section 27 contract act", "section 27 of the indian contract act",
+                "restraint of trade", "non-compete", "percept d'mark", "superintendence", "niranjan golikari"
+            ]
+        }
+
+    if any(k in q_lower for k in ["liquidated damages", "earnest money forfeiture", "penalty clause in contract"]):
+        return {
+            "type": "section",
+            "number": "74",
+            "act": "contract act",
+            "search_strings": [
+                "section 74", "section 74 contract act", "reasonable compensation", "kailash nath"
+            ]
+        }
+
+    if any(k in q_lower for k in ["live-in", "live in", "cohabitation", "nature of marriage"]):
+        return {
+            "type": "article",
+            "number": "21",
+            "act": "constitution",
+            "search_strings": [
+                "article 21", "live-in", "cohabitation", "domestic violence", "khushboo", "velusamy"
+            ]
+        }
+
+    if any(k in q_lower for k in ["anticipatory bail"]):
+        return {
+            "type": "section",
+            "number": "438",
+            "act": "crpc",
+            "search_strings": [
+                "section 438", "section 438 crpc", "anticipatory bail", "arrest"
+            ]
+        }
+
+    if any(k in q_lower for k in ["arrest without warrant", "grounds of arrest", "arrest memo"]):
+        return {
+            "type": "section",
+            "number": "41",
+            "act": "crpc",
+            "search_strings": [
+                "section 41", "section 41a", "section 41 crpc", "arnesh kumar", "d.k. basu"
+            ]
+        }
+
+    if any(k in q_lower for k in ["basic structure"]):
+        return {
+            "type": "article",
+            "number": "368",
+            "act": "constitution",
+            "search_strings": [
+                "article 368", "basic structure", "kesavananda", "minerva mills"
+            ]
+        }
+
+    if any(k in q_lower for k in ["right to privacy", "privacy as a fundamental right", "privacy right"]):
+        return {
+            "type": "article",
+            "number": "21",
+            "act": "constitution",
+            "search_strings": [
+                "article 21", "right to privacy", "puttaswamy", "fundamental right"
+            ]
         }
 
     return None
@@ -883,6 +958,30 @@ LANDMARK_METADATA: Dict[str, Dict[str, Any]] = {
         "year": 2006,
         "holding": "A restrictive covenant operating post-termination of contract is void ab initio under Section 27 of the Indian Contract Act.",
     },
+    "superintendence": {
+        "benchSize": 3,
+        "benchType": "3-Judge Bench",
+        "leadJudge": "V.D. Tulzapurkar, J.",
+        "statutes": ["Section 27 Contract Act", "Section 42 Specific Relief Act"],
+        "year": 1980,
+        "holding": "A negative covenant restricting an employee post-termination is void under Section 27; the English doctrine of reasonableness does not apply in India.",
+    },
+    "niranjan": {
+        "benchSize": 2,
+        "benchType": "Division Bench",
+        "leadJudge": "J.M. Shelat, J.",
+        "statutes": ["Section 27 Contract Act"],
+        "year": 1967,
+        "holding": "Negative covenants operating during the subsistence of employment are valid and enforceable; post-termination restraints remain void.",
+    },
+    "gujarat bottling": {
+        "benchSize": 2,
+        "benchType": "Division Bench",
+        "leadJudge": "S.C. Agrawal, J.",
+        "statutes": ["Section 27 Contract Act"],
+        "year": 1995,
+        "holding": "A negative covenant operating during the subsistence of a franchise agreement is not a restraint of trade under Section 27.",
+    },
     "kailash nath": {
         "benchSize": 2,
         "benchType": "Division Bench",
@@ -890,8 +989,25 @@ LANDMARK_METADATA: Dict[str, Dict[str, Any]] = {
         "statutes": ["Section 74 Contract Act", "Section 73 Contract Act"],
         "year": 2015,
         "holding": "Under Section 74 of the Contract Act, liquidated damages require proof of actual legal injury or loss unless incapable of proof.",
+    },
+    "velusamy": {
+        "benchSize": 2,
+        "benchType": "Division Bench",
+        "leadJudge": "Markandey Katju, J.",
+        "statutes": ["Section 2(f) Domestic Violence Act", "Article 21"],
+        "year": 2010,
+        "holding": "Live-in relationships are recognized as 'relationships in the nature of marriage' under Section 2(f) of the Domestic Violence Act if criteria akin to marriage are met.",
+    },
+    "khushboo": {
+        "benchSize": 3,
+        "benchType": "3-Judge Bench",
+        "leadJudge": "K.G. Balakrishnan, C.J.I.",
+        "statutes": ["Article 21", "Article 19(1)(a)"],
+        "year": 2010,
+        "holding": "Live-in relationships between consenting adults are not illegal and are constitutionally protected under Article 21 right to life and personal liberty.",
     }
 }
+
 
 
 def enrich_landmark_metadata(case: Dict[str, Any]) -> Dict[str, Any]:
@@ -1546,17 +1662,34 @@ class QdrantService:
             final_score = min(0.99, max(0.0, round(float(combined), 3)))
 
             # Minimum score threshold; below it return nothing
-            if final_score < 0.45:
+            min_score = 0.45 if (statute_info or is_alias_match or rights_topic) else 0.52
+            if final_score < min_score:
                 continue
             if v_score < 0.40 and kw_score == 0 and not is_alias_match and not statute_info:
                 continue
 
             t_matches = sum(1 for t in query_terms if t in f"{c.get('title', '')} {c.get('ratioSummary', '')} {c.get('text', '')}".lower())
-            if len(query_terms) >= 2 and t_matches < 2 and v_score < 0.42 and not is_alias_match and not statute_info:
-                continue
+            if len(query_terms) >= 2 and not is_alias_match and not statute_info:
+                if t_matches < 2 and v_score < 0.42:
+                    continue
+                # For queries with 3+ terms (e.g. "cricket world cup"), require at least 70% of terms or a key noun match
+                if len(query_terms) >= 3 and (t_matches / len(query_terms)) < 0.70 and v_score < 0.52:
+                    continue
 
             c["relevance_score"] = final_score
             final_candidates.append(c)
+
+        # Domain re-ranking and noise pruning for everyday rights topics
+        if rights_topic == "traffic":
+            # Demote or remove municipal vending/hawking cases for traffic police stop queries
+            if any(w in query.lower() for w in ["police", "stop", "challan"]):
+                final_candidates = [
+                    c for c in final_candidates 
+                    if not any(hw in (c.get("title") or "").lower() for hw in ["hawker", "vending", "encroachment"])
+                ]
+        elif rights_topic == "eviction":
+            # Prune weak eviction candidates
+            final_candidates = [c for c in final_candidates if c.get("relevance_score", 0) >= 0.65]
 
         final_candidates.sort(key=lambda x: x.get("relevance_score", 0.0), reverse=True)
         deduped = deduplicate_results_by_name_and_year(final_candidates)
@@ -1760,8 +1893,11 @@ class QdrantService:
         if exact_boost_results:
             combined_final = list(exact_boost_results)
             seen_final_ids = {c.get("id") for c in exact_boost_results}
+            # If the query is an exact landmark or citation lookup, hide weak semantic matches (< 0.75)
+            is_landmark_lookup = any(c.get("relevance_score", 0) >= 0.95 for c in exact_boost_results)
+            min_append_score = 0.75 if is_landmark_lookup else 0.55
             for c in fused:
-                if c.get("id") not in seen_final_ids:
+                if c.get("id") not in seen_final_ids and c.get("relevance_score", 0) >= min_append_score:
                     seen_final_ids.add(c.get("id"))
                     combined_final.append(c)
             return deduplicate_results_by_name_and_year(combined_final)[:limit]

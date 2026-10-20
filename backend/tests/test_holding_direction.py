@@ -109,8 +109,8 @@ def test_holding_4_article141_precedent_hierarchy():
     data = resp.json()
 
     assert data.get("results_count", 0) > 0, "Expected non-zero results for Article 141 query"
-    ans = data.get("ai_answer", "").lower()
-    cits = " ".join(data.get("citations", []))
+    ans = data.get("ai_answer", "").lower().replace("\xa0", " ")
+    cits = " ".join(data.get("citations", [])).replace("\xa0", " ")
 
     assert "binding" in ans, f"Answer must state larger bench is binding: {ans}"
     assert "dawoodi bohra" in ans or "dawoodi bohra" in cits.lower() or "article 141" in ans, f"Expected Dawoodi Bohra citation: {cits}"

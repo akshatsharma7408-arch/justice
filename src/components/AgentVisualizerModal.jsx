@@ -1,7 +1,18 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { X, Check, Cpu, Terminal, Sparkles } from 'lucide-react';
 
 export default function AgentVisualizerModal({ isOpen, onClose, sessionState, isRunning }) {
+  useEffect(() => {
+    if (!isOpen) return;
+    const handleKeyDown = (e) => {
+      if (e.key === 'Escape') {
+        onClose();
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [isOpen, onClose]);
+
   if (!isOpen) return null;
 
   const currentStep = sessionState?.currentStep;
@@ -100,7 +111,7 @@ export default function AgentVisualizerModal({ isOpen, onClose, sessionState, is
           <div className="terminal-scroll-viewport">
             {trace.length === 0 ? (
               <div className="terminal-empty-prompt">
-                Workflow ready. Launch "RUN TRACE" on any clause in the Document Analyzer to begin telemetry streaming.
+                Workflow ready. Run clause analysis in the Document Analyzer to begin telemetry streaming.
               </div>
             ) : (
               trace.map((item, index) => (
@@ -124,7 +135,7 @@ export default function AgentVisualizerModal({ isOpen, onClose, sessionState, is
         {/* Modal Footer */}
         <div className="agent-modal-footer">
           <div className="modal-credits-meta">
-            <span>MODEL: <strong>GEMINI-3.8-FLASH</strong></span>
+            <span>MODEL: <strong>OPENAI/GPT-OSS-120B</strong></span>
             <span className="meta-sep">&bull;</span>
             <span>ORCHESTRATION: <strong>LANGGRAPH DAG</strong></span>
             <span className="meta-sep">&bull;</span>

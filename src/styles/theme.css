@@ -103,11 +103,30 @@
   --topbar-compact-height: 54px;
   --container-max: 1240px;
 
-  /* Transitions */
+  /* Transitions & Motion Tokens */
   --ease-editorial: cubic-bezier(0.16, 1, 0.3, 1);
-  --duration-fast: 180ms;
+  --ease-out: cubic-bezier(0.22, 1, 0.36, 1);
+  --duration-150: 150ms;
+  --duration-250: 250ms;
+  --duration-400: 400ms;
+  --duration-fast: 150ms;
   --duration-normal: 250ms;
   --duration-slow: 400ms;
+  --motion-fast: opacity 150ms var(--ease-out), transform 150ms var(--ease-out);
+  --motion-normal: opacity 250ms var(--ease-out), transform 250ms var(--ease-out);
+  --motion-slow: opacity 400ms var(--ease-out), transform 400ms var(--ease-out);
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  :root {
+    --ease-out: cubic-bezier(0.22, 1, 0.36, 1);
+    --duration-150: 150ms;
+    --duration-250: 250ms;
+    --duration-400: 400ms;
+    --motion-fast: opacity 150ms var(--ease-out), transform 150ms var(--ease-out);
+    --motion-normal: opacity 250ms var(--ease-out), transform 250ms var(--ease-out);
+    --motion-slow: opacity 400ms var(--ease-out), transform 400ms var(--ease-out);
+  }
 }
 
 /* Base Document Setup */
@@ -195,6 +214,11 @@ h1, h2, h3, h4, .font-serif, .font-judicial {
 
 /* Prefers Reduced Motion: graceful fallback to simple fades */
 @media (prefers-reduced-motion: reduce) {
+  :root {
+    --motion-fast: none;
+    --motion-normal: none;
+    --motion-slow: none;
+  }
   *, *::before, *::after {
     animation-duration: 0.01ms !important;
     animation-iteration-count: 1 !important;

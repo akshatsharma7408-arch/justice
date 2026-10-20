@@ -361,7 +361,12 @@
   .hero-search-input-box {
     height: 56px !important;
     min-height: 56px !important;
-    padding: 0 14px !important;
+    padding: 0 12px !important;
+  }
+
+  .hero-placeholder-wrapper {
+    max-width: calc(100% - 46px) !important;
+    overflow: hidden !important;
   }
 
   .desktop-typewriter-placeholder {
@@ -371,11 +376,13 @@
   .mobile-short-placeholder {
     display: block !important;
     color: #7D8E84;
-    font-size: 0.95rem;
+    font-size: 0.9rem;
     pointer-events: none;
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
+    line-height: 1.2;
+    max-width: 100%;
   }
 
   .hero-search-submit-btn span {
@@ -384,6 +391,53 @@
 
   .hero-search-submit-btn {
     padding: 10px 14px;
+    min-height: 44px;
+    min-width: 44px;
+  }
+
+  .workspace-search-bar {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 10px;
+  }
+
+  .search-input-wrapper {
+    height: 52px;
+    min-height: 48px;
+    padding: 0 12px;
+  }
+
+  .search-rotating-placeholder {
+    left: 38px;
+    right: 12px;
+    font-size: 0.85rem;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    line-height: 1.2;
+  }
+
+  .search-action-btn {
+    min-height: 44px;
+    width: 100%;
+    justify-content: center;
+  }
+
+  /* Min 44px tap targets for mobile interactive elements */
+  .topbar-mobile-toggle,
+  .topbar-agent-btn,
+  .btn-friendly-retry,
+  .module-search-submit-btn,
+  .filter-pill,
+  .topic-chip,
+  .palette-close-btn,
+  .modal-close-icon-btn,
+  .btn-card-action,
+  .btn-card-chat-action {
+    min-height: 44px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
   }
 
   .hero-chips-strip {

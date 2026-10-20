@@ -249,7 +249,7 @@ export default function LegalMaxims() {
         </div>
         <h1 className="module-title font-serif">Legal Maxims & Latin Canons</h1>
         <p className="module-subtitle">
-          Over 240 classical Latin legal maxims mapped to Indian Supreme Court jurisprudence, interactive 3D flashcards, and knowledge assessment quizzes.
+          Classical Latin legal maxims, statutory canons of interpretation, interactive flashcards, and self-assessment quizzes.
         </p>
 
         {/* View Mode Switcher */}

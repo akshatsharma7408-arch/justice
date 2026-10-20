@@ -1,7 +1,7 @@
 """
 JUSTICE Legal AI Backend — Document Chat Router (/api/v1/doc/*)
 Enables free-form grounded question-answering over uploaded contracts (PDF/DOCX/text)
-using clause-aware chunking, Gemini vector embeddings, and Gemini 3.8 Flash.
+using clause-aware chunking, vector embeddings, and LLM inference.
 Enforces strict grounding: claims must quote exact clauses; questions not covered
 return "not found in this document".
 """
@@ -492,7 +492,7 @@ async def chat_with_document_endpoint(payload: DocChatRequest):
     """
     POST /api/v1/doc/chat
     Takes doc_id + question, embeds question, retrieves top matching chunks,
-    and answers using Gemini 3.8 Flash / grounded legal engine.
+    and answers using grounded legal engine.
     Strict Grounding Rule: every claim in the answer must quote the exact clause sentence.
     If the question is not covered in the document, returns 'The document does not mention this.'
     """
@@ -717,6 +717,13 @@ async def chat_with_document_endpoint(payload: DocChatRequest):
                             heading=c.get("heading") or "General Provision",
                             quoted_text=c.get("quoted_text") or ""
                         ))
+
+                # Ensure answer includes verbatim clause quote as required by strict grounding rules
+                if citations and citations[0].quoted_text:
+                    quote = citations[0].quoted_text.strip()
+                    if quote and quote.lower() not in ans.lower() and not ans.startswith("Under "):
+                        clause_ref = f"Under {citations[0].clause_number} ({citations[0].heading})" if citations[0].clause_number else "Under the agreement"
+                        ans = f'{clause_ref}, the document stipulates: "{quote}"\n\n{ans}'
 
                 ans_badged = citation_checker.check_and_badge_text(ans, doc_context=doc.raw_text, is_tier2=False)
                 return DocChatResponse(

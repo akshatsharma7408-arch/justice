@@ -530,9 +530,8 @@ export default function SmartCitator({ initialCaseId, onActiveCaseChange }) {
                   Hover over connected cases to trace precedent linkages; click any node to inspect its ratio decidendi and judicial treatment.
                 </p>
               </div>
-              <span className="badge-verified">
-                <ShieldCheck size={12} />
-                <span>Article 141 Lineage Verified</span>
+              <span className="citator-caveat-note text-xs text-muted font-mono">
+                Treatment based on available data; verify before citing
               </span>
             </div>
 

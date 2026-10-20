@@ -9,6 +9,8 @@ plus phonetic Soundex checking for Indian names and legal terms.
 Never alters valid words or case/section numbers.
 """
 
+import json
+from pathlib import Path
 import re
 from typing import Tuple, List, Set, Dict, Optional
 
@@ -270,7 +272,62 @@ SPECIAL_PHONETIC_CORRECTIONS: Dict[str, str] = {
 }
 
 
-def find_closest_vocabulary_word(word: str, vocab: Optional[Set[str]] = None) -> Optional[str]:
+CITATION_TOKENS: Set[str] = {
+    "air", "scc", "scr", "scale", "insc", "jt", "supp", "online", "sc",
+    "del", "bom", "cal", "mad", "all", "raj", "sec", "section", "art", "article",
+    "para", "paras", "order", "rule", "clause", "manu", "ilr", "dlt", "ptc",
+    "compcas", "scconline", "suppl", "vs", "versus"
+}
+
+ENGLISH_DICTIONARY: Set[str] = set()
+
+def _init_english_dictionary() -> Set[str]:
+    global ENGLISH_DICTIONARY
+    if ENGLISH_DICTIONARY:
+        return ENGLISH_DICTIONARY
+    dict_path = Path(__file__).resolve().parent.parent / "data" / "english_dictionary.json"
+    if dict_path.exists():
+        try:
+            with open(dict_path, "r", encoding="utf-8") as f:
+                ENGLISH_DICTIONARY = set(json.load(f))
+        except Exception:
+            pass
+    # Always include essential common words
+    ENGLISH_DICTIONARY.update({
+        "world", "cup", "cricket", "notice", "police", "stop", "live", "living",
+        "relationship", "clause", "clauses", "valid", "legal", "illegal", "tenant",
+        "landlord", "eviction", "murder", "homicide", "culpable", "bail", "anticipatory"
+    })
+    return ENGLISH_DICTIONARY
+
+CORRECTION_TARGET_VOCABULARY: Set[str] = set()
+
+def _init_correction_targets() -> Set[str]:
+    global CORRECTION_TARGET_VOCABULARY
+    if CORRECTION_TARGET_VOCABULARY:
+        return CORRECTION_TARGET_VOCABULARY
+    targets = set()
+    targets.update(LANDMARK_VOCABULARY)
+    targets.update(STATUTE_VOCABULARY)
+    targets.update(SPECIAL_PHONETIC_CORRECTIONS.values())
+    targets.update({
+        "arrest", "warrant", "structure", "privacy", "eviction", "tenant",
+        "homicide", "culpable", "anticipatory", "bail"
+    })
+    try:
+        from app.ingest.landmark_pipeline import LANDMARK_CASES
+        for c in LANDMARK_CASES:
+            for field in [c.get("common_name", ""), c.get("short_name", "")] + c.get("extra_aliases", []):
+                for w in re.findall(r'[a-zA-Z]{3,}', field.lower()):
+                    if w not in CITATION_TOKENS:
+                        targets.add(w)
+    except Exception:
+        pass
+    CORRECTION_TARGET_VOCABULARY = targets
+    return CORRECTION_TARGET_VOCABULARY
+
+
+def find_closest_vocabulary_word(word: str, targets: Optional[Set[str]] = None) -> Optional[str]:
     """
     Finds the closest word in the vocabulary for a misspelled word:
     - Checks special phonetic/alias lookup first
@@ -285,8 +342,8 @@ def find_closest_vocabulary_word(word: str, vocab: Optional[Set[str]] = None) ->
     if w_low in SPECIAL_PHONETIC_CORRECTIONS:
         return SPECIAL_PHONETIC_CORRECTIONS[w_low]
 
-    if vocab is None:
-        vocab = _init_master_vocabulary()
+    if targets is None:
+        targets = _init_correction_targets()
 
     w_len = len(w_low)
     max_edit = 1 if w_len <= 5 else 2
@@ -296,7 +353,7 @@ def find_closest_vocabulary_word(word: str, vocab: Optional[Set[str]] = None) ->
     best_dist = 999
     best_is_soundex = False
 
-    for v in vocab:
+    for v in targets:
         v_len = len(v)
         if abs(w_len - v_len) > max_edit + 1:
             continue
@@ -308,9 +365,6 @@ def find_closest_vocabulary_word(word: str, vocab: Optional[Set[str]] = None) ->
 
         # Allow match if distance <= max_edit or if soundex matches with dist <= max_edit + 1
         if dist <= max_edit or (is_same_soundex and dist <= max_edit + 1):
-            # Prioritize:
-            # 1. Lower edit distance
-            # 2. Soundex match
             if is_same_soundex and not best_is_soundex and dist <= best_dist + 1:
                 best_match = v
                 best_dist = dist
@@ -326,41 +380,66 @@ def find_closest_vocabulary_word(word: str, vocab: Optional[Set[str]] = None) ->
 def correct_query(query: str) -> Tuple[str, bool]:
     """
     Corrects misspelled words in a user query before search.
-    - Preserves case numbers, statutory section numbers (e.g. 'Article 21', 'Section 41', '1973', '1461').
-    - Leaves valid words untouched.
-    - Corrects words using Damerau-Levenshtein + Soundex phonetic matching.
+    Strict rules:
+    - Never spell-correct words that are in a legal or English dictionary.
+    - Never touch tokens that look like citations (AIR, SCC, SCR, INSC, SCC OnLine, years, numbers, "Section 41", "Article 21").
+    - Only correct a word when no dictionary word matches and a close match exists in the case-name and statute vocabulary.
     Returns:
     (corrected_query_string, has_corrections_bool)
     """
     if not query or not query.strip():
         return query, False
 
-    vocab = _init_master_vocabulary()
+    eng_dict = _init_english_dictionary()
+    legal_vocab = _init_master_vocabulary()
+    targets = _init_correction_targets()
 
     # Split into words while retaining delimiters/whitespace
     tokens = re.split(r'(\s+|[^\w\s])', query)
     corrected_tokens = []
     has_changes = False
 
+    prev_token_low = ""
+
     for tok in tokens:
         if not tok or tok.isspace() or re.match(r'^[^\w\s]+$', tok):
             corrected_tokens.append(tok)
             continue
 
-        # Skip numbers or alphanumeric identifiers (e.g., 498A, 1973, 41, 66A, INSC)
-        if any(c.isdigit() for c in tok) or len(tok) < 3:
-            corrected_tokens.append(tok)
-            continue
-
         tok_low = tok.lower()
 
-        # If already a valid word in vocabulary, keep it exactly
-        if tok_low in vocab:
+        # 1. Skip numbers or alphanumeric identifiers (e.g., 498A, 1973, 41, 66A, INSC)
+        if any(c.isdigit() for c in tok) or len(tok) < 3:
             corrected_tokens.append(tok)
+            prev_token_low = tok_low
             continue
 
-        # Look for closest correction
-        closest = find_closest_vocabulary_word(tok_low, vocab)
+        # 2. Never touch citation tokens (AIR, SCC, SCR, INSC, etc.)
+        if tok_low in CITATION_TOKENS:
+            corrected_tokens.append(tok)
+            prev_token_low = tok_low
+            continue
+
+        # 3. Never touch numbers/sections immediately following "section", "article", "sec", "art", "clause", "rule"
+        if prev_token_low in {"section", "sections", "sec", "sec.", "article", "articles", "art", "art.", "clause", "rule", "order"}:
+            corrected_tokens.append(tok)
+            prev_token_low = tok_low
+            continue
+
+        # 4. Never touch all-uppercase acronyms (e.g. AIR, SCC, SCR, INSC, IPC, CRPC, BNS, IT, PUCL, UOI)
+        if tok.isupper() and len(tok) <= 5:
+            corrected_tokens.append(tok)
+            prev_token_low = tok_low
+            continue
+
+        # 5. Never spell-correct words that are in a legal or English dictionary
+        if tok_low in eng_dict or tok_low in legal_vocab or tok_low in LEGAL_COMMON_WORDS:
+            corrected_tokens.append(tok)
+            prev_token_low = tok_low
+            continue
+
+        # 6. Only correct when no dictionary word matches and a close match exists in case-name & statute targets
+        closest = find_closest_vocabulary_word(tok_low, targets)
         if closest and closest != tok_low:
             # Match capitalization of original token
             if tok.isupper():
@@ -371,8 +450,11 @@ def correct_query(query: str) -> Tuple[str, bool]:
                 rep = closest
             corrected_tokens.append(rep)
             has_changes = True
+            prev_token_low = closest
         else:
             corrected_tokens.append(tok)
+            prev_token_low = tok_low
 
     corrected_text = "".join(corrected_tokens)
     return corrected_text, has_changes
+

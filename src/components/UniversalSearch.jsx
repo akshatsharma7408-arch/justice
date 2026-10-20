@@ -65,7 +65,7 @@ export default function UniversalSearch({ onSelectCaseForCitator, onOpenCaseChat
     setIsSearching(true);
     setHasSearched(true);
     try {
-      const resp = await searchPrecedentsWithBackend(trimmed, court, bench, true, 10, bypassCorrection);
+      const resp = await searchPrecedentsWithBackend(trimmed, court, bench, true, 8, bypassCorrection);
       if (resp && resp.has_spelling_correction && resp.corrected_query) {
         setSpellingCorrection({
           corrected: resp.corrected_query,

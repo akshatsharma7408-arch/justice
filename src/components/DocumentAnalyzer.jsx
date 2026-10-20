@@ -15,9 +15,9 @@ import {
 import { renderWithBadges } from '../utils/badgeFormatter';
 
 export default function DocumentAnalyzer({ onTriggerAgentAnalysis }) {
-  const [selectedPresetId, setSelectedPresetId] = useState('preset-tech-consultant');
+  const [selectedPresetId, setSelectedPresetId] = useState(null);
   const [contractsData, setContractsData] = useState(CONTRACT_PRESETS);
-  const [selectedClauseId, setSelectedClauseId] = useState('cl-9-3');
+  const [selectedClauseId, setSelectedClauseId] = useState(null);
   const [diffMode, setDiffMode] = useState(false);
   const [appliedRedlines, setAppliedRedlines] = useState({});
   const [isUploading, setIsUploading] = useState(false);
@@ -45,8 +45,8 @@ export default function DocumentAnalyzer({ onTriggerAgentAnalysis }) {
   const [expandedCitations, setExpandedCitations] = useState({});
   const chatMessagesEndRef = useRef(null);
 
-  const activeContract = contractsData.find(c => c.id === selectedPresetId) || contractsData[0];
-  const activeClause = activeContract.clauses.find(cl => cl.id === selectedClauseId) || activeContract.clauses[0];
+  const activeContract = contractsData.find(c => c.id === selectedPresetId) || null;
+  const activeClause = activeContract ? (activeContract.clauses.find(cl => cl.id === selectedClauseId) || activeContract.clauses[0]) : null;
 
   // Auto-scroll chat to bottom
   const scrollToBottom = () => {
@@ -330,10 +330,11 @@ export default function DocumentAnalyzer({ onTriggerAgentAnalysis }) {
   };
 
   const quickQuestions = [
+    "Summarise this document",
+    "What are the termination terms?",
     "What is my notice period?",
     "What are the post-termination non-compete restrictions?",
-    "How are intellectual property and inventions assigned?",
-    "What is the pet policy on bringing dogs to the office?"
+    "How are intellectual property and inventions assigned?"
   ];
 
   return (
@@ -389,7 +390,56 @@ export default function DocumentAnalyzer({ onTriggerAgentAnalysis }) {
         )}
       </div>
 
-      {/* Main Split-Pane Workspace */}
+      {/* If no contract selected, start with clean upload-first drop zone */}
+      {!activeContract ? (
+        <div className="analyzer-empty-landing animate-fade-in" style={{ maxWidth: '780px', margin: '40px auto', textAlign: 'center' }}>
+          <div className="dropzone-card" style={{
+            backgroundColor: '#12261F',
+            border: '2px dashed rgba(212, 163, 89, 0.35)',
+            borderRadius: '20px',
+            padding: '48px 32px'
+          }}>
+            <div className="dropzone-icon-wrap" style={{ margin: '0 auto 16px' }}>
+              <Upload size={36} className="text-copper" />
+            </div>
+            <h3 className="font-serif text-2xl text-ivory" style={{ marginBottom: '10px' }}>
+              Upload Agreement to Begin Analysis
+            </h3>
+            <p className="font-serif text-muted text-sm" style={{ maxWidth: '480px', margin: '0 auto 24px', lineHeight: 1.6 }}>
+              Upload any contract, employment agreement, or lease (PDF, DOCX, or TXT) to audit restrictive covenants, Section 27 compliance, and conduct clause-grounded inquiry.
+            </p>
+            <label className="btn-browse-file" style={{ display: 'inline-flex', cursor: 'pointer' }}>
+              <span className="btn-primary" style={{ padding: '12px 24px', borderRadius: '8px', fontWeight: 600 }}>
+                {isUploading ? 'Parsing with FastAPI...' : 'Select Document'}
+              </span>
+              <input type="file" onChange={handleUploadFile} style={{ display: 'none' }} accept=".pdf,.docx,.txt" disabled={isUploading} />
+            </label>
+
+            <div style={{ marginTop: '36px', borderTop: '1px solid rgba(212, 163, 89, 0.15)', paddingTop: '24px' }}>
+              <span className="mono text-xs text-muted" style={{ display: 'block', marginBottom: '12px' }}>
+                OR SELECT A SAMPLE AGREEMENT TO TEST:
+              </span>
+              <div style={{ display: 'flex', justifyContent: 'center', gap: '12px', flexWrap: 'wrap' }}>
+                {contractsData.map((c) => (
+                  <button
+                    key={c.id}
+                    type="button"
+                    className="preset-tab-btn"
+                    onClick={() => {
+                      setSelectedPresetId(c.id);
+                      setSelectedClauseId(c.clauses[0]?.id);
+                    }}
+                    style={{ padding: '8px 16px', borderRadius: '6px' }}
+                  >
+                    <span>{c.title}</span>
+                  </button>
+                ))}
+              </div>
+            </div>
+          </div>
+        </div>
+      ) : (
+      /* Main Split-Pane Workspace */
       <div className={`workspace-split-panes ${rightViewMode === 'both' ? 'view-mode-both' : ''}`}>
         {/* LEFT PANE: Document Reading Canvas */}
         <div className="split-pane-left">
@@ -496,7 +546,7 @@ export default function DocumentAnalyzer({ onTriggerAgentAnalysis }) {
           {/* View Mode Switcher Header */}
           <div className="pane-title-bar copilot-bar">
             <div className="copilot-bar-left">
-              <span className="pane-kicker">INTELLIGENCE SUITE &bull; GEMINI 3.8 FLASH</span>
+              <span className="pane-kicker">CLAUSE COMPLIANCE & ANALYSIS</span>
               <div className="copilot-tabs-strip">
                 <button
                   type="button"
@@ -529,24 +579,6 @@ export default function DocumentAnalyzer({ onTriggerAgentAnalysis }) {
                 </button>
               </div>
             </div>
-
-            {rightViewMode !== 'chat' && (
-              <button
-                type="button"
-                className="btn-primary btn-run-agent"
-                onClick={() => onTriggerAgentAnalysis({
-                  ...activeClause,
-                  riskLevel: effectiveRiskLevel,
-                  statutoryIssue: effectiveStatutoryIssue,
-                  layman: effectiveLayman,
-                  redline: effectiveRedline
-                }, activeContract.title)}
-                title="Launch autonomous LangGraph execution"
-              >
-                <Play size={13} />
-                <span>RUN TRACE</span>
-              </button>
-            )}
           </div>
 
           <div className={`copilot-columns-grid ${rightViewMode}`}>
@@ -629,7 +661,7 @@ export default function DocumentAnalyzer({ onTriggerAgentAnalysis }) {
                       {/* Layman Translation Card */}
                       <div className="copilot-card">
                         <div className="copilot-card-top">
-                          <span className="copilot-kicker mono">LAYMAN TRANSLATION &bull; GRADE 8</span>
+                          <span className="copilot-kicker mono">Simple explanation</span>
                         </div>
                         <div className="layman-quote font-judicial">
                           "{effectiveLayman}"
@@ -668,7 +700,7 @@ export default function DocumentAnalyzer({ onTriggerAgentAnalysis }) {
                           </div>
 
                           <div className="redline-btn-row">
-                            {appliedRedlines[activeClause?.id] ? (
+                            {appliedRedlines[activeClause?.id] && (
                               <button
                                 type="button"
                                 className="btn-secondary btn-revert"
@@ -676,15 +708,6 @@ export default function DocumentAnalyzer({ onTriggerAgentAnalysis }) {
                               >
                                 <RefreshCw size={13} />
                                 <span>Revert Original</span>
-                              </button>
-                            ) : (
-                              <button
-                                type="button"
-                                className="btn-primary btn-apply"
-                                onClick={() => handleApplyRedline(activeClause?.id, effectiveRedline)}
-                              >
-                                <Check size={13} />
-                                <span>Apply Enforceable Redline</span>
                               </button>
                             )}
                           </div>
@@ -873,6 +896,7 @@ export default function DocumentAnalyzer({ onTriggerAgentAnalysis }) {
           </div>
         </div>
       </div>
+      )}
     </div>
   );
 }

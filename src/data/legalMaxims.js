@@ -2604,19 +2604,6 @@ export const LEGAL_MAXIMS = [
     "indian_case_refs": []
   },
   {
-    "id": "vice-versa",
-    "maxim": "Vice versa",
-    "meaning": "The other way around",
-    "explanation": "With the order or relation reversed.",
-    "origin_note": "Classical Latin legal maxim codified in Anglo-Indian common law jurisprudence.",
-    "category": "Procedure",
-    "example": "Rights belonging to the lessor bind the lessee and vice versa.",
-    "related_maxims": [
-      "mutatis-mutandis"
-    ],
-    "indian_case_refs": []
-  },
-  {
     "id": "vox-populi-vox-dei",
     "maxim": "Vox populi, vox dei",
     "meaning": "The voice of the people is the voice of God",

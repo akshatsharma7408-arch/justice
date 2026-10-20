@@ -29,7 +29,7 @@ export function isGeminiConfigured() {
 }
 
 /**
- * Verifies backend health and active Gemini 3.8 Flash integration via GET /health.
+ * Verifies backend health and active LLM integration via GET /health.
  */
 export async function verifyGeminiConnection() {
   try {
@@ -168,6 +168,38 @@ export const clientSearchCache = new ClientLRUCache(200, 10 * 60 * 1000);
 export const clientAnswerCache = new ClientLRUCache(200, 10 * 60 * 1000);
 
 /**
+ * Formats backend error objects or Pydantic validation arrays into human-readable strings.
+ * Never outputs "[object Object]".
+ */
+export function formatBackendError(errorData, fallbackMsg = "Request failed") {
+  if (!errorData) return fallbackMsg;
+  const detail = errorData.detail ?? errorData.message ?? errorData.error;
+  if (typeof detail === 'string') {
+    const trimmed = detail.trim();
+    return trimmed && trimmed !== '[object Object]' ? trimmed : fallbackMsg;
+  }
+  if (Array.isArray(detail)) {
+    const msgs = detail.map(item => {
+      if (typeof item === 'string') return item;
+      if (item && typeof item === 'object') {
+        const fieldLoc = Array.isArray(item.loc)
+          ? item.loc.filter(x => x !== 'body').join('.')
+          : (item.loc || '');
+        const msg = item.msg || item.message || '';
+        return fieldLoc && msg ? `${fieldLoc}: ${msg}` : msg;
+      }
+      return String(item);
+    });
+    const joined = msgs.filter(Boolean).join('; ');
+    return joined && joined !== '[object Object]' ? joined : fallbackMsg;
+  }
+  if (detail && typeof detail === 'object') {
+    return detail.msg || detail.message || fallbackMsg;
+  }
+  return fallbackMsg;
+}
+
+/**
  * MODULE B: Universal Search
  * POST /api/v1/search
  */
@@ -193,7 +225,8 @@ export async function searchPrecedentsWithBackend(query, court = "ALL", benchTyp
   });
   if (!res.ok) {
     const errorData = await res.json().catch(() => ({}));
-    throw new Error(errorData.detail || `Universal search failed (HTTP ${res.status})`);
+    const message = formatBackendError(errorData, `Universal search failed (HTTP ${res.status})`);
+    throw new Error(message);
   }
   const data = await res.json();
   clientSearchCache.set(cacheKey, data);
@@ -229,7 +262,8 @@ export async function fetchSearchAnswerWithBackend(query, court = "ALL", benchTy
   });
   if (!res.ok) {
     const errorData = await res.json().catch(() => ({}));
-    throw new Error(errorData.detail || `Search answer failed (HTTP ${res.status})`);
+    const message = formatBackendError(errorData, `Search answer failed (HTTP ${res.status})`);
+    throw new Error(message);
   }
   const data = await res.json();
   if (cacheKey) {
