@@ -123,55 +123,63 @@ export default function SearchResults({
       setIsAnswerLoading(true);
     }
 
-    let fetchedResults = null;
-    try {
-      const resp = await searchPrecedentsWithBackend(trimmed, court, bench, true, 10, bypassCorrection);
-      if (resp && resp.has_spelling_correction && resp.corrected_query) {
-        setSpellingCorrection({
-          corrected: resp.corrected_query,
-          original: resp.original_query || trimmed
-        });
-      } else {
+    // Parallel execution of precedent search + AI answer synthesis
+    const searchPromise = searchPrecedentsWithBackend(trimmed, court, bench, true, 10, bypassCorrection)
+      .then(resp => {
+        if (resp && resp.has_spelling_correction && resp.corrected_query) {
+          setSpellingCorrection({
+            corrected: resp.corrected_query,
+            original: resp.original_query || trimmed
+          });
+        } else {
+          setSpellingCorrection(null);
+        }
+        if (resp && resp.results) {
+          setResults(resp.results);
+        }
+        if (resp && resp.model_used) {
+          setModelUsed(resp.model_used);
+        }
+        if (resp && resp.hyde_synthetic_ratio) {
+          setHydeRatio(resp.hyde_synthetic_ratio);
+        } else {
+          setHydeRatio('');
+        }
+        return resp;
+      })
+      .catch(err => {
         setSpellingCorrection(null);
-      }
-      if (resp && resp.results) {
-        setResults(resp.results);
-        fetchedResults = resp.results;
-      }
-      if (resp && resp.model_used) {
-        setModelUsed(resp.model_used);
-      }
-      if (resp && resp.hyde_synthetic_ratio) {
-        setHydeRatio(resp.hyde_synthetic_ratio);
-      } else {
-        setHydeRatio('');
-      }
-    } catch (err) {
-      setSpellingCorrection(null);
-      console.warn("[SearchResults] Backend search error:", err.message);
-      setSearchError(err.message || "Unable to reach legal database. Please check your connection or query.");
-      setResults([]);
-      fetchedResults = [];
-    } finally {
-      setIsLoading(false);
+        console.warn("[SearchResults] Backend search error:", err.message);
+        setSearchError(err.message || "Unable to reach legal database. Please check your connection or query.");
+        setResults([]);
+        return null;
+      })
+      .finally(() => {
+        setIsLoading(false);
+      });
+
+    let answerPromise = null;
+    if (!isLookup) {
+      answerPromise = fetchSearchAnswerWithBackend(trimmed, court, bench, null, false, bypassCorrection)
+        .then(ansResp => {
+          if (ansResp && ansResp.is_case_lookup) {
+            setAnswerData(null);
+          } else {
+            setAnswerData(ansResp);
+          }
+          return ansResp;
+        })
+        .catch(ansErr => {
+          console.warn("[SearchResults] Search answer API call failed:", ansErr);
+          setAnswerError(ansErr.message || "Failed to load AI answer");
+          return null;
+        })
+        .finally(() => {
+          setIsAnswerLoading(false);
+        });
     }
 
-    // Secondary fetch: Dedicated AI answer synthesis (if not a pure case lookup)
-    if (!isLookup) {
-      try {
-        const ansResp = await fetchSearchAnswerWithBackend(trimmed, court, bench, fetchedResults);
-        if (ansResp && ansResp.is_case_lookup) {
-          setAnswerData(null);
-        } else {
-          setAnswerData(ansResp);
-        }
-      } catch (ansErr) {
-        console.warn("[SearchResults] Search answer API call failed:", ansErr);
-        setAnswerError(ansErr.message || "Failed to load AI answer");
-      } finally {
-        setIsAnswerLoading(false);
-      }
-    }
+    await Promise.allSettled(answerPromise ? [searchPromise, answerPromise] : [searchPromise]);
   };
 
   const handleRetryAnswer = async () => {

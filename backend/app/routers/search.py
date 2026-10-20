@@ -16,8 +16,47 @@ from app.services.qdrant_service import qdrant_service
 from app.services.spelling_service import correct_query
 from app.services.answer_tiers import UNRELIABLE_TIER2_MSG
 
+from collections import OrderedDict
+import time
+
 logger = logging.getLogger("justice.router.search")
 router = APIRouter(prefix="/api/v1", tags=["Universal Search"])
+
+class TTLLRUCache:
+    """
+    10-minute LRU Cache (200 items max) for Universal Search and AI answers.
+    Sub-second response on warm searches.
+    """
+    def __init__(self, capacity: int = 200, ttl_seconds: float = 600.0):
+        self.capacity = capacity
+        self.ttl_seconds = ttl_seconds
+        self._cache: OrderedDict[str, tuple[float, Any]] = OrderedDict()
+
+    def get(self, key: str) -> Optional[Any]:
+        if key not in self._cache:
+            return None
+        timestamp, value = self._cache[key]
+        if time.time() - timestamp > self.ttl_seconds:
+            try:
+                del self._cache[key]
+            except KeyError:
+                pass
+            return None
+        self._cache.move_to_end(key)
+        return value
+
+    def set(self, key: str, value: Any) -> None:
+        if key in self._cache:
+            self._cache.move_to_end(key)
+        self._cache[key] = (time.time(), value)
+        if len(self._cache) > self.capacity:
+            self._cache.popitem(last=False)
+
+    def clear(self) -> None:
+        self._cache.clear()
+
+_SEARCH_CACHE = TTLLRUCache(capacity=200, ttl_seconds=600.0)
+_ANSWER_CACHE = TTLLRUCache(capacity=200, ttl_seconds=600.0)
 
 class SearchRequest(BaseModel):
     query: str = Field(..., description="Legal query or statutory issue (e.g., 'Section 27 non-compete enforceability')")
@@ -135,6 +174,12 @@ async def search_precedents_post(payload: SearchRequest):
             detail="Please shorten your question. Queries are limited to 300 characters."
         )
 
+    cache_key = f"{raw_query.lower()}:{payload.court}:{payload.bench_type}:{payload.bypass_correction}:{payload.enable_hyde}:{payload.limit}:{payload.force_fallback}"
+    cached_val = _SEARCH_CACHE.get(cache_key)
+    if cached_val is not None:
+        logger.info("Search cache hit for '%s'", raw_query)
+        return cached_val
+
     corrected_q, has_corr = correct_query(raw_query)
     effective_query = raw_query if payload.bypass_correction else (corrected_q if has_corr else raw_query)
     has_spelling = has_corr and not payload.bypass_correction
@@ -147,7 +192,7 @@ async def search_precedents_post(payload: SearchRequest):
     )
 
     if not payload.enable_hyde or is_pure_case_lookup_query(effective_query):
-        return SearchResponse(
+        resp = SearchResponse(
             query=effective_query,
             corrected_query=corrected_q if has_spelling else None,
             original_query=raw_query,
@@ -159,6 +204,8 @@ async def search_precedents_post(payload: SearchRequest):
             results_count=len(results),
             results=results
         )
+        _SEARCH_CACHE.set(cache_key, resp)
+        return resp
 
     # Synthesize AI answer using the Two-Tier framework
     synthesis = await llm_service.synthesize_search_answer(
@@ -174,7 +221,7 @@ async def search_precedents_post(payload: SearchRequest):
     ratio = None if is_tier2 else citation_checker.check_and_badge_text(synthesis.get("ratio_decidendi") or ai_ans, is_tier2=False)
     citations = citation_checker.badge_citations_list(synthesis.get("citations", [])) if not is_tier2 else []
 
-    return SearchResponse(
+    resp = SearchResponse(
         query=effective_query,
         corrected_query=corrected_q if has_spelling else None,
         original_query=raw_query,
@@ -186,6 +233,8 @@ async def search_precedents_post(payload: SearchRequest):
         results_count=len(tier1_results),
         results=tier1_results
     )
+    _SEARCH_CACHE.set(cache_key, resp)
+    return resp
 
 @router.post("/search/answer", response_model=SearchAnswerResponse)
 async def search_answer_post(payload: SearchAnswerRequest):
@@ -247,6 +296,13 @@ async def search_answer_post(payload: SearchAnswerRequest):
             hide_badge=True
         )
 
+    cache_key = f"{raw_query.lower()}:{payload.court}:{payload.bench_type}:{payload.bypass_correction}:{payload.force_fallback}"
+    if payload.results is None:
+        cached_val = _ANSWER_CACHE.get(cache_key)
+        if cached_val is not None:
+            logger.info("Search answer cache hit for '%s'", raw_query)
+            return cached_val
+
     # Use provided results or retrieve from Qdrant
     results = payload.results
     if results is None:
@@ -296,7 +352,7 @@ async def search_answer_post(payload: SearchAnswerRequest):
         source_cases = synthesis.get("results", []) or results or []
         no_strong = len(source_cases) == 0
 
-    return SearchAnswerResponse(
+    resp = SearchAnswerResponse(
         query=effective_query,
         corrected_query=corrected_q if has_spelling else None,
         original_query=raw_query,
@@ -312,6 +368,9 @@ async def search_answer_post(payload: SearchAnswerRequest):
         no_strong_case_match=no_strong,
         hide_badge=hide_badge
     )
+    if payload.results is None:
+        _ANSWER_CACHE.set(cache_key, resp)
+    return resp
 
 @router.get("/search/answer", response_model=SearchAnswerResponse)
 async def search_answer_get(

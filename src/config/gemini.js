@@ -125,10 +125,60 @@ export async function auditContractWithBackend(input, title = "Commercial Agreem
 }
 
 /**
+ * Client-side 10-minute LRU Cache (200 items max) for Universal Search & AI answers.
+ * Guarantees sub-second (<50ms) response on warm searches.
+ */
+class ClientLRUCache {
+  constructor(capacity = 200, ttlMs = 10 * 60 * 1000) {
+    this.capacity = capacity;
+    this.ttlMs = ttlMs;
+    this.cache = new Map();
+  }
+
+  get(key) {
+    if (!this.cache.has(key)) return null;
+    const entry = this.cache.get(key);
+    if (Date.now() - entry.timestamp > this.ttlMs) {
+      this.cache.delete(key);
+      return null;
+    }
+    // Refresh LRU position
+    this.cache.delete(key);
+    this.cache.set(key, entry);
+    return entry.value;
+  }
+
+  set(key, value) {
+    if (this.cache.has(key)) {
+      this.cache.delete(key);
+    }
+    this.cache.set(key, { value, timestamp: Date.now() });
+    if (this.cache.size > this.capacity) {
+      const oldestKey = this.cache.keys().next().value;
+      this.cache.delete(oldestKey);
+    }
+  }
+
+  clear() {
+    this.cache.clear();
+  }
+}
+
+export const clientSearchCache = new ClientLRUCache(200, 10 * 60 * 1000);
+export const clientAnswerCache = new ClientLRUCache(200, 10 * 60 * 1000);
+
+/**
  * MODULE B: Universal Search
  * POST /api/v1/search
  */
 export async function searchPrecedentsWithBackend(query, court = "ALL", benchType = "ALL", enableHyde = true, limit = 8, bypassCorrection = false) {
+  const normalizedQuery = (query || "").trim().toLowerCase();
+  const cacheKey = `search:${normalizedQuery}:${court}:${benchType}:${enableHyde}:${limit}:${bypassCorrection}`;
+  const cached = clientSearchCache.get(cacheKey);
+  if (cached) {
+    return cached;
+  }
+
   const res = await fetch(`${API_BASE}/search`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
@@ -145,7 +195,9 @@ export async function searchPrecedentsWithBackend(query, court = "ALL", benchTyp
     const errorData = await res.json().catch(() => ({}));
     throw new Error(errorData.detail || `Universal search failed (HTTP ${res.status})`);
   }
-  return await res.json();
+  const data = await res.json();
+  clientSearchCache.set(cacheKey, data);
+  return data;
 }
 
 /**
@@ -153,6 +205,16 @@ export async function searchPrecedentsWithBackend(query, court = "ALL", benchTyp
  * POST /api/v1/search/answer
  */
 export async function fetchSearchAnswerWithBackend(query, court = "ALL", benchType = "ALL", results = null, forceFallback = false, bypassCorrection = false) {
+  const normalizedQuery = (query || "").trim().toLowerCase();
+  // Only cache if results is null (direct query synthesis)
+  const cacheKey = results ? null : `answer:${normalizedQuery}:${court}:${benchType}:${forceFallback}:${bypassCorrection}`;
+  if (cacheKey) {
+    const cached = clientAnswerCache.get(cacheKey);
+    if (cached) {
+      return cached;
+    }
+  }
+
   const res = await fetch(`${API_BASE}/search/answer`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
@@ -169,7 +231,11 @@ export async function fetchSearchAnswerWithBackend(query, court = "ALL", benchTy
     const errorData = await res.json().catch(() => ({}));
     throw new Error(errorData.detail || `Search answer failed (HTTP ${res.status})`);
   }
-  return await res.json();
+  const data = await res.json();
+  if (cacheKey) {
+    clientAnswerCache.set(cacheKey, data);
+  }
+  return data;
 }
 
 /**

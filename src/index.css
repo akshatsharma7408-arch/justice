@@ -59,7 +59,7 @@ input, select, textarea {
 .skeleton-card {
   background-color: var(--bg-panel);
   border: 1px solid var(--border);
-  border-radius: 6px;
+  border-radius: var(--radius-md);
   padding: 24px;
   display: flex;
   flex-direction: column;
