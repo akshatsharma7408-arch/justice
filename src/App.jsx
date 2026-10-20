@@ -1,7 +1,9 @@
 import React, { useState, useEffect, lazy, Suspense } from 'react';
+import { AnimatePresence, motion } from 'framer-motion';
 import Navbar from './components/Navbar';
 import LandingPage from './components/LandingPage';
 import TextSelectionToolbar from './components/TextSelectionToolbar';
+import { ScrollProgressBar, SoftCursorFollower } from './components/InteractiveEffects';
 import { AgentExecutionSession } from './services/agentEngine';
 
 // Lazy-load heavy module views and modals to optimize Landing Page performance (Lighthouse > 85)
@@ -176,61 +178,72 @@ export default function App() {
               </div>
             </div>
           }>
-            {/* 1. LANDING PAGE VIEW */}
-            {activeView === 'landing' && (
-              <LandingPage
-                onNavigate={handleNavigate}
-                onSearchSubmit={handleSearchSubmit}
-                onOpenCaseChat={handleOpenCaseChatFromSearch}
-                onOpenCommandPalette={() => setIsCommandPaletteOpen(true)}
-              />
-            )}
+            <AnimatePresence mode="wait">
+              <motion.div
+                key={activeView}
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -10 }}
+                transition={{ duration: 0.22, ease: [0.16, 1, 0.3, 1] }}
+                style={{ display: 'flex', flexDirection: 'column', flex: 1, width: '100%' }}
+              >
+                {/* 1. LANDING PAGE VIEW */}
+                {activeView === 'landing' && (
+                  <LandingPage
+                    onNavigate={handleNavigate}
+                    onSearchSubmit={handleSearchSubmit}
+                    onOpenCaseChat={handleOpenCaseChatFromSearch}
+                    onOpenCommandPalette={() => setIsCommandPaletteOpen(true)}
+                  />
+                )}
 
-            {/* 2. SEARCH RESULTS MODULE */}
-            {activeView === 'search' && (
-              <SearchResults
-                initialQuery={activeSearchQuery}
-                onSelectCaseForCitator={handleSelectCaseForCitator}
-                onOpenCaseChat={handleOpenCaseChatFromSearch}
-                onSearchAgain={(q) => {
-                  setActiveSearchQuery(q);
-                  setActiveCase(null);
-                }}
-              />
-            )}
+                {/* 2. SEARCH RESULTS MODULE */}
+                {activeView === 'search' && (
+                  <SearchResults
+                    initialQuery={activeSearchQuery}
+                    onSelectCaseForCitator={handleSelectCaseForCitator}
+                    onOpenCaseChat={handleOpenCaseChatFromSearch}
+                    onSearchAgain={(q) => {
+                      setActiveSearchQuery(q);
+                      setActiveCase(null);
+                    }}
+                  />
+                )}
 
-            {/* 3. SMART CITATOR MODULE */}
-            {activeView === 'citator' && (
-              <SmartCitator
-                key={selectedCitatorCaseId}
-                initialCaseId={selectedCitatorCaseId}
-                onActiveCaseChange={setActiveCase}
-              />
-            )}
+                {/* 3. SMART CITATOR MODULE */}
+                {activeView === 'citator' && (
+                  <SmartCitator
+                    key={selectedCitatorCaseId}
+                    initialCaseId={selectedCitatorCaseId}
+                    onActiveCaseChange={setActiveCase}
+                  />
+                )}
 
-            {/* 4. DOCUMENT ANALYSER MODULE */}
-            {activeView === 'analyzer' && (
-              <DocumentAnalyzer
-                onTriggerAgentAnalysis={handleTriggerAgentAnalysis}
-              />
-            )}
+                {/* 4. DOCUMENT ANALYSER MODULE */}
+                {activeView === 'analyzer' && (
+                  <DocumentAnalyzer
+                    onTriggerAgentAnalysis={handleTriggerAgentAnalysis}
+                  />
+                )}
 
-            {/* 5. DOCUMENT CHAT MODULE */}
-            {activeView === 'docchat' && (
-              <DocumentChat />
-            )}
+                {/* 5. DOCUMENT CHAT MODULE */}
+                {activeView === 'docchat' && (
+                  <DocumentChat />
+                )}
 
-            {/* 6. COMPARISON MODULE */}
-            {activeView === 'comparison' && (
-              <ManupatraComparison
-                onSwitchToWorkspace={() => handleNavigate('analyzer')}
-              />
-            )}
+                {/* 6. COMPARISON MODULE */}
+                {activeView === 'comparison' && (
+                  <ManupatraComparison
+                    onSwitchToWorkspace={() => handleNavigate('analyzer')}
+                  />
+                )}
 
-            {/* 7. LEGAL MAXIMS MODULE */}
-            {activeView === 'maxims' && (
-              <LegalMaxims />
-            )}
+                {/* 7. LEGAL MAXIMS MODULE */}
+                {activeView === 'maxims' && (
+                  <LegalMaxims />
+                )}
+              </motion.div>
+            </AnimatePresence>
           </Suspense>
         </main>
 

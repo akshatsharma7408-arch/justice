@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { motion } from 'framer-motion';
 import { 
   ArrowUpRight, Sparkles, Scale, ShieldCheck, GitFork, 
   Network, BookOpen, ChevronRight, X, Info, MessageSquare, Check 
@@ -314,13 +315,15 @@ export default function SmartCitator({ initialCaseId, onActiveCaseChange }) {
                   }
 
                   return (
-                    <g
+                    <motion.g
                       key={node.id}
                       transform={`translate(${node.x}, ${node.y})`}
                       className="graph-node-group"
                       onMouseEnter={() => setHoveredNodeId(node.id)}
                       onMouseLeave={() => setHoveredNodeId(null)}
                       onClick={() => setSelectedGraphNode(node)}
+                      whileHover={{ scale: 1.06 }}
+                      transition={{ type: 'spring', stiffness: 360, damping: 22 }}
                       style={{
                         cursor: 'pointer',
                         opacity: isDimmed ? 0.35 : 1,
@@ -332,10 +335,10 @@ export default function SmartCitator({ initialCaseId, onActiveCaseChange }) {
                         y="-30"
                         width="140"
                         height="60"
-                        rx="6"
+                        rx="18"
                         fill={isHovered || isSelected ? '#17302A' : statusBg}
                         stroke={isHovered || isSelected ? '#E0955A' : borderColor}
-                        strokeWidth={isHovered || isSelected ? 2 : 1}
+                        strokeWidth={isHovered || isSelected ? 2.5 : 1}
                         filter={isHovered ? 'url(#copper-glow)' : 'none'}
                         style={{ transition: 'all 200ms ease' }}
                       />
@@ -348,7 +351,7 @@ export default function SmartCitator({ initialCaseId, onActiveCaseChange }) {
                       <text textAnchor="middle" y="22" fill="#9AA79F" fontSize="8" fontFamily="Inter">
                         {node.court.split(' ')[0]} {node.year}
                       </text>
-                    </g>
+                    </motion.g>
                   );
                 })}
               </svg>

@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useMemo } from 'react';
+import { motion } from 'framer-motion';
 import { 
   Search, Sparkles, BookOpen, Layers, CheckCircle2, 
   RotateCw, HelpCircle, ChevronDown, ChevronUp, ArrowRight,
@@ -366,7 +367,12 @@ export default function LegalMaxims() {
             onClick={() => setIsFlipped(!isFlipped)}
             title="Click card to flip"
           >
-            <div className={`flashcard-3d-flipper ${isFlipped ? 'is-flipped' : ''}`}>
+            <motion.div
+              className={`flashcard-3d-flipper ${isFlipped ? 'is-flipped' : ''}`}
+              animate={{ rotateY: isFlipped ? 180 : 0 }}
+              transition={{ type: "spring", stiffness: 260, damping: 20 }}
+              whileHover={{ scale: 1.02 }}
+            >
               {/* FRONT: Latin Maxim */}
               <div className="flashcard-face flashcard-front">
                 <span className="card-kicker mono">LATIN LEGAL CANON &bull; CLICK TO FLIP</span>
@@ -393,7 +399,7 @@ export default function LegalMaxims() {
                   <span>Click to flip back</span>
                 </div>
               </div>
-            </div>
+            </motion.div>
           </div>
 
           {/* Flashcard Navigation Controls */}

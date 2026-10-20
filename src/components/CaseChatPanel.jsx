@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
+import { motion } from 'framer-motion';
 import { 
   MessageSquare, Send, Copy, Check, RotateCcw, 
   Trash2, X, ChevronDown, ChevronRight, Sparkles, 
@@ -369,16 +370,19 @@ export default function CaseChatPanel({
       <div className="case-chat-quick-buttons-strip">
         <div className="quick-buttons-scroll" role="toolbar" aria-label="Suggested quick questions">
           {QUICK_BUTTONS.map((qText, idx) => (
-            <button
+            <motion.button
               key={idx}
               type="button"
               className={`quick-button-chip ${qText.startsWith('Summarise') ? 'is-summary' : ''}`}
               onClick={() => handleSendMessage(qText)}
               disabled={isLoading}
+              whileHover={{ y: -2 }}
+              whileTap={{ scale: 0.96 }}
+              transition={{ type: 'spring', stiffness: 400, damping: 25 }}
             >
               {qText.startsWith('Summarise') && <Sparkles size={12} />}
               <span>{qText}</span>
-            </button>
+            </motion.button>
           ))}
         </div>
       </div>
@@ -404,15 +408,17 @@ export default function CaseChatPanel({
             disabled={isLoading}
           />
 
-          <button
+          <motion.button
             type="submit"
             className="chat-send-btn"
             disabled={isLoading || !input.trim()}
             title="Send question"
             aria-label="Send question"
+            whileHover={{ scale: 1.05 }}
+            whileTap={{ scale: 0.94 }}
           >
             <Send size={15} />
-          </button>
+          </motion.button>
         </form>
 
         <div className="chat-footer-disclaimer">

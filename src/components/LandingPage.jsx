@@ -1,5 +1,15 @@
 import React, { useState, useEffect, useRef } from 'react';
+import { motion } from 'framer-motion';
 import { Search, ArrowRight, ArrowUpRight, Scale, ShieldCheck, Check, MessageSquare, BookOpen, FileText, SlidersHorizontal, Sparkles, ChevronRight, AlertTriangle, ExternalLink } from 'lucide-react';
+import { 
+  ScrollProgressBar, 
+  SoftCursorFollower, 
+  TiltCard, 
+  MagneticButton, 
+  CountUpNumber, 
+  TypewriterPlaceholder, 
+  DraggableQuestionsRow 
+} from './InteractiveEffects';
 
 const ROTATING_PLACEHOLDERS = [
   "What are my rights if an officer arrests me without a warrant?",
@@ -40,6 +50,7 @@ export default function LandingPage({
   const [scrollProgress, setScrollProgress] = useState(0);
   const [mouseParallax, setMouseParallax] = useState({ x: 0, y: 0 });
   const [toastMessage, setToastMessage] = useState(null);
+  const [copiedCitationId, setCopiedCitationId] = useState(null);
 
   // Rotating placeholder
   useEffect(() => {
@@ -99,10 +110,14 @@ export default function LandingPage({
     }
   };
 
-  const copyCitation = (text) => {
+  const copyCitation = (text, id = null) => {
     navigator.clipboard?.writeText(text);
+    if (id) setCopiedCitationId(id);
     setToastMessage(`Copied "${text}" to clipboard`);
-    setTimeout(() => setToastMessage(null), 2400);
+    setTimeout(() => {
+      setToastMessage(null);
+      if (id) setCopiedCitationId(null);
+    }, 2400);
   };
 
   // Dynamic transforms based on scrollProgress (0 = hero full, 1 = sticky top bar)
@@ -111,6 +126,12 @@ export default function LandingPage({
 
   return (
     <div className="landing-page-root" onMouseMove={handleMouseMove}>
+      {/* Top Window Scroll Progress Line */}
+      <ScrollProgressBar />
+
+      {/* Ambient Soft Copper Cursor Glow across Hero and Cards */}
+      <SoftCursorFollower />
+
       {/* Toast Notification */}
       {toastMessage && (
         <div className="landing-toast animate-fade-in" role="status">
@@ -179,42 +200,55 @@ export default function LandingPage({
             <form className="hero-search-form" onSubmit={handleSearch}>
               <div className="hero-search-input-box">
                 <Search size={20} className="hero-search-icon" aria-hidden="true" />
-                <input
-                  type="text"
-                  className="hero-search-input"
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  placeholder={
-                    searchQuery ? "" : (placeholderFade ? "" : ROTATING_PLACEHOLDERS[placeholderIndex])
-                  }
-                  aria-label="Ask any question, case name, statute or citation"
-                  autoComplete="off"
-                />
-                <button
+                <div style={{ position: 'relative', width: '100%', display: 'flex', alignItems: 'center' }}>
+                  <input
+                    type="text"
+                    className="hero-search-input"
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    aria-label="Ask any question, case name, statute or citation"
+                    autoComplete="off"
+                  />
+                  {!searchQuery && (
+                    <div style={{ position: 'absolute', left: 0, pointerEvents: 'none', width: '100%' }}>
+                      <TypewriterPlaceholder placeholders={ROTATING_PLACEHOLDERS} />
+                    </div>
+                  )}
+                </div>
+                <MagneticButton
                   type="submit"
                   className="hero-search-submit-btn"
                   aria-label="Execute Search"
                 >
                   <span>Search Precedents</span>
                   <ArrowRight size={16} />
-                </button>
+                </MagneticButton>
               </div>
             </form>
 
-            {/* Everyday Query Chips */}
+            {/* Horizontally Draggable Popular Questions Strip */}
             <div className="hero-chips-strip">
-              <span className="chips-kicker mono">POPULAR CITIZEN QUESTIONS:</span>
-              <div className="chips-flow">
-                {EVERYDAY_CHIPS.map((chip, idx) => (
-                  <button
-                    key={idx}
-                    type="button"
-                    className="everyday-chip"
-                    onClick={() => handleChipClick(chip.query)}
-                  >
-                    <span>{chip.label}</span>
-                  </button>
-                ))}
+              <span className="chips-kicker mono">POPULAR CITIZEN QUESTIONS (DRAG OR SWIPE):</span>
+              <DraggableQuestionsRow chips={EVERYDAY_CHIPS} onChipClick={handleChipClick} />
+            </div>
+
+            {/* Real Number Counters Strip (Scrolled into view count-up) */}
+            <div className="landing-stats-strip" aria-label="Corpus Statistics">
+              <div className="stat-card-box">
+                <span className="stat-number-val font-serif"><CountUpNumber target={1736} suffix="+" /></span>
+                <span className="stat-label-text">Supreme Court Judgments</span>
+              </div>
+              <div className="stat-card-box">
+                <span className="stat-number-val font-serif"><CountUpNumber target={12} suffix="" /></span>
+                <span className="stat-label-text">Landmark Rulings</span>
+              </div>
+              <div className="stat-card-box">
+                <span className="stat-number-val font-serif"><CountUpNumber target={100} suffix="%" /></span>
+                <span className="stat-label-text">Grounded Citations</span>
+              </div>
+              <div className="stat-card-box">
+                <span className="stat-number-val font-serif"><CountUpNumber target={0} suffix="" /></span>
+                <span className="stat-label-text">Hallucinated Cases</span>
               </div>
             </div>
           </div>
@@ -302,8 +336,8 @@ export default function LandingPage({
           </div>
 
           <div className="three-answers-grid">
-            {/* Card 1: D.K. Basu */}
-            <article className="editorial-answer-card">
+            {/* Card 1: D.K. Basu (TiltCard with glossy highlight) */}
+            <TiltCard className="editorial-answer-card" maxTilt={6}>
               <div className="card-top-kicker">
                 <span className="kicker-tag mono">ARREST & DETENTION</span>
                 <span className="badge-verified">
@@ -324,10 +358,14 @@ export default function LandingPage({
                   <button
                     type="button"
                     className="btn-copy-cite"
-                    onClick={() => copyCitation("(1997) 1 SCC 416")}
+                    onClick={() => copyCitation("(1997) 1 SCC 416", "dk-basu")}
                     title="Copy citation"
                   >
-                    Copy
+                    {copiedCitationId === "dk-basu" ? (
+                      <span className="copy-success-badge"><Check size={12} /> Copied</span>
+                    ) : (
+                      "Copy"
+                    )}
                   </button>
                   <button
                     type="button"
@@ -339,10 +377,10 @@ export default function LandingPage({
                   </button>
                 </div>
               </div>
-            </article>
+            </TiltCard>
 
-            {/* Card 2: Biswabani / Landlord eviction */}
-            <article className="editorial-answer-card">
+            {/* Card 2: Biswabani / Landlord eviction (TiltCard with glossy highlight) */}
+            <TiltCard className="editorial-answer-card" maxTilt={6}>
               <div className="card-top-kicker">
                 <span className="kicker-tag mono">TENANCY & HOUSING</span>
                 <span className="badge-verified">
@@ -363,10 +401,14 @@ export default function LandingPage({
                   <button
                     type="button"
                     className="btn-copy-cite"
-                    onClick={() => copyCitation("(1980) 1 SCC 185")}
+                    onClick={() => copyCitation("(1980) 1 SCC 185", "biswabani")}
                     title="Copy citation"
                   >
-                    Copy
+                    {copiedCitationId === "biswabani" ? (
+                      <span className="copy-success-badge"><Check size={12} /> Copied</span>
+                    ) : (
+                      "Copy"
+                    )}
                   </button>
                   <button
                     type="button"
@@ -378,10 +420,10 @@ export default function LandingPage({
                   </button>
                 </div>
               </div>
-            </article>
+            </TiltCard>
 
-            {/* Card 3: Percept D'Mark / Non-compete */}
-            <article className="editorial-answer-card">
+            {/* Card 3: Percept D'Mark / Non-compete (TiltCard with glossy highlight) */}
+            <TiltCard className="editorial-answer-card" maxTilt={6}>
               <div className="card-top-kicker">
                 <span className="kicker-tag mono">EMPLOYMENT & CONTRACTS</span>
                 <span className="badge-verified">
@@ -402,10 +444,14 @@ export default function LandingPage({
                   <button
                     type="button"
                     className="btn-copy-cite"
-                    onClick={() => copyCitation("(2006) 4 SCC 227")}
+                    onClick={() => copyCitation("(2006) 4 SCC 227", "percept")}
                     title="Copy citation"
                   >
-                    Copy
+                    {copiedCitationId === "percept" ? (
+                      <span className="copy-success-badge"><Check size={12} /> Copied</span>
+                    ) : (
+                      "Copy"
+                    )}
                   </button>
                   <button
                     type="button"
@@ -417,7 +463,7 @@ export default function LandingPage({
                   </button>
                 </div>
               </div>
-            </article>
+            </TiltCard>
           </div>
         </div>
       </section>
@@ -468,9 +514,9 @@ export default function LandingPage({
               </div>
             </div>
 
-            {/* Interactive Source Inspector Mock */}
+            {/* Interactive Source Inspector Mock (TiltCard) */}
             <div className="source-interactive-col">
-              <div className="judgment-excerpt-window">
+              <TiltCard className="judgment-excerpt-window" maxTilt={5}>
                 <div className="window-header">
                   <span className="window-pill mono">RECORDED JUDGMENT EXCERPT &bull; PARAGRAPH 35</span>
                   <span className="badge-verified">
@@ -509,7 +555,7 @@ export default function LandingPage({
                     <ArrowRight size={14} />
                   </button>
                 </div>
-              </div>
+              </TiltCard>
             </div>
           </div>
         </div>
@@ -531,8 +577,8 @@ export default function LandingPage({
 
           {/* Interactive Case Chat Visual Spread */}
           <div className="ivory-chat-showcase-grid">
-            {/* Left: Precedent Card Preview */}
-            <div className="ivory-case-card">
+            {/* Left: Precedent Card Preview (TiltCard) */}
+            <TiltCard className="ivory-case-card" maxTilt={5}>
               <div className="ivory-card-meta">
                 <span className="ivory-court-pill mono">Supreme Court of India</span>
                 <span className="ivory-year-pill mono">1973 &bull; 13 Judges</span>
@@ -551,7 +597,7 @@ export default function LandingPage({
                 <span className="ivory-chip mono">Article 368</span>
                 <span className="ivory-chip mono">Judicial Review</span>
               </div>
-            </div>
+            </TiltCard>
 
             {/* Right: Live Interactive Case Chat Mock */}
             <div className="ivory-chat-window">
@@ -623,8 +669,8 @@ export default function LandingPage({
           </div>
 
           <div className="tier-comparison-grid">
-            {/* TIER 1: VERIFIED */}
-            <div className="tier-card tier-verified">
+            {/* TIER 1: VERIFIED (TiltCard) */}
+            <TiltCard className="tier-card tier-verified" maxTilt={5}>
               <div className="tier-badge-line">
                 <span className="badge-verified">
                   <ShieldCheck size={14} />
@@ -643,10 +689,10 @@ export default function LandingPage({
               <div className="tier-sample-pill green mono">
                 Status: Good Law (Affirmed by Coordinate Bench)
               </div>
-            </div>
+            </TiltCard>
 
-            {/* TIER 2: AI ANSWER NOT VERIFIED */}
-            <div className="tier-card tier-unverified">
+            {/* TIER 2: AI ANSWER NOT VERIFIED (TiltCard) */}
+            <TiltCard className="tier-card tier-unverified" maxTilt={5}>
               <div className="tier-badge-line">
                 <span className="badge-not-verified">
                   <AlertTriangle size={14} />
@@ -665,7 +711,7 @@ export default function LandingPage({
               <div className="tier-sample-pill amber mono">
                 Notice: General information only. Check a primary source.
               </div>
-            </div>
+            </TiltCard>
           </div>
         </div>
       </section>

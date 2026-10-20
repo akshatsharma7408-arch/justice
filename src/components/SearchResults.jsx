@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { motion } from 'framer-motion';
 import { 
   Search, ArrowRight, ArrowUpRight, Scale, ShieldCheck, 
   ChevronDown, ChevronUp, MessageSquare, Copy, Check, Filter, Sparkles 
@@ -6,6 +7,7 @@ import {
 import { LANDMARK_PRECEDENTS } from '../data/legalCorpus';
 import { searchPrecedentsWithBackend } from '../config/gemini';
 import { renderWithBadges } from '../utils/badgeFormatter';
+import { TiltCard } from './InteractiveEffects';
 
 export default function SearchResults({
   initialQuery = '',
@@ -21,6 +23,7 @@ export default function SearchResults({
   const [isLoading, setIsLoading] = useState(false);
   const [expandedCaseId, setExpandedCaseId] = useState(null);
   const [toastMessage, setToastMessage] = useState(null);
+  const [copiedCaseKey, setCopiedCaseKey] = useState(null);
   const [modelUsed, setModelUsed] = useState('openai/gpt-oss-120b');
   const [hydeRatio, setHydeRatio] = useState('');
 
@@ -77,11 +80,15 @@ export default function SearchResults({
     if (onSearchAgain) onSearchAgain(q);
   };
 
-  const handleCopyCitation = (citation, title) => {
+  const handleCopyCitation = (citation, title, caseKey = null) => {
     const textToCopy = `${title}, ${citation}`;
     navigator.clipboard?.writeText(textToCopy);
+    if (caseKey) setCopiedCaseKey(caseKey);
     setToastMessage(`Copied "${citation}"`);
-    setTimeout(() => setToastMessage(null), 2200);
+    setTimeout(() => {
+      setToastMessage(null);
+      if (caseKey) setCopiedCaseKey(null);
+    }, 2200);
   };
 
   return (
@@ -225,137 +232,154 @@ export default function SearchResults({
                 : 95;
 
               return (
-                <article
+                <motion.div
                   key={caseIdKey}
-                  className="precedent-editorial-card animate-stagger"
-                  style={{ animationDelay: `${index * 60}ms` }}
+                  initial={{ opacity: 0, y: 16 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.35, delay: index * 0.05, ease: [0.16, 1, 0.3, 1] }}
                 >
-                  {/* Meta Strip: Court, Bench, Year, Relevance, Status */}
-                  <div className="card-meta-strip">
-                    <div className="meta-left-cluster">
-                      <span className="meta-chip court">{precedent.court}</span>
-                      <span className="meta-sep">&bull;</span>
-                      <span className="meta-chip bench">
-                        {precedent.benchType || 'Bench'} ({precedent.benchSize || 2} Judges)
-                      </span>
-                      <span className="meta-sep">&bull;</span>
-                      <span className="meta-chip year">{precedent.decisionYear}</span>
+                  <TiltCard className="precedent-editorial-card" maxTilt={3}>
+                    {/* Meta Strip: Court, Bench, Year, Relevance, Status */}
+                    <div className="card-meta-strip">
+                      <div className="meta-left-cluster">
+                        <span className="meta-chip court">{precedent.court}</span>
+                        <span className="meta-sep">&bull;</span>
+                        <span className="meta-chip bench">
+                          {precedent.benchType || 'Bench'} ({precedent.benchSize || 2} Judges)
+                        </span>
+                        <span className="meta-sep">&bull;</span>
+                        <span className="meta-chip year">{precedent.decisionYear}</span>
 
-                      {/* Relevance Score Bar */}
-                      <span className="meta-sep">&bull;</span>
-                      <div className="relevance-indicator-wrap" title={`Relevance: ${relevancePercent}%`}>
-                        <span className="relevance-label mono">Match {relevancePercent}%</span>
-                        <div className="relevance-bar-track">
-                          <div
-                            className="relevance-bar-fill"
-                            style={{ width: `${relevancePercent}%` }}
-                          />
+                        {/* Relevance Score Bar */}
+                        <span className="meta-sep">&bull;</span>
+                        <div className="relevance-indicator-wrap" title={`Relevance: ${relevancePercent}%`}>
+                          <span className="relevance-label mono">Match {relevancePercent}%</span>
+                          <div className="relevance-bar-track">
+                            <motion.div
+                              className="relevance-bar-fill"
+                              initial={{ width: 0 }}
+                              animate={{ width: `${relevancePercent}%` }}
+                              transition={{ duration: 0.7, delay: 0.1 + index * 0.04, ease: "easeOut" }}
+                            />
+                          </div>
                         </div>
                       </div>
-                    </div>
 
-                    <div className="meta-right-cluster">
-                      <span className="badge-verified">
-                        <ShieldCheck size={12} />
-                        <span>Verified Citation</span>
-                      </span>
-                    </div>
-                  </div>
-
-                  {/* Case Title and Citation Code */}
-                  <div className="card-headline-row">
-                    <h2 className="case-title font-serif">{precedent.title}</h2>
-                    <span className="citation-badge mono">{precedent.citation}</span>
-                  </div>
-
-                  {/* Statutes Chips */}
-                  {precedent.statutes && precedent.statutes.length > 0 && (
-                    <div className="card-statutes-row">
-                      {precedent.statutes.map((st, i) => (
-                        <span key={i} className="statute-tag mono">{st}</span>
-                      ))}
-                    </div>
-                  )}
-
-                  {/* Ratio Decidendi / Relevant Passage Box */}
-                  <div className="card-ratio-box">
-                    <div className="ratio-kicker mono">
-                      {precedent.ratioLabel || (precedent.is_verified_ratio ? 'RATIO DECIDENDI / LEGAL PRINCIPLE' : 'RELEVANT PASSAGE')}
-                    </div>
-                    <p className="ratio-quote font-serif">
-                      "{precedent.ratioSummary}"
-                    </p>
-                  </div>
-
-                  {/* Expandable Recorded Excerpts Drawer */}
-                  {isExpanded && (
-                    <div className="card-expanded-drawer animate-fade-in">
-                      <div className="drawer-header">
-                        <span className="drawer-kicker mono">PRIMARY JUDGMENT RECORD</span>
-                        <span className="drawer-case-chat-hint mono">
-                          Case Chat panel active for this judgment
+                      <div className="meta-right-cluster">
+                        <span className="badge-verified">
+                          <ShieldCheck size={12} />
+                          <span>Verified Citation</span>
                         </span>
                       </div>
-                      <div className="drawer-body">
-                        <div className="drawer-para">
-                          <span className="para-num mono">Para 1 (Holding)</span>
-                          <p className="para-text font-serif">{precedent.ratioSummary}</p>
-                        </div>
-                        {precedent.text && precedent.text !== precedent.ratioSummary && (
-                          <div className="drawer-para">
-                            <span className="para-num mono">Para 2 (Judicial Analysis)</span>
-                            <p className="para-text font-serif">{precedent.text}</p>
-                          </div>
-                        )}
+                    </div>
+
+                    {/* Case Title and Citation Code */}
+                    <div className="card-headline-row">
+                      <h2 className="case-title font-serif">{precedent.title}</h2>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                        <span className="hover-open-arrow font-serif" aria-hidden="true">
+                          <span>Inspect</span>
+                          <ArrowRight size={13} />
+                        </span>
+                        <span className="citation-badge mono">{precedent.citation}</span>
                       </div>
                     </div>
-                  )}
 
-                  {/* Card Actions Footer */}
-                  <div className="card-actions-row">
-                    <div className="card-actions-left">
-                      <button
-                        type="button"
-                        className="btn-card-copy mono"
-                        onClick={() => handleCopyCitation(precedent.citation, precedent.title)}
-                        title="Copy official citation to clipboard"
-                      >
-                        <Copy size={13} />
-                        <span>Copy Citation</span>
-                      </button>
+                    {/* Statutes Chips */}
+                    {precedent.statutes && precedent.statutes.length > 0 && (
+                      <div className="card-statutes-row">
+                        {precedent.statutes.map((st, i) => (
+                          <span key={i} className="statute-tag mono">{st}</span>
+                        ))}
+                      </div>
+                    )}
+
+                    {/* Ratio Decidendi / Relevant Passage Box */}
+                    <div className="card-ratio-box">
+                      <div className="ratio-kicker mono">
+                        {precedent.ratioLabel || (precedent.is_verified_ratio ? 'RATIO DECIDENDI / LEGAL PRINCIPLE' : 'RELEVANT PASSAGE')}
+                      </div>
+                      <p className="ratio-quote font-serif">
+                        "{precedent.ratioSummary}"
+                      </p>
                     </div>
 
-                    <div className="card-actions-right">
-                      {/* Case Chat Toggle */}
-                      <button
-                        type="button"
-                        className={`btn-card-chat ${isExpanded ? 'is-active' : ''}`}
-                        onClick={() => {
-                          const nextId = isExpanded ? null : caseIdKey;
-                          setExpandedCaseId(nextId);
-                          if (onOpenCaseChat) {
-                            onOpenCaseChat(nextId ? { ...precedent, id: caseIdKey } : null);
-                          }
-                        }}
-                        aria-label="Ask about this case in Case Chat"
-                      >
-                        <MessageSquare size={13} />
-                        <span>{isExpanded ? 'Close Chat' : 'Ask about this case'}</span>
-                        {isExpanded ? <ChevronUp size={13} /> : <ChevronDown size={13} />}
-                      </button>
+                    {/* Expandable Recorded Excerpts Drawer */}
+                    {isExpanded && (
+                      <div className="card-expanded-drawer animate-fade-in">
+                        <div className="drawer-header">
+                          <span className="drawer-kicker mono">PRIMARY JUDGMENT RECORD</span>
+                          <span className="drawer-case-chat-hint mono">
+                            Case Chat panel active for this judgment
+                          </span>
+                        </div>
+                        <div className="drawer-body">
+                          <div className="drawer-para">
+                            <span className="para-num mono">Para 1 (Holding)</span>
+                            <p className="para-text font-serif">{precedent.ratioSummary}</p>
+                          </div>
+                          {precedent.text && precedent.text !== precedent.ratioSummary && (
+                            <div className="drawer-para">
+                              <span className="para-num mono">Para 2 (Judicial Analysis)</span>
+                              <p className="para-text font-serif">{precedent.text}</p>
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    )}
 
-                      {/* Verify in Citator */}
-                      <button
-                        type="button"
-                        className="btn-card-citator"
-                        onClick={() => onSelectCaseForCitator(precedent)}
-                      >
-                        <span>Verify in Smart Citator</span>
-                        <ArrowUpRight size={14} />
-                      </button>
+                    {/* Card Actions Footer */}
+                    <div className="card-actions-row">
+                      <div className="card-actions-left">
+                        <button
+                          type="button"
+                          className="btn-card-copy mono"
+                          onClick={() => handleCopyCitation(precedent.citation, precedent.title, caseIdKey)}
+                          title="Copy official citation to clipboard"
+                        >
+                          {copiedCaseKey === caseIdKey ? (
+                            <span className="copy-success-badge"><Check size={12} /> Copied</span>
+                          ) : (
+                            <>
+                              <Copy size={13} />
+                              <span>Copy Citation</span>
+                            </>
+                          )}
+                        </button>
+                      </div>
+
+                      <div className="card-actions-right">
+                        {/* Case Chat Toggle */}
+                        <button
+                          type="button"
+                          className={`btn-card-chat ${isExpanded ? 'is-active' : ''}`}
+                          onClick={() => {
+                            const nextId = isExpanded ? null : caseIdKey;
+                            setExpandedCaseId(nextId);
+                            if (onOpenCaseChat) {
+                              onOpenCaseChat(nextId ? { ...precedent, id: caseIdKey } : null);
+                            }
+                          }}
+                          aria-label="Ask about this case in Case Chat"
+                        >
+                          <MessageSquare size={13} />
+                          <span>{isExpanded ? 'Close Chat' : 'Ask about this case'}</span>
+                          {isExpanded ? <ChevronUp size={13} /> : <ChevronDown size={13} />}
+                        </button>
+
+                        {/* Verify in Citator */}
+                        <button
+                          type="button"
+                          className="btn-card-citator"
+                          onClick={() => onSelectCaseForCitator(precedent)}
+                        >
+                          <span>Verify in Smart Citator</span>
+                          <ArrowUpRight size={14} />
+                        </button>
+                      </div>
                     </div>
-                  </div>
-                </article>
+                  </TiltCard>
+                </motion.div>
               );
             })}
           </div>

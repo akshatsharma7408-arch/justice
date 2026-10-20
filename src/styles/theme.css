@@ -1,11 +1,12 @@
 /* ==========================================================================
    JUSTICE — Design System & Theme Tokens
-   Strict Dark Editorial Legal Theme:
+   Polished Dark Editorial Legal Theme:
    Base: #0B1A15, Panels: #12261F, Raised: #17302A, Deeper: #07110D
-   Headings/Key Text: #EFE8D6 (Ivory), Body: #D9D3C2, Muted: #9AA79F
-   Accent Copper: #C77B3A, Bright Copper (Hover/Glow): #E0955A
-   Borders: #24403A
-   Verified: #4CAF7D, Warning: #E0A030, Error: #D9534F
+   Emerald Gradients: #0B1A15 to #0F3D2E to #0B2A20
+   Headings: #FAF6EC (Bright Ivory), Body: #DDD7C7, Muted: #A9B8AF (WCAG AA)
+   Accent Copper: #B8692E to #E0955A to #C77B3A
+   Emerald Highlight: #1FB57A (Verified & Success states)
+   Curves: sm 12px, md 18px, lg 26px, pill 999px
    ========================================================================== */
 
 :root {
@@ -14,41 +15,74 @@
   --bg-panel: #12261F;
   --bg-raised: #17302A;
   --bg-deep: #07110D;
-  --bg-gradient-hero: linear-gradient(180deg, #0B1A15 0%, #0F2A21 50%, #07110D 100%);
-  --bg-gradient-subtle: linear-gradient(135deg, rgba(18, 38, 31, 0.9) 0%, rgba(11, 26, 21, 0.95) 100%);
+  --bg-surface-elevated: #153229;
+
+  /* Rich Emerald Gradients */
+  --bg-gradient-hero: linear-gradient(180deg, #0B1A15 0%, #0F3D2E 48%, #0B2A20 100%);
+  --bg-gradient-panel: linear-gradient(145deg, #12261F 0%, #17382E 52%, #0F2A21 100%);
+  --bg-gradient-card: linear-gradient(145deg, rgba(23, 48, 42, 0.94) 0%, rgba(18, 38, 31, 0.92) 100%);
+  --bg-gradient-raised: linear-gradient(135deg, #17382E 0%, #112821 100%);
+  --bg-gradient-subtle: linear-gradient(135deg, rgba(18, 38, 31, 0.92) 0%, rgba(11, 26, 21, 0.96) 100%);
 
   /* Typography Palette */
-  --text-ivory: #EFE8D6;
-  --text-body: #D9D3C2;
-  --text-muted: #9AA79F;
+  --text-ivory: #FAF6EC;       /* Bright, rich, warm ivory */
+  --text-ivory-dim: #EFE8D6;   /* Secondary ivory */
+  --text-body: #DDD7C7;        /* Highly readable warm body */
+  --text-muted: #A9B8AF;       /* Brightened for clear WCAG AA contrast */
   --text-deep: #07110D;
 
-  /* Accent & Glow */
+  /* Polished Copper Gradient & Accents */
   --copper: #C77B3A;
   --copper-hover: #E0955A;
-  --copper-glow: rgba(224, 149, 90, 0.22);
-  --copper-glow-faint: rgba(199, 123, 58, 0.12);
-  --copper-subtle: rgba(199, 123, 58, 0.08);
-  --copper-hairline: rgba(199, 123, 58, 0.45);
+  --copper-dark: #B8692E;
+  --copper-gradient: linear-gradient(135deg, #B8692E 0%, #E0955A 50%, #C77B3A 100%);
+  --copper-gradient-hover: linear-gradient(135deg, #C77B3A 0%, #F0A56B 50%, #D48446 100%);
+  --copper-gradient-active: linear-gradient(135deg, #A2561F 0%, #B8692E 50%, #C77B3A 100%);
+  --copper-glow: rgba(224, 149, 90, 0.32);
+  --copper-glow-faint: rgba(199, 123, 58, 0.16);
+  --copper-subtle: rgba(199, 123, 58, 0.09);
+  --copper-hairline: rgba(199, 123, 58, 0.5);
 
-  /* Borders */
-  --border: #24403A;
-  --border-light: #2D5048;
-  --border-subtle: rgba(36, 64, 58, 0.6);
-  --border-active: rgba(199, 123, 58, 0.6);
-
-  /* Status Tokens */
-  --verified: #4CAF7D;
-  --verified-bg: rgba(76, 175, 125, 0.12);
-  --verified-border: rgba(76, 175, 125, 0.35);
+  /* Emerald Highlight & Status Tokens */
+  --emerald-highlight: #1FB57A;
+  --emerald-glow: rgba(31, 181, 122, 0.3);
+  --verified: #1FB57A;
+  --verified-bg: rgba(31, 181, 122, 0.12);
+  --verified-border: rgba(31, 181, 122, 0.38);
 
   --warning: #E0A030;
   --warning-bg: rgba(224, 160, 48, 0.12);
-  --warning-border: rgba(224, 160, 48, 0.35);
+  --warning-border: rgba(224, 160, 48, 0.38);
 
   --error: #D9534F;
   --error-bg: rgba(217, 83, 79, 0.12);
-  --error-border: rgba(217, 83, 79, 0.35);
+  --error-border: rgba(217, 83, 79, 0.38);
+
+  /* Borders */
+  --border: #24403A;
+  --border-light: #2E534B;
+  --border-subtle: rgba(36, 64, 58, 0.7);
+  --border-active: rgba(224, 149, 90, 0.65);
+  --border-emerald: rgba(31, 181, 122, 0.45);
+
+  /* Curves: Rounded Corner Tokens */
+  --radius-sm: 12px;
+  --radius-md: 18px;
+  --radius-lg: 26px;
+  --radius-pill: 999px;
+
+  /* Glossy Highlights & Sheens */
+  --gloss-highlight: inset 0 1px 0 rgba(255, 255, 255, 0.14), inset 0 0 0 1px rgba(255, 255, 255, 0.03);
+  --button-gloss: inset 0 1px 0 rgba(255, 255, 255, 0.28), inset 0 -1px 0 rgba(0, 0, 0, 0.25);
+  --diagonal-sheen: linear-gradient(115deg, transparent 25%, rgba(255, 255, 255, 0.06) 45%, rgba(255, 255, 255, 0.14) 50%, rgba(255, 255, 255, 0.06) 55%, transparent 75%);
+
+  /* Deep Tinted Shadows (faint green and copper tint, not flat grey) */
+  --shadow-sm: 0 2px 10px -1px rgba(7, 17, 13, 0.65), 0 0 12px rgba(15, 61, 46, 0.14);
+  --shadow-md: 0 8px 24px -3px rgba(7, 17, 13, 0.78), 0 0 20px rgba(15, 61, 46, 0.22);
+  --shadow-lg: 0 16px 44px -6px rgba(7, 17, 13, 0.88), 0 0 32px rgba(15, 61, 46, 0.28), 0 0 16px rgba(184, 105, 46, 0.12);
+  --shadow-copper: 0 6px 26px -2px rgba(184, 105, 46, 0.36), 0 0 18px rgba(224, 149, 90, 0.24);
+  --card-shadow: 0 8px 30px -4px rgba(7, 17, 13, 0.82), 0 0 22px rgba(15, 61, 46, 0.2);
+  --card-shadow-hover: 0 18px 52px -6px rgba(7, 17, 13, 0.92), 0 0 32px rgba(15, 61, 46, 0.32), 0 0 24px rgba(199, 123, 58, 0.16);
 
   /* Ivory Contrast Section (Full-width showcase) */
   --ivory-bg: #EFE8D6;
@@ -68,11 +102,6 @@
   --topbar-height: 64px;
   --topbar-compact-height: 54px;
   --container-max: 1240px;
-
-  /* Card Inner Light & Shadows */
-  --card-inner-light: inset 0 1px 0 0 rgba(239, 232, 214, 0.05);
-  --card-shadow: 0 4px 24px -2px rgba(0, 0, 0, 0.5);
-  --card-shadow-hover: 0 8px 36px -4px rgba(0, 0, 0, 0.65), 0 0 20px rgba(199, 123, 58, 0.08);
 
   /* Transitions */
   --ease-editorial: cubic-bezier(0.16, 1, 0.3, 1);
@@ -105,7 +134,7 @@ body::before {
   height: 100vh;
   pointer-events: none;
   z-index: 9999;
-  opacity: 0.038;
+  opacity: 0.034;
   background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E");
 }
 
@@ -128,34 +157,50 @@ h1, h2, h3, h4, .font-serif, .font-judicial {
   font-size: 0.88em;
 }
 
-/* Custom Scrollbar */
+/* Custom Scrollbar (Rounded to pill) */
 ::-webkit-scrollbar {
-  width: 7px;
-  height: 7px;
+  width: 8px;
+  height: 8px;
 }
 ::-webkit-scrollbar-track {
   background: var(--bg-deep);
+  border-radius: var(--radius-pill);
 }
 ::-webkit-scrollbar-thumb {
-  background: var(--border);
-  border-radius: 4px;
+  background: var(--border-light);
+  border-radius: var(--radius-pill);
+  box-shadow: var(--gloss-highlight);
 }
 ::-webkit-scrollbar-thumb:hover {
   background: var(--copper);
 }
 
-/* Focus Rings (Accessibility WCAG AA) */
+/* Focus Rings (Accessibility WCAG AA, curved to match shape) */
 :focus-visible {
   outline: 2px solid var(--copper-hover);
   outline-offset: 2px;
+  border-radius: inherit;
 }
 
-/* Prefers Reduced Motion */
+/* Animated Shimmer Sweep for Primary Elements */
+@keyframes shimmerSweep {
+  0% { transform: translateX(-160%); }
+  100% { transform: translateX(160%); }
+}
+
+@keyframes pulseGlow {
+  0%, 100% { opacity: 0.4; }
+  50% { opacity: 0.8; }
+}
+
+/* Prefers Reduced Motion: graceful fallback to simple fades */
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after {
     animation-duration: 0.01ms !important;
     animation-iteration-count: 1 !important;
     transition-duration: 0.01ms !important;
     scroll-behavior: auto !important;
+    transform: none !important;
   }
 }
+

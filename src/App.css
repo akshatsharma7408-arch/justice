@@ -115,8 +115,8 @@
   align-items: center;
   background: var(--bg-deep);
   border: 1px solid var(--border);
-  border-radius: 4px;
-  padding: 0 10px;
+  border-radius: var(--radius-pill);
+  padding: 0 14px;
   height: 38px;
   transition: all var(--duration-fast) ease;
 }
@@ -246,7 +246,7 @@
   padding: 6px 12px;
   background: var(--bg-panel);
   border: 1px solid var(--border);
-  border-radius: 4px;
+  border-radius: var(--radius-md);
   color: var(--text-ivory);
   font-size: 0.8rem;
   cursor: pointer;
@@ -304,7 +304,7 @@
   padding: 12px 14px;
   background: var(--bg-panel);
   border: 1px solid var(--border);
-  border-radius: 4px;
+  border-radius: var(--radius-md);
   color: var(--text-body);
   font-size: 0.92rem;
   text-align: left;
@@ -451,9 +451,9 @@
   align-items: center;
   background: var(--bg-deep);
   border: 1px solid var(--border);
-  border-radius: 6px;
-  padding: 6px 8px 6px 18px;
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.45), inset 0 1px 0 rgba(239, 232, 214, 0.05);
+  border-radius: var(--radius-pill);
+  padding: 6px 8px 6px 22px;
+  box-shadow: var(--shadow-md), var(--gloss-highlight);
   transition: all var(--duration-normal) var(--ease-editorial);
 }
 
@@ -489,20 +489,25 @@
   align-items: center;
   gap: 8px;
   padding: 12px 22px;
-  background: var(--copper);
+  background: var(--copper-gradient);
   color: var(--bg-deep);
   font-weight: 600;
   font-size: 0.92rem;
-  border-radius: 4px;
+  border-radius: var(--radius-pill);
+  border: 1px solid rgba(255, 255, 255, 0.22);
   cursor: pointer;
   white-space: nowrap;
   flex-shrink: 0;
+  position: relative;
+  overflow: hidden;
+  box-shadow: var(--shadow-copper);
   transition: all var(--duration-fast) ease;
 }
 
 .hero-search-submit-btn:hover {
-  background: var(--copper-hover);
-  box-shadow: 0 0 16px rgba(224, 149, 90, 0.4);
+  background: var(--copper-gradient-hover);
+  box-shadow: 0 0 22px rgba(224, 149, 90, 0.45);
+  transform: translateY(-1px);
 }
 
 /* Everyday Chips */
@@ -618,8 +623,8 @@
   align-items: center;
   background: var(--bg-deep);
   border: 1px solid var(--border);
-  border-radius: 4px;
-  padding: 0 10px;
+  border-radius: var(--radius-pill);
+  padding: 0 14px;
   height: 36px;
   width: 100%;
 }
@@ -685,8 +690,8 @@
   background: var(--bg-panel);
   border: 1px solid var(--border);
   color: var(--text-muted);
-  padding: 4px 8px;
-  border-radius: 4px;
+  padding: 4px 10px;
+  border-radius: var(--radius-pill);
   cursor: pointer;
 }
 
@@ -749,21 +754,34 @@
 }
 
 .editorial-answer-card {
-  background: var(--bg-panel);
+  background: var(--bg-gradient-card);
   border: 1px solid var(--border);
-  border-radius: 6px;
+  border-radius: var(--radius-lg);
   padding: 32px 28px;
   display: flex;
   flex-direction: column;
   justify-content: space-between;
-  box-shadow: var(--card-inner-light);
-  transition: all var(--duration-normal) ease;
+  box-shadow: var(--card-shadow), var(--gloss-highlight);
+  position: relative;
+  overflow: hidden;
+  transition: all var(--duration-normal) var(--ease-editorial);
+}
+
+.editorial-answer-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.16), transparent);
+  pointer-events: none;
 }
 
 .editorial-answer-card:hover {
-  border-color: rgba(199, 123, 58, 0.45);
+  border-color: var(--border-active);
   box-shadow: var(--card-shadow-hover);
-  transform: translateY(-2px);
+  transform: translateY(-3px);
 }
 
 .card-top-kicker {
@@ -876,11 +894,12 @@
 
 /* Source Window Mock */
 .judgment-excerpt-window {
-  background: var(--bg-deep);
+  background: var(--bg-gradient-panel);
   border: 1px solid var(--border);
-  border-radius: 6px;
-  box-shadow: 0 12px 42px rgba(0, 0, 0, 0.55);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-lg), var(--gloss-highlight);
   overflow: hidden;
+  position: relative;
 }
 
 .window-header {
@@ -927,7 +946,7 @@
 .window-annotation {
   background: var(--bg-panel);
   border: 1px solid var(--border);
-  border-radius: 4px;
+  border-radius: var(--radius-md);
   padding: 12px 14px;
   font-size: 0.86rem;
 }
@@ -1013,8 +1032,9 @@
 .ivory-case-card {
   background: var(--ivory-card-bg);
   border: 1px solid var(--ivory-border);
-  border-radius: 6px;
+  border-radius: var(--radius-lg);
   padding: 32px 28px;
+  box-shadow: 0 12px 32px rgba(11, 26, 21, 0.08);
   display: flex;
   flex-direction: column;
 }
@@ -1070,8 +1090,8 @@
 .ivory-chat-window {
   background: #FAF6ED;
   border: 1px solid var(--ivory-border);
-  border-radius: 6px;
-  box-shadow: 0 12px 36px rgba(11, 26, 21, 0.08);
+  border-radius: var(--radius-lg);
+  box-shadow: 0 16px 44px rgba(11, 26, 21, 0.12);
   display: flex;
   flex-direction: column;
   overflow: hidden;
@@ -1213,20 +1233,31 @@
 }
 
 .tier-card {
-  background: var(--bg-panel);
+  background: var(--bg-gradient-card);
   border: 1px solid var(--border);
-  border-radius: 6px;
+  border-radius: var(--radius-lg);
   padding: 36px 32px;
   display: flex;
   flex-direction: column;
+  box-shadow: var(--card-shadow), var(--gloss-highlight);
+  position: relative;
+  overflow: hidden;
+  transition: all var(--duration-normal) var(--ease-editorial);
+}
+
+.tier-card:hover {
+  transform: translateY(-3px);
+  box-shadow: var(--card-shadow-hover);
 }
 
 .tier-card.tier-verified {
-  border-top: 3px solid var(--verified);
+  border-top: 3px solid var(--emerald-highlight);
+  box-shadow: var(--card-shadow), 0 0 20px rgba(31, 181, 122, 0.12);
 }
 
 .tier-card.tier-unverified {
   border-top: 3px solid var(--warning);
+  box-shadow: var(--card-shadow), 0 0 20px rgba(224, 160, 48, 0.12);
 }
 
 .tier-badge-line {
@@ -1572,20 +1603,34 @@
 }
 
 .precedent-editorial-card {
-  background: var(--bg-panel);
+  background: var(--bg-gradient-card);
   border: 1px solid var(--border);
-  border-radius: 6px;
+  border-radius: var(--radius-lg);
   padding: 28px;
-  box-shadow: var(--card-inner-light);
+  box-shadow: var(--card-shadow), var(--gloss-highlight);
   display: flex;
   flex-direction: column;
   gap: 16px;
-  transition: all var(--duration-fast) ease;
+  position: relative;
+  overflow: hidden;
+  transition: all var(--duration-normal) var(--ease-editorial);
+}
+
+.precedent-editorial-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.16), transparent);
+  pointer-events: none;
 }
 
 .precedent-editorial-card:hover {
-  border-color: rgba(199, 123, 58, 0.45);
+  border-color: var(--border-active);
   box-shadow: var(--card-shadow-hover);
+  transform: translateY(-3px);
 }
 
 .card-meta-strip {
@@ -1624,16 +1669,19 @@
 }
 
 .relevance-bar-track {
-  width: 48px;
-  height: 4px;
+  width: 54px;
+  height: 5px;
   background: var(--bg-deep);
-  border-radius: 2px;
+  border-radius: var(--radius-pill);
   overflow: hidden;
+  box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.4);
 }
 
 .relevance-bar-fill {
   height: 100%;
-  background: var(--copper);
+  background: var(--copper-gradient);
+  border-radius: var(--radius-pill);
+  box-shadow: 0 0 8px rgba(224, 149, 90, 0.4);
 }
 
 .card-headline-row {
@@ -2507,7 +2555,7 @@
 .citation-pill-item {
   background: var(--bg-panel);
   border: 1px solid var(--border);
-  border-radius: 4px;
+  border-radius: var(--radius-md);
   overflow: hidden;
 }
 
@@ -3926,8 +3974,8 @@
     margin: 0 20px 24px 0;
     background: var(--bg-panel);
     border: 1px solid var(--border);
-    border-radius: 8px;
-    box-shadow: 0 12px 40px rgba(0, 0, 0, 0.45), inset 0 1px 0 rgba(239, 232, 214, 0.04);
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow-lg), var(--gloss-highlight);
     display: flex;
     flex-direction: column;
     overflow: hidden;
@@ -3958,8 +4006,8 @@
     border-left: none;
     border-right: none;
     border-bottom: none;
-    border-radius: 16px 16px 0 0;
-    box-shadow: 0 -10px 40px rgba(0, 0, 0, 0.65);
+    border-radius: var(--radius-lg) var(--radius-lg) 0 0;
+    box-shadow: 0 -10px 48px rgba(7, 17, 13, 0.85), var(--gloss-highlight);
     display: flex;
     flex-direction: column;
     overflow: hidden;
@@ -3988,8 +4036,8 @@
   border: 1px solid var(--border-active);
   color: var(--text-ivory);
   padding: 10px 18px;
-  border-radius: 30px;
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.5), 0 0 16px var(--copper-glow-faint);
+  border-radius: var(--radius-pill);
+  box-shadow: var(--shadow-copper);
   cursor: pointer;
   transition: all var(--duration-fast) ease;
 }
@@ -4576,4 +4624,313 @@
   color: var(--text-muted);
   text-align: center;
   margin-top: 6px;
+}
+
+
+/* ==========================================================================
+   INTERACTIVE POLISH & MICRO-INTERACTIONS
+   - Scroll Progress Line
+   - Soft Copper Cursor Glow
+   - 3D Tilt Card and Specular Glare
+   - Magnetic Buttons with Shimmer & Ripple
+   - Typewriter Placeholder
+   - Draggable Question Chips
+   - Real Number Statistics Strip
+   - Hover Arrow Reveal for Precedent Cards
+   ========================================================================== */
+
+/* 1. Top Window Scroll Progress Bar */
+.window-scroll-progress-bar {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 3.5px;
+  z-index: 10001;
+  background: linear-gradient(90deg, #B8692E 0%, #E0955A 45%, #1FB57A 100%);
+  box-shadow: 0 0 10px rgba(224, 149, 90, 0.5), 0 0 18px rgba(31, 181, 122, 0.4);
+}
+
+/* 2. Soft Copper Cursor Light (Desktop only) */
+.soft-copper-cursor-light {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 650px;
+  height: 650px;
+  margin-left: -325px;
+  margin-top: -325px;
+  pointer-events: none;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(224, 149, 90, 0.08) 0%, rgba(31, 181, 122, 0.035) 45%, transparent 70%);
+  z-index: 9998;
+  transition: opacity 0.3s ease;
+  will-change: transform;
+}
+
+/* 3. 3D Tilt Card Wrapper */
+.tilt-card-wrapper {
+  position: relative;
+  transform-style: preserve-3d;
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+  box-shadow: var(--card-shadow), var(--gloss-highlight);
+  will-change: transform;
+}
+
+.tilt-card-wrapper.is-tilting {
+  box-shadow: var(--card-shadow-hover);
+}
+
+.tilt-card-glare {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  border-radius: inherit;
+  z-index: 8;
+  mix-blend-mode: overlay;
+  transition: opacity 0.2s ease;
+}
+
+/* 4. Magnetic Button */
+.magnetic-button {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  border-radius: var(--radius-pill);
+  background: var(--copper-gradient);
+  box-shadow: var(--shadow-copper);
+  border: 1px solid rgba(255, 255, 255, 0.22);
+  cursor: pointer;
+  padding: 12px 24px;
+  color: var(--bg-deep);
+  font-weight: 600;
+  font-size: 0.92rem;
+  transition: box-shadow 0.25s ease, background 0.25s ease;
+}
+
+.magnetic-button:hover {
+  background: var(--copper-gradient-hover);
+  box-shadow: 0 8px 30px -2px rgba(184, 105, 46, 0.5), 0 0 24px rgba(224, 149, 90, 0.35);
+}
+
+.magnetic-btn-content {
+  position: relative;
+  z-index: 2;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.magnetic-btn-shimmer {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(115deg, transparent 20%, rgba(255, 255, 255, 0.24) 48%, rgba(255, 255, 255, 0.4) 50%, rgba(255, 255, 255, 0.24) 52%, transparent 80%);
+  animation: shimmerSweep 3.4s infinite ease-in-out;
+  pointer-events: none;
+  z-index: 1;
+}
+
+.magnetic-ripple {
+  position: absolute;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.45);
+  transform: translate(-50%, -50%) scale(0);
+  animation: rippleExpand 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  pointer-events: none;
+  z-index: 3;
+}
+
+@keyframes rippleExpand {
+  to {
+    transform: translate(-50%, -50%) scale(18);
+    opacity: 0;
+  }
+}
+
+/* 5. Typewriter Placeholder */
+.typewriter-text {
+  display: inline-flex;
+  align-items: center;
+  color: #8CA094;
+  font-style: normal;
+}
+
+.typewriter-cursor {
+  display: inline-block;
+  color: var(--copper-hover);
+  margin-left: 2px;
+  font-weight: 300;
+  animation: cursorBlink 0.8s infinite;
+}
+
+@keyframes cursorBlink {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0; }
+}
+
+/* 6. Draggable Questions Strip */
+.draggable-chips-container {
+  width: 100%;
+  overflow: hidden;
+  cursor: grab;
+  padding: 4px 0;
+  user-select: none;
+}
+
+.draggable-chips-container:active {
+  cursor: grabbing;
+}
+
+.draggable-chips-track {
+  display: flex;
+  gap: 10px;
+  width: max-content;
+  padding-right: 28px;
+}
+
+.draggable-chip {
+  cursor: grab;
+  background: var(--bg-gradient-panel);
+  border: 1px solid var(--border);
+  box-shadow: var(--shadow-sm), var(--gloss-highlight);
+  white-space: nowrap;
+}
+
+.draggable-chip:hover {
+  border-color: var(--copper);
+  background: var(--bg-raised);
+  box-shadow: var(--shadow-sm), 0 0 14px var(--copper-glow-faint);
+}
+
+/* 7. Real Number Counters Strip */
+.landing-stats-strip {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 18px;
+  margin-top: 48px;
+  padding-top: 36px;
+  border-top: 1px solid var(--border-subtle);
+  width: 100%;
+}
+
+.stat-card-box {
+  background: var(--bg-gradient-panel);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  padding: 22px 24px;
+  box-shadow: var(--shadow-sm), var(--gloss-highlight);
+  position: relative;
+  overflow: hidden;
+  transition: transform 0.25s var(--ease-editorial), border-color 0.25s ease, box-shadow 0.25s ease;
+}
+
+.stat-card-box::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.16), transparent);
+}
+
+.stat-card-box:hover {
+  transform: translateY(-3px);
+  border-color: var(--copper-hairline);
+  box-shadow: var(--shadow-md), 0 0 18px var(--copper-glow-faint);
+}
+
+.stat-number-val {
+  font-size: 2.1rem;
+  font-weight: 700;
+  color: var(--text-ivory);
+  display: block;
+  line-height: 1.1;
+  margin-bottom: 6px;
+  letter-spacing: -0.02em;
+}
+
+.stat-label-text {
+  font-size: 0.78rem;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  font-weight: 500;
+}
+
+/* 8. Hover Arrow Reveal for Precedent Cards */
+.hover-open-arrow {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.88rem;
+  color: var(--copper);
+  opacity: 0;
+  transform: translateX(-6px);
+  transition: all 0.22s var(--ease-editorial);
+  pointer-events: none;
+}
+
+.precedent-editorial-card:hover .hover-open-arrow {
+  opacity: 1;
+  transform: translateX(0);
+}
+
+/* 9. Morphing Checkmark on Copy Citation */
+.btn-copy-cite, .btn-card-copy {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  border-radius: var(--radius-pill);
+  transition: all 0.2s ease;
+}
+
+.copy-success-badge {
+  color: var(--emerald-highlight) !important;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  animation: popIn 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@keyframes popIn {
+  0% { transform: scale(0.7); opacity: 0; }
+  100% { transform: scale(1); opacity: 1; }
+}
+
+/* 10. Shimmer Sweep on Active Dock / Nav Item */
+.module-active-bar, .dock-copper-underline {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  height: 2px;
+  background: var(--copper-gradient);
+  box-shadow: 0 0 10px rgba(224, 149, 90, 0.6);
+  border-radius: var(--radius-pill);
+}
+
+.dock-module-link.is-active, .module-link-btn.is-active {
+  color: var(--text-ivory);
+}
+
+/* Responsive adjustments for stats strip */
+@media (max-width: 991px) {
+  .landing-stats-strip {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 14px;
+  }
+}
+
+@media (max-width: 480px) {
+  .landing-stats-strip {
+    grid-template-columns: 1fr;
+  }
 }

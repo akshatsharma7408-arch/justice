@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { motion } from 'framer-motion';
 import { Search, Scale, FileText, MessageSquare, SlidersHorizontal, BookOpen, Cpu, X, Menu } from 'lucide-react';
 import { BACKEND_URL } from '../config/gemini';
 
@@ -125,15 +126,23 @@ export default function Navbar({
             {MODULES.map((m) => {
               const isActive = activeView === m.id;
               return (
-                <button
+                <motion.button
                   key={m.id}
                   type="button"
                   className={`module-link-btn ${isActive ? 'is-active' : ''}`}
                   onClick={() => onNavigate(m.id)}
+                  whileHover={{ y: -2 }}
+                  whileTap={{ scale: 0.97 }}
                 >
                   <span className="module-link-text">{m.label}</span>
-                  {isActive && <span className="module-active-bar" />}
-                </button>
+                  {isActive && (
+                    <motion.span
+                      layoutId="activeNavUnderline"
+                      className="module-active-bar"
+                      transition={{ type: 'spring', stiffness: 380, damping: 30 }}
+                    />
+                  )}
+                </motion.button>
               );
             })}
           </div>
