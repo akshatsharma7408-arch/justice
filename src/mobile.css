@@ -345,3 +345,67 @@
     cursor: pointer;
   }
 }
+
+/* --------------------------------------------------------------------------
+   Item 13: 1280px Agent DAG pill margin and 390px mobile search polish
+   -------------------------------------------------------------------------- */
+@media (max-width: 1280px) {
+  .navbar-dag-btn,
+  .topbar-agent-btn,
+  .navbar-actions-col {
+    margin-right: 16px !important;
+  }
+}
+
+@media (max-width: 500px) {
+  .hero-search-input-box {
+    height: 56px !important;
+    min-height: 56px !important;
+    padding: 0 14px !important;
+  }
+
+  .desktop-typewriter-placeholder {
+    display: none !important;
+  }
+
+  .mobile-short-placeholder {
+    display: block !important;
+    color: #7D8E84;
+    font-size: 0.95rem;
+    pointer-events: none;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .hero-search-submit-btn span {
+    display: none;
+  }
+
+  .hero-search-submit-btn {
+    padding: 10px 14px;
+  }
+
+  .hero-chips-strip {
+    width: 100%;
+  }
+
+  .draggable-chips-container {
+    width: 100%;
+    overflow-x: auto !important;
+    -webkit-overflow-scrolling: touch !important;
+    scrollbar-width: none;
+  }
+
+  .draggable-chips-container::-webkit-scrollbar {
+    display: none;
+  }
+
+  .draggable-chips-track {
+    display: flex !important;
+    flex-wrap: nowrap !important;
+    gap: 8px !important;
+    width: max-content !important;
+  }
+}
+

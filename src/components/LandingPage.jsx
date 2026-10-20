@@ -211,8 +211,13 @@ export default function LandingPage({
                     maxLength={350}
                   />
                   {!searchQuery && (
-                    <div style={{ position: 'absolute', left: 0, pointerEvents: 'none', width: '100%' }}>
-                      <TypewriterPlaceholder placeholders={ROTATING_PLACEHOLDERS} />
+                    <div className="hero-placeholder-wrapper" style={{ position: 'absolute', left: 0, pointerEvents: 'none', width: '100%' }}>
+                      <span className="desktop-typewriter-placeholder">
+                        <TypewriterPlaceholder placeholders={ROTATING_PLACEHOLDERS} />
+                      </span>
+                      <span className="mobile-short-placeholder" aria-hidden="true">
+                        Ask a legal question
+                      </span>
                     </div>
                   )}
                 </div>

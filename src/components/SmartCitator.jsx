@@ -1,11 +1,12 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { motion } from 'framer-motion';
 import { 
   ArrowUpRight, Sparkles, Scale, ShieldCheck, GitFork, 
-  Network, BookOpen, ChevronRight, X, Info, MessageSquare, Check 
+  Network, BookOpen, ChevronRight, X, Info, MessageSquare, Check,
+  Search, Loader2 
 } from 'lucide-react';
 import { LANDMARK_PRECEDENTS } from '../data/legalCorpus';
-import { getCitatorCaseWithBackend, fetchCaseText } from '../config/gemini';
+import { getCitatorCaseWithBackend, fetchCaseText, searchPrecedentsWithBackend } from '../config/gemini';
 import { renderWithBadges } from '../utils/badgeFormatter';
 
 // Graph nodes definition for topological Article 141 DAG
@@ -93,7 +94,25 @@ export default function SmartCitator({ initialCaseId, onActiveCaseChange }) {
   const [hoveredNodeId, setHoveredNodeId] = useState(null);
   const [selectedGraphNode, setSelectedGraphNode] = useState(null);
 
+  // Citator Dataset Search state
+  const [citatorSearchQuery, setCitatorSearchQuery] = useState('');
+  const [citatorSearchResults, setCitatorSearchResults] = useState([]);
+  const [isCitatorSearching, setIsCitatorSearching] = useState(false);
+  const [searchOpen, setSearchOpen] = useState(false);
+  const searchTimeoutRef = useRef(null);
+  const searchContainerRef = useRef(null);
+
   const fallbackCase = LANDMARK_PRECEDENTS.find(c => c.id === selectedCaseId) || LANDMARK_PRECEDENTS[0];
+
+  useEffect(() => {
+    const handleOutsideClick = (e) => {
+      if (searchContainerRef.current && !searchContainerRef.current.contains(e.target)) {
+        setSearchOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', handleOutsideClick);
+    return () => document.removeEventListener('mousedown', handleOutsideClick);
+  }, []);
 
   useEffect(() => {
     let isMounted = true;
@@ -138,6 +157,77 @@ export default function SmartCitator({ initialCaseId, onActiveCaseChange }) {
     }
   }, [currentCase, selectedCaseId, onActiveCaseChange]);
 
+  // Handle case search in dataset
+  const handleSearchInputChange = (text) => {
+    setCitatorSearchQuery(text);
+    if (!text.trim()) {
+      setCitatorSearchResults([]);
+      setSearchOpen(false);
+      setIsCitatorSearching(false);
+      return;
+    }
+
+    setIsCitatorSearching(true);
+    setSearchOpen(true);
+
+    if (searchTimeoutRef.current) {
+      clearTimeout(searchTimeoutRef.current);
+    }
+
+    searchTimeoutRef.current = setTimeout(async () => {
+      try {
+        const query = text.trim();
+        const localMatches = LANDMARK_PRECEDENTS.filter(p =>
+          p.title.toLowerCase().includes(query.toLowerCase()) ||
+          (p.citation && p.citation.toLowerCase().includes(query.toLowerCase())) ||
+          (p.keywords && p.keywords.some(k => k.toLowerCase().includes(query.toLowerCase())))
+        );
+
+        let backendResults = [];
+        try {
+          const resp = await searchPrecedentsWithBackend(query, 'ALL', 'ALL', false, 8, true);
+          backendResults = resp.results || [];
+        } catch (e) {
+          console.warn("[SmartCitator] dataset search fallback:", e.message);
+        }
+
+        const combined = [...localMatches];
+        const seenIds = new Set(localMatches.map(m => m.id));
+
+        for (const br of backendResults) {
+          if (!seenIds.has(br.id)) {
+            seenIds.add(br.id);
+            combined.push({
+              id: br.id,
+              title: br.title,
+              citation: br.citation,
+              court: br.court || 'Supreme Court of India',
+              benchType: br.benchType || br.bench_type || 'Division Bench',
+              benchSize: br.benchSize || br.bench_size || 2,
+              decisionYear: br.decisionYear || br.year,
+              ratioSummary: br.snippet || br.ratioSummary || ''
+            });
+          }
+        }
+
+        setCitatorSearchResults(combined.slice(0, 8));
+      } catch (err) {
+        console.warn("[SmartCitator] Search error:", err);
+      } finally {
+        setIsCitatorSearching(false);
+      }
+    }, 280);
+  };
+
+  const handleSelectCaseFromSearch = (caseItem) => {
+    setSelectedCaseId(caseItem.id);
+    setLiveCase(caseItem);
+    setSelectedGraphNode(null);
+    setCitatorSearchResults([]);
+    setCitatorSearchQuery('');
+    setSearchOpen(false);
+  };
+
   // Jump to paragraph event handler
   useEffect(() => {
     const handleJump = (e) => {
@@ -160,9 +250,138 @@ export default function SmartCitator({ initialCaseId, onActiveCaseChange }) {
 
   const rules = currentCase?.article141Evaluation?.rules || [
     { level: "Division Bench (2 Judges)", jurisdiction: "Bindingly bound. Lacks jurisdiction to overrule or modify this ratio.", status: "BOUND" },
-    { level: `Coordinate Bench (${currentCase.benchSize} Judges)`, jurisdiction: "Cannot overrule. Must refer to CJI for larger bench reference.", status: "REFERENCE_REQUIRED" },
-    { level: `Larger Bench (${currentCase.benchSize + 1}+ Judges)`, jurisdiction: "Holds plenary jurisdiction under Article 141 to review or overrule.", status: "COMPETENT_TO_OVERRULE" }
+    { level: `Coordinate Bench (${currentCase.benchSize || 2} Judges)`, jurisdiction: "Cannot overrule. Must refer to CJI for larger bench reference.", status: "REFERENCE_REQUIRED" },
+    { level: `Larger Bench (${(currentCase.benchSize || 2) + 1}+ Judges)`, jurisdiction: "Holds plenary jurisdiction under Article 141 to review or overrule.", status: "COMPETENT_TO_OVERRULE" }
   ];
+
+  // Dynamic Graph Nodes and Edges for the selected case
+  const activeGraphNodes = useMemo(() => {
+    if (selectedCaseId === 'sc-2006-percept') {
+      return CITATION_GRAPH_NODES;
+    }
+    const target = {
+      id: 'node-target',
+      name: currentCase.title || 'Supreme Court Precedent',
+      citation: currentCase.citation || 'Supreme Court Judgment',
+      court: currentCase.court || 'Supreme Court of India',
+      bench: currentCase.benchType || `${currentCase.benchSize || 2} Judges Bench`,
+      benchSize: currentCase.benchSize || 2,
+      year: currentCase.decisionYear || currentCase.year || 2024,
+      status: 'TARGET',
+      statusLabel: 'Target Precedent',
+      x: 400,
+      y: 170,
+      ratio: currentCase.ratioSummary || currentCase.aiAnalysis?.executive_summary || currentCase.snippet || "Primary ratio decidendi under Article 141 of the Constitution of India."
+    };
+
+    if (currentCase.treatmentHistory && currentCase.treatmentHistory.length > 0) {
+      const positions = [
+        { x: 160, y: 80 },
+        { x: 640, y: 80 },
+        { x: 200, y: 270 },
+        { x: 600, y: 270 }
+      ];
+      const related = currentCase.treatmentHistory.slice(0, 4).map((th, idx) => ({
+        id: `node-${idx}`,
+        name: th.case,
+        citation: `(${th.year})`,
+        court: th.court || 'Supreme Court of India',
+        bench: 'Appellate Bench',
+        benchSize: 2,
+        year: th.year,
+        status: (th.treatment || 'AFFIRMED').toUpperCase(),
+        statusLabel: th.treatment || 'Affirmed',
+        x: positions[idx].x,
+        y: positions[idx].y,
+        ratio: th.note || `Judicial treatment of precedent: ${th.treatment}`
+      }));
+      return [target, ...related];
+    }
+
+    return [
+      target,
+      {
+        id: 'node-coord',
+        name: `Coordinate Bench (${currentCase.benchSize || 2} Judges)`,
+        citation: 'Article 141 Doctrine',
+        court: 'Supreme Court of India',
+        bench: `Coordinate ${currentCase.benchSize || 2} Judges`,
+        benchSize: currentCase.benchSize || 2,
+        year: currentCase.decisionYear || currentCase.year || 2024,
+        status: 'AFFIRMED',
+        statusLabel: 'Coordinate Bench (Bound)',
+        x: 160,
+        y: 80,
+        ratio: 'A bench of coordinate strength is strictly bound by this ratio. If in disagreement, it must refer the question to the Chief Justice for a larger bench.'
+      },
+      {
+        id: 'node-larger',
+        name: `Larger Constitutional Bench (${(currentCase.benchSize || 2) + 1}+ Judges)`,
+        citation: 'Plenary Jurisdiction',
+        court: 'Supreme Court of India',
+        bench: `Larger Bench (${(currentCase.benchSize || 2) + 1}+ Judges)`,
+        benchSize: (currentCase.benchSize || 2) + 1,
+        year: (currentCase.decisionYear || currentCase.year || 2024) + 1,
+        status: 'RELIED_ON',
+        statusLabel: 'Competent to Overrule',
+        x: 640,
+        y: 80,
+        ratio: 'Only a bench of higher numerical strength possesses the constitutional authority under Article 141 to reconsider, modify, or overrule this precedent.'
+      },
+      {
+        id: 'node-hc',
+        name: 'All High Courts of India',
+        citation: 'Art. 141 Mandate',
+        court: 'All 25 High Courts',
+        bench: 'Constitutional Courts',
+        benchSize: 1,
+        year: 2024,
+        status: 'AFFIRMED',
+        statusLabel: 'Strictly Bound',
+        x: 200,
+        y: 270,
+        ratio: 'The law declared by the Supreme Court is binding on all courts within the territory of India. High Courts have zero discretion to depart from this ratio.'
+      },
+      {
+        id: 'node-subordinate',
+        name: 'District & Subordinate Courts',
+        citation: 'Territorial Application',
+        court: 'Subordinate Judiciary',
+        bench: 'Trial Courts',
+        benchSize: 1,
+        year: 2024,
+        status: 'DISTINGUISHED',
+        statusLabel: 'Binding Authority',
+        x: 600,
+        y: 270,
+        ratio: 'Subordinate courts must apply this precedent as mandatory law in all pending civil and criminal proceedings.'
+      }
+    ];
+  }, [selectedCaseId, currentCase]);
+
+  const activeGraphEdges = useMemo(() => {
+    return activeGraphNodes
+      .filter(n => n.id !== 'node-target')
+      .map((n) => {
+        let stroke = '#4CAF7D';
+        let dash = 'none';
+        if (n.status === 'RELIED_ON') stroke = '#9AA79F';
+        else if (n.status === 'DISTINGUISHED') { stroke = '#E0A030'; dash = '4 4'; }
+        else if (n.status === 'OVERRULED' || n.status === 'COMPETENT_TO_OVERRULE') stroke = '#D9534F';
+
+        return {
+          id: `edge-${n.id}`,
+          from: 'node-target',
+          to: n.id,
+          x1: 400,
+          y1: 170,
+          x2: n.x,
+          y2: n.y,
+          stroke,
+          dash
+        };
+      });
+  }, [activeGraphNodes]);
 
   return (
     <div className="module-view-container animate-fade-in">
@@ -178,9 +397,82 @@ export default function SmartCitator({ initialCaseId, onActiveCaseChange }) {
           Automated Article 141 constitutional Shepardizer. Maps judicial lineage across Supreme Court and High Courts, evaluates bench strength hierarchy, and flags overruling risks in real time.
         </p>
 
-        {/* Precedent Selector Chips */}
+        {/* Dataset Case Lookup & Precedent Selector */}
         <div className="citator-precedent-bar">
-          <span className="picker-label mono">SELECT PRECEDENT:</span>
+          <div className="citator-search-wrapper" ref={searchContainerRef}>
+            <div className="citator-search-box">
+              <Search size={16} className="citator-search-icon" aria-hidden="true" />
+              <input
+                type="text"
+                placeholder="Search any case in dataset (e.g. Arnesh Kumar, Puttaswamy, Percept, citation...)"
+                value={citatorSearchQuery}
+                onChange={(e) => handleSearchInputChange(e.target.value)}
+                onFocus={() => { if (citatorSearchResults.length > 0) setSearchOpen(true); }}
+                className="citator-search-input"
+                aria-label="Look up any Supreme Court case"
+              />
+              {isCitatorSearching && (
+                <span className="citator-search-status mono">
+                  <Loader2 size={13} className="spin-inline" /> Searching...
+                </span>
+              )}
+              {citatorSearchQuery && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    setCitatorSearchQuery('');
+                    setCitatorSearchResults([]);
+                    setSearchOpen(false);
+                  }}
+                  className="citator-search-clear"
+                  aria-label="Clear search"
+                >
+                  <X size={14} />
+                </button>
+              )}
+            </div>
+
+            {searchOpen && citatorSearchResults.length > 0 && (
+              <div className="citator-search-dropdown animate-fade-in">
+                <div className="citator-dropdown-header mono">
+                  MATCHING CASES IN DATASET ({citatorSearchResults.length})
+                </div>
+                {citatorSearchResults.map((res) => {
+                  const isLandmark = LANDMARK_PRECEDENTS.some(p => p.id === res.id);
+                  return (
+                    <button
+                      key={res.id}
+                      type="button"
+                      className="citator-search-item"
+                      onClick={() => handleSelectCaseFromSearch(res)}
+                    >
+                      <div className="citator-search-item-top">
+                        <span className="citator-search-item-title font-serif">{res.title}</span>
+                        <span className={`citator-dataset-badge mono ${isLandmark ? 'is-landmark' : 'is-sc'}`}>
+                          {isLandmark ? 'LANDMARK' : 'SUPREME COURT'}
+                        </span>
+                      </div>
+                      <div className="citator-search-item-meta mono">
+                        <span>{res.citation || 'SC Judgment'}</span>
+                        {res.decisionYear && <span>&bull; {res.decisionYear}</span>}
+                        {res.benchType && <span>&bull; {res.benchType}</span>}
+                      </div>
+                    </button>
+                  );
+                })}
+              </div>
+            )}
+          </div>
+
+          <div className="citator-chips-header-row">
+            <span className="picker-label mono">OR CHOOSE LANDMARK PRECEDENT:</span>
+            {currentCase && !LANDMARK_PRECEDENTS.some(p => p.id === currentCase.id) && (
+              <span className="citator-current-loaded-badge mono">
+                Active Case: {currentCase.title.split('v.')[0]} ({currentCase.decisionYear || currentCase.year})
+              </span>
+            )}
+          </div>
+
           <div className="citator-chips-flow">
             {LANDMARK_PRECEDENTS.map((c) => (
               <button
@@ -261,12 +553,7 @@ export default function SmartCitator({ initialCaseId, onActiveCaseChange }) {
                 </defs>
 
                 {/* Connecting Edges */}
-                {[
-                  { id: 'edge-affirmed', from: 'node-target', to: 'node-affirmed', x1: 400, y1: 170, x2: 160, y2: 80, stroke: '#4CAF7D' },
-                  { id: 'edge-relied', from: 'node-target', to: 'node-relied', x1: 400, y1: 170, x2: 640, y2: 80, stroke: '#9AA79F' },
-                  { id: 'edge-distinguished', from: 'node-target', to: 'node-distinguished', x1: 400, y1: 170, x2: 200, y2: 270, stroke: '#E0A030', dash: '4 4' },
-                  { id: 'edge-overruled', from: 'node-target', to: 'node-overruled', x1: 400, y1: 170, x2: 600, y2: 270, stroke: '#D9534F' }
-                ].map((edge) => {
+                {activeGraphEdges.map((edge) => {
                   const isHighlighted = hoveredNodeId === edge.to || hoveredNodeId === 'node-target' || selectedGraphNode?.id === edge.to;
                   return (
                     <line
@@ -286,7 +573,7 @@ export default function SmartCitator({ initialCaseId, onActiveCaseChange }) {
                 })}
 
                 {/* Nodes */}
-                {CITATION_GRAPH_NODES.map((node) => {
+                {activeGraphNodes.map((node) => {
                   const isTarget = node.id === 'node-target';
                   const isHovered = hoveredNodeId === node.id;
                   const isSelected = selectedGraphNode?.id === node.id;
@@ -402,7 +689,8 @@ export default function SmartCitator({ initialCaseId, onActiveCaseChange }) {
                     className="btn-detail-target"
                     onClick={() => {
                       if (selectedGraphNode.id !== 'node-target') {
-                        setSelectedCaseId('sc-1967-niranjan');
+                        const targetId = selectedGraphNode.caseId || (selectedGraphNode.id.startsWith('sc-') ? selectedGraphNode.id : null);
+                        if (targetId) setSelectedCaseId(targetId);
                         setSelectedGraphNode(null);
                       }
                     }}
@@ -430,30 +718,30 @@ export default function SmartCitator({ initialCaseId, onActiveCaseChange }) {
             </div>
 
             <div className="treatment-items-list">
-              {(currentCase.subsequentTreatments || [
-                {
-                  caseName: "Gujarat Bottling Co. Ltd. v. Coca Cola Co.",
-                  citation: "(1995) 5 SCC 545",
-                  court: "Supreme Court of India",
-                  benchSize: 2,
-                  year: 1995,
-                  treatmentType: "DISTINGUISHED",
-                  treatmentSummary: "Distinguished negative covenants in commercial distribution contracts from post-employment restraints."
-                },
-                {
-                  caseName: "Superintendence Co. of India (P) Ltd. v. Krishan Murgai",
-                  citation: "(1980) 2 SCC 246",
-                  court: "Supreme Court of India",
-                  benchSize: 3,
-                  year: 1980,
-                  treatmentType: "RELIED_ON",
-                  treatmentSummary: "Affirmed that Section 27 invalidates post-service covenants regardless of perceived reasonableness."
-                }
-              ]).map((t, idx) => (
+              {((currentCase.subsequentTreatments && currentCase.subsequentTreatments.length > 0)
+                ? currentCase.subsequentTreatments
+                : (currentCase.treatmentHistory && currentCase.treatmentHistory.length > 0)
+                  ? currentCase.treatmentHistory.map(th => ({
+                      caseName: th.case,
+                      citation: `(${th.year})`,
+                      court: th.court || 'Supreme Court of India',
+                      treatmentType: (th.treatment || 'AFFIRMED').toUpperCase(),
+                      treatmentSummary: th.note || `Judicial treatment of precedent: ${th.treatment}`
+                    }))
+                  : [
+                      {
+                        caseName: `Article 141 Judicial Precedent Lineage (${currentCase.title})`,
+                        citation: currentCase.citation || 'Supreme Court Judgment',
+                        court: currentCase.court || 'Supreme Court of India',
+                        treatmentType: 'AFFIRMED',
+                        treatmentSummary: 'Declared law binding upon all subordinate and High Courts across India under Article 141 of the Constitution.'
+                      }
+                    ]
+              ).map((t, idx) => (
                 <div key={idx} className="treatment-card">
                   <div className="treatment-card-header">
-                    <span className={`treatment-badge mono ${t.treatmentType.toLowerCase()}`}>
-                      {t.treatmentType.replace('_', ' ')}
+                    <span className={`treatment-badge mono ${(t.treatmentType || 'AFFIRMED').toLowerCase()}`}>
+                      {(t.treatmentType || 'AFFIRMED').replace('_', ' ')}
                     </span>
                     <span className="treatment-citation mono">{t.citation}</span>
                   </div>
