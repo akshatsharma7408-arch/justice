@@ -14,6 +14,7 @@ from app.config import settings
 from app.services.llm_service import llm_service
 from app.services.qdrant_service import qdrant_service
 from app.services.spelling_service import correct_query
+from app.services.answer_tiers import UNRELIABLE_TIER2_MSG
 
 logger = logging.getLogger("justice.router.search")
 router = APIRouter(prefix="/api/v1", tags=["Universal Search"])
@@ -59,12 +60,13 @@ class SearchAnswerResponse(BaseModel):
     ai_answer: Optional[str] = None
     ratio_decidendi: Optional[str] = None
     citations: Optional[List[str]] = []
-    tier: str = Field("tier2", description="'tier1', 'tier2', 'case_lookup', or 'not_found'")
+    tier: str = Field("tier2", description="'tier1', 'tier2', 'case_lookup', 'unreliable', or 'not_found'")
     tier_label: str = Field("AI answer, not verified, not legal advice", description="Human-readable badge label")
     model_used: str
     is_case_lookup: bool = False
     source_cases: Optional[List[Dict[str, Any]]] = []
     no_strong_case_match: bool = False
+    hide_badge: bool = False
 
 def is_pure_case_lookup_query(query: str) -> bool:
     """
@@ -158,7 +160,7 @@ async def search_precedents_post(payload: SearchRequest):
     from app.services.citation_checker import citation_checker
     is_tier2 = "tier2" in synthesis.get("model_used", "").lower()
     ai_ans = citation_checker.check_and_badge_text(synthesis.get("answer") or "", is_tier2=is_tier2)
-    ratio = citation_checker.check_and_badge_text(synthesis.get("ratio_decidendi") or ai_ans, is_tier2=is_tier2)
+    ratio = None if is_tier2 else citation_checker.check_and_badge_text(synthesis.get("ratio_decidendi") or ai_ans, is_tier2=False)
     citations = citation_checker.badge_citations_list(synthesis.get("citations", [])) if not is_tier2 else []
 
     return SearchResponse(
@@ -180,12 +182,32 @@ async def search_answer_post(payload: SearchAnswerRequest):
     POST /api/v1/search/answer
     Dedicated AI answer synthesis endpoint for Universal Search.
     Returns:
+    - Blank query: is_case_lookup=True, ai_answer=None, hide_badge=True
     - Pure case lookups (e.g. 'Kesavananda', 'AIR 1973 SC 1461'): is_case_lookup=True (no AI answer card needed)
     - Tier 1: Grounded answer with verified citations, tier_label='Verified citations'
     - Tier 2: Plain-language explanation, tier_label='AI answer, not verified, not legal advice'
+    - Unreliable: Plain message without AI badge (hide_badge=True)
     - No strong match: Tier 2 explanation with no_strong_case_match=True
     """
     raw_query = (payload.query or "").strip()
+    if not raw_query:
+        return SearchAnswerResponse(
+            query="",
+            corrected_query=None,
+            original_query=None,
+            has_spelling_correction=False,
+            ai_answer=None,
+            ratio_decidendi=None,
+            citations=[],
+            tier="case_lookup",
+            tier_label="",
+            model_used="blank_query",
+            is_case_lookup=True,
+            source_cases=[],
+            no_strong_case_match=False,
+            hide_badge=True
+        )
+
     corrected_q, has_corr = correct_query(raw_query)
     effective_query = raw_query if payload.bypass_correction else (corrected_q if has_corr else raw_query)
     has_spelling = has_corr and not payload.bypass_correction
@@ -204,7 +226,8 @@ async def search_answer_post(payload: SearchAnswerRequest):
             model_used="case_lookup",
             is_case_lookup=True,
             source_cases=[],
-            no_strong_case_match=False
+            no_strong_case_match=False,
+            hide_badge=True
         )
 
     # Use provided results or retrieve from Qdrant
@@ -229,18 +252,25 @@ async def search_answer_post(payload: SearchAnswerRequest):
     is_not_found = "not_found" in model_used.lower()
 
     ai_ans = citation_checker.check_and_badge_text(synthesis.get("answer") or "", is_tier2=is_tier2)
-    ratio = citation_checker.check_and_badge_text(synthesis.get("ratio_decidendi") or ai_ans, is_tier2=is_tier2)
+    ratio = None if (is_tier2 or is_not_found) else citation_checker.check_and_badge_text(synthesis.get("ratio_decidendi") or ai_ans, is_tier2=False)
     citations = citation_checker.badge_citations_list(synthesis.get("citations", [])) if not is_tier2 else []
 
     # Determine source cases and Tier/Label
+    hide_badge = False
     if is_not_found:
         tier = "not_found"
         tier_label = "AI answer, not verified"
         source_cases = []
         no_strong = True
     elif is_tier2:
-        tier = "tier2"
-        tier_label = "AI answer, not verified"
+        if synthesis.get("hide_badge") or ai_ans == UNRELIABLE_TIER2_MSG or "unreliable" in model_used.lower():
+            tier = "unreliable"
+            tier_label = ""
+            hide_badge = True
+        else:
+            tier = "tier2"
+            tier_label = "AI answer, not verified"
+            hide_badge = False
         source_cases = synthesis.get("results", []) or []
         no_strong = len(source_cases) == 0
     else:
@@ -262,7 +292,8 @@ async def search_answer_post(payload: SearchAnswerRequest):
         model_used=model_used or settings.LLM_MODEL,
         is_case_lookup=False,
         source_cases=source_cases,
-        no_strong_case_match=no_strong
+        no_strong_case_match=no_strong,
+        hide_badge=hide_badge
     )
 
 @router.get("/search/answer", response_model=SearchAnswerResponse)
@@ -277,7 +308,24 @@ async def search_answer_get(
     GET /api/v1/search/answer
     Convenience query-param endpoint for browser and REST querying.
     """
-    search_text = q or query or "Section 27 non-compete"
+    search_text = (q or query or "").strip()
+    if not search_text:
+        return SearchAnswerResponse(
+            query="",
+            corrected_query=None,
+            original_query=None,
+            has_spelling_correction=False,
+            ai_answer=None,
+            ratio_decidendi=None,
+            citations=[],
+            tier="case_lookup",
+            tier_label="",
+            model_used="blank_query",
+            is_case_lookup=True,
+            source_cases=[],
+            no_strong_case_match=False,
+            hide_badge=True
+        )
     req = SearchAnswerRequest(
         query=search_text,
         court=court,

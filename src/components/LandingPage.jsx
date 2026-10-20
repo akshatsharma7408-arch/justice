@@ -243,12 +243,12 @@ export default function LandingPage({
                 <span className="stat-label-text">Landmark Rulings</span>
               </div>
               <div className="stat-card-box">
-                <span className="stat-number-val font-serif"><CountUpNumber target={100} suffix="%" /></span>
-                <span className="stat-label-text">Grounded Citations</span>
+                <span className="stat-number-val font-serif"><CountUpNumber target={33} suffix="k+" /></span>
+                <span className="stat-label-text">Indexed Chunks</span>
               </div>
               <div className="stat-card-box">
-                <span className="stat-number-val font-serif"><CountUpNumber target={0} suffix="" /></span>
-                <span className="stat-label-text">Hallucinated Cases</span>
+                <span className="stat-number-val font-serif" style={{ fontSize: '1.25rem', lineHeight: 1.3 }}>Supreme Court</span>
+                <span className="stat-label-text">Every case shown comes from the Supreme Court dataset</span>
               </div>
             </div>
           </div>

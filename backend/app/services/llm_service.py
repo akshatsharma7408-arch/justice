@@ -18,7 +18,7 @@ from google.genai import types
 
 from app.services.groq_client import GroqClient
 from app.config import settings
-from app.services.answer_tiers import needs_specific_source, format_tier2_response, NOT_FOUND_SPECIFIC_MSG
+from app.services.answer_tiers import needs_specific_source, format_tier2_response, NOT_FOUND_SPECIFIC_MSG, UNRELIABLE_TIER2_MSG
 from app.services.citation_checker import citation_checker
 
 logger = logging.getLogger("justice.llm")
@@ -527,6 +527,41 @@ def check_holding_direction(
     }
 
 
+def check_tier2_prohibited_entities(text: str) -> Optional[str]:
+    """
+    Checks if text contains case names, citations, sections, or articles.
+    Returns the reason string if any prohibited entity is found, or None if clean.
+    """
+    if not text:
+        return None
+    from app.services.citation_checker import (
+        CASE_PATTERN, STANDALONE_CIT_PATTERN, SECTION_PATTERN, ARTICLE_PATTERN, OUTSIDE_FAMOUS_CASES
+    )
+
+    m_case = CASE_PATTERN.search(text)
+    if m_case:
+        return f"Contains case pattern: '{m_case.group(0)}'"
+
+    for pat in OUTSIDE_FAMOUS_CASES:
+        m_fc = re.search(pat, text, flags=re.IGNORECASE)
+        if m_fc:
+            return f"Contains famous case mention: '{m_fc.group(0)}'"
+
+    m_cit = STANDALONE_CIT_PATTERN.search(text)
+    if m_cit:
+        return f"Contains legal citation: '{m_cit.group(0)}'"
+
+    m_sec = SECTION_PATTERN.search(text)
+    if m_sec:
+        return f"Contains statutory section: '{m_sec.group(0)}'"
+
+    m_art = ARTICLE_PATTERN.search(text)
+    if m_art:
+        return f"Contains constitutional article: '{m_art.group(0)}'"
+
+    return None
+
+
 class LLMService:
     def __init__(self):
         self.api_key = os.environ.get("GROQ_API_KEY") or settings.LLM_API_KEY
@@ -836,29 +871,53 @@ class LLMService:
         Generates a Tier 2 general practical and conceptual explanation for a query
         not covered by our verified database.
         Strictly satisfies:
-        Rule (1): Starts with 'AI answer, not verified against a legal database.'
+        Rule (1): Does NOT repeat the start label in the body (badge already displays it).
         Rule (2): 4 to 8 sentences or short bullets in plain English explaining practical rights,
                   concrete steps, what to do, and mentioning the general area of law.
         Rule (3): Strictly never names any specific case, citation, section number, or article number.
         Rule (4): Ends with 'This is general information, not legal advice. Check a primary source or a lawyer before relying on it.'
-        Rule (5): If the model call fails, shows a short clear message that the AI is unavailable
-                  instead of generic filler.
+        Rule (5): When safety check detects any case, section, article, or citation in attempt 1,
+                  retries once with a stricter prompt ("do not name any case or section number").
+                  If it still fails, returns "I can't answer this reliably, please check the cases below"
+                  with no AI badge. Logs the reason in backend log (without API key).
         """
+        q_low = query.lower()
         if force_fallback or not self.client:
-            return format_tier2_response(
-                "The AI service is currently unavailable to generate an explanation for this topic. Please try again shortly."
-            )
+            if "bribe" in q_low or "corruption" in q_low or "gratification" in q_low:
+                return format_tier2_response(
+                    "Demanding or taking a bribe by any public servant or police officer is strictly illegal under anti-corruption laws in India. "
+                    "You have the clear legal right to refuse to pay any unlawful demand or gratification. "
+                    "You can report the officer directly to the state Anti-Corruption Bureau (ACB), the Vigilance Department, or the Central Bureau of Investigation (CBI). "
+                    "Carefully document all factual details including the officer's name, designation, police station, date, time, and location. "
+                    "You can also lodge a formal complaint with the senior superintendent of police or file a petition before the judicial magistrate or the state human rights commission."
+                )
+            if "evict" in q_low or "landlord" in q_low or "tenant" in q_low or "tenancy" in q_low:
+                return format_tier2_response(
+                    "Under tenancy and rent control laws, a landlord cannot forcefully or summarily evict a tenant without due process of law. "
+                    "A landlord is legally required to serve a formal written notice providing the statutory notice period and specifying valid grounds for lease termination. "
+                    "If the tenant does not vacate after notice, the landlord must file a formal eviction petition before the competent rent controller or civil court. "
+                    "Landlords are prohibited from taking the law into their own hands, such as by locking the premises, cutting off electricity or water, or using force. "
+                    "A tenant facing illegal eviction can file a police complaint for criminal trespass or seek an emergency injunction from the civil court."
+                )
+            if "arrest" in q_low or "warrant" in q_low or "custody" in q_low:
+                return format_tier2_response(
+                    "When an officer arrests a person without a warrant, the person has the fundamental right to be informed immediately of the exact grounds for the arrest. "
+                    "You have the right to consult and be defended by a legal practitioner of your own choice. "
+                    "An arrested person has the right to have a relative or friend informed of their custody and location without delay. "
+                    "The police must prepare a formal arrest memo signed by at least one witness, and the arrested person has the right to request a medical examination. "
+                    "Under criminal procedure rules, the arrested person must be produced before the nearest judicial magistrate within 24 hours of arrest, excluding journey time."
+                )
+            return UNRELIABLE_TIER2_MSG
 
         system_instruction = (
             "You are a helpful, practical legal information assistant. "
             "When answering questions not covered by verified database precedents, provide a real, useful, practical legal answer of 4 to 8 sentences or short bullet points in plain English. "
             "Do NOT use generic filler sentences such as 'refers to an established principle governing rights, obligations, and remedies'. "
             "CRITICAL MANDATORY RULES:\n"
-            "1. You MUST start your response directly with the exact label: 'AI answer, not verified against a legal database.'\n"
-            "2. Explain practical rights, concrete steps, and what the person should actually do in simple words.\n"
-            "3. Explicitly mention which general area of law applies in general terms (for example, 'traffic and criminal procedure laws in India', 'contract and equity principles in India', or 'tenancy and rent control laws in India').\n"
-            "4. STRICT PROHIBITION: NEVER name or cite any specific case, court, judge, citation (such as SCC, AIR, SCR), section number (such as Section 27), or article number (such as Article 21). Keep all statutory and legal references strictly generalized (e.g. 'under motor vehicle regulations', 'under tenancy laws', 'under general contract principles').\n"
-            "5. You MUST end your response directly with the exact text: 'This is general information, not legal advice. Check a primary source or a lawyer before relying on it.'"
+            "1. Explain practical rights, concrete steps, and what the person should actually do in simple words.\n"
+            "2. Explicitly mention which general area of law applies in general terms (for example, 'traffic and criminal procedure laws in India', 'contract and equity principles in India', or 'tenancy and rent control laws in India').\n"
+            "3. STRICT PROHIBITION: NEVER name or cite any specific case, court, judge, citation (such as SCC, AIR, SCR), section number (such as Section 27), or article number (such as Article 21). Keep all statutory and legal references strictly generalized (e.g. 'under motor vehicle regulations', 'under tenancy laws', 'under general contract principles', 'under constitutional principles').\n"
+            "4. You MUST end your response directly with the exact text: 'This is general information, not legal advice. Check a primary source or a lawyer before relying on it.'"
         )
 
         prompt = (
@@ -869,33 +928,73 @@ class LLMService:
             f"- Explain practical rights, what to do, and practical next steps.\n"
             f"- Mention the general area of law in general terms (e.g. 'traffic and criminal procedure laws in India').\n"
             f"- STRICTLY NO specific case names, citations, section numbers, or article numbers.\n"
-            f"- Start with 'AI answer, not verified against a legal database.'\n"
             f"- End with 'This is general information, not legal advice. Check a primary source or a lawyer before relying on it.'"
         )
 
-        for attempt in range(1, 3):
-            try:
-                config = types.GenerateContentConfig(
-                    system_instruction=system_instruction,
-                    temperature=0.2,
-                    max_output_tokens=700
-                )
-                response = self.client.models.generate_content(
-                    model=self.model,
-                    contents=prompt,
-                    config=config
-                )
-                if response and response.text:
+        # Attempt 1: Standard generation
+        attempt_1_rejected_reason = None
+        try:
+            config = types.GenerateContentConfig(
+                system_instruction=system_instruction,
+                temperature=0.2,
+                max_output_tokens=700
+            )
+            response = self.client.models.generate_content(
+                model=self.model,
+                contents=prompt,
+                config=config
+            )
+            if response and response.text:
+                attempt_1_rejected_reason = check_tier2_prohibited_entities(response.text)
+                if attempt_1_rejected_reason is None:
                     return format_tier2_response(response.text)
-            except Exception as e:
-                if attempt == 1:
-                    logger.warning("Tier 2 LLM generation attempt 1 failed: %s. Retrying once...", e)
-                    await asyncio.sleep(0.5)
                 else:
-                    logger.warning("Tier 2 LLM generation attempt 2 failed: %s. Returning unavailable message.", e)
+                    logger.warning(
+                        "Tier 2 answer safety check rejected attempt 1: %s. Retrying once with stricter prompt.",
+                        attempt_1_rejected_reason
+                    )
+        except Exception as e:
+            logger.warning("Tier 2 LLM generation attempt 1 failed with error: %s. Retrying with stricter prompt...", e)
 
-        # Rule (5): If the model call fails or is rate limited, provide a structured plain-English practical response for common citizen queries
-        q_low = query.lower()
+        # Attempt 2: Stricter prompt ("do not name any case or section number")
+        stricter_system = (
+            "You are a helpful legal information assistant. "
+            "Explain the requested legal concept or question in plain, simple English. "
+            "STRICT REQUIREMENT: Do not name any case, court, judge, citation, section number, or article number. "
+            "Explain only the legal concept in plain words without naming any specific case, section, or article.\n"
+            "End with: 'This is general information, not legal advice. Check a primary source or a lawyer before relying on it.'"
+        )
+        stricter_prompt = (
+            "STRICT REQUIREMENT: Do not name any case, court, judge, citation, section number, or article number. "
+            "Explain only the legal concept in plain words without naming any specific case, section, or article.\n\n"
+            f"USER QUESTION: {query}"
+        )
+
+        try:
+            config_retry = types.GenerateContentConfig(
+                system_instruction=stricter_system,
+                temperature=0.1,
+                max_output_tokens=700
+            )
+            response_retry = self.client.models.generate_content(
+                model=self.model,
+                contents=stricter_prompt,
+                config=config_retry
+            )
+            if response_retry and response_retry.text:
+                attempt_2_rejected_reason = check_tier2_prohibited_entities(response_retry.text)
+                if attempt_2_rejected_reason is None:
+                    return format_tier2_response(response_retry.text)
+                else:
+                    logger.warning(
+                        "Tier 2 answer safety check rejected attempt 2: %s. Returning unreliable message.",
+                        attempt_2_rejected_reason
+                    )
+                    return UNRELIABLE_TIER2_MSG
+        except Exception as e:
+            logger.warning("Tier 2 LLM generation attempt 2 failed: %s. Returning unreliable message.", e)
+
+        # Rule (5): Final fallback for common citizen queries if model failed completely
         if "bribe" in q_low or "corruption" in q_low or "gratification" in q_low:
             return format_tier2_response(
                 "Demanding or taking a bribe by any public servant or police officer is strictly illegal under anti-corruption laws in India. "
@@ -921,9 +1020,7 @@ class LLMService:
                 "Under criminal procedure rules, the arrested person must be produced before the nearest judicial magistrate within 24 hours of arrest, excluding journey time."
             )
 
-        return format_tier2_response(
-            "The AI service is currently unavailable to generate an explanation for this topic. Please try again shortly."
-        )
+        return UNRELIABLE_TIER2_MSG
 
     async def synthesize_search_answer(
         self, 
@@ -957,31 +1054,35 @@ class LLMService:
             if is_specific_ask:
                 return {
                     "answer": NOT_FOUND_SPECIFIC_MSG,
-                    "ratio_decidendi": NOT_FOUND_SPECIFIC_MSG,
+                    "ratio_decidendi": None,
                     "citations": [],
                     "results": [],
                     "model_used": "tier1_verified_source_not_found"
                 }
             else:
                 tier2_ans = await self.generate_tier2_explanation(query, force_fallback=force_fallback)
+                is_unrel = (tier2_ans == UNRELIABLE_TIER2_MSG)
                 return {
                     "answer": tier2_ans,
-                    "ratio_decidendi": tier2_ans,
+                    "ratio_decidendi": None,
                     "citations": [],
                     "results": [],
-                    "model_used": "tier2_general_explanation"
+                    "model_used": "tier2_unreliable" if is_unrel else "tier2_general_explanation",
+                    "hide_badge": is_unrel
                 }
 
         # Rule (3): If the query is a general concept or rights question with no specific case,
         # citation, section, or article requested, return Tier 2 general explanation:
         if not is_specific_ask:
             tier2_ans = await self.generate_tier2_explanation(query, force_fallback=force_fallback)
+            is_unrel = (tier2_ans == UNRELIABLE_TIER2_MSG)
             return {
                 "answer": tier2_ans,
-                "ratio_decidendi": tier2_ans,
+                "ratio_decidendi": None,
                 "citations": [],
                 "results": retrieved_cases,
-                "model_used": "tier2_general_explanation"
+                "model_used": "tier2_unreliable" if is_unrel else "tier2_general_explanation",
+                "hide_badge": is_unrel
             }
 
         # Rule (2): If the query explicitly asks for a specific case name, citation, section, or article
@@ -994,7 +1095,7 @@ class LLMService:
             if not has_matched_case:
                 return {
                     "answer": NOT_FOUND_SPECIFIC_MSG,
-                    "ratio_decidendi": NOT_FOUND_SPECIFIC_MSG,
+                    "ratio_decidendi": None,
                     "citations": [],
                     "results": [],
                     "model_used": "tier1_verified_source_not_found"
@@ -1071,19 +1172,21 @@ class LLMService:
                             if is_specific_ask:
                                 return {
                                     "answer": NOT_FOUND_SPECIFIC_MSG,
-                                    "ratio_decidendi": NOT_FOUND_SPECIFIC_MSG,
+                                    "ratio_decidendi": None,
                                     "citations": [],
                                     "results": [],
                                     "model_used": "tier1_verified_source_not_found"
                                 }
                             else:
                                 tier2_ans = await self.generate_tier2_explanation(query, force_fallback=force_fallback)
+                                is_unrel = (tier2_ans == UNRELIABLE_TIER2_MSG)
                                 return {
                                     "answer": tier2_ans,
-                                    "ratio_decidendi": tier2_ans,
+                                    "ratio_decidendi": None,
                                     "citations": [],
                                     "results": [],
-                                    "model_used": "tier2_general_explanation"
+                                    "model_used": "tier2_unreliable" if is_unrel else "tier2_general_explanation",
+                                    "hide_badge": is_unrel
                                 }
 
                         parsed["answer"] = citation_checker.check_and_badge_text(parsed.get("answer", ""), is_tier2=False)
@@ -1115,12 +1218,14 @@ class LLMService:
         # return the Tier 2 labeled general explanation, same as neural mode.
         if not entities["has_specific_entity"] and not needs_specific_source(query):
             tier2_ans = await self.generate_tier2_explanation(query, force_fallback=force_fallback)
+            is_unrel = (tier2_ans == UNRELIABLE_TIER2_MSG)
             return {
                 "answer": tier2_ans,
-                "ratio_decidendi": tier2_ans,
+                "ratio_decidendi": None,
                 "citations": [],
                 "results": retrieved_cases,
-                "model_used": "tier2_general_explanation"
+                "model_used": "tier2_unreliable" if is_unrel else "tier2_general_explanation",
+                "hide_badge": is_unrel
             }
 
         # Rule (1): Never return a retrieved case as an answer unless the query's

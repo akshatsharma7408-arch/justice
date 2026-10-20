@@ -19,6 +19,7 @@ NOT_FOUND_SPECIFIC_MSG = "I couldn't find a verified source for this"
 TIER2_START_LABEL = "AI answer, not verified against a legal database."
 TIER2_END_LABEL = "This is general information, not legal advice. Check a primary source or a lawyer before relying on it."
 TIER2_UNAVAILABLE_MSG = "The AI service is currently unavailable to generate an explanation for this topic. Please try again shortly."
+UNRELIABLE_TIER2_MSG = "I can't answer this reliably, please check the cases below"
 
 
 def needs_specific_source(query: str) -> bool:
@@ -113,9 +114,9 @@ def sanitize_tier2_text(text: str) -> str:
 
 def format_tier2_response(explanation: str) -> str:
     """
-    Formats a general conceptual or practical legal explanation to strictly start with
-    'AI answer, not verified against a legal database.' and end with
+    Formats a general conceptual or practical legal explanation to end with
     'This is general information, not legal advice. Check a primary source or a lawyer before relying on it.'
+    The first line disclaimer is removed from the body because the UI badge already displays it.
     """
     raw = explanation.strip()
 
@@ -138,4 +139,4 @@ def format_tier2_response(explanation: str) -> str:
     # Sanitize any accidental cases, sections, or articles
     sanitized = sanitize_tier2_text(raw).strip()
 
-    return f"{TIER2_START_LABEL}\n\n{sanitized}\n\n{TIER2_END_LABEL}"
+    return f"{sanitized}\n\n{TIER2_END_LABEL}"

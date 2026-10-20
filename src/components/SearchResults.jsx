@@ -227,7 +227,7 @@ export default function SearchResults({
     }, 2200);
   };
 
-  const isCurrentLookup = isPureCaseLookup(query);
+  const isCurrentLookup = isPureCaseLookup(query) || !query || !query.trim();
 
   return (
     <div className="module-view-container animate-fade-in">
@@ -318,7 +318,7 @@ export default function SearchResults({
 
       {/* Results Content Area */}
       <div className="results-content-area">
-        {/* Top AI Answer Section: Skeleton / Error / Answer Card (hidden for pure case lookups) */}
+        {/* Top AI Answer Section: Skeleton / Error / Answer Card (hidden for pure case lookups and blank queries) */}
         {hasSearched && !isCurrentLookup && (
           <div className="search-ai-answer-section" style={{ marginBottom: '24px' }}>
             {isAnswerLoading ? (
@@ -362,10 +362,14 @@ export default function SearchResults({
                   {/* Card Top Strip: Kicker + Tier Badge */}
                   <div className="answer-card-top-strip">
                     <span className="answer-kicker mono">
-                      {answerData.tier === 'tier1' ? 'VERIFIED LEGAL SYNTHESIS' : 'PLAIN-LANGUAGE CITIZEN SUMMARY'}
+                      {answerData.tier === 'tier1'
+                        ? 'VERIFIED LEGAL SYNTHESIS'
+                        : answerData.tier === 'unreliable'
+                        ? 'LEGAL NOTICE'
+                        : 'PLAIN-LANGUAGE CITIZEN SUMMARY'}
                     </span>
                     <div className="answer-badge-wrap">
-                      {answerData.tier === 'tier1' ? (
+                      {answerData.hide_badge || answerData.tier === 'unreliable' ? null : answerData.tier === 'tier1' ? (
                         <span className="badge-answer-tier1 mono">
                           <ShieldCheck size={13} />
                           <span>Verified citations</span>
@@ -436,6 +440,8 @@ export default function SearchResults({
                     <span className="answer-disclaimer-text mono">
                       {answerData.tier === 'tier1'
                         ? 'Grounded directly in Indian Supreme Court jurisprudence'
+                        : answerData.tier === 'unreliable'
+                        ? 'Authoritative Supreme Court precedents are indexed below'
                         : 'General legal information \u2022 Not legal advice \u2022 Verify with a lawyer or primary statute'}
                     </span>
                   </div>
@@ -575,10 +581,20 @@ export default function SearchResults({
                       </div>
 
                       <div className="meta-right-cluster">
-                        <span className="badge-verified">
-                          <ShieldCheck size={12} />
-                          <span>Verified Citation</span>
-                        </span>
+                        {Boolean(
+                          precedent.is_verified_ratio || 
+                          precedent.retrieval_mode?.includes('sc_judgments') || 
+                          precedent.retrieval_mode?.includes('verified_precedents') || 
+                          precedent.landmark || 
+                          precedent.source_link || 
+                          precedent.case_id ||
+                          (precedent.year && precedent.court)
+                        ) && (
+                          <span className="badge-verified">
+                            <ShieldCheck size={12} />
+                            <span>Verified Citation</span>
+                          </span>
+                        )}
                       </div>
                     </div>
 

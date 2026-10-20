@@ -104,13 +104,17 @@ LEGAL_COMMON_WORDS: Set[str] = {
     "advocate", "counsel", "senior", "bar", "court", "registry", "registry", "clerk",
 
     # Common English Query & Structural Words (Never mutate these)
-    "what", "is", "the", "a", "an", "of", "in", "to", "for", "on", "with", "by", "from",
+    "what", "is", "are", "am", "was", "were", "be", "been", "being",
+    "have", "has", "had", "do", "does", "did",
+    "the", "a", "an", "of", "in", "to", "for", "on", "with", "by", "from",
     "at", "about", "against", "without", "under", "between", "over", "after", "before",
-    "during", "into", "through", "can", "could", "should", "would", "do", "does", "did",
-    "how", "why", "who", "when", "where", "my", "your", "his", "her", "their", "our",
+    "during", "into", "through", "can", "could", "should", "would",
+    "how", "why", "who", "whom", "whose", "when", "where",
+    "i", "me", "my", "we", "us", "our", "you", "your", "he", "him", "his", "she", "her", "they", "them", "their",
     "it", "its", "any", "all", "some", "no", "not", "or", "and", "nor", "but", "if",
     "then", "else", "than", "which", "there", "here", "this", "that", "these", "those",
-    "right", "valid", "validity", "illegal", "unlawful", "law", "case", "cases",
+    "right", "rights", "arrest", "arrests", "officer", "officers", "police", "person", "persons",
+    "valid", "validity", "illegal", "unlawful", "law", "laws", "case", "cases",
     "held", "court", "judge", "judges", "justice", "bench", "ruling", "decision",
     "landmark", "union", "india", "state", "delhi", "kerala", "bombay", "madras",
     "calcutta", "allahabad", "rajasthan", "punjab", "haryana", "bihar", "gujarat"
