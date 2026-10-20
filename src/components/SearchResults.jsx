@@ -572,7 +572,7 @@ export default function SearchResults({
                         </div>
                         <div className="drawer-body">
                           <div className="drawer-para">
-                            <span className="para-num mono">Para 1 (Holding)</span>
+                            <span className="para-num mono">{precedent.is_verified_ratio ? 'Para 1 (Holding)' : 'Para 1'}</span>
                             <p className="para-text font-serif">{precedent.ratioSummary}</p>
                           </div>
                           {precedent.text && precedent.text !== precedent.ratioSummary && (

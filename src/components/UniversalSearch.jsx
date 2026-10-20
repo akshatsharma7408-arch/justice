@@ -368,7 +368,7 @@ export default function UniversalSearch({ onSelectCaseForCitator, onOpenCaseChat
 
                   <div className="expanded-paragraphs-stack">
                     <div id="chunk-0" className="expanded-para-item">
-                      <div className="para-index-line mono">Paragraph 1 (Holding & Ratio)</div>
+                      <div className="para-index-line mono">{precedent.is_verified_ratio ? 'Paragraph 1 (Holding & Ratio)' : 'Paragraph 1'}</div>
                       <p className="para-content font-judicial">{precedent.ratioSummary}</p>
                     </div>
                     {precedent.text && precedent.text !== precedent.ratioSummary && (

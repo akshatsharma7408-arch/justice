@@ -575,7 +575,7 @@ def step_extract_and_chunk() -> Tuple[List[Dict[str, Any]], Dict[str, int]]:
             f"Also known as: {', '.join(aliases_list)}."
         )
 
-        total_chunks = len(text_chunks) + 1  # including the extra short chunk
+        total_chunks = len(text_chunks)
 
         # Add text chunks
         case_chunks: List[Dict[str, Any]] = []
@@ -598,29 +598,9 @@ def step_extract_and_chunk() -> Tuple[List[Dict[str, Any]], Dict[str, int]]:
                 "text": chunk_text
             })
 
-        # Add the extra short chunk at index len(text_chunks)
-        extra_idx = len(text_chunks)
-        case_chunks.append({
-            "chunk_id": f"{year}_{path}_{extra_idx}",
-            "case_name": title,
-            "common_name": common_name,
-            "year": int(year),
-            "citation": citation,
-            "bench": bench,
-            "neutral_citation": nc_display,
-            "case_id": path,
-            "source_link": source_link,
-            "chunk_index": extra_idx,
-            "total_chunks_in_case": total_chunks,
-            "topic": "constitutional_landmark",
-            "landmark": True,
-            "aliases": aliases_list,
-            "text": extra_chunk_text
-        })
-
         all_chunks.extend(case_chunks)
         chunk_counts[common_name] = len(case_chunks)
-        logger.info("Chunked '%s': %d total chunks (including identity alias chunk)", common_name, len(case_chunks))
+        logger.info("Chunked '%s': %d total judgment chunks (aliases indexed as payload field)", common_name, len(case_chunks))
 
     CHUNKS_DIR.mkdir(parents=True, exist_ok=True)
     out_file = CHUNKS_DIR / "landmark_chunks.json"

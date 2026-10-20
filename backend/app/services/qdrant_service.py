@@ -262,90 +262,180 @@ def extract_statutes_from_text(text: str) -> List[str]:
     return tags[:4]
 
 
+def clean_judgment_text(text: str) -> str:
+    """
+    Cleans OCR, page header junk, broken glyphs, and alias lists from judgment text:
+    - Strips page header junk such as '432 [2025] 2 S.C.R. Digital Supreme Court Reports'.
+    - Removes broken glyph characters (U+FFFD and unicode boxes/geometric symbols).
+    - Removes alias list ('Also known as ...') and citation headers.
+    - Collapses spaces.
+    """
+    if not text:
+        return ""
+
+    # 1. Remove broken glyph characters: U+FFFD and unicode boxes/geometric symbols
+    t = re.sub(r'[\ufffd\u2500-\u25ff\u25a0-\u25ff]', '', text)
+
+    # 2. Strip page header patterns
+    header_patterns = [
+        r'\b\d+\s*\[\s*\d{4}\s*\]\s*\d*\s*(?:SUPP\.?\s*\d*)?\s*S\.?C\.?R\.?(?:\s*Digital)?(?:\s*Supreme Court Reports)?',
+        r'\[\s*\d{4}\s*\]\s*\d*\s*(?:SUPP\.?\s*\d*)?\s*S\.?C\.?R\.?(?:\s*Digital)?(?:\s*Supreme Court Reports)?',
+        r'\bDigital Supreme Court Reports\b',
+        r'\bSUPREME COURT OF INDIA\b',
+        r'\bIN THE SUPREME COURT OF INDIA\b',
+        r'\bRecord of Proceedings\b',
+        r'\bPage\s+\d+\s+(?:of\s+\d+)?\b',
+        r'\bREPORTABLE\b',
+        r'\bNON-REPORTABLE\b',
+        r'\b(?:CIVIL|CRIMINAL|ORIGINAL)\s+APPELLATE\s+JURISDICTION\b',
+        r'\bWRIT\s+PETITION\s*\([A-Za-z0-9\s\.\-]+\)\s*NO\.?\s*\d+\s+OF\s+\d{4}\b',
+    ]
+    for pat in header_patterns:
+        t = re.sub(pat, '', t, flags=re.IGNORECASE)
+
+    # 3. Strip alias list / citation headers: "Also known as ...", "Citations: ..."
+    t = re.sub(r'(?:Also known as:?|Citations:?|Equivalent citations:?).*?(?=(?:[A-Z][a-z]+|\Z))', '', t, flags=re.IGNORECASE)
+
+    # 4. Collapse spaces
+    t = re.sub(r'\s+', ' ', t).strip()
+    return t
+
+
+def cut_to_sentence_boundary(text: str, max_chars: int = 320) -> str:
+    """
+    Cuts clean text at a sentence boundary up to max_chars characters.
+    If cutting at sentence boundary is impossible, cuts at the last word boundary.
+    """
+    if not text:
+        return ""
+    if len(text) <= max_chars:
+        return text
+
+    sentences = re.split(r'(?<=[.!?])\s+', text)
+    accumulated = ""
+    for s in sentences:
+        candidate = f"{accumulated} {s}".strip() if accumulated else s
+        if len(candidate) <= max_chars:
+            accumulated = candidate
+        else:
+            break
+
+    if accumulated and len(accumulated) >= 40:
+        return accumulated
+
+    # Word boundary fallback
+    truncated = text[:max_chars - 3].rsplit(' ', 1)[0] + "..."
+    return truncated
+
+
 def extract_relevant_passage(
     query: str, 
-    text: str, 
+    text: str = "", 
     is_verified_ratio: bool = False, 
-    verified_ratio: str = ""
+    verified_ratio: str = "",
+    chunks: Optional[List[Dict[str, Any]]] = None,
+    case_name: str = ""
 ) -> Tuple[str, str, bool]:
     """
-    Extracts the best-matching passage from the judgment for the user's query.
-    - Prefers paragraphs from the court's reasoning or conclusion.
-    - Skips transcripts, tables, headers, and exhibits.
-    - Trims to ~400 characters at sentence boundary.
-    - Returns (passage_text, ratio_label, is_verified_ratio).
+    Extracts the best-matching passage from the judgment for the user's query:
+    - Never shows the alias list ("Also known as ...") or citation header as a passage.
+    - Picks the chunk that best matches the query (not the last chunk).
+    - Strips page header junk, removes broken glyphs (U+FFFD and boxes), collapses spaces.
+    - Cuts at a sentence boundary, max 320 characters.
+    - If the cleaned passage is shorter than 40 characters, picks the next best chunk.
+    - When a landmark has no judgment chunk text, shows its stored one-line holding instead.
+    - Only labels "Holding" if it really is from the operative part or verified ratio.
     """
-    if is_verified_ratio and verified_ratio and len(verified_ratio.strip()) > 30:
-        return (verified_ratio.strip(), "RATIO DECIDENDI / LEGAL PRINCIPLE", True)
+    # 1. Match landmark default holding if applicable
+    matched_meta = None
+    target_name = (case_name or "").lower()
+    for lk, meta in LANDMARK_METADATA.items():
+        if lk in target_name:
+            matched_meta = meta
+            break
 
-    if not text:
-        return ("No excerpt available for this judgment.", "RELEVANT PASSAGE", False)
+    default_holding = ""
+    if matched_meta and matched_meta.get("holding"):
+        default_holding = matched_meta["holding"]
+    elif is_verified_ratio and verified_ratio and len(verified_ratio.strip()) > 30:
+        default_holding = verified_ratio.strip()
 
-    # Split text into paragraphs or blocks
-    raw_paras = [p.strip() for p in re.split(r'\n{2,}|\r\n{2,}', text) if p.strip()]
-    if not raw_paras:
-        raw_paras = [p.strip() for p in re.split(r'(?<=[.!?])\s+(?=[A-Z])', text) if p.strip()]
-
-    # Skip lines that are transcripts, tables, headers, or exhibits
-    noise_prefixes = (
-        "exhibit", "ex.", "pw-", "dw-", "annexure", "table", "p.w.", "d.w.", 
-        "cross-examination", "q.", "a.", "examination-in-chief", "sl. no.", 
-        "appeal from", "order date", "coram:"
-    )
-    clean_paras = []
-    for p in raw_paras:
-        p_clean = re.sub(r'[\r\n\t]+', ' ', p).strip()
-        p_lower = p_clean.lower()
-        if len(p_clean) < 40:
-            continue
-        if any(p_lower.startswith(prefix) for prefix in noise_prefixes):
-            continue
-        if re.match(r'^(?:[A-Z0-9\.\-_\s]+:|\bQ\b|\bA\b)', p_clean):
-            continue
-        clean_paras.append(p_clean)
-
-    if not clean_paras:
-        clean_paras = [re.sub(r'[\r\n\t]+', ' ', text).strip()]
-
-    # Score paragraphs:
+    # 2. Build candidate chunks list
+    candidate_texts: List[str] = []
+    query_terms = [t for t in re.findall(r'[a-zA-Z0-9]{3,}', query.lower()) if t not in SEARCH_STOPWORDS]
     reasoning_markers = [
         "held that", "we hold", "in our view", "we are of the opinion", "it is settled law",
         "the court held", "the supreme court held", "laid down that", "the ratio", 
-        "accordingly", "we find that", "the principle is", "cannot be sustained", 
+        "accordingly,", "ordered accordingly", "appeal is allowed", "appeal is dismissed",
         "we conclude", "in conclusion", "it is well settled", "doctrine of"
     ]
-    query_terms = [t for t in re.findall(r'[a-zA-Z0-9]{3,}', query.lower()) if t not in SEARCH_STOPWORDS]
 
-    best_para = clean_paras[0]
-    best_score = -1.0
+    if chunks:
+        # Filter out alias chunks
+        valid_chunks = [
+            ch for ch in chunks
+            if not ch.get("is_alias_chunk")
+            and "Also known as:" not in ch.get("text", "")
+            and not ch.get("text", "").strip().startswith("Citations:")
+        ]
 
-    for p in clean_paras:
-        p_lower = p.lower()
-        score = 0.0
-        if any(rm in p_lower for rm in reasoning_markers):
-            score += 3.0
-        term_matches = sum(1 for t in query_terms if t in p_lower)
-        score += term_matches * 1.5
+        scored_chunks = []
+        for ch in valid_chunks:
+            c_raw = ch.get("text", "") or ""
+            c_low = c_raw.lower()
+            score = 0.0
+            score += sum(3.0 for rm in reasoning_markers if rm in c_low)
+            score += sum(2.0 for qt in query_terms if qt in c_low)
+            if any(np in c_low[:60] for np in ["record of proceedings", "annexure", "exhibit", "pw-", "dw-"]):
+                score -= 5.0
+            scored_chunks.append((score, c_raw))
 
-        if score > best_score:
-            best_score = score
-            best_para = p
+        scored_chunks.sort(key=lambda x: x[0], reverse=True)
+        candidate_texts = [sc[1] for sc in scored_chunks]
+    elif text:
+        # Split text into paragraphs or blocks
+        raw_paras = [p.strip() for p in re.split(r'\n{2,}|\r\n{2,}', text) if p.strip()]
+        if not raw_paras:
+            raw_paras = [text]
+        
+        scored_paras = []
+        for p in raw_paras:
+            p_clean = re.sub(r'[\r\n\t]+', ' ', p).strip()
+            p_low = p_clean.lower()
+            if "Also known as:" in p_clean or p_clean.startswith("Citations:"):
+                continue
+            score = 0.0
+            score += sum(3.0 for rm in reasoning_markers if rm in p_low)
+            score += sum(2.0 for qt in query_terms if qt in p_low)
+            scored_paras.append((score, p_clean))
 
-    # Trim to ~400 characters at sentence boundary
-    cleaned = best_para
-    if len(cleaned) > 400:
-        sentences = re.split(r'(?<=[.!?])\s+', cleaned)
-        trimmed = ""
-        for s in sentences:
-            if len(trimmed) + len(s) + 1 <= 420:
-                trimmed = f"{trimmed} {s}".strip() if trimmed else s
-            else:
-                break
-        if not trimmed or len(trimmed) < 150:
-            trimmed = cleaned[:397].rsplit(' ', 1)[0] + "..."
-        cleaned = trimmed
+        scored_paras.sort(key=lambda x: x[0], reverse=True)
+        candidate_texts = [sp[1] for sp in scored_paras]
 
-    return (cleaned, "RELEVANT PASSAGE", False)
+    # 3. Try each candidate chunk in scored order
+    for c_text in candidate_texts:
+        if "Also known as:" in c_text or c_text.strip().startswith("Citations:"):
+            continue
+
+        cleaned = clean_judgment_text(c_text)
+        if not cleaned:
+            continue
+
+        snippet = cut_to_sentence_boundary(cleaned, max_chars=320)
+        # If the cleaned passage is shorter than 40 characters, pick the next best chunk
+        if len(snippet) < 40:
+            continue
+
+        is_op = bool(is_verified_ratio)
+        label = "RATIO DECIDENDI / LEGAL PRINCIPLE" if is_op else "RELEVANT PASSAGE"
+        return (snippet, label, is_op)
+
+    # 4. When a landmark has no valid judgment chunk text, show its stored one-line holding instead
+    if default_holding:
+        cleaned_holding = cut_to_sentence_boundary(clean_judgment_text(default_holding), max_chars=320)
+        return (cleaned_holding, "RATIO DECIDENDI / LEGAL PRINCIPLE", True)
+
+    return ("No excerpt available for this judgment.", "RELEVANT PASSAGE", False)
 
 
 def extract_substantive_terms(query: str) -> List[str]:
@@ -473,6 +563,7 @@ LANDMARK_METADATA: Dict[str, Dict[str, Any]] = {
         "leadJudge": "S.M. Sikri, C.J.I.",
         "statutes": ["Article 368", "Article 13", "Article 31C", "Article 31A", "Article 19"],
         "year": 1973,
+        "holding": "Parliament's amending power under Article 368 is not unlimited and cannot alter the basic structure or essential framework of the Constitution.",
     },
     "maneka gandhi": {
         "benchSize": 7,
@@ -480,6 +571,7 @@ LANDMARK_METADATA: Dict[str, Dict[str, Any]] = {
         "leadJudge": "M.H. Beg, C.J.I.",
         "statutes": ["Article 21", "Article 14", "Article 19", "Passports Act 1967"],
         "year": 1978,
+        "holding": "Procedure depriving personal liberty under Article 21 must be just, fair, and reasonable, incorporating substantive due process.",
     },
     "puttaswamy": {
         "benchSize": 9,
@@ -487,6 +579,7 @@ LANDMARK_METADATA: Dict[str, Dict[str, Any]] = {
         "leadJudge": "J.S. Khehar, C.J.I.",
         "statutes": ["Article 21", "Article 14", "Article 19", "Aadhaar Act 2016"],
         "year": 2017,
+        "holding": "The right to privacy is a fundamental right protected under Article 21 and the architectural framework of Part III of the Constitution.",
     },
     "vishaka": {
         "benchSize": 3,
@@ -494,6 +587,7 @@ LANDMARK_METADATA: Dict[str, Dict[str, Any]] = {
         "leadJudge": "J.S. Verma, C.J.I.",
         "statutes": ["Article 14", "Article 19(1)(g)", "Article 21", "CEDAW"],
         "year": 1997,
+        "holding": "Laid down mandatory binding guidelines to prevent and redress sexual harassment of women at workplaces under Articles 14, 19, and 21.",
     },
     "navtej": {
         "benchSize": 5,
@@ -501,6 +595,7 @@ LANDMARK_METADATA: Dict[str, Dict[str, Any]] = {
         "leadJudge": "Dipak Misra, C.J.I.",
         "statutes": ["Section 377 IPC", "Article 14", "Article 15", "Article 19(1)(a)", "Article 21"],
         "year": 2018,
+        "holding": "Section 377 of the Indian Penal Code, insofar as it criminalises consensual sexual acts between adults in private, is unconstitutional and violates Articles 14, 15, 19, and 21.",
     },
     "minerva mills": {
         "benchSize": 5,
@@ -508,6 +603,7 @@ LANDMARK_METADATA: Dict[str, Dict[str, Any]] = {
         "leadJudge": "Y.V. Chandrachud, C.J.I.",
         "statutes": ["Article 368(4)", "Article 368(5)", "Article 31C", "Article 14", "Article 19"],
         "year": 1980,
+        "holding": "The Constitution is founded on the bedrock of balance between Fundamental Rights and Directive Principles; Article 368 cannot destroy that balance.",
     },
     "golaknath": {
         "benchSize": 11,
@@ -515,6 +611,7 @@ LANDMARK_METADATA: Dict[str, Dict[str, Any]] = {
         "leadJudge": "K. Subba Rao, C.J.I.",
         "statutes": ["Article 368", "Article 13(2)", "Article 19", "Article 31"],
         "year": 1967,
+        "holding": "Fundamental rights in Part III are transcendental and inviolable; Parliament cannot amend the Constitution so as to abridge or take them away.",
     },
     "bommai": {
         "benchSize": 9,
@@ -522,6 +619,7 @@ LANDMARK_METADATA: Dict[str, Dict[str, Any]] = {
         "leadJudge": "S.R. Pandian, J.",
         "statutes": ["Article 356", "Article 74(2)", "Article 355", "Article 14"],
         "year": 1994,
+        "holding": "Secularism is a basic feature of the Constitution; presidential proclamations imposing President's Rule under Article 356 are subject to judicial review.",
     },
     "olga tellis": {
         "benchSize": 5,
@@ -529,6 +627,7 @@ LANDMARK_METADATA: Dict[str, Dict[str, Any]] = {
         "leadJudge": "Y.V. Chandrachud, C.J.I.",
         "statutes": ["Article 21", "Article 19(1)(e)", "Article 19(1)(g)", "Article 39(a)", "Article 41"],
         "year": 1985,
+        "holding": "The right to life under Article 21 includes the right to livelihood; no person can be evicted or deprived of livelihood without fair and reasonable procedure.",
     },
     "arnesh kumar": {
         "benchSize": 2,
@@ -536,6 +635,7 @@ LANDMARK_METADATA: Dict[str, Dict[str, Any]] = {
         "leadJudge": "Chandramauli Kumar Prasad, J.",
         "statutes": ["Section 41 CrPC", "Section 41A CrPC", "Section 498A IPC", "Article 21"],
         "year": 2014,
+        "holding": "Mandated strict guidelines and arrest checklist under Section 41 CrPC to prevent unnecessary arrests in offenses punishable with up to seven years.",
     },
     "dk basu": {
         "benchSize": 2,
@@ -543,6 +643,7 @@ LANDMARK_METADATA: Dict[str, Dict[str, Any]] = {
         "leadJudge": "Kuldip Singh, J.",
         "statutes": ["Article 21", "Article 22", "Section 50 CrPC", "Section 57 CrPC"],
         "year": 1996,
+        "holding": "Laid down mandatory constitutional safeguards, arrest memos, and procedural guidelines for police during arrest and detention to prevent custodial torture.",
     },
     "d.k. basu": {
         "benchSize": 2,
@@ -550,6 +651,7 @@ LANDMARK_METADATA: Dict[str, Dict[str, Any]] = {
         "leadJudge": "Kuldip Singh, J.",
         "statutes": ["Article 21", "Article 22", "Section 50 CrPC", "Section 57 CrPC"],
         "year": 1996,
+        "holding": "Laid down mandatory constitutional safeguards, arrest memos, and procedural guidelines for police during arrest and detention to prevent custodial torture.",
     },
     "shreya singhal": {
         "benchSize": 2,
@@ -557,6 +659,7 @@ LANDMARK_METADATA: Dict[str, Dict[str, Any]] = {
         "leadJudge": "J. Chelameswar, J.",
         "statutes": ["Section 66A IT Act", "Article 19(1)(a)", "Article 19(2)", "Article 14"],
         "year": 2015,
+        "holding": "Struck down Section 66A of the Information Technology Act as unconstitutionally vague and violative of the right to freedom of speech under Article 19(1)(a).",
     },
     "lalita kumari": {
         "benchSize": 5,
@@ -564,6 +667,7 @@ LANDMARK_METADATA: Dict[str, Dict[str, Any]] = {
         "leadJudge": "P. Sathasivam, C.J.I.",
         "statutes": ["Section 154 CrPC", "Section 156 CrPC", "Section 157 CrPC", "Article 21"],
         "year": 2013,
+        "holding": "Registration of an FIR under Section 154 CrPC is mandatory if the information discloses the commission of a cognizable offense.",
     },
     "indra sawhney": {
         "benchSize": 9,
@@ -571,6 +675,7 @@ LANDMARK_METADATA: Dict[str, Dict[str, Any]] = {
         "leadJudge": "M.H. Kania, C.J.I.",
         "statutes": ["Article 16(4)", "Article 16(1)", "Article 15(4)", "Article 14", "Article 340"],
         "year": 1992,
+        "holding": "Upheld 27% reservation for backward classes subject to the exclusion of the creamy layer and an overall 50% reservation ceiling.",
     },
     "percept": {
         "benchSize": 2,
@@ -578,6 +683,7 @@ LANDMARK_METADATA: Dict[str, Dict[str, Any]] = {
         "leadJudge": "H.K. Sema, J.",
         "statutes": ["Section 27 Contract Act", "Article 19(1)(g)"],
         "year": 2006,
+        "holding": "A restrictive covenant operating post-termination of contract is void ab initio under Section 27 of the Indian Contract Act.",
     },
     "kailash nath": {
         "benchSize": 2,
@@ -585,6 +691,7 @@ LANDMARK_METADATA: Dict[str, Dict[str, Any]] = {
         "leadJudge": "Ranjan Gogoi, J.",
         "statutes": ["Section 74 Contract Act", "Section 73 Contract Act"],
         "year": 2015,
+        "holding": "Under Section 74 of the Contract Act, liquidated damages require proof of actual legal injury or loss unless incapable of proof.",
     }
 }
 
@@ -705,6 +812,7 @@ class QdrantService:
         self._sc_chunks: Optional[List[Dict[str, Any]]] = None
         self._sc_vectors: Optional[np.ndarray] = None
         self._sc_cases_meta: Optional[Dict[str, Dict[str, Any]]] = None
+        self._sc_chunks_by_case_id: Optional[Dict[str, List[Dict[str, Any]]]] = None
         self._sc_loaded: bool = False
 
         self._init_client()
@@ -766,19 +874,22 @@ class QdrantService:
                 norms[norms == 0] = 1.0
                 self._sc_vectors = raw_vecs / norms
 
-                # Build fast case metadata index for citation lookup
+                # Build fast case metadata index and case chunks map for citation lookup and snippet matching
                 self._sc_cases_meta = {}
+                self._sc_chunks_by_case_id = {}
                 for c in self._sc_chunks:
                     cid = c.get("case_id", "")
-                    if cid and cid not in self._sc_cases_meta:
-                        self._sc_cases_meta[cid] = {
-                            "case_name": c.get("case_name"),
-                            "year": c.get("year"),
-                            "citation": c.get("citation"),
-                            "neutral_citation": c.get("neutral_citation"),
-                            "bench": c.get("bench"),
-                            "source_link": c.get("source_link")
-                        }
+                    if cid:
+                        self._sc_chunks_by_case_id.setdefault(cid, []).append(c)
+                        if cid not in self._sc_cases_meta:
+                            self._sc_cases_meta[cid] = {
+                                "case_name": c.get("case_name"),
+                                "year": c.get("year"),
+                                "citation": c.get("citation"),
+                                "neutral_citation": c.get("neutral_citation"),
+                                "bench": c.get("bench"),
+                                "source_link": c.get("source_link")
+                            }
 
                 logger.info(
                     "Loaded local Supreme Court dataset: %d chunks across %d judgments (%.1f MB vectors)",
@@ -896,15 +1007,14 @@ class QdrantService:
             bench_size = 5 if first.get("landmark") else 2
         bench_type = "Constitution Bench" if bench_size >= 5 else ("Division Bench" if bench_size == 2 else f"{bench_size}-Judge Bench")
 
-        # Pick best holding/ratio
-        ratio = ""
-        for ch in chunks:
-            text_lower = ch.get("text", "").lower()
-            if ch.get("landmark") or any(w in text_lower for w in ["held", "ratio", "we hold", "order"]):
-                ratio = ch.get("text", "")[:320]
-                break
-        if not ratio:
-            ratio = first.get("text", "")[:320]
+        # Pick best holding/ratio using Item 5 cleaning logic
+        passage, label, is_ratio = extract_relevant_passage(
+            query="",
+            text=first.get("text", "") or "",
+            is_verified_ratio=bool(first.get("landmark")),
+            chunks=chunks,
+            case_name=title
+        )
 
         combined_text = "\n".join(ch.get("text", "") for ch in chunks[:3])
         statutes = extract_statutes_from_text(combined_text)
@@ -920,7 +1030,9 @@ class QdrantService:
             "bench": bench,
             "benchType": bench_type,
             "benchSize": bench_size,
-            "ratioSummary": ratio,
+            "ratioSummary": passage,
+            "ratioLabel": label,
+            "is_verified_ratio": is_ratio,
             "statutes": statutes,
             "total_chunks": len(chunks),
             "chunks": chunks
@@ -1138,11 +1250,15 @@ class QdrantService:
                     p["decisionYear"] = p.get("year")
                     
                     text_content = p.get("text", "") or ""
+                    cid = p.get("case_id") or p.get("id")
+                    c_chunks = self.get_case_chunks_by_id(cid) if cid else None
                     passage, label, is_ratio = extract_relevant_passage(
                         query=query,
                         text=text_content,
                         is_verified_ratio=bool(p.get("landmark")),
-                        verified_ratio=p.get("ratioSummary", "")
+                        verified_ratio=p.get("ratioSummary", ""),
+                        chunks=c_chunks,
+                        case_name=c_title
                     )
                     p["ratioSummary"] = passage
                     p["ratioLabel"] = label
@@ -1250,13 +1366,15 @@ class QdrantService:
                 case["benchSize"] = 2
 
             text_content = case.get("text", "") or case.get("ratioSummary", "") or ""
+            c_name = case.get("case_name") or case.get("title") or ""
             # Derive statutes strictly from text with NO default fake tags
             case["statutes"] = extract_statutes_from_text(text_content)
             passage, label, is_ratio = extract_relevant_passage(
                 query=query,
                 text=text_content,
                 is_verified_ratio=bool(case.get("landmark")),
-                verified_ratio=case.get("ratioSummary", "") if case.get("landmark") else ""
+                verified_ratio=case.get("ratioSummary", "") if case.get("landmark") else "",
+                case_name=c_name
             )
             case["ratioSummary"] = passage
             case["ratioLabel"] = label
@@ -1442,11 +1560,15 @@ class QdrantService:
                         citation_disp = chunk.get("citation") or chunk.get("neutral_citation") or f"[{chunk.get('year')}] SCR"
 
                         text_content = chunk.get("text", "") or ""
+                        cid = chunk.get("case_id")
+                        c_chunks = self._sc_chunks_by_case_id.get(cid, [chunk]) if self._sc_chunks_by_case_id else [chunk]
                         passage, label, is_ratio = extract_relevant_passage(
                             query=query,
                             text=text_content,
                             is_verified_ratio=False,
-                            verified_ratio=""
+                            verified_ratio="",
+                            chunks=c_chunks,
+                            case_name=c_name
                         )
 
                         results.append({
@@ -1479,42 +1601,50 @@ class QdrantService:
                 try:
                     with open(landmark_chunks_file, "r", encoding="utf-8") as f:
                         l_chunks = json.load(f)
-                    seen_boost = {r.get("title", "").strip().lower() for r in results}
+
+                    landmark_case_chunks: Dict[str, List[Dict[str, Any]]] = {}
                     for lc in l_chunks:
-                        c_title = lc.get("common_name") or lc.get("case_name")
-                        c_key = (c_title or "").strip().lower()
+                        c_title = lc.get("common_name") or lc.get("case_name") or ""
+                        if c_title:
+                            landmark_case_chunks.setdefault(c_title, []).append(lc)
+
+                    seen_boost = {r.get("title", "").strip().lower() for r in results}
+                    for c_title, c_chunks in landmark_case_chunks.items():
+                        c_key = c_title.strip().lower()
                         if not c_key or c_key in seen_boost:
                             continue
-                        lc_aliases = [re.sub(r'[\s\W_]+', '', a).lower() for a in lc.get("aliases", [])]
-                        if lc.get("common_name"):
-                            lc_aliases.append(re.sub(r'[\s\W_]+', '', lc["common_name"]).lower())
+                        first_chunk = c_chunks[0]
+                        lc_aliases = [re.sub(r'[\s\W_]+', '', a).lower() for a in first_chunk.get("aliases", [])]
+                        if first_chunk.get("common_name"):
+                            lc_aliases.append(re.sub(r'[\s\W_]+', '', first_chunk["common_name"]).lower())
                         if any(re.sub(r'[\s\W_]+', '', ma).lower() in lc_aliases for ma in matched_aliases):
                             seen_boost.add(c_key)
-                            text_content = lc.get("text", "") or ""
                             passage, label, is_ratio = extract_relevant_passage(
                                 query=query,
-                                text=text_content,
+                                text=first_chunk.get("text", "") or "",
                                 is_verified_ratio=True,
-                                verified_ratio=lc.get("ratioSummary", "")
+                                verified_ratio=first_chunk.get("ratioSummary", ""),
+                                chunks=c_chunks,
+                                case_name=c_title
                             )
                             results.insert(0, {
-                                "id": lc.get("case_id"),
+                                "id": first_chunk.get("case_id"),
                                 "title": c_title,
-                                "citation": lc.get("citation") or lc.get("neutral_citation") or f"[{lc.get('year')}] SCR",
+                                "citation": first_chunk.get("citation") or first_chunk.get("neutral_citation") or f"[{first_chunk.get('year')}] SCR",
                                 "court": "Supreme Court of India",
                                 "benchType": "Supreme Court Bench",
                                 "benchSize": 5,
-                                "decisionYear": lc.get("year"),
-                                "statutes": extract_statutes_from_text(text_content),
+                                "decisionYear": first_chunk.get("year"),
+                                "statutes": extract_statutes_from_text(passage),
                                 "ratioSummary": passage,
                                 "ratioLabel": label,
                                 "is_verified_ratio": is_ratio,
                                 "relevance_score": 0.99,
                                 "raw_vector_score": 0.99,
                                 "retrieval_mode": f"local_exact_boost+landmark_cases+{embedding_service.mode}",
-                                "source_link": lc.get("source_link"),
-                                "neutral_citation": lc.get("neutral_citation"),
-                                "bench": lc.get("bench")
+                                "source_link": first_chunk.get("source_link"),
+                                "neutral_citation": first_chunk.get("neutral_citation"),
+                                "bench": first_chunk.get("bench")
                             })
                 except Exception as e:
                     logger.debug("Local landmark boost failed: %s", e)
