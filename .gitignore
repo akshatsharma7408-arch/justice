@@ -22,6 +22,14 @@ lerna-debug.log*
 .env.*.local
 *.local
 !.env.example
+*.pem
+*.key
+
+# Test artifacts & scratch
+test-results/
+playwright-report/
+screenshots/
+scratch/
 
 # Python
 __pycache__/
