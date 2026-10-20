@@ -72,6 +72,7 @@ export default function SearchResults({
   const [copiedCaseKey, setCopiedCaseKey] = useState(null);
   const [modelUsed, setModelUsed] = useState('openai/gpt-oss-120b');
   const [hydeRatio, setHydeRatio] = useState('');
+  const [spellingCorrection, setSpellingCorrection] = useState(null);
 
   // AI Answer Card State
   const [answerData, setAnswerData] = useState(null);
@@ -87,7 +88,13 @@ export default function SearchResults({
     }
   }, [initialQuery]);
 
-  const executeSearch = async (searchQuery = query, court = courtFilter, bench = benchFilter) => {
+  const handleSearchInstead = (original) => {
+    setQuery(original);
+    setSpellingCorrection(null);
+    executeSearch(original, courtFilter, benchFilter, true);
+  };
+
+  const executeSearch = async (searchQuery = query, court = courtFilter, bench = benchFilter, bypassCorrection = false) => {
     const trimmed = (searchQuery || '').trim();
     if (!trimmed) return;
 
@@ -105,7 +112,15 @@ export default function SearchResults({
 
     let fetchedResults = null;
     try {
-      const resp = await searchPrecedentsWithBackend(trimmed, court, bench, true, 10);
+      const resp = await searchPrecedentsWithBackend(trimmed, court, bench, true, 10, bypassCorrection);
+      if (resp && resp.has_spelling_correction && resp.corrected_query) {
+        setSpellingCorrection({
+          corrected: resp.corrected_query,
+          original: resp.original_query || trimmed
+        });
+      } else {
+        setSpellingCorrection(null);
+      }
       if (resp && resp.results) {
         setResults(resp.results);
         fetchedResults = resp.results;
@@ -119,6 +134,7 @@ export default function SearchResults({
         setHydeRatio('');
       }
     } catch (err) {
+      setSpellingCorrection(null);
       console.warn("[SearchResults] Backend search error; falling back to local corpus filter:", err.message);
       const terms = trimmed.toLowerCase().split(' ').filter(t => t.length > 2);
       const filtered = LANDMARK_PRECEDENTS.filter(item => {
@@ -426,6 +442,42 @@ export default function SearchResults({
                 </TiltCard>
               </motion.div>
             ) : null}
+          </div>
+        )}
+
+        {/* Spelling Tolerance Banner */}
+        {hasSearched && spellingCorrection && (
+          <div className="spelling-correction-line" style={{
+            fontSize: '0.875rem',
+            color: 'var(--text-secondary, #8CA69E)',
+            padding: '10px 16px',
+            marginBottom: '16px',
+            backgroundColor: 'rgba(212, 163, 89, 0.08)',
+            border: '1px solid rgba(212, 163, 89, 0.25)',
+            borderRadius: '12px',
+            display: 'flex',
+            alignItems: 'center',
+            gap: '6px'
+          }}>
+            <span>
+              Showing results for <strong style={{ color: 'var(--ivory, #F5F2EB)' }}>{spellingCorrection.corrected}</strong>. Search instead for{' '}
+              <button
+                type="button"
+                onClick={() => handleSearchInstead(spellingCorrection.original)}
+                style={{
+                  background: 'none',
+                  border: 'none',
+                  color: 'var(--copper, #D4A359)',
+                  textDecoration: 'underline',
+                  cursor: 'pointer',
+                  padding: 0,
+                  font: 'inherit',
+                  fontWeight: 600
+                }}
+              >
+                {spellingCorrection.original}
+              </button>
+            </span>
           </div>
         )}
 

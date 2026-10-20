@@ -25,6 +25,7 @@ import numpy as np
 
 from app.config import settings
 from app.services.embedding_service import embedding_service
+from app.services.spelling_service import correct_query
 
 logger = logging.getLogger("justice.qdrant")
 
@@ -1399,9 +1400,13 @@ class QdrantService:
         # Item 6: Return at most 8 results
         effective_limit = min(limit or 8, 8)
 
+        # Item 7: Spelling tolerance: before searching, correct the query
+        corrected_q, has_corr = correct_query(query)
+        active_query = corrected_q if has_corr else query
+
         # Item 3: Exact citation matching
-        det_cit = detect_citation(query)
-        is_pure_cit = is_pure_citation_query(query) if det_cit else False
+        det_cit = detect_citation(active_query)
+        is_pure_cit = is_pure_citation_query(active_query) if det_cit else False
 
         if det_cit:
             matched_case = self.lookup_exact_citation(det_cit)
@@ -1415,11 +1420,11 @@ class QdrantService:
                         results = []
                         if self._client:
                             try:
-                                results = self._search_qdrant(query, court_filter, bench_filter, effective_limit)
+                                results = self._search_qdrant(active_query, court_filter, bench_filter, effective_limit)
                             except Exception:
-                                results = self._search_local(query, court_filter, bench_filter, effective_limit)
+                                results = self._search_local(active_query, court_filter, bench_filter, effective_limit)
                         else:
-                            results = self._search_local(query, court_filter, bench_filter, effective_limit)
+                            results = self._search_local(active_query, court_filter, bench_filter, effective_limit)
                         combined = [matched_case]
                         seen_ids = {matched_case.get("id"), matched_case.get("case_id"), (matched_case.get("title") or "").lower()}
                         for r in results:
@@ -1436,11 +1441,11 @@ class QdrantService:
 
         if self._client:
             try:
-                res = self._search_qdrant(query, court_filter, bench_filter, effective_limit)
+                res = self._search_qdrant(active_query, court_filter, bench_filter, effective_limit)
                 return deduplicate_results_by_name_and_year(res)[:effective_limit]
             except Exception as e:
                 logger.warning("Live Qdrant query failed, falling back to local index: %s", e)
-        res = self._search_local(query, court_filter, bench_filter, effective_limit)
+        res = self._search_local(active_query, court_filter, bench_filter, effective_limit)
         return deduplicate_results_by_name_and_year(res)[:effective_limit]
 
     def _matches_filters(self, case: Dict[str, Any], court_filter: str, bench_filter: str) -> bool:
@@ -1630,8 +1635,24 @@ class QdrantService:
             except Exception as e:
                 logger.debug("Alias scroll failed: %s", e)
 
-        # 2. Evaluate verified landmark precedents from self.corpus if configured
+        # 2. Evaluate verified landmark precedents from self.corpus and landmark dataset if configured
         if self.corpus:
+            for lm in self._get_landmark_precedents():
+                cid = lm.get("id") or lm.get("case_id")
+                if cid in seen_ids:
+                    continue
+                c_copy = dict(lm)
+                c_text = f"{c_copy.get('title', '')} {c_copy.get('ratioSummary', '')} {' '.join(c_copy.get('statutes', []))} {c_copy.get('citation', '')}"
+                lm_vec = embedding_service.embed_query(c_text)
+                dot = sum(q * c for q, c in zip(vector, lm_vec))
+                norm_c = math.sqrt(sum(c * c for c in lm_vec)) or 1.0
+                cos_sim = dot / (norm_v * norm_c)
+                c_copy["raw_vector_score"] = float(cos_sim)
+                c_copy["id"] = cid
+                candidates.append(c_copy)
+                if cid:
+                    seen_ids.add(cid)
+
             corpus_vecs = self._get_corpus_vectors()
             for case_item, c_vec in zip(self.corpus, corpus_vecs):
                 cid = case_item.get("id") or case_item.get("case_id")

@@ -128,7 +128,7 @@ export async function auditContractWithBackend(input, title = "Commercial Agreem
  * MODULE B: Universal Search
  * POST /api/v1/search
  */
-export async function searchPrecedentsWithBackend(query, court = "ALL", benchType = "ALL", enableHyde = true, limit = 8) {
+export async function searchPrecedentsWithBackend(query, court = "ALL", benchType = "ALL", enableHyde = true, limit = 8, bypassCorrection = false) {
   const res = await fetch(`${API_BASE}/search`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
@@ -137,7 +137,8 @@ export async function searchPrecedentsWithBackend(query, court = "ALL", benchTyp
       court: court,
       bench_type: benchType,
       enable_hyde: enableHyde,
-      limit: limit
+      limit: limit,
+      bypass_correction: bypassCorrection
     })
   });
   if (!res.ok) {
@@ -150,7 +151,7 @@ export async function searchPrecedentsWithBackend(query, court = "ALL", benchTyp
  * MODULE B: AI Answer for Universal Search
  * POST /api/v1/search/answer
  */
-export async function fetchSearchAnswerWithBackend(query, court = "ALL", benchType = "ALL", results = null, forceFallback = false) {
+export async function fetchSearchAnswerWithBackend(query, court = "ALL", benchType = "ALL", results = null, forceFallback = false, bypassCorrection = false) {
   const res = await fetch(`${API_BASE}/search/answer`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
@@ -159,7 +160,8 @@ export async function fetchSearchAnswerWithBackend(query, court = "ALL", benchTy
       court: court,
       bench_type: benchType,
       results: results,
-      force_fallback: forceFallback
+      force_fallback: forceFallback,
+      bypass_correction: bypassCorrection
     })
   });
   if (!res.ok) {

@@ -13,12 +13,15 @@ import logging
 from app.config import settings
 from app.services.llm_service import llm_service
 from app.services.qdrant_service import qdrant_service
+from app.services.spelling_service import correct_query
 
 logger = logging.getLogger("justice.router.search")
 router = APIRouter(prefix="/api/v1", tags=["Universal Search"])
 
 class SearchRequest(BaseModel):
     query: str = Field(..., description="Legal query or statutory issue (e.g., 'Section 27 non-compete enforceability')")
+    original_query: Optional[str] = Field(None, description="Original query prior to correction")
+    bypass_correction: bool = Field(False, description="Whether to bypass spelling correction")
     court: Optional[str] = Field("ALL", description="Court filter: 'ALL', 'Supreme Court of India', 'Delhi High Court'")
     bench_type: Optional[str] = Field("ALL", description="Bench filter: 'ALL', 'CONSTITUTION', 'DIVISION'")
     enable_hyde: bool = Field(True, description="Whether to synthesize judicial ratio from retrieved precedents")
@@ -28,6 +31,9 @@ class SearchRequest(BaseModel):
 class SearchResponse(BaseModel):
     model_config = {"protected_namespaces": ()}
     query: str
+    corrected_query: Optional[str] = None
+    original_query: Optional[str] = None
+    has_spelling_correction: bool = False
     hyde_synthetic_ratio: Optional[str] = None
     ai_answer: Optional[str] = None
     citations: Optional[List[str]] = None
@@ -37,6 +43,8 @@ class SearchResponse(BaseModel):
 
 class SearchAnswerRequest(BaseModel):
     query: str = Field(..., description="Legal query or statutory issue")
+    original_query: Optional[str] = Field(None, description="Original query prior to correction")
+    bypass_correction: bool = Field(False, description="Whether to bypass spelling correction")
     court: Optional[str] = Field("ALL", description="Court filter: 'ALL', 'Supreme Court of India', 'Delhi High Court'")
     bench_type: Optional[str] = Field("ALL", description="Bench filter: 'ALL', 'CONSTITUTION', 'DIVISION'")
     force_fallback: bool = Field(False, description="Whether to force deterministic legal fallback")
@@ -45,6 +53,9 @@ class SearchAnswerRequest(BaseModel):
 class SearchAnswerResponse(BaseModel):
     model_config = {"protected_namespaces": ()}
     query: str
+    corrected_query: Optional[str] = None
+    original_query: Optional[str] = None
+    has_spelling_correction: bool = False
     ai_answer: Optional[str] = None
     ratio_decidendi: Optional[str] = None
     citations: Optional[List[str]] = []
@@ -110,27 +121,35 @@ async def search_precedents_post(payload: SearchRequest):
     If enable_hyde is False, returns retrieved cases immediately without synthesis.
     If enable_hyde is True, synthesizes judicial holding strictly from retrieved precedents with source citations.
     """
+    raw_query = (payload.query or "").strip()
+    corrected_q, has_corr = correct_query(raw_query)
+    effective_query = raw_query if payload.bypass_correction else (corrected_q if has_corr else raw_query)
+    has_spelling = has_corr and not payload.bypass_correction
+
     results = qdrant_service.search_precedents(
-        query=payload.query,
+        query=effective_query,
         court_filter=payload.court or "ALL",
         bench_filter=payload.bench_type or "ALL",
         limit=payload.limit
     )
 
-    if not payload.enable_hyde or is_pure_case_lookup_query(payload.query):
+    if not payload.enable_hyde or is_pure_case_lookup_query(effective_query):
         return SearchResponse(
-            query=payload.query,
+            query=effective_query,
+            corrected_query=corrected_q if has_spelling else None,
+            original_query=raw_query,
+            has_spelling_correction=has_spelling,
             hyde_synthetic_ratio=results[0].get("ratioSummary") if results else None,
             ai_answer=None,
             citations=[f"{results[0].get('title')} ({results[0].get('citation')})"] if results else [],
-            model_used="case_lookup" if is_pure_case_lookup_query(payload.query) else "retrieval_only",
+            model_used="case_lookup" if is_pure_case_lookup_query(effective_query) else "retrieval_only",
             results_count=len(results),
             results=results
         )
 
     # Synthesize AI answer using the Two-Tier framework
     synthesis = await llm_service.synthesize_search_answer(
-        payload.query, 
+        effective_query, 
         results, 
         force_fallback=payload.force_fallback
     )
@@ -143,7 +162,10 @@ async def search_precedents_post(payload: SearchRequest):
     citations = citation_checker.badge_citations_list(synthesis.get("citations", [])) if not is_tier2 else []
 
     return SearchResponse(
-        query=payload.query,
+        query=effective_query,
+        corrected_query=corrected_q if has_spelling else None,
+        original_query=raw_query,
+        has_spelling_correction=has_spelling,
         hyde_synthetic_ratio=ratio,
         ai_answer=ai_ans,
         citations=citations,
@@ -163,9 +185,17 @@ async def search_answer_post(payload: SearchAnswerRequest):
     - Tier 2: Plain-language explanation, tier_label='AI answer, not verified, not legal advice'
     - No strong match: Tier 2 explanation with no_strong_case_match=True
     """
-    if is_pure_case_lookup_query(payload.query):
+    raw_query = (payload.query or "").strip()
+    corrected_q, has_corr = correct_query(raw_query)
+    effective_query = raw_query if payload.bypass_correction else (corrected_q if has_corr else raw_query)
+    has_spelling = has_corr and not payload.bypass_correction
+
+    if is_pure_case_lookup_query(effective_query):
         return SearchAnswerResponse(
-            query=payload.query,
+            query=effective_query,
+            corrected_query=corrected_q if has_spelling else None,
+            original_query=raw_query,
+            has_spelling_correction=has_spelling,
             ai_answer=None,
             ratio_decidendi=None,
             citations=[],
@@ -181,14 +211,14 @@ async def search_answer_post(payload: SearchAnswerRequest):
     results = payload.results
     if results is None:
         results = qdrant_service.search_precedents(
-            query=payload.query,
+            query=effective_query,
             court_filter=payload.court or "ALL",
             bench_filter=payload.bench_type or "ALL",
             limit=5
         )
 
     synthesis = await llm_service.synthesize_search_answer(
-        payload.query,
+        effective_query,
         results,
         force_fallback=payload.force_fallback
     )
@@ -220,7 +250,10 @@ async def search_answer_post(payload: SearchAnswerRequest):
         no_strong = len(source_cases) == 0
 
     return SearchAnswerResponse(
-        query=payload.query,
+        query=effective_query,
+        corrected_query=corrected_q if has_spelling else None,
+        original_query=raw_query,
+        has_spelling_correction=has_spelling,
         ai_answer=ai_ans,
         ratio_decidendi=ratio,
         citations=citations,
