@@ -132,22 +132,41 @@ def test_explain_selection_empty(client=client):
     assert res.status_code == 400
     assert "empty" in res.json()["detail"].lower()
 
-def test_explain_selection_too_short(client=client):
-    """Selection under 3 words returns 400 Bad Request."""
+def test_explain_selection_two_words_allowed(client=client):
+    """Item 10: Allow 2-word selections (at least 1 word allowed)."""
     res = client.post("/api/explain-selection", json={
         "selected_text": "Two words"
     })
-    assert res.status_code == 400
-    assert "at least 3 words" in res.json()["detail"].lower()
+    assert res.status_code == 200, f"2-word selection must be allowed: {res.text}"
+    assert "In simple words:" in res.json()["explanation"]
+
+def test_explain_selection_single_word_allowed(client=client):
+    """Item 10: At least 1 word allowed."""
+    res = client.post("/api/explain-selection", json={
+        "selected_text": "Covenant"
+    })
+    assert res.status_code == 200, f"Single word selection must be allowed: {res.text}"
+    assert "In simple words:" in res.json()["explanation"]
 
 def test_explain_selection_too_long(client=client):
-    """Selection over 1500 chars returns 400 Bad Request."""
-    too_long = "This is a very long text passage being selected by the user. " * 30  # >1800 chars
+    """Item 10: Selection over 800 chars returns 400 Bad Request."""
+    too_long = "This is a very long text passage being selected by the user. " * 15  # >900 chars
     res = client.post("/api/explain-selection", json={
         "selected_text": too_long
     })
     assert res.status_code == 400
     assert "exceeds maximum length" in res.json()["detail"].lower()
+
+def test_explain_selection_inside_case_not_generic_contract(client=client):
+    """Item 10: When inside a case, explanation is about selected words in that case, not generic contract."""
+    res = client.post("/api/explain-selection", json={
+        "selected_text": "basic structure doctrine",
+        "case_id": "S_1973_1_1_1002"
+    })
+    assert res.status_code == 200
+    exp = res.json()["explanation"].lower()
+    assert "kesavananda" in exp or "judgment" in exp or "court" in exp or "constitution" in exp, f"Expected case explanation: {exp}"
+    assert "contractual obligations must comply" not in exp, "Must NOT reuse generic contract answer"
 
 # ---------------------------------------------------------------------------
 # Tests for /api/case-text

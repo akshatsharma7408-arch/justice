@@ -48,6 +48,7 @@ export default function App() {
   const [isExplainModalOpen, setIsExplainModalOpen] = useState(false);
   const [standaloneExplainText, setStandaloneExplainText] = useState('');
   const [standaloneExplainContext, setStandaloneExplainContext] = useState(null);
+  const [standaloneExplainCaseId, setStandaloneExplainCaseId] = useState(null);
 
   const handleToggleCaseChat = () => {
     setIsCaseChatOpen(prev => {
@@ -78,23 +79,32 @@ export default function App() {
   };
 
   const handleTriggerGlobalExplain = (selectedText) => {
+    setStandaloneExplainText(selectedText);
+
     if (activeView === 'citator' || (activeView === 'search' && activeCase)) {
-      setIsCaseChatOpen(true);
-      try {
-        localStorage.setItem('justice_case_chat_open', 'true');
-      } catch (e) {}
-      setCaseChatExternalPrompt(`Explain this in simple words: ${selectedText}`);
+      const cId = activeCase?.id || selectedCitatorCaseId || null;
+      const cTitle = activeCase?.title || 'Supreme Court Judgment';
+      setStandaloneExplainCaseId(cId);
+      setStandaloneExplainContext(`Case: ${cTitle}`);
+      setIsExplainModalOpen(true);
       return;
     }
 
     if (activeView === 'analyzer' || activeView === 'docchat') {
-      setStandaloneExplainText(selectedText);
+      setStandaloneExplainCaseId(null);
       setStandaloneExplainContext("Contract & Clause Audit Context");
       setIsExplainModalOpen(true);
       return;
     }
 
-    setStandaloneExplainText(selectedText);
+    if (activeView === 'maxims') {
+      setStandaloneExplainCaseId(null);
+      setStandaloneExplainContext("Legal Maxim Doctrine");
+      setIsExplainModalOpen(true);
+      return;
+    }
+
+    setStandaloneExplainCaseId(null);
     setStandaloneExplainContext(null);
     setIsExplainModalOpen(true);
   };
@@ -282,9 +292,15 @@ export default function App() {
         {/* Standalone Explain Selection Modal / Bottom Sheet */}
         <ExplainSelectionModal
           isOpen={isExplainModalOpen}
-          onClose={() => setIsExplainModalOpen(false)}
+          onClose={() => {
+            setIsExplainModalOpen(false);
+            setStandaloneExplainText('');
+            setStandaloneExplainCaseId(null);
+            setStandaloneExplainContext(null);
+          }}
           selectedText={standaloneExplainText}
           context={standaloneExplainContext}
+          caseId={standaloneExplainCaseId}
         />
       </Suspense>
 

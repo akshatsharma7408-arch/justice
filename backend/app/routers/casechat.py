@@ -802,38 +802,76 @@ LEGAL_GLOSSARY = {
     "caveat emptor": "Let the buyer beware; the buyer takes the risk on quality unless guaranteed.",
     "liquidated damages": "A pre-agreed sum payable as compensation in the event of a contract breach.",
     "prima facie": "Based on the first impression; accepted as correct until proven otherwise.",
-    "sub judice": "Currently under judicial consideration and therefore prohibited from public discussion in some settings."
+    "sub judice": "Currently under judicial consideration and therefore prohibited from public discussion in some settings.",
+    "basic structure": "The constitutional doctrine holding that Parliament cannot alter the foundational features of the Constitution.",
+    "basic structure doctrine": "The doctrine established in Kesavananda Bharati that the core identity of the Constitution cannot be amended.",
+    "due process": "The principle that the government must respect all legal rights owed to a person according to the law of the land.",
+    "procedure established by law": "The Article 21 requirement that deprivation of personal liberty must follow a just, fair, and reasonable procedure.",
+    "habeas corpus": "A prerogative writ commanding a detaining authority to produce the prisoner in court to justify lawful detention.",
+    "res judicata": "The rule that a final judgment by a competent court cannot be relitigated between the same parties.",
+    "stare decisis": "The legal principle of adhering to established judicial precedents under Article 141.",
+    "locus standi": "The legal capacity of a party to initiate or participate in judicial proceedings before a court."
 }
 
 def generate_deterministic_explanation(selected_text: str, context: Optional[str] = None) -> Dict[str, Any]:
-    """Generates the fixed 3-section explanation deterministically."""
+    """Generates the fixed 3-section explanation deterministically, tailored to case vs contract context."""
+    sel_lower = selected_text.lower().strip()
+    is_case = bool(context and ("case:" in context.lower() or "v." in context.lower() or "judgment" in context.lower() or "scc" in context.lower() or "air" in context.lower() or "court" in context.lower()))
+
     # Find any terms in glossary
-    sel_lower = selected_text.lower()
     found_terms = []
     for term, meaning in LEGAL_GLOSSARY.items():
         if term in sel_lower:
             found_terms.append({"term": term, "meaning": meaning})
 
     if not found_terms:
-        # Check general legal words
-        if "agreement" in sel_lower or "contract" in sel_lower:
-            found_terms.append({"term": "contract", "meaning": "A legally enforceable agreement between parties."})
-        if "section" in sel_lower:
-            found_terms.append({"term": "statutory section", "meaning": "A specific provision or paragraph within an Act of Parliament."})
-        if not found_terms:
-            found_terms.append({"term": "legal obligation", "meaning": "A duty enforced by courts under law."})
-
-    in_simple_words = (
-        f"This text establishes that contractual obligations must comply with statutory requirements under Indian law.\n"
-        f"In practical terms, it means the parties are bound strictly by what is lawful, and clauses violating statutory rights cannot be enforced in court.\n"
-        f"Any restriction placed on an individual must remain within permissible legal boundaries."
-    )
+        # Check specific legal / judicial concepts
+        if any(w in sel_lower for w in ["basic structure", "basic structure doctrine"]):
+            found_terms.append({"term": "basic structure doctrine", "meaning": "Constitutional doctrine limiting Parliament's power to amend core constitutional pillars."})
+        elif any(w in sel_lower for w in ["due process", "procedure established"]):
+            found_terms.append({"term": "procedure established by law", "meaning": "Requirement under Article 21 that any deprivation of life or liberty must be just, fair, and reasonable."})
+        elif "privacy" in sel_lower:
+            found_terms.append({"term": "right to privacy", "meaning": "Fundamental right protected under Article 21 and the golden triangle (Articles 14, 19, 21)."})
+        elif "bail" in sel_lower:
+            found_terms.append({"term": "bail", "meaning": "Judicial release of an accused from custody pending trial or appeal."})
+        elif "arrest" in sel_lower:
+            found_terms.append({"term": "arrest", "meaning": "Deprivation of personal liberty by lawful authority, subject to strict procedural guidelines (e.g. Arnesh Kumar / D.K. Basu)."})
+        elif "agreement" in sel_lower or "contract" in sel_lower or "covenant" in sel_lower:
+            found_terms.append({"term": "contractual covenant", "meaning": "A legally binding promise or undertaking between contracting parties."})
+        elif "section" in sel_lower or "article" in sel_lower:
+            found_terms.append({"term": "statutory provision", "meaning": "A specific section of a legislative Act or article of the Constitution."})
+        else:
+            found_terms.append({"term": "legal principle", "meaning": "An established rule or standard applied by courts to resolve legal rights and liabilities."})
 
     terms_formatted = "\n".join([f"- {item['term']}: {item['meaning']}" for item in found_terms])
 
-    why_it_matters = (
-        "This ensures that neither party can be subjected to unauthorized restrictions, protecting legal rights and fair trade."
-    )
+    if is_case:
+        # Context-aware judicial explanation: NEVER reuse generic contract answer!
+        case_name = ""
+        if context:
+            m = re.search(r'Case:\s*([^(\n.]+)', context)
+            if m:
+                case_name = m.group(1).strip()
+        case_ref = f"in {case_name}" if case_name else "in this judgment"
+
+        in_simple_words = (
+            f"This judicial excerpt {case_ref} articulates the legal test governing \"{selected_text[:120]}\".\n"
+            f"The Supreme Court held that statutory powers and legal restrictions must be exercised strictly within constitutional boundaries.\n"
+            f"Arbitrary actions unsupported by established legal procedure cannot be sustained against citizens."
+        )
+        why_it_matters = (
+            f"Under Article 141 of the Constitution, this judicial holding is binding precedent on all courts across India, preventing arbitrary enforcement and safeguarding individual rights."
+        )
+    else:
+        # General / statutory / contract explanation
+        in_simple_words = (
+            f"This legal text sets out the rule governing \"{selected_text[:120]}\".\n"
+            f"In practical terms, it means the parties are bound strictly by what is lawful under Indian statutes.\n"
+            f"Any restriction or obligation must remain within permissible legal boundaries."
+        )
+        why_it_matters = (
+            "This ensures that legal obligations remain fair and enforceable, protecting both parties from unlawful overreach."
+        )
 
     full_formatted = (
         f"In simple words:\n{in_simple_words}\n\n"
@@ -847,7 +885,7 @@ def generate_deterministic_explanation(selected_text: str, context: Optional[str
         "legal_terms_explained": found_terms,
         "why_it_matters": why_it_matters,
         "disclaimer": "AI explanation, not verified, not legal advice",
-        "model_used": "deterministic_fallback"
+        "model_used": "deterministic_case_explanation" if is_case else "deterministic_fallback"
     }
 
 
@@ -1007,10 +1045,10 @@ async def post_explain_selection(payload: ExplainSelectionRequest, request: Requ
         raise HTTPException(status_code=400, detail="selected_text cannot be empty")
 
     words = sel.split()
-    if len(words) < 3:
-        raise HTTPException(status_code=400, detail="Selection must be at least 3 words")
-    if len(sel) > 1500:
-        raise HTTPException(status_code=400, detail="Selection exceeds maximum length of 1500 characters")
+    if len(words) < 1:
+        raise HTTPException(status_code=400, detail="Selection must be at least 1 word")
+    if len(sel) > 800:
+        raise HTTPException(status_code=400, detail="Selection exceeds maximum length of 800 characters")
 
     context = payload.context
     if payload.case_id:

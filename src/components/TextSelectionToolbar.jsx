@@ -18,14 +18,14 @@ export default function TextSelectionToolbar({ onTriggerExplain }) {
       const text = selection.toString().trim();
       const words = text.split(/\s+/).filter(Boolean);
 
-      // Ignore selections under 3 words or over 1500 characters
-      if (words.length < 3 || text.length > 1500) {
+      // Minimum 1 word, maximum 800 characters
+      if (words.length < 1 || text.length > 800) {
         setPosition(null);
         setSelectedText('');
         return;
       }
 
-      // Check if selection starts or ends inside input boxes, buttons, or nav bar
+      // Check if selection starts or ends inside input boxes, buttons, nav bar, or chat inputs
       const anchorNode = selection.anchorNode;
       const focusNode = selection.focusNode;
       const anchorEl = anchorNode?.nodeType === Node.ELEMENT_NODE ? anchorNode : anchorNode?.parentElement;
@@ -35,7 +35,7 @@ export default function TextSelectionToolbar({ onTriggerExplain }) {
         if (!el) return false;
         return Boolean(
           el.closest(
-            'input, textarea, button, select, [contenteditable="true"], .workspace-sidebar, .workspace-topbar, .site-header, .case-chat-input-area, .explain-modal-backdrop, .case-chat-quick-buttons-strip'
+            'input, textarea, button, select, [contenteditable="true"], nav, header, .site-header, .navbar, .landing-top-bar, .app-nav, .docked-nav, .workspace-sidebar, .workspace-topbar, .case-chat-input-area, .case-chat-textarea, .chat-input, .docchat-input-area, .docchat-input, .case-chat-input, .explain-modal-backdrop, .explain-modal-dialog, .explain-modal-card, .case-chat-quick-buttons-strip'
           )
         );
       };
@@ -72,7 +72,7 @@ export default function TextSelectionToolbar({ onTriggerExplain }) {
         if (selection && !selection.isCollapsed) {
           const text = selection.toString().trim();
           const words = text.split(/\s+/).filter(Boolean);
-          if (words.length >= 3 && text.length <= 1500) {
+          if (words.length >= 1 && text.length <= 800) {
             e.preventDefault();
             onTriggerExplain(text);
             setPosition(null);
