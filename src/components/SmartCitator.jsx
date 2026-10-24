@@ -14,6 +14,7 @@ const CITATION_GRAPH_NODES = [
   {
     id: 'node-target',
     name: "Percept D'Mark v. Zaheer Khan",
+    shortName: "Percept v. Zaheer Khan",
     citation: "(2006) 4 SCC 227",
     court: "Supreme Court of India",
     bench: "Division Bench (2 Judges)",
@@ -22,64 +23,53 @@ const CITATION_GRAPH_NODES = [
     status: "TARGET",
     statusLabel: "Target Precedent",
     x: 400,
-    y: 170,
+    y: 175,
     ratio: "Post-employment non-compete covenants are completely void under Section 27. Doctrine of restraint of trade applies strictly post-service."
   },
   {
     id: 'node-affirmed',
     name: "Superintendence Co. v. Krishan Murgai",
+    shortName: "Superintendence Co.",
     citation: "(1981) 2 SCC 246",
     court: "Supreme Court of India",
-    bench: "3 Judges Bench",
+    bench: "3-Judge Bench",
     benchSize: 3,
-    year: 1981,
+    year: 1980,
     status: "AFFIRMED",
-    statusLabel: "Affirmed",
-    x: 640,
-    y: 80,
+    statusLabel: "Affirmed / Followed",
+    x: 630,
+    y: 85,
     ratio: "Restraints post-service cannot be justified by reasonableness under Indian law; Section 27 admits no exception except sale of goodwill."
   },
   {
     id: 'node-distinguished-golikari',
     name: "Niranjan Shankar Golikari v. Century Spg.",
+    shortName: "Niranjan Golikari",
     citation: "(1967) 2 SCR 378",
     court: "Supreme Court of India",
-    bench: "2 Judges Bench",
+    bench: "Division Bench (2 Judges)",
     benchSize: 2,
     year: 1967,
     status: "DISTINGUISHED",
-    statusLabel: "Distinguished (In-Service Only)",
-    x: 160,
-    y: 80,
+    statusLabel: "Distinguished (In-Service)",
+    x: 170,
+    y: 85,
     ratio: "Negative covenants operating during the period of employment do not attract Section 27, whereas post-service covenants are void."
   },
   {
-    id: 'node-distinguished',
-    name: "Gujarat Bottling Co. Ltd. v. Coca Cola Co.",
-    citation: "(1995) 5 SCC 545",
-    court: "Supreme Court of India",
-    bench: "Division Bench",
-    benchSize: 2,
-    year: 1995,
-    status: "DISTINGUISHED",
-    statusLabel: "Distinguished on Facts",
-    x: 200,
-    y: 270,
-    ratio: "Commercial franchise agreements restricting bottling of competing beverages during contract subsistence are valid commercial terms."
-  },
-  {
-    id: 'node-overruled',
-    name: "Oakes & Co. v. Jackson",
-    citation: "ILR (1876) 1 Mad 134",
-    court: "Madras High Court",
+    id: 'node-relied-wipro',
+    name: "Wipro Ltd. v. Beckman Coulter International",
+    shortName: "Wipro v. Beckman Coulter",
+    citation: "(2006) 131 DLT 681",
+    court: "Delhi High Court",
     bench: "Single Judge",
     benchSize: 1,
-    year: 1876,
-    status: "OVERRULED",
-    statusLabel: "Overruled",
-    x: 600,
-    y: 270,
-    ratio: "Earlier colonial rulings attempting to inject English common law reasonableness exceptions into Section 27 were overruled."
+    year: 2006,
+    status: "RELIED_ON",
+    statusLabel: "Relied On / Applied",
+    x: 400,
+    y: 285,
+    ratio: "Applied Percept D'Mark in holding non-solicitation and restrictive covenants operating post-contract to be barred under Section 27."
   }
 ];
 
@@ -259,9 +249,12 @@ export default function SmartCitator({ initialCaseId, onActiveCaseChange }) {
     if (selectedCaseId === 'sc-2006-percept') {
       return CITATION_GRAPH_NODES;
     }
+    const cleanTitle = (currentCase.title || 'Supreme Court Precedent').trim();
+    const shortTitle = cleanTitle.split('v.')[0].trim() + (cleanTitle.includes('v.') ? ' v. ...' : '');
     const target = {
       id: 'node-target',
-      name: currentCase.title || 'Supreme Court Precedent',
+      name: cleanTitle,
+      shortName: shortTitle,
       citation: currentCase.citation || 'Supreme Court Judgment',
       court: currentCase.court || 'Supreme Court of India',
       bench: currentCase.benchType || `${currentCase.benchSize || 2} Judges Bench`,
@@ -270,31 +263,40 @@ export default function SmartCitator({ initialCaseId, onActiveCaseChange }) {
       status: 'TARGET',
       statusLabel: 'Target Precedent',
       x: 400,
-      y: 170,
+      y: 175,
       ratio: currentCase.ratioSummary || currentCase.aiAnalysis?.executive_summary || currentCase.snippet || "Primary ratio decidendi under Article 141 of the Constitution of India."
     };
 
     if (currentCase.treatmentHistory && currentCase.treatmentHistory.length > 0) {
       const positions = [
-        { x: 160, y: 80 },
-        { x: 640, y: 80 },
-        { x: 200, y: 270 },
-        { x: 600, y: 270 }
+        { x: 170, y: 85 },
+        { x: 630, y: 85 },
+        { x: 170, y: 275 },
+        { x: 630, y: 275 }
       ];
-      const related = currentCase.treatmentHistory.slice(0, 4).map((th, idx) => ({
-        id: `node-${idx}`,
-        name: th.case,
-        citation: `(${th.year})`,
-        court: th.court || 'Supreme Court of India',
-        bench: 'Appellate Bench',
-        benchSize: 2,
-        year: th.year,
-        status: (th.treatment || 'AFFIRMED').toUpperCase(),
-        statusLabel: th.treatment || 'Affirmed',
-        x: positions[idx].x,
-        y: positions[idx].y,
-        ratio: th.note || `Judicial treatment of precedent: ${th.treatment}`
-      }));
+      const related = currentCase.treatmentHistory.slice(0, 4).map((th, idx) => {
+        const caseTitle = th.case || 'Precedent Treatment';
+        const yearMatch = caseTitle.match(/\((\d{4})\)/) || [null, th.year];
+        const year = yearMatch[1] || th.year;
+        const cleanName = caseTitle.replace(/\s*\(\d{4}\)/, '').trim();
+        const shortRelName = cleanName.split('v.')[0].trim() + (cleanName.includes('v.') ? ' v. ...' : '');
+
+        return {
+          id: `node-${idx}`,
+          name: cleanName,
+          shortName: shortRelName,
+          citation: th.citation || (year ? `(${year})` : 'Citation on Record'),
+          court: th.court || 'Supreme Court of India',
+          bench: th.bench || 'Appellate Bench',
+          benchSize: th.benchSize || 2,
+          year: year || currentCase.decisionYear,
+          status: (th.treatment || 'AFFIRMED').toUpperCase(),
+          statusLabel: th.treatment ? th.treatment.replace('_', ' ') : 'Affirmed',
+          x: positions[idx].x,
+          y: positions[idx].y,
+          ratio: th.note || `Judicial treatment: ${th.treatment || 'Cited'}`
+        };
+      });
       return [target, ...related];
     }
 
@@ -316,7 +318,7 @@ export default function SmartCitator({ initialCaseId, onActiveCaseChange }) {
           from: 'node-target',
           to: n.id,
           x1: 400,
-          y1: 170,
+          y1: 175,
           x2: n.x,
           y2: n.y,
           stroke,
@@ -567,24 +569,27 @@ export default function SmartCitator({ initialCaseId, onActiveCaseChange }) {
                         }}
                       >
                         <rect
-                          x="-70"
-                          y="-30"
-                          width="140"
-                          height="60"
-                          rx="18"
+                          x="-95"
+                          y="-35"
+                          width="190"
+                          height="70"
+                          rx="12"
                           fill={isHovered || isSelected ? '#17302A' : statusBg}
                           stroke={isHovered || isSelected ? '#E0955A' : borderColor}
                           strokeWidth={isHovered || isSelected ? 2.5 : 1}
                           style={{ transition: 'stroke 150ms ease, fill 150ms ease, stroke-width 150ms ease' }}
                         />
-                        <text textAnchor="middle" y="-8" fill={statusColor} fontSize="9.5" fontWeight="600" letterSpacing="0.04em" fontFamily="Inter, sans-serif">
+                        <text textAnchor="middle" y="-18" fill={statusColor} fontSize="8" fontWeight="700" letterSpacing="0.05em" fontFamily="Inter, sans-serif">
                           {node.statusLabel.toUpperCase()}
                         </text>
-                        <text textAnchor="middle" y="10" fill="#EFE8D6" fontSize="9" fontFamily="JetBrains Mono, monospace">
-                          {(node.citation || '').split(' ')[0]}
+                        <text textAnchor="middle" y="-2" fill="#FFFFFF" fontSize="10.5" fontWeight="600" fontFamily="Playfair Display, Georgia, serif">
+                          {(node.shortName || node.name).length > 25 ? (node.shortName || node.name).slice(0, 24) + '…' : (node.shortName || node.name)}
                         </text>
-                        <text textAnchor="middle" y="22" fill="#9AA79F" fontSize="8" fontFamily="Inter, sans-serif">
-                          {(node.court || '').split(' ')[0]} {node.year}
+                        <text textAnchor="middle" y="13" fill="#D4AF37" fontSize="9" fontWeight="500" fontFamily="JetBrains Mono, monospace">
+                          {node.citation && node.citation.length > 24 ? node.citation.slice(0, 23) + '…' : node.citation}
+                        </text>
+                        <text textAnchor="middle" y="25" fill="#9AA79F" fontSize="8" fontFamily="Inter, sans-serif">
+                          {node.court.split(' ')[0]} {node.court.includes('High') ? 'HC' : 'SC'} • {node.year}
                         </text>
                       </g>
                     );

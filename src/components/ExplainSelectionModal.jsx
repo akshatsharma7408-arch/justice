@@ -174,15 +174,15 @@ export default function ExplainSelectionModal({
   };
 
   return (
-    <div 
-      className="explain-modal-backdrop" 
-      onClick={onClose} 
-      role="dialog" 
+    <div
+      className="explain-modal-backdrop"
+      onClick={onClose}
+      role="dialog"
       aria-modal="true"
       aria-labelledby="explain-modal-heading"
     >
-      <div 
-        className="explain-modal-dialog" 
+      <div
+        className="explain-modal-dialog"
         onClick={(e) => e.stopPropagation()}
         style={{
           backgroundColor: '#12261F',
@@ -203,9 +203,9 @@ export default function ExplainSelectionModal({
             </h3>
           </div>
 
-          <button 
-            type="button" 
-            className="explain-close-btn" 
+          <button
+            type="button"
+            className="explain-close-btn"
             onClick={onClose}
             aria-label="Close explanation popup"
           >
@@ -253,9 +253,9 @@ export default function ExplainSelectionModal({
 
           <div className="footer-actions">
             {explanationData && (
-              <button 
-                type="button" 
-                className="btn-explain-copy" 
+              <button
+                type="button"
+                className="btn-explain-copy"
                 onClick={handleCopy}
               >
                 {copied ? (
@@ -272,9 +272,9 @@ export default function ExplainSelectionModal({
               </button>
             )}
 
-            <button 
-              type="button" 
-              className="btn-primary-explain-close" 
+            <button
+              type="button"
+              className="btn-primary-explain-close"
               onClick={onClose}
             >
               Done

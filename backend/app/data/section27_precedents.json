@@ -296,10 +296,10 @@
       "status": "GREEN",
       "statusLabel": "GOOD LAW (7-JUDGE CONSTITUTION BENCH)",
       "statutes": ["Transfer of Property Act, 1882 - Section 106", "State Rent Control Acts"],
-      "ratioSummary": "A 7-judge Constitution Bench held that in rent-controlled premises, service of a contractual notice to quit under Section 106 of the Transfer of Property Act is not a condition precedent to an eviction petition under State Rent Control Acts. However, a landlord cannot forcefully or summarily evict a tenant and must establish one of the statutory grounds for eviction provided under rent control legislation before the competent authority.",
-      "judges": ["A.D. Koshal, J.", "D.A. Desai, J.", "N.L. Untwalia, J.", "P.S. Kailasam, J.", "R.S. Pathak, J.", "V.D. Tulzapurkar, J.", "Y.V. Chandrachud, C.J.I."],
+      "ratioSummary": "A 7-judge Constitution Bench held that in premises governed by State Rent Control legislation, service of a contractual notice to quit under Section 106 of the Transfer of Property Act is not a condition precedent to an eviction petition. A landlord cannot forcefully or summarily evict a tenant and must establish one of the statutory grounds for eviction provided under the applicable State Rent Control Act before the competent authority.",
+      "judges": ["N.L. Untwalia, J.", "Y.V. Chandrachud, C.J.I.", "R.S. Sarkaria, J.", "P.N. Shingal, J.", "P.S. Kailasam, J.", "E.S. Venkataramiah, J.", "O. Chinnappa Reddy, J."],
       "keywords": ["tenancy", "landlord", "eviction", "rent control", "section 106 transfer of property act", "notice to quit", "ejectment", "rent control act eviction ground", "dhanapal chettiar"],
-      "source": {"name": "Indian Kanoon (free)", "url": "https://indiankanoon.org/doc/816999/", "accessed": "2026-10-20"}
+      "source": {"name": "Indian Kanoon (free)", "url": "https://indiankanoon.org/doc/1188309/", "accessed": "2026-10-21"}
     },
     {
       "id": "sc-2005-atmaram",
@@ -310,16 +310,16 @@
       "benchType": "Division Bench",
       "benchSize": 2,
       "leadJudge": "R.C. Lahoti, C.J.I.",
-      "decisionYear": 2005,
-      "year": 2005,
+      "decisionYear": 2004,
+      "year": 2004,
       "decisionDate": "2004-12-10",
       "status": "GREEN",
       "statusLabel": "GOOD LAW (ARTICLE 141 BINDING)",
       "statutes": ["Delhi Rent Control Act, 1958", "Code of Civil Procedure, 1908 - Order XLI Rule 5"],
-      "ratioSummary": "The Supreme Court held that once an eviction decree or order is passed against a tenant who fails to pay rent, the lawful tenancy terminates. A tenant who fails to pay rent cannot live or remain in the premises without paying rent indefinitely. If an appellate court grants a stay of eviction, the court has the equitable jurisdiction to direct the tenant to pay reasonable market rent or mesne profits during the pendency of the appeal.",
+      "ratioSummary": "In premises governed by the Delhi Rent Control Act, eviction proceedings arose from alleged unlawful subletting. The Supreme Court held that once an eviction decree is passed, lawful tenancy terminates. Under Order XLI Rule 5 of the Code of Civil Procedure, an appellate court granting a stay of eviction has equitable jurisdiction to condition that stay on the tenant paying reasonable compensation or mesne profits for continued use and occupation during the pendency of the appeal.",
       "judges": ["R.C. Lahoti, C.J.I.", "G.P. Mathur, J."],
-      "keywords": ["tenant not paying rent", "live in apartment without paying rent", "apartment", "eviction", "mesne profits", "possession", "stay of eviction", "rent arrears", "atma ram properties"],
-      "source": {"name": "Indian Kanoon (free)", "url": "https://indiankanoon.org/doc/1577740/", "accessed": "2026-10-20"}
+      "keywords": ["stay of eviction", "order XLI rule 5 CPC", "mesne profits", "compensation for use and occupation", "delhi rent control act", "unlawful subletting", "atma ram properties"],
+      "source": {"name": "CaseOn (free)", "url": "https://www.caseon.in/uploads/cases/pdf/ms-atma-ram-properties-p-ltd-vs-ms-federal-motors-pvt-ltd.pdf", "accessed": "2026-10-21"}
     },
     {
       "id": "sc-1967-manmohandas",
@@ -329,17 +329,17 @@
       "court": "Supreme Court of India",
       "benchType": "Three-Judge Bench",
       "benchSize": 3,
-      "leadJudge": "V. Ramaswami, J.",
-      "decisionYear": 1967,
-      "year": 1967,
-      "decisionDate": "1966-11-28",
+      "leadJudge": "J.M. Shelat, J.",
+      "decisionYear": 1966,
+      "year": 1966,
+      "decisionDate": "1966-10-12",
       "status": "GREEN",
       "statusLabel": "GOOD LAW (ARTICLE 141 BINDING)",
-      "statutes": ["U.P. (Temporary) Control of Rent and Eviction Act, 1947", "Transfer of Property Act, 1882"],
-      "ratioSummary": "Under rent control legislation, non-payment of rent constitutes a principal statutory ground for eviction. When a tenant defaults in paying rent and fails to clear arrears after notice, the landlord is entitled to institute an eviction suit. A tenant has no statutory protection to remain in occupation of the rented apartment without paying the agreed rent.",
-      "judges": ["K. Subba Rao, C.J.I.", "J.C. Shah, J.", "V. Ramaswami, J."],
-      "keywords": ["rent default", "eviction ground", "tenant not paying rent", "without paying rent", "statutory notice", "manmohan das shah"],
-      "source": {"name": "Indian Kanoon (free)", "url": "https://indiankanoon.org/doc/1218524/", "accessed": "2026-10-20"}
+      "statutes": ["U.P. (Temporary) Control of Rent and Eviction Act, 1947 - Section 3(1)(c)"],
+      "ratioSummary": "Under Section 3(1)(c) of the U.P. (Temporary) Control of Rent and Eviction Act, 1947, a tenant is liable to eviction if they make alterations that materially alter the accommodation or are likely substantially to diminish its value. The question whether alterations are material is one of fact to be determined by the nature and extent of the structural changes made to the premises.",
+      "judges": ["K. Subba Rao, C.J.I.", "J.M. Shelat, J.", "R.S. Bachawat, J."],
+      "keywords": ["material alterations", "diminish value", "section 3(1)(c)", "UP rent control", "accommodation", "babu manmohan das shah"],
+      "source": {"name": "Indian Kanoon (free)", "url": "https://indiankanoon.org/doc/1073776/", "accessed": "2026-10-21"}
     }
   ]
 }

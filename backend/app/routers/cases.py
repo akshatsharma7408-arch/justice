@@ -15,7 +15,8 @@ from app.services.qdrant_service import (
     normalize_citation,
     clean_judgment_text,
     extract_statutes_from_text,
-    SEARCH_STOPWORDS
+    SEARCH_STOPWORDS,
+    detect_citation
 )
 from app.routers.casechat import (
     _init_case_data,
@@ -40,6 +41,8 @@ class CaseListItem(BaseModel):
     benchType: Optional[str] = None
     statutes: List[str] = Field(default_factory=list)
     ratioSummary: Optional[str] = ""
+    ratioLabel: Optional[str] = "RATIO DECIDENDI / LEGAL PRINCIPLE"
+    is_verified_ratio: Optional[bool] = True
 
 
 class CaseSearchResponse(BaseModel):
@@ -60,6 +63,7 @@ class CaseDetailResponse(BaseModel):
     statutes: List[str] = Field(default_factory=list)
     ratioSummary: Optional[str] = ""
     ratioLabel: Optional[str] = "RATIO DECIDENDI / LEGAL PRINCIPLE"
+    is_verified_ratio: Optional[bool] = True
     holding: Optional[str] = None
     overruledCases: List[str] = Field(default_factory=list)
     treatmentHistory: List[Dict[str, Any]] = Field(default_factory=list)
@@ -69,14 +73,15 @@ class CaseDetailResponse(BaseModel):
 def _search_full_case_collection(query: str, limit: int = 20) -> List[Dict[str, Any]]:
     """
     Searches across all records available to the application:
-    1. Verified Precedent Corpus & Tenancy Precedents (section27_precedents.json)
-    2. Landmark SC Cases (landmark_chunks.json)
-    3. Entire SC Judgments Metadata Index (1,740+ cases from chunks.json & citizen_rights_chunks.json)
+    1. Exact Citation Lookup & Precedent Aliases (AIR 1973 SC 1461, (1978) 1 SCC 248)
+    2. Verified Precedent Corpus & Tenancy Precedents (section27_precedents.json)
+    3. Entire SC Judgments Metadata Index (_CASE_METADATA_INDEX)
+    4. Live Qdrant sc_judgments collection via native MatchText scroll and vector search
     
     Supports:
     - Full case name
-    - Partial name (e.g. 'Dhanapal', 'Atma Ram', 'Babu', 'Maneka', 'Niranjan')
-    - Formal citation (e.g. 'AIR 1979 SC 1745', '[1975] 3 S.C.R. 1', '(2006) 4 SCC 227')
+    - Partial name (e.g. 'Dhanapal', 'Atma Ram', 'Babu', 'Maneka', 'Niranjan', 'Kesavananda', 'Vihaan', 'Harminder')
+    - Formal or compact citations (e.g. 'AIR 1979 SC 1745', 'AIR1973SC1461', '[1975] 3 S.C.R. 1', '(2006) 4 SCC 227')
     - Decision Year
     - Statutory keywords
     """
@@ -89,11 +94,25 @@ def _search_full_case_collection(query: str, limit: int = 20) -> List[Dict[str, 
     scored_cases: List[tuple[float, str, Dict[str, Any]]] = []
     seen_ids = set()
 
-    # Pre-index cases list from corpus first (to give high priority to hand-verified precedents)
+    # 0. Check exact citation lookup first (e.g. AIR 1973 SC 1461, AIR1973SC1461)
+    if q:
+        cit_match = qdrant_service.lookup_exact_citation(q)
+        if not cit_match:
+            det_cit = detect_citation(q)
+            if det_cit:
+                cit_match = qdrant_service.lookup_exact_citation(det_cit)
+        if cit_match:
+            cid = str(cit_match.get("id") or cit_match.get("case_id")).strip()
+            seen_ids.add(cid.lower())
+            scored_cases.append((300.0, cid, cit_match))
+
+    # 1. Pre-index cases list from corpus first (to give high priority to hand-verified precedents)
     corpus_cases = qdrant_service.corpus or []
     for c in corpus_cases:
         cid = c.get("id") or c.get("case_id")
         if not cid:
+            continue
+        if cid.lower() in seen_ids:
             continue
         seen_ids.add(cid.lower())
         title = (c.get("title") or "").strip()
@@ -145,7 +164,7 @@ def _search_full_case_collection(query: str, limit: int = 20) -> List[Dict[str, 
         if score > 0:
             scored_cases.append((score, cid, c))
 
-    # Search remaining cases from _CASE_METADATA_INDEX
+    # 2. Search remaining cases from _CASE_METADATA_INDEX
     for cid, c in _CASE_METADATA_INDEX.items():
         cid_clean = str(cid).strip()
         if cid_clean.lower() in seen_ids:
@@ -198,6 +217,128 @@ def _search_full_case_collection(query: str, limit: int = 20) -> List[Dict[str, 
             seen_ids.add(cid_clean.lower())
             scored_cases.append((score, cid_clean, c))
 
+    # 3. Search LIVE Qdrant collection (sc_judgments) across all 36,758 points
+    if q and qdrant_service._client:
+        try:
+            from qdrant_client.http.models import Filter, FieldCondition, MatchText
+            client = qdrant_service._client
+
+            filter_conditions = [
+                FieldCondition(key="case_name", match=MatchText(text=q)),
+                FieldCondition(key="citation", match=MatchText(text=q))
+            ]
+
+            # If query contains citation tokens like AIR 1973 1461
+            q_cit_tokens = re.findall(r'(?:AIR|SCC|SCR|\d{4}|\d+)', q, re.IGNORECASE)
+            if len(q_cit_tokens) >= 2:
+                filter_conditions.append(FieldCondition(key="citation", match=MatchText(text=" ".join(q_cit_tokens))))
+
+            target_collection = qdrant_service.sc_collection_name
+            try:
+                available = {col.name for col in client.get_collections().collections}
+                if target_collection not in available:
+                    target_collection = qdrant_service.collection_name
+            except Exception:
+                pass
+
+            records, _ = client.scroll(
+                collection_name=target_collection,
+                scroll_filter=Filter(should=filter_conditions),
+                limit=limit * 2,
+                with_payload=True,
+                with_vectors=False
+            )
+
+            for rec in records:
+                payload = rec.payload or {}
+                cid = str(payload.get("case_id") or payload.get("id") or rec.id).strip()
+                if not cid or cid.lower() in seen_ids:
+                    continue
+
+                title = (payload.get("case_name") or payload.get("title") or cid).strip()
+                cit = (payload.get("citation") or "").strip()
+                year = payload.get("year")
+                bench = payload.get("bench")
+
+                title_low = title.lower()
+                cit_norm = normalize_citation(cit)
+                score = 55.0
+
+                if q_low in title_low:
+                    score += 75.0
+                if q_tokens:
+                    matched_tokens = sum(1 for t in q_tokens if t in title_low)
+                    if matched_tokens == len(q_tokens):
+                        score += 65.0
+                    elif matched_tokens > 0:
+                        score += (matched_tokens / len(q_tokens)) * 40.0
+
+                if q_norm and (q_norm == cit_norm or (len(q_norm) >= 4 and q_norm in cit_norm)):
+                    score += 95.0
+                elif q_low in cit.lower():
+                    score += 50.0
+
+                case_record = {
+                    "id": cid,
+                    "title": title,
+                    "citation": cit,
+                    "court": payload.get("court") or "Supreme Court of India",
+                    "year": year,
+                    "decisionYear": year,
+                    "bench": bench,
+                    "statutes": payload.get("statutes") or [],
+                    "text": payload.get("text") or payload.get("chunk_text") or "",
+                    "ratioSummary": payload.get("holding") or payload.get("summary") or "",
+                    "is_verified_ratio": bool(payload.get("holding")),
+                    "ratioLabel": "RATIO DECIDENDI / LEGAL PRINCIPLE" if payload.get("holding") else "SOURCE EXCERPT / OPENING TEXT (UNVERIFIED)"
+                }
+
+                seen_ids.add(cid.lower())
+                scored_cases.append((score, cid, case_record))
+
+        except Exception as e:
+            logger.warning(f"Live Qdrant scroll failed in _search_full_case_collection: {e}")
+
+    # 4. Fallback to vector search if fewer than limit results
+    if len(scored_cases) < limit and q and qdrant_service._client:
+        try:
+            from app.services.embedding_service import embedding_service
+            q_vec = embedding_service.embed_query(q)
+            if q_vec:
+                search_res = qdrant_service._client.search(
+                    collection_name=target_collection,
+                    query_vector=q_vec,
+                    limit=limit,
+                    with_payload=True
+                )
+                for hit in search_res:
+                    payload = hit.payload or {}
+                    cid = str(payload.get("case_id") or payload.get("id") or hit.id).strip()
+                    if not cid or cid.lower() in seen_ids:
+                        continue
+                    title = (payload.get("case_name") or payload.get("title") or cid).strip()
+                    cit = (payload.get("citation") or "").strip()
+                    year = payload.get("year")
+                    v_score = float(hit.score or 0.0) * 45.0
+                    case_record = {
+                        "id": cid,
+                        "title": title,
+                        "citation": cit,
+                        "court": payload.get("court") or "Supreme Court of India",
+                        "year": year,
+                        "decisionYear": year,
+                        "bench": payload.get("bench"),
+                        "statutes": payload.get("statutes") or [],
+                        "text": payload.get("text") or payload.get("chunk_text") or "",
+                        "ratioSummary": payload.get("holding") or "",
+                        "is_verified_ratio": bool(payload.get("holding")),
+                        "ratioLabel": "RATIO DECIDENDI / LEGAL PRINCIPLE" if payload.get("holding") else "SOURCE EXCERPT / OPENING TEXT (UNVERIFIED)"
+                    }
+                    seen_ids.add(cid.lower())
+                    scored_cases.append((v_score, cid, case_record))
+        except Exception as e:
+            logger.debug(f"Vector search in _search_full_case_collection skipped: {e}")
+
     # Sort descending by score, tie-break by year descending
     scored_cases.sort(key=lambda x: (x[0], x[2].get("decisionYear") or x[2].get("year") or 0), reverse=True)
     return [item[2] for item in scored_cases[:limit]]
@@ -229,9 +370,17 @@ def _normalize_case_record(raw: Dict[str, Any], case_id: str) -> Dict[str, Any]:
 
     # Ratio Summary / Holding
     ratio_summary = raw.get("ratioSummary") or raw.get("holding")
+    is_verified_ratio = raw.get("is_verified_ratio")
+    if is_verified_ratio is None:
+        is_verified_ratio = bool(raw.get("holding") or raw.get("ratioSummary"))
+
     if not ratio_summary and raw.get("text"):
         cleaned = clean_judgment_text(raw.get("text", ""))
         ratio_summary = cleaned[:350] + ("..." if len(cleaned) > 350 else "")
+        is_verified_ratio = False
+        ratio_label = "SOURCE EXCERPT / OPENING TEXT (UNVERIFIED)"
+    else:
+        ratio_label = raw.get("ratioLabel") or ("RATIO DECIDENDI / LEGAL PRINCIPLE" if is_verified_ratio else "SOURCE EXCERPT / OPENING TEXT (UNVERIFIED)")
 
     return {
         "id": cid,
@@ -244,7 +393,8 @@ def _normalize_case_record(raw: Dict[str, Any], case_id: str) -> Dict[str, Any]:
         "leadJudge": raw.get("leadJudge"),
         "statutes": statutes,
         "ratioSummary": ratio_summary or "Ratio summary not recorded in available archive",
-        "ratioLabel": raw.get("ratioLabel") or "RATIO DECIDENDI / LEGAL PRINCIPLE",
+        "ratioLabel": ratio_label,
+        "is_verified_ratio": bool(is_verified_ratio),
         "holding": raw.get("holding") or ratio_summary,
         "overruledCases": raw.get("overruledCases") or [],
         "treatmentHistory": raw.get("treatmentHistory") or [],
@@ -260,7 +410,7 @@ async def search_cases_endpoint(
 ):
     """
     GET /api/v1/cases/search?q={query}&limit={limit}
-    Searches across all 1,740+ available cases in the repository collection.
+    Searches across all available cases in the repository collection.
     Matches party names, partial names, citations, years, and statutes.
     Returns lightweight search hits for Precedent Comparison searchable case pickers.
     """
@@ -278,7 +428,9 @@ async def search_cases_endpoint(
             benchSize=normalized["benchSize"],
             benchType=normalized["benchType"],
             statutes=normalized["statutes"],
-            ratioSummary=normalized["ratioSummary"]
+            ratioSummary=normalized["ratioSummary"],
+            ratioLabel=normalized["ratioLabel"],
+            is_verified_ratio=normalized["is_verified_ratio"]
         ))
     return CaseSearchResponse(
         total=len(cases),

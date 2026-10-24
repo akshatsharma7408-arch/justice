@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { 
-  Search, ArrowRight, ArrowUpRight, Scale, ShieldCheck, 
+import {
+  Search, ArrowRight, ArrowUpRight, Scale, ShieldCheck,
   ChevronDown, ChevronUp, MessageSquare, Copy, Check, Filter, Sparkles,
   AlertCircle, RefreshCw, BookOpen
 } from 'lucide-react';
@@ -150,8 +150,8 @@ export default function SearchResults({
       .catch(err => {
         setSpellingCorrection(null);
         const errText = (typeof err === 'object' && err?.message) ? err.message : String(err || '');
-        const sanitized = (!errText || errText === '[object Object]') 
-          ? "Unable to reach legal database. Please check your connection or query." 
+        const sanitized = (!errText || errText === '[object Object]')
+          ? "Unable to reach legal database. Please check your connection or query."
           : errText;
         console.warn("[SearchResults] Backend search error:", sanitized);
         setSearchError(sanitized);
@@ -357,15 +357,15 @@ export default function SearchResults({
                   {typeof searchError === 'string' && searchError.includes("300")
                     ? "Question is too long"
                     : typeof searchError === 'string' && searchError.includes("empty")
-                    ? "Search query required"
-                    : "Unable to retrieve precedents"}
+                      ? "Search query required"
+                      : "Unable to retrieve precedents"}
                 </h3>
                 <p className="error-card-desc">
                   {typeof searchError === 'string' && searchError.includes("300")
                     ? "Please shorten your question. Queries are limited to 300 characters."
                     : typeof searchError === 'string' && searchError.includes("empty")
-                    ? "Please enter a legal question, bare act section, or case title to search."
-                    : `${searchError && searchError !== '[object Object]' ? searchError : 'Connection or query error'}. Click Retry to try connecting again.`}
+                      ? "Please enter a legal question, bare act section, or case title to search."
+                      : `${searchError && searchError !== '[object Object]' ? searchError : 'Connection or query error'}. Click Retry to try connecting again.`}
                 </p>
               </div>
             </div>
@@ -496,8 +496,8 @@ export default function SearchResults({
                       {answerData.tier === 'tier1'
                         ? 'AI summary based on the cases below \u2022 Not formal legal advice'
                         : answerData.tier === 'unreliable'
-                        ? 'Authoritative Supreme Court precedents are indexed below'
-                        : 'General legal information \u2022 Not legal advice \u2022 Verify with a lawyer or primary statute'}
+                          ? 'Authoritative Supreme Court precedents are indexed below'
+                          : 'General legal information \u2022 Not legal advice \u2022 Verify with a lawyer or primary statute'}
                     </span>
                   </div>
                 </TiltCard>
@@ -626,19 +626,19 @@ export default function SearchResults({
 
                       <div className="meta-right-cluster">
                         {Boolean(
-                          precedent.is_verified_ratio || 
-                          precedent.retrieval_mode?.includes('sc_judgments') || 
-                          precedent.retrieval_mode?.includes('verified_precedents') || 
-                          precedent.landmark || 
-                          precedent.source_link || 
+                          precedent.is_verified_ratio ||
+                          precedent.retrieval_mode?.includes('sc_judgments') ||
+                          precedent.retrieval_mode?.includes('verified_precedents') ||
+                          precedent.landmark ||
+                          precedent.source_link ||
                           precedent.case_id ||
                           (precedent.year && precedent.court)
                         ) && (
-                          <span className="badge-verified">
-                            <ShieldCheck size={12} />
-                            <span>Verified Citation</span>
-                          </span>
-                        )}
+                            <span className="badge-verified">
+                              <ShieldCheck size={12} />
+                              <span>Verified Citation</span>
+                            </span>
+                          )}
                       </div>
                     </div>
 

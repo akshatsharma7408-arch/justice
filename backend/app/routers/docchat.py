@@ -240,6 +240,7 @@ async def upload_document_endpoint(
     extracted_text = ""
     doc_title = title or "Commercial Contract"
     warnings: List[str] = []
+    image_items: List[Tuple[str, bytes]] = []
     page_count = 1
     IMAGE_EXTS = {".jpg", ".jpeg", ".png", ".webp", ".heic"}
 
@@ -290,6 +291,17 @@ async def upload_document_endpoint(
         if len(all_files) > 10:
             raise HTTPException(status_code=400, detail="Maximum 10 files allowed per upload.")
 
+        ALLOWED_EXTENSIONS = {".pdf", ".docx", ".txt", ".jpg", ".jpeg", ".png", ".webp", ".heic"}
+
+        # Validate file extensions before reading
+        for f in all_files:
+            fname = f.filename.lower() if f.filename else ""
+            if not any(fname.endswith(ext) for ext in ALLOWED_EXTENSIONS):
+                raise HTTPException(
+                    status_code=400,
+                    detail=f"Unsupported file format for '{f.filename}'. Allowed formats: PDF, DOCX, TXT, and images (JPG, PNG, WEBP, HEIC)."
+                )
+
         # Check if files are images
         image_items: List[Tuple[str, bytes]] = []
         is_all_images = all(any(f.filename.lower().endswith(ext) for ext in IMAGE_EXTS) for f in all_files)
@@ -301,20 +313,40 @@ async def upload_document_endpoint(
                     status_code=400,
                     detail=f"File '{f.filename}' exceeds 10MB limit ({len(f_bytes) / (1024 * 1024):.1f}MB)."
                 )
-            if any(f.filename.lower().endswith(ext) for ext in IMAGE_EXTS):
+
+            # Reject Windows executables / binary executables
+            if f_bytes.startswith(b"MZ") or f.filename.lower().endswith(".exe"):
+                raise HTTPException(
+                    status_code=400,
+                    detail=f"Executable file '{f.filename}' is not permitted."
+                )
+
+            fname_lower = f.filename.lower()
+            if any(fname_lower.endswith(ext) for ext in IMAGE_EXTS):
+                # Verify image magic bytes
+                if fname_lower.endswith(".png") and not f_bytes.startswith(b"\x89PNG\r\n\x1a\n"):
+                    raise HTTPException(status_code=400, detail=f"File '{f.filename}' is not a valid PNG image.")
+                elif (fname_lower.endswith(".jpg") or fname_lower.endswith(".jpeg")) and not f_bytes.startswith(b"\xff\xd8"):
+                    raise HTTPException(status_code=400, detail=f"File '{f.filename}' is not a valid JPEG image.")
                 image_items.append((f.filename, f_bytes))
-            elif f.filename.lower().endswith(".pdf"):
+            elif fname_lower.endswith(".pdf"):
+                if not f_bytes.startswith(b"%PDF-"):
+                    raise HTTPException(status_code=400, detail=f"File '{f.filename}' does not contain a valid PDF signature.")
                 doc_title = f.filename
                 extracted_text, pdf_warns = extract_text_from_pdf_with_ocr_fallback(f_bytes)
                 warnings.extend(pdf_warns)
                 page_count = len(re.findall(r'--- Page \d+ ---', extracted_text)) or 1
                 break
-            elif f.filename.lower().endswith(".docx"):
+            elif fname_lower.endswith(".docx"):
+                if not f_bytes.startswith(b"PK\x03\x04"):
+                    raise HTTPException(status_code=400, detail=f"File '{f.filename}' does not contain a valid DOCX signature.")
                 doc_title = f.filename
                 extracted_text = extract_text_from_docx(f_bytes)
                 page_count = 1
                 break
-            else:
+            elif fname_lower.endswith(".txt"):
+                if b"\x00" in f_bytes:
+                    raise HTTPException(status_code=400, detail=f"File '{f.filename}' contains binary data and cannot be processed as plain text.")
                 doc_title = f.filename
                 try:
                     extracted_text = f_bytes.decode("utf-8")
@@ -322,6 +354,8 @@ async def upload_document_endpoint(
                     extracted_text = f_bytes.decode("latin-1")
                 page_count = 1
                 break
+            else:
+                raise HTTPException(status_code=400, detail=f"Unsupported file format for '{f.filename}'.")
 
         # Process multi-images if uploaded
         if image_items and not extracted_text:
@@ -347,16 +381,28 @@ async def upload_document_endpoint(
         except Exception:
             extracted_text = ""
 
-    if not extracted_text or not extracted_text.strip():
+    # Fail-closed check: detect unreadable scans, OCR errors, or empty documents
+    substantive_text = re.sub(r'--- Page \d+.*?---\n?', '', extracted_text or '')
+    substantive_text = re.sub(r'\[(?:Warning|Error):[^\]]+\]', '', substantive_text).strip()
+
+    # If images were uploaded but produced no readable text, or warnings contain unreadable/blurry/error
+    has_ocr_failure = any("too blurry or unclear" in w.lower() or "error:" in w.lower() or "ocr" in w.lower() for w in warnings)
+    if (image_items and not substantive_text) or (has_ocr_failure and len(substantive_text) < 30):
         raise HTTPException(
-            status_code=400, 
-            detail="No document text could be extracted. Please upload a valid PDF, DOCX, image, or text file."
+            status_code=422,
+            detail="Document text is unreadable, too blurry, or contains OCR extraction errors. Please upload a clear document or digital PDF."
+        )
+
+    if not substantive_text or len(substantive_text) < 15:
+        raise HTTPException(
+            status_code=422, 
+            detail="No document text could be extracted. Please upload a valid contract with legible clauses."
         )
 
     # 2. Segment text into clause-aware chunks
     raw_clauses = segment_into_clauses(extracted_text)
     if not raw_clauses:
-        raise HTTPException(status_code=400, detail="Could not segment document into valid clauses.")
+        raise HTTPException(status_code=422, detail="Could not segment document into valid clauses.")
 
     # 3. Extract clause numbers and headings + run statutory Section 27 compliance audit
     chunk_objects: List[ClauseChunk] = []
@@ -369,9 +415,16 @@ async def upload_document_endpoint(
         title_str = c.get("title", f"Clause {idx + 1}")
         text_str = c.get("text", "").strip()
 
-        # Extract clause number if present
-        match = re.search(r'\b(?:Section|Clause|\b)(\d+(?:\.\d+)*)\b', title_str, re.IGNORECASE)
-        clause_num = f"Clause {match.group(1)}" if match else f"Clause {idx + 1}"
+        # Extract genuine clause number without misidentifying durations like '45 days'
+        match = re.search(r'\b(?:Section|Clause|Article)\s+(\d+(?:\.\d+)*)\b', title_str, re.IGNORECASE)
+        if not match:
+            leading_match = re.match(r'^\s*\(?(\d+(?:\.\d+)*)\)?[\.\:]\s+[A-Za-z]', title_str)
+            if leading_match:
+                clause_num = f"Clause {leading_match.group(1)}"
+            else:
+                clause_num = f"Clause {idx + 1}"
+        else:
+            clause_num = f"Clause {match.group(1)}"
 
         chunk = ClauseChunk(
             chunk_id=idx + 1,

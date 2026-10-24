@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { 
-  Upload, Send, MessageSquare, FileText, Check, ShieldCheck, 
-  AlertTriangle, Quote, ChevronDown, ChevronUp, RefreshCw, X 
+import {
+  Upload, Send, MessageSquare, FileText, Check, ShieldCheck,
+  AlertTriangle, Quote, ChevronDown, ChevronUp, RefreshCw, X
 } from 'lucide-react';
 import { CONTRACT_PRESETS } from '../data/legalCorpus';
 import { uploadDocumentForChatWithBackend, chatWithDocumentWithBackend } from '../config/gemini';

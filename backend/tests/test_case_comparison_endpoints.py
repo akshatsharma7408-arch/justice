@@ -94,3 +94,33 @@ def test_get_case_by_id_not_found():
     assert resp.status_code == 404
     detail = resp.json()["detail"]
     assert "not found in the verified dataset" in detail or "couldn't find" in detail
+
+
+def test_cases_search_full_collection_queries():
+    """Full-collection search in cases router must query live collection and return real cases."""
+    for q in ["Kesavananda", "Maneka Gandhi", "Vihaan", "Harminder", "AIR1973SC1461"]:
+        resp = client.get(f"/api/v1/cases/search?q={q}&limit=5")
+        assert resp.status_code == 200, f"Query '{q}' failed with status {resp.status_code}"
+        data = resp.json()
+        assert data["total"] >= 1, f"Expected at least 1 result for query '{q}', got 0"
+        titles = [c["title"].lower() for c in data["cases"]]
+        if q == "Kesavananda" or q == "AIR1973SC1461":
+            assert any("kesavananda" in t for t in titles), f"Kesavananda missing for '{q}': {titles}"
+        elif q == "Maneka Gandhi":
+            assert any("maneka" in t for t in titles), f"Maneka missing for '{q}': {titles}"
+        elif q == "Vihaan":
+            assert any("vihaan" in t for t in titles), f"Vihaan missing for '{q}': {titles}"
+        elif q == "Harminder":
+            assert any("harminder" in t for t in titles), f"Harminder missing for '{q}': {titles}"
+
+
+def test_unverified_case_ratio_label():
+    """Unverified sliced text in case records must be labeled SOURCE EXCERPT / OPENING TEXT (UNVERIFIED)."""
+    # 1975_3_1_20 is a non-landmark case whose ratio is extracted from raw text
+    resp = client.get("/api/v1/cases/1975_3_1_20")
+    assert resp.status_code == 200
+    data = resp.json()
+    assert "ratioLabel" in data
+    assert data["is_verified_ratio"] is False
+    assert data["ratioLabel"] == "SOURCE EXCERPT / OPENING TEXT (UNVERIFIED)"
+

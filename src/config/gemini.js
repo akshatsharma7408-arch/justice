@@ -414,15 +414,19 @@ export async function uploadDocumentForChatWithBackend(input, title = "Uploaded 
  * MODULE F: Document Chat
  * POST /api/v1/doc/chat
  */
-export async function chatWithDocumentWithBackend(docId, question) {
-  const res = await fetch(`${API_BASE}/doc/chat`, {
+export async function chatWithDocumentWithBackend(docId, question, signal = null) {
+  const options = {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({
       doc_id: docId,
       question: question
     })
-  });
+  };
+  if (signal) {
+    options.signal = signal;
+  }
+  const res = await fetch(`${API_BASE}/doc/chat`, options);
   if (!res.ok) {
     throw new Error(`Document chat query failed (HTTP ${res.status})`);
   }

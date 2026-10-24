@@ -306,6 +306,25 @@ async def search_answer_post(payload: SearchAnswerRequest):
             hide_badge=True
         )
 
+    q_low = effective_query.lower()
+    if any(w in q_low for w in ["cricket", "world cup", "bake a cake", "weather forecast", "football", "recipe"]) and not any(w in q_low for w in ["court", "judgment", "section", "article", "petition", "law", "act", "rights", "legal", "advocate"]):
+        return SearchAnswerResponse(
+            query=effective_query,
+            corrected_query=corrected_q if has_spelling else None,
+            original_query=raw_query,
+            has_spelling_correction=has_spelling,
+            ai_answer="Justice is a legal research assistant for Indian Supreme Court precedents and citizen rights. This does not appear to be a legal question. Please ask about Indian law, rights, statutes, or court judgments.",
+            ratio_decidendi=None,
+            citations=[],
+            tier="not_found",
+            tier_label="Non-legal topic",
+            model_used="non_legal_query",
+            is_case_lookup=False,
+            source_cases=[],
+            no_strong_case_match=True,
+            hide_badge=True
+        )
+
     cache_key = f"{raw_query.lower()}:{payload.court}:{payload.bench_type}:{payload.bypass_correction}:{payload.force_fallback}"
     if payload.results is None:
         cached_val = _ANSWER_CACHE.get(cache_key)

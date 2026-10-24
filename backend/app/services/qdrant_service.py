@@ -719,6 +719,12 @@ def extract_relevant_passage(
         scored_paras.sort(key=lambda x: x[0], reverse=True)
         candidate_texts = [sp[1] for sp in scored_paras]
 
+    # If the case is a landmark with a verified authoritative holding (e.g. Kesavananda, Maneka Gandhi, etc.):
+    # When query is empty (detail/comparison view) or asks for holding/ratio, return default_holding directly
+    if default_holding and (not query or any(w in query.lower() for w in ["ratio", "holding", "principle", "doctrine", "decided", "rule", "basic structure"])):
+        cleaned_holding = cut_to_sentence_boundary(clean_judgment_text(default_holding), max_chars=320)
+        return (cleaned_holding, "RATIO DECIDENDI / LEGAL PRINCIPLE", True)
+
     # 3. Try each candidate chunk in scored order
     for c_text in candidate_texts:
         if "Also known as:" in c_text or c_text.strip().startswith("Citations:"):
@@ -733,8 +739,21 @@ def extract_relevant_passage(
         if len(snippet) < 40:
             continue
 
-        is_op = bool(is_verified_ratio)
-        label = "RATIO DECIDENDI / LEGAL PRINCIPLE" if is_op else "RELEVANT PASSAGE"
+        # Check if the extracted snippet is an operative ratio / holding
+        has_operative_marker = any(rm in snippet.lower() for rm in [
+            "held that", "we hold", "we are of the opinion", "it is settled law",
+            "the court held", "the supreme court held", "laid down that", "the ratio", 
+            "accordingly,", "ordered accordingly", "we conclude", "in conclusion", "it is well settled"
+        ])
+        if is_verified_ratio and has_operative_marker:
+            is_op = True
+            label = "RATIO DECIDENDI / LEGAL PRINCIPLE"
+        elif not query:
+            is_op = False
+            label = "SOURCE EXCERPT / OPENING TEXT (UNVERIFIED)"
+        else:
+            is_op = False
+            label = "RELEVANT PASSAGE"
         return (snippet, label, is_op)
 
     # 4. When a landmark has no valid judgment chunk text, show its stored one-line holding instead
@@ -742,7 +761,7 @@ def extract_relevant_passage(
         cleaned_holding = cut_to_sentence_boundary(clean_judgment_text(default_holding), max_chars=320)
         return (cleaned_holding, "RATIO DECIDENDI / LEGAL PRINCIPLE", True)
 
-    return ("No excerpt available for this judgment.", "RELEVANT PASSAGE", False)
+    return ("No excerpt available for this judgment.", "SOURCE EXCERPT (UNVERIFIED)", False)
 
 
 def extract_substantive_terms(query: str) -> List[str]:
@@ -1044,25 +1063,33 @@ LANDMARK_METADATA: Dict[str, Dict[str, Any]] = {
         "benchSize": 7,
         "benchType": "Constitution Bench",
         "leadJudge": "N.L. Untwalia, J.",
-        "statutes": ["Section 106 Transfer of Property Act", "Rent Control Legislation"],
+        "statutes": ["Transfer of Property Act, 1882 - Section 106", "State Rent Control Acts"],
         "year": 1979,
-        "holding": "A landlord cannot evict a tenant without establishing statutory grounds under the Rent Control Act, though contractual notice under Section 106 TPA is not a prerequisite.",
+        "holding": "In rent-controlled premises, contractual notice under Section 106 of the Transfer of Property Act is not a condition precedent to an eviction petition under State Rent Control Acts; the landlord must establish statutory grounds for eviction.",
     },
     "atma ram": {
         "benchSize": 2,
         "benchType": "Division Bench",
         "leadJudge": "R.C. Lahoti, C.J.I.",
-        "statutes": ["Delhi Rent Control Act", "Order XLI Rule 5 CPC"],
-        "year": 2005,
-        "holding": "A tenant who fails to pay rent has no right to remain in the apartment without paying; upon eviction decree, stay may be conditioned on payment of mesne profits.",
+        "statutes": ["Delhi Rent Control Act, 1958", "Code of Civil Procedure, 1908 - Order XLI Rule 5"],
+        "year": 2004,
+        "holding": "In premises governed by the Delhi Rent Control Act, eviction arose from alleged unlawful subletting; under Order XLI Rule 5 CPC, an appellate court staying an eviction decree has equitable jurisdiction to condition that stay on payment of reasonable compensation / mesne profits for continued use and occupation during appeal.",
     },
     "manmohan das": {
         "benchSize": 3,
         "benchType": "3-Judge Bench",
-        "leadJudge": "V. Ramaswami, J.",
-        "statutes": ["Rent Control Act", "Transfer of Property Act"],
-        "year": 1967,
-        "holding": "Non-payment of rent after statutory notice is a valid ground for tenant eviction.",
+        "leadJudge": "J.M. Shelat, J.",
+        "statutes": ["U.P. (Temporary) Control of Rent and Eviction Act, 1947 - Section 3(1)(c)"],
+        "year": 1966,
+        "holding": "Under Section 3(1)(c) of the U.P. Rent Control Act, 1947, a tenant is liable to eviction if they make structural alterations that materially alter the accommodation or substantially diminish its value.",
+    },
+    "vihaan kumar": {
+        "benchSize": 2,
+        "benchType": "Division Bench",
+        "leadJudge": "Abhay S. Oka, J.",
+        "statutes": ["Code of Criminal Procedure, 1973 - Section 41", "Grounds of Arrest"],
+        "year": 2025,
+        "holding": "Arrest without communicating grounds of arrest in writing to the accused in a timely manner vitiates remand orders and violates personal liberty.",
     }
 }
 
@@ -1070,14 +1097,26 @@ LANDMARK_METADATA: Dict[str, Dict[str, Any]] = {
 
 def enrich_landmark_metadata(case: Dict[str, Any]) -> Dict[str, Any]:
     """
-    Enforces Item 4 requirements:
+    Enforces Item 4 & Item 1 requirements:
     1. Sets correct benchSize and benchType for every landmark.
     2. Populates hand-checked statutes/articles tags for landmarks.
     3. Populates leadJudge when known, otherwise hides it.
     4. Guarantees non-null year and decisionYear.
+    5. Avoids mislabeling author as 1-Judge bench.
     """
     c_title = (case.get("title") or case.get("case_name") or case.get("common_name") or "").lower()
     c_cit = case.get("citation") or case.get("neutral_citation") or ""
+    cid = str(case.get("id") or case.get("case_id") or "")
+
+    # Special check for Vihaan Kumar
+    if "2025_2_424_451" in cid or "vihaan kumar" in c_title:
+        case["benchSize"] = 2
+        case["benchType"] = "Division Bench"
+        case["leadJudge"] = "Abhay S. Oka, J."
+        case["bench"] = "Abhay S. Oka, J. & Nongmeikapam Kotiswar Singh, J."
+        case["decisionYear"] = 2025
+        case["year"] = 2025
+        return case
 
     # Match landmark
     matched_meta = None
@@ -1095,17 +1134,19 @@ def enrich_landmark_metadata(case: Dict[str, Any]) -> Dict[str, Any]:
             case["decisionYear"] = matched_meta["year"]
             case["year"] = matched_meta["year"]
     else:
-        # Standard case bench rules
+        # Standard case bench rules: do not count author string as full bench
         bs = case.get("benchSize")
         bench_str = case.get("bench") or ""
         if not bs and bench_str:
             judges_list = [j.strip() for j in re.split(r'[,;&]|\band\b', bench_str) if j.strip()]
-            bs = len(judges_list) if len(judges_list) > 0 else 2
-        if not bs:
-            bs = 2
+            # If multiple judges listed, count them; if only 1 judge name (likely author only), do not claim 1-judge bench
+            bs = len(judges_list) if len(judges_list) > 1 else None
+
         case["benchSize"] = bs
-        if not case.get("benchType"):
+        if bs:
             case["benchType"] = "Constitution Bench" if bs >= 5 else ("Division Bench" if bs == 2 else ("3-Judge Bench" if bs == 3 else f"{bs}-Judge Bench"))
+        else:
+            case["benchType"] = None
 
         if bench_str and not case.get("leadJudge"):
             lead = [j.strip() for j in re.split(r'[,;&]|\band\b', bench_str) if j.strip()]
@@ -1317,9 +1358,9 @@ class QdrantService:
     # ------------------------------------------------------------------ #
     # Case by ID & Chunk Fetching (for Case Chat, Text, Citator)          #
     # ------------------------------------------------------------------ #
-    def get_case_chunks_by_id(self, case_id: str) -> List[Dict[str, Any]]:
+    def get_case_chunks_by_id(self, case_id: str, max_chunks: int = 50) -> List[Dict[str, Any]]:
         """
-        Retrieves all chunks for a given case_id in chunk_index order.
+        Retrieves chunks for a given case_id in chunk_index order, up to max_chunks.
         Queries live Qdrant collection 'sc_judgments' first, then falls back to local SC chunks.
         """
         cid = (case_id or "").strip()
@@ -1344,7 +1385,7 @@ class QdrantService:
                     hits, next_offset = self._client.scroll(
                         collection_name=target_collection,
                         scroll_filter=Filter(must=[FieldCondition(key="case_id", match=MatchValue(value=cid))]),
-                        limit=100,
+                        limit=50,
                         offset=offset,
                         with_payload=True,
                         with_vectors=False
@@ -1354,7 +1395,7 @@ class QdrantService:
                         p["id"] = p.get("id") or str(h.id)
                         p["chunk_id"] = p.get("chunk_id") or f"{cid}_chunk_{p.get('chunk_index', 0)}"
                         all_chunks.append(p)
-                    if not next_offset or len(hits) == 0:
+                    if not next_offset or len(hits) == 0 or len(all_chunks) >= max_chunks:
                         break
                     offset = next_offset
 
@@ -2227,23 +2268,58 @@ class QdrantService:
             try:
                 available = {c.name for c in self._client.get_collections().collections}
                 if self.sc_collection_name in available:
-                    from qdrant_client.models import Filter, FieldCondition, MatchValue
+                    from qdrant_client.models import Filter, FieldCondition, MatchValue, MatchText
                     should_conditions = [
-                        FieldCondition(key="case_name", match=MatchValue(value=citation_or_name)),
-                        FieldCondition(key="citation", match=MatchValue(value=citation_or_name)),
+                        FieldCondition(key="case_name", match=MatchText(text=citation_or_name)),
+                        FieldCondition(key="citation", match=MatchText(text=citation_or_name)),
                         FieldCondition(key="case_id", match=MatchValue(value=citation_or_name)),
                     ]
                     # Also match extracted citation if present in query string
                     cit_match = re.search(r'\[?\b\d{4}\]?\s*\d*\s*(?:SCC|AIR|SCR|SCALE|INSC|S\.C\.R\.)[ \t]*\d+[A-Za-z0-9\s]*', citation_or_name, re.I)
                     if cit_match:
-                        should_conditions.append(FieldCondition(key="citation", match=MatchValue(value=cit_match.group(0).strip())))
+                        should_conditions.append(FieldCondition(key="citation", match=MatchText(text=cit_match.group(0).strip())))
+
+                    # Distinctive tokens (len >= 5) from case name
+                    name_tokens = [tok for tok in re.findall(r'[a-zA-Z]{5,}', citation_or_name) if tok.lower() not in {"state", "union", "india", "versus", "another", "others", "limited", "company"}]
+                    for tok in name_tokens[:3]:
+                        should_conditions.append(FieldCondition(key="case_name", match=MatchText(text=tok)))
 
                     scroll_res, _ = self._client.scroll(
                         collection_name=self.sc_collection_name,
                         scroll_filter=Filter(should=should_conditions),
-                        limit=1
+                        limit=5
                     )
                     if scroll_res:
+                        # Choose best matching record
+                        for hit in scroll_res:
+                            p = hit.payload or {}
+                            c_name = (p.get("case_name") or "").lower()
+                            c_cit = (p.get("citation") or "").lower()
+                            if cit_match and cit_match.group(0).strip().lower() in c_cit:
+                                return {
+                                    "verified": True,
+                                    "title": p.get("case_name"),
+                                    "citation": p.get("citation") or p.get("neutral_citation"),
+                                    "court": "Supreme Court of India",
+                                    "year": p.get("year"),
+                                    "bench": p.get("bench"),
+                                    "source_collection": "sc_judgments",
+                                    "badge": "verified"
+                                }
+                            if name_tokens:
+                                matched_toks = sum(1 for tok in name_tokens if tok.lower() in c_name)
+                                if matched_toks >= min(2, len(name_tokens)):
+                                    return {
+                                        "verified": True,
+                                        "title": p.get("case_name"),
+                                        "citation": p.get("citation") or p.get("neutral_citation"),
+                                        "court": "Supreme Court of India",
+                                        "year": p.get("year"),
+                                        "bench": p.get("bench"),
+                                        "source_collection": "sc_judgments",
+                                        "badge": "verified"
+                                    }
+                        # If first hit matched the full query
                         p = scroll_res[0].payload or {}
                         return {
                             "verified": True,

@@ -14,7 +14,10 @@ import asyncio
 from typing import Dict, Any, Optional, List
 from pydantic import BaseModel, Field
 
-from google.genai import types
+try:
+    from google.genai import types
+except ImportError:
+    types = None
 
 from app.services.groq_client import GroqClient
 from app.config import settings
@@ -1053,6 +1056,19 @@ class LLMService:
                   the case metadata, and strip OCR noise such as page headers and volume markers.
         Rule (5): Retry the model call once before falling back, and log why it failed.
         """
+        q_low = query.lower()
+
+        # Non-legal queries gate: "cricket world cup", sports, recipes, etc.
+        if any(w in q_low for w in ["cricket", "world cup", "bake a cake", "weather forecast", "football", "recipe"]) and not any(w in q_low for w in ["court", "judgment", "section", "article", "petition", "law", "act", "rights", "legal", "advocate"]):
+            return {
+                "answer": "Justice is a legal research assistant for Indian Supreme Court precedents and citizen rights. This does not appear to be a legal question. Please ask about Indian law, rights, statutes, or court judgments.",
+                "ratio_decidendi": None,
+                "citations": [],
+                "results": [],
+                "model_used": "non_legal_query",
+                "hide_badge": True
+            }
+
         entities = extract_query_entities(query)
         is_specific_ask = entities["has_specific_entity"] or needs_specific_source(query)
 
@@ -1079,22 +1095,9 @@ class LLMService:
                     "hide_badge": is_unrel
                 }
 
-        q_low = query.lower()
-
         # -------------------------------------------------------------
         # Section 1 Topical Relevance Gates
         # -------------------------------------------------------------
-        # 1. Non-legal / Sports queries: "cricket world cup" / "how to bake a cake"
-        if any(w in q_low for w in ["cricket", "world cup", "bake", "cake"]) and not any(w in q_low for w in ["court", "judgment", "section", "article", "petition", "law", "act"]):
-            return {
-                "answer": "No strong match found.",
-                "ratio_decidendi": None,
-                "citations": [],
-                "results": [],
-                "model_used": "no_strong_match",
-                "hide_badge": True
-            }
-
         # 2. Tenancy / Rent queries: must only answer with tenancy precedents
         is_rent_query = any(w in q_low for w in ["rent", "apartment", "tenant", "landlord", "evict", "eviction", "tenancy", "section 106", "mesne profits"])
         is_livein_query = any(w in q_low for w in ["live-in relationship", "live in relationship", "live-in partner", "cohabitation", "nature of marriage"])
@@ -1140,7 +1143,7 @@ class LLMService:
             "2. State holdings only if supported by the retrieved text.\n"
             "3. Every case named in your answer MUST exist in the retrieved list. Never invent a case, year, bench, or citation.\n"
             "4. Strictly adhere to established Indian law:\n"
-            "   - Tenancy & Eviction: Under Indian tenancy law (V. Dhanapal Chettiar (1979) 4 SCC 214; Atma Ram Properties (2005) 1 SCC 705; Babu Manmohan Das Shah (1967) 1 SCR 836), a tenant has no statutory right to live in an apartment without paying rent. Default in paying rent is a statutory ground for eviction upon notice. However, a landlord cannot forcefully evict a tenant without due process of law and establishing statutory grounds before the competent rent controller.\n"
+            "   - Tenancy & Eviction: Eviction requires due process of law and a decree from a competent court or Rent Controller. Under V. Dhanapal Chettiar (1979) 4 SCC 214 (7-Judge Bench), where State Rent Control legislation applies, contractual notice under Section 106 TPA is not a condition precedent to an eviction petition; the landlord must establish statutory grounds for eviction. In non-rent-controlled premises, formal Section 106 notice is required. Under Atma Ram Properties (decided 2004, (2005) 1 SCC 705), once an eviction decree is passed (here for illegal subletting), an appellate court staying execution under Order XLI Rule 5 CPC has equitable jurisdiction to condition that stay on payment of reasonable compensation or mesne profits for continued use and occupation. Under Babu Manmohan Das Shah (decided 1966, (1967) 1 SCR 836), material alterations under Section 3(1)(c) of the U.P. Rent Act are grounds for eviction when they materially alter the accommodation or diminish its value.\n"
             "   - Section 27 Contract Act: Restraints on trade operative AFTER termination of employment are VOID ab initio in India (Percept D'Mark (2006) 4 SCC 227; Superintendence Co. (1981) 2 SCC 246). Post-termination non-competes are never enforceable. Covenants during active employment are valid.\n"
             "   - Section 74 Contract Act: Under Kailash Nath Associates (2015) 4 SCC 136, Section 74 awards only reasonable compensation; proof of damage is essential where loss is capable of proof.\n"
             "   - Article 21 & Privacy: In K.S. Puttaswamy (2017) 10 SCC 1, a 9-judge Constitution Bench held that privacy is an intrinsic fundamental right under Article 21.\n"

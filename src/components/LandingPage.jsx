@@ -1,14 +1,14 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { motion } from 'framer-motion';
 import { Search, ArrowRight, ArrowUpRight, Scale, ShieldCheck, Check, MessageSquare, BookOpen, FileText, SlidersHorizontal, Sparkles, ChevronRight, AlertTriangle, ExternalLink } from 'lucide-react';
-import { 
-  ScrollProgressBar, 
-  SoftCursorFollower, 
-  TiltCard, 
-  MagneticButton, 
-  CountUpNumber, 
-  TypewriterPlaceholder, 
-  DraggableQuestionsRow 
+import {
+  ScrollProgressBar,
+  SoftCursorFollower,
+  TiltCard,
+  MagneticButton,
+  CountUpNumber,
+  TypewriterPlaceholder,
+  DraggableQuestionsRow
 } from './InteractiveEffects';
 
 const ROTATING_PLACEHOLDERS = [
@@ -395,7 +395,7 @@ export default function LandingPage({
                 "Can my landlord evict me without notice?"
               </h3>
               <p className="card-answer-prose">
-                No. In India, a landlord cannot physically throw you out, cut off essential amenities, or change the locks. Even when a lease expires or rent is delayed, Section 106 of the Transfer of Property Act and statutory rent control laws require formal written notice and proof of statutory grounds. A tenant can only be evicted under a lawful decree of a competent court.
+                No. In India, a landlord cannot physically throw you out, cut off essential amenities, or change the locks. Eviction requires due process of law and a court decree. For premises governed by State Rent Control legislation, a landlord must establish specific statutory grounds before the Rent Controller (contractual Section 106 notice is not a prerequisite, as held in V. Dhanapal Chettiar). In non-rent-controlled tenancies, formal contractual notice under Section 106 of the Transfer of Property Act is required before filing an eviction suit.
               </p>
               <div className="card-source-citation">
                 <span className="citation-title font-serif">Heera Traders v. Kamla Jain</span>

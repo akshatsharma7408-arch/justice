@@ -1,13 +1,13 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { 
-  FileText, Upload, ArrowRight, RefreshCw, Check, 
+import {
+  FileText, Upload, ArrowRight, RefreshCw, Check,
   FileDiff, Play, ArrowUpRight, Cpu, ShieldAlert, Sparkles, AlertTriangle,
   MessageSquare, Send, Quote, ChevronDown, ChevronUp, HelpCircle, Columns, Maximize2,
   AlertCircle, X, Trash2, Edit3, Image as ImageIcon, Eye, FileCheck
 } from 'lucide-react';
-import { 
-  uploadDocumentForChatWithBackend, 
-  chatWithDocumentWithBackend 
+import {
+  uploadDocumentForChatWithBackend,
+  chatWithDocumentWithBackend
 } from '../config/gemini';
 import { renderWithBadges } from '../utils/badgeFormatter';
 
@@ -43,6 +43,11 @@ export default function Documents({ onTriggerAgentAnalysis }) {
   const [viewMode, setViewMode] = useState('both'); // 'both' | 'analysis' | 'chat'
   const [mobileTab, setMobileTab] = useState('analysis'); // 'analysis' | 'chat'
 
+  // Document versioning & generation guards
+  const [docVersion, setDocVersion] = useState(1);
+  const docVersionRef = useRef(1);
+  const activeChatAbortRef = useRef(null);
+
   // Chat state
   const [chatMessages, setChatMessages] = useState([]);
   const [chatInput, setChatInput] = useState('');
@@ -51,8 +56,8 @@ export default function Documents({ onTriggerAgentAnalysis }) {
   const [expandedCitations, setExpandedCitations] = useState({});
   const chatMessagesEndRef = useRef(null);
 
-  const activeClause = docData?.clauses?.find(cl => cl.chunk_id === selectedClauseId || cl.id === selectedClauseId) 
-    || docData?.clauses?.[0] 
+  const activeClause = docData?.clauses?.find(cl => cl.chunk_id === selectedClauseId || cl.id === selectedClauseId)
+    || docData?.clauses?.[0]
     || null;
 
   // Auto-scroll chat to bottom
@@ -126,10 +131,19 @@ export default function Documents({ onTriggerAgentAnalysis }) {
         throw new Error("Invalid response from document processing service.");
       }
 
-      // Initialize clean chat history grounded in this document
+      // Abort any in-flight chat query and increment version
+      if (activeChatAbortRef.current) {
+        activeChatAbortRef.current.abort();
+        activeChatAbortRef.current = null;
+      }
+      const newVersion = docVersionRef.current + 1;
+      docVersionRef.current = newVersion;
+      setDocVersion(newVersion);
+
+      // Initialize clean chat history grounded in this document version
       const initialChat = [
         {
-          id: 'welcome-msg',
+          id: `welcome-v${newVersion}`,
           sender: 'assistant',
           text: `I've read and analyzed "${resp.title}". Ask any question about this document. Every claim will quote the exact clause it originates from.`,
           citations: [],
@@ -141,6 +155,7 @@ export default function Documents({ onTriggerAgentAnalysis }) {
       setEditedText(resp.raw_text || '');
       setSelectedClauseId(resp.clauses?.[0]?.chunk_id || 1);
       setChatMessages(initialChat);
+      setExpandedCitations({});
       setPendingImages([]);
       setAppliedRedlines({});
     } catch (err) {
@@ -181,6 +196,12 @@ export default function Documents({ onTriggerAgentAnalysis }) {
     setIsReanalyzing(true);
     setUploadError(null);
 
+    // Abort any in-flight chat query
+    if (activeChatAbortRef.current) {
+      activeChatAbortRef.current.abort();
+      activeChatAbortRef.current = null;
+    }
+
     try {
       const formData = new FormData();
       formData.append('text', editedText);
@@ -188,15 +209,22 @@ export default function Documents({ onTriggerAgentAnalysis }) {
       formData.append('doc_id', docData.doc_id);
 
       const resp = await uploadDocumentForChatWithBackend(formData, docData.title, docData.doc_id);
+
+      const newVersion = docVersionRef.current + 1;
+      docVersionRef.current = newVersion;
+      setDocVersion(newVersion);
+
       setDocData(resp);
       setSelectedClauseId(resp.clauses?.[0]?.chunk_id || 1);
       setIsEditingText(false);
-      setChatMessages(prev => [
-        ...prev,
+      setExpandedCitations({});
+
+      // Reset chat messages and citations to version message so stale Q&A from previous text is not preserved
+      setChatMessages([
         {
-          id: `update-${Date.now()}`,
+          id: `update-v${newVersion}`,
           sender: 'assistant',
-          text: "Document text was updated. Analysis and chat context have been re-indexed against the latest edits.",
+          text: `Document text updated (v${newVersion}). Chat history and clause citations have been reset to match your latest edits. Ask any question about this edited version.`,
           citations: [],
           timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
         }
@@ -211,19 +239,36 @@ export default function Documents({ onTriggerAgentAnalysis }) {
 
   // Remove document / Reset to clean state
   const handleRemoveDocument = () => {
+    if (activeChatAbortRef.current) {
+      activeChatAbortRef.current.abort();
+      activeChatAbortRef.current = null;
+    }
+    const newVersion = docVersionRef.current + 1;
+    docVersionRef.current = newVersion;
+    setDocVersion(newVersion);
+
     setDocData(null);
     setSelectedClauseId(null);
     setEditedText('');
     setIsEditingText(false);
     setChatMessages([]);
+    setExpandedCitations({});
     setPendingImages([]);
     setUploadError(null);
   };
 
-  // Send question in Document Chat
+  // Send question in Document Chat with AbortController and generation guards
   const handleSendQuestion = async (queryText) => {
     const trimmed = (queryText || chatInput).trim();
     if (!trimmed || !docData?.doc_id || isChatLoading) return;
+
+    // Abort previous in-flight chat query if any
+    if (activeChatAbortRef.current) {
+      activeChatAbortRef.current.abort();
+    }
+    const abortController = new AbortController();
+    activeChatAbortRef.current = abortController;
+    const currentVersion = docVersionRef.current;
 
     const userMsg = {
       id: `user-${Date.now()}`,
@@ -238,7 +283,11 @@ export default function Documents({ onTriggerAgentAnalysis }) {
     setChatError(null);
 
     try {
-      const data = await chatWithDocumentWithBackend(docData.doc_id, trimmed);
+      const data = await chatWithDocumentWithBackend(docData.doc_id, trimmed, abortController.signal);
+      // Generation guard: ignore if request was aborted or document was modified while in-flight
+      if (abortController.signal.aborted || currentVersion !== docVersionRef.current) {
+        return;
+      }
       const assistantMsg = {
         id: `asst-${Date.now()}`,
         sender: 'assistant',
@@ -249,10 +298,18 @@ export default function Documents({ onTriggerAgentAnalysis }) {
       };
       setChatMessages(prev => [...prev, assistantMsg]);
     } catch (err) {
+      if (abortController.signal.aborted || currentVersion !== docVersionRef.current) {
+        return;
+      }
       console.error("[Documents] Chat error:", err);
       setChatError(err.message || "Failed to query document. Please try again.");
     } finally {
-      setIsChatLoading(false);
+      if (currentVersion === docVersionRef.current) {
+        setIsChatLoading(false);
+        if (activeChatAbortRef.current === abortController) {
+          activeChatAbortRef.current = null;
+        }
+      }
     }
   };
 
@@ -332,9 +389,9 @@ export default function Documents({ onTriggerAgentAnalysis }) {
             <AlertCircle size={20} className="text-copper" />
             <p className="error-card-desc">{uploadError}</p>
           </div>
-          <button 
-            type="button" 
-            className="btn-friendly-retry mono" 
+          <button
+            type="button"
+            className="btn-friendly-retry mono"
             onClick={() => setUploadError(null)}
           >
             Dismiss
@@ -358,17 +415,17 @@ export default function Documents({ onTriggerAgentAnalysis }) {
                   </p>
                 </div>
                 <div className="staged-actions">
-                  <button 
-                    type="button" 
-                    className="btn-cancel-staged mono" 
+                  <button
+                    type="button"
+                    className="btn-cancel-staged mono"
                     onClick={() => setPendingImages([])}
                     disabled={isUploading}
                   >
                     Cancel
                   </button>
-                  <button 
-                    type="button" 
-                    className="btn-run-ocr mono" 
+                  <button
+                    type="button"
+                    className="btn-run-ocr mono"
                     onClick={handleStartStagedUpload}
                     disabled={isUploading}
                   >
@@ -396,24 +453,24 @@ export default function Documents({ onTriggerAgentAnalysis }) {
                     <div className="thumbnail-overlay">
                       <span className="thumbnail-name" title={img.name}>{img.name}</span>
                       <div className="thumbnail-controls">
-                        <button 
-                          type="button" 
+                        <button
+                          type="button"
                           disabled={idx === 0 || isUploading}
                           onClick={() => handleMoveStagedImage(idx, -1)}
                           title="Move Left"
                         >
                           &larr;
                         </button>
-                        <button 
-                          type="button" 
+                        <button
+                          type="button"
                           disabled={idx === pendingImages.length - 1 || isUploading}
                           onClick={() => handleMoveStagedImage(idx, 1)}
                           title="Move Right"
                         >
                           &rarr;
                         </button>
-                        <button 
-                          type="button" 
+                        <button
+                          type="button"
                           onClick={() => handleRemoveStagedImage(img.id)}
                           disabled={isUploading}
                           className="btn-remove-thumb"
@@ -429,7 +486,7 @@ export default function Documents({ onTriggerAgentAnalysis }) {
             </div>
           ) : (
             /* Clean Dropzone */
-            <div 
+            <div
               className={`documents-dropzone-hero ${isUploading ? 'is-uploading' : ''}`}
               onClick={() => fileInputRef.current?.click()}
             >
@@ -453,20 +510,20 @@ export default function Documents({ onTriggerAgentAnalysis }) {
                 {isUploading ? "Processing Document..." : "No document yet"}
               </h2>
               <p className="dropzone-sub">
-                {isUploading 
-                  ? uploadProgress || "Extracting text, analyzing statutory compliance, and embedding clauses..." 
+                {isUploading
+                  ? uploadProgress || "Extracting text, analyzing statutory compliance, and embedding clauses..."
                   : "Upload a contract, notice, or legal document to begin."}
               </p>
-              
+
               <div className="dropzone-formats-strip mono">
-                <span>PDF</span> &bull; 
-                <span>DOCX</span> &bull; 
-                <span>TXT</span> &bull; 
+                <span>PDF</span> &bull;
+                <span>DOCX</span> &bull;
+                <span>TXT</span> &bull;
                 <span>JPG / PNG / WEBP / HEIC (Up to 10 photos)</span>
               </div>
 
-              <button 
-                type="button" 
+              <button
+                type="button"
                 className="btn-dropzone-browse mono"
                 disabled={isUploading}
               >
@@ -513,8 +570,8 @@ export default function Documents({ onTriggerAgentAnalysis }) {
             </div>
 
             <div className="file-bar-actions">
-              <button 
-                type="button" 
+              <button
+                type="button"
                 className="btn-file-action mono"
                 onClick={() => setIsTextExpanded(!isTextExpanded)}
                 title="Inspect or edit extracted text"
@@ -522,8 +579,8 @@ export default function Documents({ onTriggerAgentAnalysis }) {
                 <Edit3 size={13} />
                 <span>{isTextExpanded ? "Hide Extracted Text" : "View / Edit Text"}</span>
               </button>
-              <button 
-                type="button" 
+              <button
+                type="button"
                 className="btn-file-action mono"
                 onClick={() => fileInputRef.current?.click()}
                 title="Replace with new document"
@@ -531,8 +588,8 @@ export default function Documents({ onTriggerAgentAnalysis }) {
                 <RefreshCw size={13} />
                 <span>Replace Document</span>
               </button>
-              <button 
-                type="button" 
+              <button
+                type="button"
                 className="btn-file-action btn-danger mono"
                 onClick={handleRemoveDocument}
                 title="Close document and return to start"
@@ -560,8 +617,8 @@ export default function Documents({ onTriggerAgentAnalysis }) {
                 <div className="pane-actions">
                   {isEditingText ? (
                     <>
-                      <button 
-                        type="button" 
+                      <button
+                        type="button"
                         className="btn-pane-action mono"
                         onClick={() => {
                           setEditedText(docData.raw_text || '');
@@ -570,8 +627,8 @@ export default function Documents({ onTriggerAgentAnalysis }) {
                       >
                         Cancel
                       </button>
-                      <button 
-                        type="button" 
+                      <button
+                        type="button"
                         className="btn-pane-action btn-save mono"
                         onClick={handleRerunAnalysis}
                         disabled={isReanalyzing || !editedText.trim()}
@@ -590,8 +647,8 @@ export default function Documents({ onTriggerAgentAnalysis }) {
                       </button>
                     </>
                   ) : (
-                    <button 
-                      type="button" 
+                    <button
+                      type="button"
                       className="btn-pane-action mono"
                       onClick={() => setIsEditingText(true)}
                     >
@@ -729,8 +786,8 @@ export default function Documents({ onTriggerAgentAnalysis }) {
                   ) : (
                     <div className="clause-text-box">
                       <p className="clause-prose font-mono">
-                        {appliedRedlines[activeClause.chunk_id] && activeClause.balanced_redline 
-                          ? activeClause.balanced_redline 
+                        {appliedRedlines[activeClause.chunk_id] && activeClause.balanced_redline
+                          ? activeClause.balanced_redline
                           : activeClause.text}
                       </p>
                     </div>
@@ -768,8 +825,8 @@ export default function Documents({ onTriggerAgentAnalysis }) {
                           >
                             <Check size={13} />
                             <span>
-                              {appliedRedlines[activeClause.chunk_id] 
-                                ? "Revert to Original Text" 
+                              {appliedRedlines[activeClause.chunk_id]
+                                ? "Revert to Original Text"
                                 : "Apply Section 27 Redline"}
                             </span>
                           </button>
@@ -906,8 +963,8 @@ export default function Documents({ onTriggerAgentAnalysis }) {
                 </div>
 
                 {/* Chat Input Bar */}
-                <form 
-                  className="doc-chat-form" 
+                <form
+                  className="doc-chat-form"
                   onSubmit={(e) => {
                     e.preventDefault();
                     handleSendQuestion(chatInput);

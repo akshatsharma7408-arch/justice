@@ -99,3 +99,44 @@ def test_search_post_ui_payload_limit():
     resp_8 = client.post("/api/v1/search", json=payload_8)
     assert resp_8.status_code == 200, f"Expected 200 for limit=8, got {resp_8.status_code}: {resp_8.text}"
 
+
+def test_upload_executable_returns_400():
+    """Uploading an .exe or MZ binary must be rejected with HTTP 400."""
+    fake_exe = b"MZ\x90\x00\x03\x00\x00\x00" + b"\x00" * 100
+    files = {"files": ("bad.exe", fake_exe, "application/octet-stream")}
+    resp = client.post("/api/v1/doc/upload", files=files)
+    assert resp.status_code == 400
+    assert "Executable file" in resp.json().get("detail", "") or "Unsupported file format" in resp.json().get("detail", "")
+
+
+def test_upload_corrupt_pdf_signature_returns_400():
+    """Uploading a file claiming to be .pdf without %PDF- signature must return HTTP 400."""
+    corrupt_pdf = b"NOT_A_REAL_PDF_HEADER" + b"some data" * 10
+    files = {"files": ("test.pdf", corrupt_pdf, "application/pdf")}
+    resp = client.post("/api/v1/doc/upload", files=files)
+    assert resp.status_code == 400
+    assert "PDF signature" in resp.json().get("detail", "")
+
+
+def test_upload_empty_document_returns_422():
+    """Uploading an empty or whitespace-only document must fail closed with HTTP 422."""
+    resp = client.post("/api/v1/doc/upload", json={"text": "   \n\t  "})
+    assert resp.status_code == 422
+    assert "No document text could be extracted" in resp.json().get("detail", "")
+
+
+def test_clause_numbering_not_confused_by_duration():
+    """Text with '45 days written notice' must not be mislabeled as Clause 45."""
+    contract_text = (
+        "Clause 1: Term of Agreement\nThis agreement shall remain in force for two years.\n\n"
+        "Termination Notice Period\nEither party may terminate by giving 45 days written notice to the other party.\n\n"
+        "Clause 2: Confidentiality\nAll proprietary information shall remain confidential.\n"
+    )
+    resp = client.post("/api/v1/doc/upload", json={"text": contract_text})
+    assert resp.status_code == 200
+    clauses = resp.json().get("clauses", [])
+    clause_numbers = [c["clause_number"] for c in clauses]
+    assert "Clause 45" not in clause_numbers
+    assert "Clause 1" in clause_numbers
+
+

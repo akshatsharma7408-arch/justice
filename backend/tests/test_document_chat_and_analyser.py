@@ -228,13 +228,9 @@ def test_upload_images_blank_blurry_detection():
         "/api/v1/doc/upload-images",
         files=[("files", ("blank_photo.png", buf.getvalue(), "image/png"))]
     )
-    assert resp.status_code == 200
-    data = resp.json()
-    assert data["doc_id"]
-    raw = data.get("raw_text") or ""
-    warns = data.get("warnings") or []
-    # When an image has no text, it must flag blurry/unclear
-    assert "blurry or unclear" in raw or any("blurry" in str(w).lower() for w in warns) or "No text could be reliably extracted" in raw
+    assert resp.status_code == 422
+    detail = resp.json().get("detail", "")
+    assert "unreadable" in detail.lower() or "blurry" in detail.lower() or "ocr" in detail.lower()
 
 
 def test_upload_images_with_drawn_text_ocr():

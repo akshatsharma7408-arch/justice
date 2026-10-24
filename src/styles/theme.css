@@ -25,10 +25,14 @@
   --bg-gradient-subtle: linear-gradient(135deg, rgba(18, 38, 31, 0.92) 0%, rgba(11, 26, 21, 0.96) 100%);
 
   /* Typography Palette */
-  --text-ivory: #FAF6EC;       /* Bright, rich, warm ivory */
-  --text-ivory-dim: #EFE8D6;   /* Secondary ivory */
-  --text-body: #DDD7C7;        /* Highly readable warm body */
-  --text-muted: #A9B8AF;       /* Brightened for clear WCAG AA contrast */
+  --text-ivory: #FAF6EC;
+  /* Bright, rich, warm ivory */
+  --text-ivory-dim: #EFE8D6;
+  /* Secondary ivory */
+  --text-body: #DDD7C7;
+  /* Highly readable warm body */
+  --text-muted: #A9B8AF;
+  /* Brightened for clear WCAG AA contrast */
   --text-deep: #07110D;
 
   /* Polished Copper Gradient & Accents */
@@ -133,7 +137,8 @@ html {
   overflow-x: clip;
 }
 
-html, body {
+html,
+body {
   background-color: var(--bg-base);
   color: var(--text-body);
   font-family: var(--font-sans);
@@ -166,7 +171,12 @@ body::before {
 }
 
 /* Headings Typography */
-h1, h2, h3, h4, .font-serif, .font-judicial {
+h1,
+h2,
+h3,
+h4,
+.font-serif,
+.font-judicial {
   font-family: var(--font-serif);
   color: var(--text-ivory);
   font-weight: 600;
@@ -183,15 +193,18 @@ h1, h2, h3, h4, .font-serif, .font-judicial {
   width: 8px;
   height: 8px;
 }
+
 ::-webkit-scrollbar-track {
   background: var(--bg-deep);
   border-radius: var(--radius-pill);
 }
+
 ::-webkit-scrollbar-thumb {
   background: var(--border-light);
   border-radius: var(--radius-pill);
   box-shadow: var(--gloss-highlight);
 }
+
 ::-webkit-scrollbar-thumb:hover {
   background: var(--copper);
 }
@@ -205,13 +218,25 @@ h1, h2, h3, h4, .font-serif, .font-judicial {
 
 /* Animated Shimmer Sweep for Primary Elements */
 @keyframes shimmerSweep {
-  0% { transform: translateX(-160%); }
-  100% { transform: translateX(160%); }
+  0% {
+    transform: translateX(-160%);
+  }
+
+  100% {
+    transform: translateX(160%);
+  }
 }
 
 @keyframes pulseGlow {
-  0%, 100% { opacity: 0.4; }
-  50% { opacity: 0.8; }
+
+  0%,
+  100% {
+    opacity: 0.4;
+  }
+
+  50% {
+    opacity: 0.8;
+  }
 }
 
 /* Prefers Reduced Motion: graceful fallback to simple fades */
@@ -221,7 +246,10 @@ h1, h2, h3, h4, .font-serif, .font-judicial {
     --motion-normal: none;
     --motion-slow: none;
   }
-  *, *::before, *::after {
+
+  *,
+  *::before,
+  *::after {
     animation-duration: 0.01ms !important;
     animation-iteration-count: 1 !important;
     transition-duration: 0.01ms !important;
@@ -229,4 +257,3 @@ h1, h2, h3, h4, .font-serif, .font-judicial {
     transform: none !important;
   }
 }
-

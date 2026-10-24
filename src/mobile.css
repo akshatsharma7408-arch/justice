@@ -11,6 +11,7 @@
    minmax(0, 1fr) + min-width:0 on children stops min-content blowout.
    -------------------------------------------------------------------------- */
 @media (max-width: 1024px) {
+
   .workspace-split-panes,
   .workspace-split-panes.view-mode-both {
     grid-template-columns: minmax(0, 1fr);
@@ -24,11 +25,11 @@
     grid-template-columns: minmax(0, 1fr);
   }
 
-  .workspace-split-panes > *,
-  .copilot-columns-grid > *,
-  .comparison-cards-grid > *,
-  .modern-mini-canvas > *,
-  .bench-matrix-grid > * {
+  .workspace-split-panes>*,
+  .copilot-columns-grid>*,
+  .comparison-cards-grid>*,
+  .modern-mini-canvas>*,
+  .bench-matrix-grid>* {
     min-width: 0;
   }
 }
@@ -37,6 +38,7 @@
    Phone width
    -------------------------------------------------------------------------- */
 @media (max-width: 768px) {
+
   /* Global guard: nothing may push the page sideways. Scrollable strips
      (matrix table, alphabet row, tab strips) scroll inside themselves. */
   .workspace-app-shell {
@@ -189,7 +191,8 @@
 
   .docchat-text-input {
     min-width: 0;
-    font-size: 16px; /* stops iOS auto-zoom on focus */
+    font-size: 16px;
+    /* stops iOS auto-zoom on focus */
   }
 
   .docchat-send-btn {
@@ -298,11 +301,13 @@
   }
 
   .palette-search-input {
-    font-size: 16px; /* stops iOS auto-zoom */
+    font-size: 16px;
+    /* stops iOS auto-zoom */
   }
 
   .palette-dialog-footer {
-    display: none; /* keyboard hints are noise on touch */
+    display: none;
+    /* keyboard hints are noise on touch */
   }
 
   .palette-item-card {
@@ -350,6 +355,7 @@
    Item 13: 1280px Agent DAG pill margin and 390px mobile search polish
    -------------------------------------------------------------------------- */
 @media (max-width: 1280px) {
+
   .navbar-dag-btn,
   .topbar-agent-btn,
   .navbar-actions-col {
@@ -462,4 +468,3 @@
     width: max-content !important;
   }
 }
-

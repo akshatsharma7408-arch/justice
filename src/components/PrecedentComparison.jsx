@@ -1,18 +1,18 @@
 import React, { useState, useMemo, useRef, useEffect, useCallback } from 'react';
-import { 
-  ArrowRight, 
-  Scale, 
-  BookOpen, 
-  ShieldCheck, 
-  AlertTriangle, 
-  CheckCircle2, 
-  ChevronRight, 
-  ArrowLeftRight, 
-  Search, 
-  X, 
-  Check, 
-  Calendar, 
-  Users, 
+import {
+  ArrowRight,
+  Scale,
+  BookOpen,
+  ShieldCheck,
+  AlertTriangle,
+  CheckCircle2,
+  ChevronRight,
+  ArrowLeftRight,
+  Search,
+  X,
+  Check,
+  Calendar,
+  Users,
   HelpCircle,
   Loader2
 } from 'lucide-react';
@@ -31,7 +31,7 @@ function getVerifiedTreatment(c1, c2) {
   const c1Overruled = (c1.overruledCases || []).find(oc => {
     const ocLow = oc.toLowerCase();
     return (c2Title.length > 5 && ocLow.includes(c2Title.slice(0, 14))) ||
-           (c2Cite && ocLow.includes(c2Cite));
+      (c2Cite && ocLow.includes(c2Cite));
   });
   if (c1Overruled) {
     return `${c1.title} (${c1.decisionYear || 'SC'}) expressly overruled ${c2.title} (${c2.decisionYear || 'SC'}).`;
@@ -41,7 +41,7 @@ function getVerifiedTreatment(c1, c2) {
   const c2Overruled = (c2.overruledCases || []).find(oc => {
     const ocLow = oc.toLowerCase();
     return (c1Title.length > 5 && ocLow.includes(c1Title.slice(0, 14))) ||
-           (c1Cite && ocLow.includes(c1Cite));
+      (c1Cite && ocLow.includes(c1Cite));
   });
   if (c2Overruled) {
     return `${c2.title} (${c2.decisionYear || 'SC'}) expressly overruled ${c1.title} (${c1.decisionYear || 'SC'}).`;
@@ -51,13 +51,13 @@ function getVerifiedTreatment(c1, c2) {
   const t1 = (c1.treatmentHistory || []).find(th => {
     const thCase = (th.case || '').toLowerCase();
     return (c2Title.length > 5 && thCase.includes(c2Title.slice(0, 14))) ||
-           (thCase.length > 5 && c2Title.includes(thCase.slice(0, 14)));
+      (thCase.length > 5 && c2Title.includes(thCase.slice(0, 14)));
   });
   if (t1) {
-    const verb = t1.treatment === 'AFFIRMED' ? 'affirmed' : 
-                 t1.treatment === 'DISTINGUISHED' ? 'distinguished' : 
-                 t1.treatment === 'RELIED_ON' ? 'relied on' :
-                 t1.treatment === 'OVERRULED' ? 'overruled' : t1.treatment.toLowerCase();
+    const verb = t1.treatment === 'AFFIRMED' ? 'affirmed' :
+      t1.treatment === 'DISTINGUISHED' ? 'distinguished' :
+        t1.treatment === 'RELIED_ON' ? 'relied on' :
+          t1.treatment === 'OVERRULED' ? 'overruled' : t1.treatment.toLowerCase();
     return `${c1.title} was ${verb} in ${t1.case} (${t1.year})${t1.note ? `: ${t1.note}` : ''}.`;
   }
 
@@ -65,13 +65,13 @@ function getVerifiedTreatment(c1, c2) {
   const t2 = (c2.treatmentHistory || []).find(th => {
     const thCase = (th.case || '').toLowerCase();
     return (c1Title.length > 5 && thCase.includes(c1Title.slice(0, 14))) ||
-           (thCase.length > 5 && c1Title.includes(thCase.slice(0, 14)));
+      (thCase.length > 5 && c1Title.includes(thCase.slice(0, 14)));
   });
   if (t2) {
-    const verb = t2.treatment === 'AFFIRMED' ? 'affirmed' : 
-                 t2.treatment === 'DISTINGUISHED' ? 'distinguished' : 
-                 t2.treatment === 'RELIED_ON' ? 'relied on' :
-                 t2.treatment === 'OVERRULED' ? 'overruled' : t2.treatment.toLowerCase();
+    const verb = t2.treatment === 'AFFIRMED' ? 'affirmed' :
+      t2.treatment === 'DISTINGUISHED' ? 'distinguished' :
+        t2.treatment === 'RELIED_ON' ? 'relied on' :
+          t2.treatment === 'OVERRULED' ? 'overruled' : t2.treatment.toLowerCase();
     return `${c2.title} was ${verb} in ${t2.case} (${t2.year})${t2.note ? `: ${t2.note}` : ''}.`;
   }
 
@@ -81,14 +81,14 @@ function getVerifiedTreatment(c1, c2) {
 /**
  * Searchable Case Picker Component with real backend search API
  */
-function SearchableCasePicker({ 
-  label, 
-  selectedCase, 
+function SearchableCasePicker({
+  label,
+  selectedCase,
   isLoadingCase,
   caseError,
-  onSelectCase, 
-  otherCaseId, 
-  roleTag 
+  onSelectCase,
+  otherCaseId,
+  roleTag
 }) {
   const [isOpen, setIsOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
@@ -270,9 +270,9 @@ function SearchableCasePicker({
 
       {/* Dropdown Search Popover */}
       {isOpen && (
-        <div 
-          className="picker-dropdown-popover animate-fade-in" 
-          role="region" 
+        <div
+          className="picker-dropdown-popover animate-fade-in"
+          role="region"
           aria-label="Precedent Search"
           onKeyDown={handleKeyDown}
         >
@@ -294,9 +294,9 @@ function SearchableCasePicker({
               <Loader2 size={14} className="animate-spin text-muted" />
             )}
             {searchQuery && !isSearching && (
-              <button 
-                type="button" 
-                className="picker-clear-btn" 
+              <button
+                type="button"
+                className="picker-clear-btn"
                 onClick={() => setSearchQuery('')}
                 aria-label="Clear search"
               >
@@ -305,9 +305,9 @@ function SearchableCasePicker({
             )}
           </div>
 
-          <div 
+          <div
             id="picker-candidates-list"
-            className="picker-results-list" 
+            className="picker-results-list"
             role="listbox"
           >
             {isSearching && candidates.length === 0 ? (
