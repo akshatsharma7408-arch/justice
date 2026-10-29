@@ -75,7 +75,7 @@ def load_constitution_provisions(curated: Dict[str, Dict[str, Any]]) -> List[Dic
     return provisions
 
 # Authoritative Curated Statutory Datasets
-SEED_VERSION = "2026-10-29.v6"  # bump on any seed content/corpus correction; self-heal reseeds on mismatch
+SEED_VERSION = "2026-10-29.v7"  # bump on any seed content/corpus correction; self-heal reseeds on mismatch
 
 BARE_ACTS_DATA = [
     {
@@ -414,15 +414,21 @@ STATUTORY_PROVISIONS_DATA = [
             "(1) An application for compensation arising out of an accident of the nature specified in sub-section (1) of section 165 may be made—\n"
             "(a) by the person who has sustained the injury; or\n"
             "(b) by the owner of the property; or\n"
-            "(c) where death has resulted from the accident, by all or any of the legal representatives of the deceased;\n"
-            "(d) by any agent duly authorised by the person injured or all or any of the legal representatives of the deceased..."
+            "(c) where death has resulted from the accident, by all or any of the legal representatives of the deceased; or\n"
+            "(d) by any agent duly authorised by the person injured or all or any of the legal representatives of the deceased, as the case may be:\n"
+            "Provided that where all the legal representatives of the deceased have not joined in any such application for compensation, the application shall be made on behalf of or for the benefit of all the legal representatives of the deceased and the legal representatives who have not so joined, shall be impleaded as respondents to the application.\n"
+            "Provided further that where a person accepts compensation under section 164 in accordance with the procedure provided under section 149, his claims petition before the Claims Tribunal shall lapse.\n"
+            "(2) Every application under sub-section (1) shall be made, at the option of the claimant, either to the Claims Tribunal having jurisdiction over the area in which the accident occurred or to the Claims Tribunal within the local limits of whose jurisdiction the claimant resides or carries on business or within the local limits of whose jurisdiction the defendant resides, and shall be in such form and contain such particulars as may be prescribed.\n"
+            "(3) No application for compensation shall be entertained unless it is made within six months of the occurrence of the accident.\n"
+            "(4) The Claims Tribunal shall treat any report of accidents forwarded to it under section 159 as an application for compensation under this Act.\n"
+            "(5) Notwithstanding anything in this Act or any other law for the time being in force, the right of a person to claim compensation for injury in an accident shall, upon the death of the person injured, survive to his legal representatives, irrespective of whether the cause of death is relatable to or had any nexus with the injury or not."
         ),
         "explanation": (
             "Governs fault-based adjudication before the Motor Accident Claims Tribunal (MACT) against the owner, driver, and insurance company "
             "of an identified offending vehicle. Compensation is calculated judicially under the structured multiplier system (Sarla Verma (2009) 6 SCC 121 "
             "and National Insurance Co. v. Pranay Sethi (2017) 16 SCC 680) based on age, verified monthly income, future prospects, dependency, and permanent disability percentage."
         ),
-        "source_url": "https://www.indiacode.nic.in/bitstream/123456789/15390/1/the_motor_vehicles_act%2C_1988.pdf",
+        "source_url": "https://prsindia.org/files/bills_acts/bills_parliament/2019/Motor%20Vehicles%20(Amendment)%20Act,%202019.pdf",
         "effective_date": "1 July 1989 (as amended by Act 32 of 2019)"
     },
 
@@ -568,16 +574,13 @@ STATUTORY_PROVISIONS_DATA = [
         "section_number": "41",
         "heading": "When police may arrest without warrant",
         "body": (
-            "(1) Any police officer may without an order from a Magistrate and without a warrant, arrest any person—\n"
-            "(a) who commits, in the presence of a police officer, a cognizable offence;\n"
-            "(b) against whom a reasonable complaint has been made, or credible information has been received, or a reasonable suspicion exists "
-            "that he has committed a cognizable offence punishable with imprisonment for a term which may be less than seven years or which may extend to seven years..."
+            "(1) Any police officer may without an order from a Magistrate and without a warrant, arrest any person— (a) who commits, in the presence of a police officer, a cognizable offence; (b) against whom a reasonable complaint has been made, or credible information has been received, or a reasonable suspicion exists that he has committed a cognizable offence punishable with imprisonment for a term which may be less than seven years or which may extend to seven years whether with or without fine, if the following conditions are satisfied, namely:— (i) the police officer has reason to believe on the basis of such complaint, information, or suspicion that such person has committed the said offence; (ii) the police officer is satisfied that such arrest is necessary— (a) to prevent such person from committing any further offence; or (b) for proper investigation of the offence; or (c) to prevent such person from causing the evidence of the offence to disappear or tampering with such evidence in any manner; or (d) to prevent such person from making any inducement, threat or promise to any person acquainted with the facts of the case so as to dissuade him from disclosing such facts to the Court or to the police officer; or (e) as unless such person is arrested, his presence in the Court whenever required cannot be ensured, and the police officer shall record while making such arrest, his reasons in writing: Provided that a police officer shall, in all cases where the arrest of a person is not required under the provisions of this sub-section, record the reasons in writing for not making the arrest.; (ba) against whom credible information has been received that he has committed a cognizable offence punishable with imprisonment for a term which may extend to more than seven years whether with or without fine or with death sentence and the police officer has reason to believe on the basis of that information that such person has committed the said offence; (c) who has been proclaimed as an offender either under this Code or by order of the State Government; or (d) in whose possession anything is found which may reasonably be suspected to be stolen property and who may reasonably be suspected of having committed an offence with reference to such thing; or (e) who obstructs a police officer while in the execution of his duty, or who has escaped, or attempts to escape, from lawful custody; or (f) who is reasonably suspected of being a deserter from any of the Armed Forces of the Union; or (g) who has been concerned in, or against whom a reasonable complaint has been made, or credible information has been received, or a reasonable suspicion exists, of his having been concerned in, any act committed at any place out of India which, if committed in India, would have been punishable as an offence, and for which he is, under any law relating to extradition, or otherwise, liable to be apprehended or detained in custody in India; or (h) who, being a released convict, commits a breach of any rule made under sub-section (5) of section 356; or (i) for whose arrest any requisition, whether written or oral, has been received from another police officer, provided that the requisition specifies the person to be arrested and the offence or other cause for which the arrest is to be made and it appears therefrom that the person might lawfully be arrested without a warrant by the officer who issued the requisition. (2) Subject to the provisions of section 42, no person concerned in a non-cognizable offence or against whom a complaint has been made or credible information has been received or reasonable suspicion exists of his having so concerned, shall be arrested except under a warrant or order of a Magistrate."
         ),
         "explanation": (
             "Governs arrest without warrant. Under Arnesh Kumar v. State of Bihar (2014) 8 SCC 273 and D.K. Basu (1997) 1 SCC 416, "
             "police cannot arrest mechanically for offences punishable up to 7 years without satisfying the statutory checklist of necessity and recording reasons."
         ),
-        "source_url": "https://www.indiacode.nic.in/bitstream/123456789/15272/1/the_code_of_criminal_procedure%2C_1973.pdf",
+        "source_url": "https://cdnbbsr.s3waas.gov.in/s3ec044a11654ad1e1e48352252859ff30/uploads/2023/11/2023110156.pdf",
         "effective_date": "1 April 1974"
     },
     {
@@ -586,14 +589,12 @@ STATUTORY_PROVISIONS_DATA = [
         "section_number": "41A",
         "heading": "Notice of appearance before police officer",
         "body": (
-            "(1) The police officer shall, in all cases where the arrest of a person is not required under the provisions of sub-section (1) of section 41, "
-            "issue a notice directing the person against whom a reasonable complaint has been made, or credible information has been received, "
-            "or a reasonable suspicion exists that he has committed a cognizable offence, to appear before him or at such other place as may be specified in the notice."
+            "(1) The police officer shall, in all cases where the arrest of a person is not required under the provisions of sub-section (1) of section 41, issue a notice directing the person against whom a reasonable complaint has been made, or credible information has been received, or a reasonable suspicion exists that he has committed a cognizable offence, to appear before him or at such other place as may be specified in the notice. (2) Where such a notice is issued to any person, it shall be the duty of that person to comply with the terms of the notice. (3) Where such person complies and continues to comply with the notice, he shall not be arrested in respect of the offence referred to in the notice unless, for reasons to be recorded, the police officer is of the opinion that he ought to be arrested. (4) Where such person, at any time, fails to comply with the terms of the notice or is unwilling to identify himself, the police officer may, subject to such orders as may have been passed by a competent Court in this behalf, arrest him for the offence mentioned in the notice."
         ),
         "explanation": (
             "Mandates issuance of a notice of appearance instead of arrest for offences punishable up to 7 years where arrest is not strictly necessary."
         ),
-        "source_url": "https://www.indiacode.nic.in/bitstream/123456789/15272/1/the_code_of_criminal_procedure%2C_1973.pdf",
+        "source_url": "https://cdnbbsr.s3waas.gov.in/s3ec044a11654ad1e1e48352252859ff30/uploads/2023/11/2023110156.pdf",
         "effective_date": "1 November 2010 (inserted by Act 5 of 2009)"
     },
     {
@@ -602,14 +603,13 @@ STATUTORY_PROVISIONS_DATA = [
         "section_number": "56",
         "heading": "Person arrested to be taken before Magistrate or officer in charge of police station",
         "body": (
-            "A police officer making an arrest without warrant shall, without unnecessary delay and subject to the provisions herein contained "
-            "as to bail, take or send the person arrested before a Magistrate having jurisdiction in the case, or before the officer in charge of a police station."
+            "A police officer making an arrest without warrant shall, without unnecessary delay and subject to the provisions herein contained as to bail, take or send the person arrested before a Magistrate having jurisdiction in the case, or before the officer in charge of a police station."
         ),
         "explanation": (
             "Statutory procedural mandate giving effect to Article 22(2) of the Constitution: every person arrested without a warrant must be brought "
             "before a Magistrate or police station officer in charge without unnecessary delay."
         ),
-        "source_url": "https://www.indiacode.nic.in/bitstream/123456789/15272/1/the_code_of_criminal_procedure%2C_1973.pdf",
+        "source_url": "https://cdnbbsr.s3waas.gov.in/s3ec044a11654ad1e1e48352252859ff30/uploads/2023/11/2023110156.pdf",
         "effective_date": "1 April 1974"
     },
     {
@@ -618,20 +618,14 @@ STATUTORY_PROVISIONS_DATA = [
         "section_number": "161",
         "heading": "Examination of witnesses by police",
         "body": (
-            "(1) Any police officer making an investigation under this Chapter, or any police officer not below such rank as the State Government may, "
-            "by general or special order, prescribe in this behalf, acting on the requisition of such officer, may examine orally any person supposed "
-            "to be acquainted with the facts and circumstances of the case.\n"
-            "(2) Such person shall be bound to answer truly all questions relating to such case put to him by such officer, other than questions "
-            "the answers to which would have a tendency to expose him to a criminal charge or to a penalty or forfeiture.\n"
-            "(3) The police officer may reduce into writing any statement made to him in the course of an examination under this section; "
-            "and if he does so, he shall make a separate and true record of the statement of each such person whose statement he records."
+            "(1) Any police officer making an investigation under this Chapter, or any police officer not below such rank as the State Government may, by general or special order, prescribe in this behalf, acting on the requisition of such officer, may examine orally any person supposed to be acquainted with the facts and circumstances of the case. (2) Such person shall be bound to answer truly all questions relating to such case put to him by such officer, other than questions the answers to which would have a tendency to expose him to a criminal charge or to a penalty or forfeiture. (3) The police officer may reduce into writing any statement made to him in the course of an examination under this section; and if he does so, he shall make a separate and true record of the statement of each such person whose statement he records. Provided that statement made under this sub-section may also be recorded by audio-video electronic means: Provided further that the statement of a woman against whom an offence under section 354, section 354A, section 354B, section 354C, section 354D, section 376, section 376A, section 376AB, section 376B, section 376C, section 376D, section 376DA, section 376DB, section 376E or section 509 of the Indian Penal Code (45 of 1860) is alleged to have been committed or attempted shall be recorded, by a woman police officer or any woman officer."
         ),
         "explanation": (
             "Governs oral examination of witnesses by investigating police officers during criminal investigations. "
             "Statements recorded under Section 161 cannot be signed by the witness and cannot be used as substantive evidence at trial; "
             "they may only be used to contradict the witness under Section 162 CrPC and Section 145 Evidence Act."
         ),
-        "source_url": "https://www.indiacode.nic.in/bitstream/123456789/15272/1/the_code_of_criminal_procedure%2C_1973.pdf",
+        "source_url": "https://cdnbbsr.s3waas.gov.in/s3ec044a11654ad1e1e48352252859ff30/uploads/2023/11/2023110156.pdf",
         "effective_date": "1 April 1974"
     },
 
@@ -648,7 +642,7 @@ STATUTORY_PROVISIONS_DATA = [
             "Codifies the doctrine of absolute doli incapax under Indian criminal jurisprudence. "
             "A child under 7 years is conclusively presumed to lack the capacity to form criminal intent (mens rea) and cannot be convicted of any offence."
         ),
-        "source_url": "https://www.indiacode.nic.in/bitstream/123456789/4219/1/THE-INDIAN-PENAL-CODE-1860.pdf",
+        "source_url": "https://crpf.mha.gov.in/writereaddata/images/pdf/IPC_1860_IN_ENGLISH.pdf",
         "effective_date": "1 May 1861"
     },
     {
@@ -663,7 +657,7 @@ STATUTORY_PROVISIONS_DATA = [
         "explanation": (
             "Provides qualified immunity (doli capax inquiry) for children between 7 and 12 years of age. Criminal liability depends on proof of sufficient maturity."
         ),
-        "source_url": "https://www.indiacode.nic.in/bitstream/123456789/4219/1/THE-INDIAN-PENAL-CODE-1860.pdf",
+        "source_url": "https://crpf.mha.gov.in/writereaddata/images/pdf/IPC_1860_IN_ENGLISH.pdf",
         "effective_date": "1 May 1861"
     },
     {
@@ -686,7 +680,7 @@ STATUTORY_PROVISIONS_DATA = [
             "Defines statutory categories of 'grievous hurt' across Indian law, specifically referenced by Section 161 of the Motor Vehicles Act, 1988 "
             "for fixed statutory relief under the Compensation to Victims of Hit and Run Motor Accidents Scheme, 2022."
         ),
-        "source_url": "https://www.indiacode.nic.in/bitstream/123456789/4219/1/THE-INDIAN-PENAL-CODE-1860.pdf",
+        "source_url": "https://crpf.mha.gov.in/writereaddata/images/pdf/IPC_1860_IN_ENGLISH.pdf",
         "effective_date": "1 May 1861"
     },
 
@@ -707,7 +701,7 @@ STATUTORY_PROVISIONS_DATA = [
             "Contracts involving personal service, employment, or determinable contracts cannot be specifically enforced by Indian courts. "
             "Damages constitute the sole admissible remedy."
         ),
-        "source_url": "https://www.indiacode.nic.in/handle/123456789/1583",
+        "source_url": "https://indiacode.gov.in/items/e0a1c7bb-8bed-47d7-a0b6-9fd3c8a3944c",
         "effective_date": "1 March 1964"
     },
     {
@@ -725,6 +719,7 @@ STATUTORY_PROVISIONS_DATA = [
             "(f) to prevent, on the ground of nuisance, an act of which it is not reasonably clear that it will be a nuisance;\n"
             "(g) to prevent a continuing breach in which the plaintiff has acquiesced;\n"
             "(h) when equally efficacious relief can certainly be obtained by any other usual mode of proceeding except in case of breach of trust;\n"
+            "(ha) if it would impede or delay the progress or completion of any infrastructure project or interfere with the continued provision of relevant facility related thereto or services being the subject matter of such project.\n"
             "(i) when the conduct of the plaintiff or his agents has been such as to disentitle him to the assistance of the court;\n"
             "(j) when the plaintiff has no personal interest in the matter."
         ),
@@ -732,7 +727,7 @@ STATUTORY_PROVISIONS_DATA = [
             "Clause (e) bars an injunction to restrain the breach of a contract whose specific performance is barred under Section 14 "
             "(such as contracts for personal services or post-service non-compete agreements)."
         ),
-        "source_url": "https://www.indiacode.nic.in/handle/123456789/1583",
+        "source_url": "https://indiacode.gov.in/items/e0a1c7bb-8bed-47d7-a0b6-9fd3c8a3944c",
         "effective_date": "1 March 1964"
     },
     {
@@ -751,7 +746,7 @@ STATUTORY_PROVISIONS_DATA = [
             "Statutory basis for enforcing during-employment exclusive covenants under Niranjan Shankar Golikari (1967). "
             "However, Section 42 cannot be used to circumvent Section 27 to enforce post-employment restraints (Percept D'Mark)."
         ),
-        "source_url": "https://www.indiacode.nic.in/handle/123456789/1583",
+        "source_url": "https://indiacode.gov.in/items/e0a1c7bb-8bed-47d7-a0b6-9fd3c8a3944c",
         "effective_date": "1 March 1964"
     },
 
@@ -762,15 +757,17 @@ STATUTORY_PROVISIONS_DATA = [
         "section_number": "8",
         "heading": "Power to refer parties to arbitration where there is an arbitration agreement",
         "body": (
-            "A judicial authority, before which an action is brought in a matter which is the subject of an arbitration agreement shall, "
-            "if a party to the arbitration agreement or any person claiming through or under him, so applies not later than the date of "
-            "submitting his first statement on the substance of the dispute, then, notwithstanding any judgment, decree or order of the "
-            "Supreme Court or of any Court, refer the parties to arbitration unless it finds that prima facie no valid arbitration agreement exists."
+            "(1) A judicial authority, before which an action is brought in a matter which is the subject of an arbitration agreement shall, if a party to the arbitration agreement or any person claiming through or under him, so applies not later than the date of submitting his first statement on the substance of the dispute, then, notwithstanding any judgment, decree or order of the Supreme Court or any Court, refer the parties to arbitration unless it finds that prima facie no valid arbitration agreement exists.\n"
+            "(2) The application referred to in sub-section\n"
+            "(1) shall not be entertained unless it is accompanied by the original arbitration agreement or a duly certified copy thereof:\n"
+            "Provided that where the original arbitration agreement or a certified copy thereof is not available with the party applying for reference to arbitration under sub-section (1), and the said agreement or certified copy is retained by the other party to that agreement, then, the party so applying shall file such application along with a copy of the arbitration agreement and a petition praying the Court to call upon the other party to produce the original arbitration agreement or its duly certified copy before that Court.\n"
+            "(3) Notwithstanding that an application has been made under sub-section\n"
+            "(1) and that the issue is pending before the judicial authority, an arbitration may be commenced or continued and an arbitral award made."
         ),
         "explanation": (
             "Mandatory referral to arbitration where a valid arbitration agreement exists, preserving party autonomy and minimal judicial intervention."
         ),
-        "source_url": "https://www.indiacode.nic.in/handle/123456789/1978",
+        "source_url": "https://indiacode.gov.in/items/99bffa19-c36b-417d-9175-4098ad6a6cf7",
         "effective_date": "22 August 1996"
     },
     {
@@ -779,21 +776,22 @@ STATUTORY_PROVISIONS_DATA = [
         "section_number": "9",
         "heading": "Interim measures, etc., by Court",
         "body": (
-            "A party may, before or during arbitral proceedings or at any time after the making of the arbitral award but before it is enforced "
-            "in accordance with section 36, apply to a court—\n"
+            "(1) A party may, before or during arbitral proceedings or at any time after the making of the arbitral award but before it is enforced in accordance with section 36, apply to a court—\n"
             "(i) for the appointment of a guardian for a minor or person of unsound mind for the purposes of arbitral proceedings; or\n"
             "(ii) for an interim measure of protection in respect of any of the following matters, namely:—\n"
             "(a) the preservation, interim custody or sale of any goods which are the subject-matter of the arbitration agreement;\n"
             "(b) securing the amount in dispute in the arbitration;\n"
-            "(c) the detention, preservation or inspection of any property or thing which is the subject-matter of the arbitration agreement...\n"
+            "(c) the detention, preservation or inspection of any property or thing which is the subject-matter of the dispute in arbitration, or as to which any question may arise therein and authorising for any of the aforesaid purposes any person to enter upon any land or building in the possession of any party, or authorising any samples to be taken or any observation to be made, or experiment to be tried, which may be necessary or expedient for the purpose of obtaining full information or evidence;\n"
             "(d) interim injunction or the appointment of a receiver;\n"
-            "(e) such other interim measure of protection as may appear to the court to be just and convenient."
+            "(e) such other interim measure of protection as may appear to the Court to be just and convenient, and the Court shall have the same power for making orders as it has for the purpose of, and in relation to, any proceedings before it.\n"
+            "(2) Where, before the commencement of the arbitral proceedings, a Court passes an order for any interim measure of protection under sub-section (1), the arbitral proceedings shall be commenced within a period of ninety days from the date of such order or within such further time as the Court may determine.\n"
+            "(3) Once the arbitral tribunal has been constituted, the Court shall not entertain an application under sub-section (1), unless the Court finds that circumstances exist which may not render the remedy provided under section 17 efficacious."
         ),
         "explanation": (
             "Empowers the civil court to grant urgent pre-arbitral or interim protection. Once the arbitral tribunal is formed, "
             "Section 17 applications take precedence unless special circumstances render the tribunal remedy inefficacious."
         ),
-        "source_url": "https://www.indiacode.nic.in/handle/123456789/1978",
+        "source_url": "https://indiacode.gov.in/items/99bffa19-c36b-417d-9175-4098ad6a6cf7",
         "effective_date": "22 August 1996"
     },
     {
@@ -802,16 +800,53 @@ STATUTORY_PROVISIONS_DATA = [
         "section_number": "11",
         "heading": "Appointment of arbitrators",
         "body": (
-            "A person of any nationality may be an arbitrator, unless otherwise agreed by the parties...\n"
-            "The Supreme Court or, as the case may be, the High Court or any person or institution designated by such Court, "
-            "in an application under this section, shall examine whether there is an arbitration agreement, "
-            "and nothing more."
+            "(1) A person of any nationality may be an arbitrator, unless otherwise agreed by the parties.\n"
+            "(2) Subject to sub-section (6), the parties are free to agree on a procedure for appointing the arbitrator or arbitrators.\n"
+            "(3) Failing any agreement referred to in sub-section (2), in an arbitration with three arbitrators, each party shall appoint one arbitrator, and the two appointed arbitrators shall appoint the third arbitrator who shall act as the presiding arbitrator.\n"
+            "(4) If the appointment procedure in sub-section\n"
+            "(3) applies and—\n"
+            "(a) a party fails to appoint an arbitrator within thirty days from the receipt of a request to do so from the other party; or\n"
+            "(b) the two appointed arbitrators fail to agree on the third arbitrator within thirty days from the date of their appointment, the appointment shall be made, upon request of a party, by the Supreme Court or, as the case may be, the High Court or any person or institution designated by such Court ;\n"
+            "(5) Failing any agreement referred to in sub-section (2), in an arbitration with a sole arbitrator, if the parties fail to agree on the arbitrator within thirty days from receipt of a request by one party from the other party to so agree the appointment shall be made, upon request of a party, by the Supreme Court or, as the case may be, the High Court or any person or institution designated by such Court.\n"
+            "(6) Where, under an appointment procedure agreed upon by the parties,—\n"
+            "(a) a party fails to act as required under that procedure; or\n"
+            "(b) the parties, or the two appointed arbitrators, fail to reach an agreement expected of them under that procedure; or\n"
+            "(c) a person, including an institution, fails to perform any function entrusted to him or it under that procedure, a party may request the Supreme Court or, as the case may be, the High Court or any person or institution designated by such Court to take the necessary measure, unless the agreement on the appointment procedure provides other means for securing the appointment. (6A) The Supreme Court or, as the case may be, the High Court, while considering any application under sub-section\n"
+            "(4) or sub-section\n"
+            "(5) or sub-section (6), shall, notwithstanding any judgment, decree or order of any Court, confine to the examination of the existence of an arbitration agreement. (6B) The designation of any person or institution by the Supreme Court or, as the case may be, the High Court, for the purposes of this section shall not be regarded as a delegation of judicial power by the Supreme Court or the High Court.\n"
+            "(7) A decision on a matter entrusted by sub-section\n"
+            "(4) or sub-section\n"
+            "(5) or sub-section\n"
+            "(6) to the Supreme Court or, as the case may be, the High Court or the person or institution designated by such Court is final and no appeal including Letters Patent Appeal shall lie against such decision.\n"
+            "(8) The Supreme Court or, as the case may be, the High Court or the person or institution designated by such Court, before appointing an arbitrator, shall seek a disclosure in writing from the prospective arbitrator in terms of sub-section\n"
+            "(1) of section 12, and have due regard to—\n"
+            "(a) any qualifications required for the arbitrator by the agreement of the parties; and\n"
+            "(b) the contents of the disclosure and other considerations as are likely to secure the appointment of an independent and impartial arbitrator.\n"
+            "(9) In the case of appointment of sole or third arbitrator in an international commercial arbitration, the Supreme Court or the person or institution designated by that Court may appoint an arbitrator of a nationality other than the nationalities of the parties where the parties belong to different nationalities.\n"
+            "(10) The Supreme Court or, as the case may be, the High Court, may make such scheme as the said Court may deem appropriate for dealing with matters entrusted by sub-section\n"
+            "(4) or sub-section\n"
+            "(5) or sub-section (6), to it.\n"
+            "(11) Where more than one request has been made under sub-section\n"
+            "(4) or sub-section\n"
+            "(5) or sub-section\n"
+            "(6) to the Chief Justices of different High Courts or their designates, different High Courts or their designates, the High Court or its designate to whom the request has been first made under the relevant sub-section shall alone be competent to decide on the request.\n"
+            "(12)\n"
+            "(a) Where the matters referred to in sub-sections (4), (5), (6), (7),\n"
+            "(8) and sub-section\n"
+            "(10) arise in an international commercial arbitration, the reference to the “Supreme Court or, as the case may be, the High Court” in those sub-sections shall be construed as a reference to the “Supreme Court”; and\n"
+            "(b) Where the matters referred to in sub-sections (4), (5), (6), (7),\n"
+            "(8) and sub-section\n"
+            "(10) arise in any other arbitration, the reference to “the Supreme Court or, as the case may be, the High Court” in those sub-sections shall be construed as a reference to the “High Court” within whose local limits the principal Civil Court referred to in clause\n"
+            "(e) of sub-section\n"
+            "(1) of section 2 is situate, and where the High Court itself is the Court referred to in that clause, to that High Court.\n"
+            "(13) An application made under this section for appointment of an arbitrator or arbitrators shall be disposed of by the Supreme Court or the High Court or the person or institution designated by such Court, as the case may be, as expeditiously as possible and an endeavour shall be made to dispose of the matter within a period of sixty days from the date of service of notice on the opposite party.\n"
+            "(14) For the purpose of determination of the fees of the arbitral tribunal and the manner of its payment to the arbitral tribunal, the High Court may frame such rules as may be necessary, after taking into consideration the rates specified in the Fourth Schedule. Explanation.—For the removal of doubts, it is hereby clarified that this sub-section shall not apply to international commercial arbitration and in arbitrations (other than international commercial arbitration) in case where parties have agreed for determination of fees as per the rules of an arbitral institution."
         ),
         "explanation": (
             "Governs judicial appointment of arbitrators. Under Vidya Drolia (2021) and SBI General Insurance (2024), "
             "the referral court's examination is strictly confined to the prima facie existence of the arbitration agreement."
         ),
-        "source_url": "https://www.indiacode.nic.in/handle/123456789/1978",
+        "source_url": "https://indiacode.gov.in/items/99bffa19-c36b-417d-9175-4098ad6a6cf7",
         "effective_date": "22 August 1996"
     },
     {
@@ -820,17 +855,37 @@ STATUTORY_PROVISIONS_DATA = [
         "section_number": "34",
         "heading": "Application for setting aside arbitral award",
         "body": (
-            "Recourse to a Court against an arbitral award may be made only by an application for setting aside such award in accordance with sub-section (2) and sub-section (3)...\n"
-            "An arbitral award may be set aside by the Court only if—\n"
+            "(1) Recourse to a Court against an arbitral award may be made only by an application for setting aside such award in accordance with sub-section\n"
+            "(2) and sub-section (3).\n"
+            "(2) An arbitral award may be set aside by the Court only if—\n"
+            "(a) the party making the application establishes on the basis of the record of the arbitral tribunal that—\n"
+            "(i) a party was under some incapacity, or\n"
+            "(ii) the arbitration agreement is not valid under the law to which the parties have subjected it or, failing any indication thereon, under the law for the time being in force; or\n"
+            "(iii) the party making the application was not given proper notice of the appointment of an arbitrator or of the arbitral proceedings or was otherwise unable to present his case; or\n"
+            "(iv) the arbitral award deals with a dispute not contemplated by or not falling within the terms of the submission to arbitration, or it contains decisions on matters beyond the scope of the submission to arbitration:\n"
+            "Provided that, if the decisions on matters submitted to arbitration can be separated from those not so submitted, only that part of the arbitral award which contains decisions on matters not submitted to arbitration may be set aside; or\n"
+            "(v) the composition of the arbitral tribunal or the arbitral procedure was not in accordance with the agreement of the parties, unless such agreement was in conflict with a provision of this Part from which the parties cannot derogate, or, failing such agreement, was not in accordance with this Part; or\n"
             "(b) the Court finds that—\n"
             "(i) the subject-matter of the dispute is not capable of settlement by arbitration under the law for the time being in force, or\n"
-            "(ii) the arbitral award is in conflict with the public policy of India."
+            "(ii) the arbitral award is in conflict with the public policy of India.\n"
+            "Explanation 1.—For the avoidance of any doubt, it is clarified that an award is in conflict with the public policy of India, only if,—\n"
+            "(i) the making of the award was induced or affected by fraud or corruption or was in violation of section 75 or section 81; or\n"
+            "(ii) it is in contravention with the fundamental policy of Indian law; or\n"
+            "(iii) it is in conflict with the most basic notions of morality or justice.\n"
+            "Explanation 2.—For the avoidance of doubt, the test as to whether there is a contravention with the fundamental policy of Indian law shall not entail a review on the merits of the dispute. (2A) An arbitral award arising out of arbitrations other than international commercial arbitrations, may also be set aside by the Court, if the Court finds that the award is vitiated by patent illegality appearing on the face of the award:\n"
+            "Provided that an award shall not be set aside merely on the ground of an erroneous application of the law or by reappreciation of evidence.\n"
+            "(3) An application for setting aside may not be made after three months have elapsed from the date on which the party making that application had received the arbitral award or, if a request had been made under section 33, from the date on which that request had been disposed of by the arbitral tribunal:\n"
+            "Provided that if the Court is satisfied that the applicant was prevented by sufficient cause from making the application within the said period of three months it may entertain the application within a further period of thirty days, but not thereafter.\n"
+            "(4) On receipt of an application under sub-section (1), the Court may, where it is appropriate and it is so requested by a party, adjourn the proceedings for a period of time determined by it in order to give the arbitral tribunal an opportunity to resume the arbitral proceedings or to take such other action as in the opinion of arbitral tribunal will eliminate the grounds for setting aside the arbitral award.\n"
+            "(5) An application under this section shall be filed by a party only after issuing a prior notice to the other party and such application shall be accompanied by an affidavit by the applicant endorsing compliance with the said requirement.\n"
+            "(6) An application under this section shall be disposed of expeditiously, and in any event, within a period of one year from the date on which the notice referred to in sub-section\n"
+            "(5) is served upon the other party."
         ),
         "explanation": (
             "Defines the narrow, non-merit grounds for setting aside arbitral awards in India. Under Associate Builders (2015) "
             "and Ssangyong Engineering (2019), courts cannot review the merits of the dispute or re-appreciate evidence."
         ),
-        "source_url": "https://www.indiacode.nic.in/handle/123456789/1978",
+        "source_url": "https://indiacode.gov.in/items/99bffa19-c36b-417d-9175-4098ad6a6cf7",
         "effective_date": "22 August 1996"
     }
 ]
