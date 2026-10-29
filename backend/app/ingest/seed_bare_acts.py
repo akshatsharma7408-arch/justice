@@ -7,6 +7,7 @@ Usage:
     python -m app.ingest.seed_bare_acts
 """
 
+import re
 import sqlite3
 import logging
 from pathlib import Path
@@ -20,6 +21,58 @@ CURRENT_DIR = Path(__file__).resolve().parent
 BACKEND_DIR = CURRENT_DIR.parent.parent
 DATA_DIR = BACKEND_DIR / "data"
 DB_PATH = DATA_DIR / "justice_statutes.db"
+
+# Verified Constitution corpus (official Legislative Department diglot edition).
+# Regenerate via scripts/constitution/parse_coi.py + clean_coi.py.
+CONSTITUTION_SOURCE_URL = "https://www.legislative.gov.in/static/uploads/2025/07/c9fe9c9b6840524844316f74bb1c556c.pdf"
+CONSTITUTION_EDITION = "Diglot edition [As on 1st May, 2026] (incorporating amendments up to the 106th Amendment Act, 2023)"
+CONSTITUTION_CORPUS_PATHS = [
+    CURRENT_DIR / "constitution_corpus.json",
+    BACKEND_DIR.parent / "scripts" / "constitution" / "coi_corpus.json",
+]
+
+
+def _article_sort_key(num: str):
+    m = re.match(r"(\d+)([A-Z]*)", num)
+    return (int(m.group(1)), m.group(2))
+
+
+def load_constitution_provisions(curated: Dict[str, Dict[str, Any]]) -> List[Dict[str, Any]]:
+    """Build Constitution provision rows from the verified corpus JSON.
+
+    Bodies/headings come verbatim from the official diglot PDF extraction
+    (scripts/constitution/coi_corpus.json); the hand-curated entries only
+    contribute landmark-case explanations and effective dates. Falls back to
+    the curated entries if the corpus file is unavailable.
+    """
+    import json as _json
+    corpus = None
+    for path in CONSTITUTION_CORPUS_PATHS:
+        if path.exists():
+            corpus = _json.loads(path.read_text(encoding="utf-8"))
+            logger.info(f"Constitution corpus loaded from {path} ({len(corpus)} articles)")
+            break
+    if corpus is None:
+        logger.warning("Constitution corpus JSON not found; using curated provisions only")
+        return [curated[n] for n in sorted(curated, key=_article_sort_key)]
+
+    provisions = []
+    for num in sorted(corpus, key=_article_sort_key):
+        art = corpus[num]
+        note = curated.get(num.upper(), {})
+        status = art.get("status", "in_force")
+        provisions.append({
+            "id": f"constitution-1950-art-{num.lower()}",
+            "act_id": "constitution-of-india-1950",
+            "section_number": num,
+            "heading": art["title"],
+            "body": art["body"],
+            "explanation": note.get("explanation"),
+            "source_url": CONSTITUTION_SOURCE_URL,
+            "effective_date": note.get("effective_date") if status == "in_force" else None,
+            "status": status,
+        })
+    return provisions
 
 # Authoritative Curated Statutory Datasets
 BARE_ACTS_DATA = [
@@ -811,6 +864,10 @@ def init_db(db_path: Path) -> sqlite3.Connection:
             cursor.execute("ALTER TABLE statutory_provisions ADD COLUMN source_url TEXT;")
         if "effective_date" not in prov_cols:
             cursor.execute("ALTER TABLE statutory_provisions ADD COLUMN effective_date TEXT;")
+        if "status" not in prov_cols:
+            cursor.execute("ALTER TABLE statutory_provisions ADD COLUMN status TEXT DEFAULT 'in_force';")
+        if "edition" not in act_cols:
+            cursor.execute("ALTER TABLE bare_acts ADD COLUMN edition TEXT;")
 
     return conn
 
@@ -832,9 +889,13 @@ def seed_database(conn: sqlite3.Connection) -> Tuple[int, int]:
         """, (act["id"], act["title"], act["act_number"], act["year"], act.get("jurisdiction", "India")))
         acts_inserted += 1
 
-    # 2. Insert statutory provisions
+    # 2. Insert statutory provisions (Constitution handled separately from the verified corpus)
     provisions_inserted = 0
+    constitution_curated = {}
     for prov in STATUTORY_PROVISIONS_DATA:
+        if prov["act_id"] == "constitution-of-india-1950":
+            constitution_curated[prov["section_number"].upper()] = prov
+            continue
         cursor.execute("""
             INSERT INTO statutory_provisions (id, act_id, section_number, heading, body, explanation, source_url, effective_date)
             VALUES (?, ?, ?, ?, ?, ?, ?, ?)
@@ -855,6 +916,20 @@ def seed_database(conn: sqlite3.Connection) -> Tuple[int, int]:
             prov["explanation"],
             prov.get("source_url"),
             prov.get("effective_date")
+        ))
+        provisions_inserted += 1
+
+    # 3. Constitution: replace any prior provisions with the verified corpus
+    cursor.execute("DELETE FROM statutory_provisions WHERE act_id = 'constitution-of-india-1950';")
+    cursor.execute("UPDATE bare_acts SET edition = ? WHERE id = 'constitution-of-india-1950';", (CONSTITUTION_EDITION,))
+    for prov in load_constitution_provisions(constitution_curated):
+        cursor.execute("""
+            INSERT INTO statutory_provisions (id, act_id, section_number, heading, body, explanation, source_url, effective_date, status)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?);
+        """, (
+            prov["id"], prov["act_id"], prov["section_number"], prov["heading"],
+            prov["body"], prov["explanation"], prov.get("source_url"),
+            prov.get("effective_date"), prov.get("status", "in_force"),
         ))
         provisions_inserted += 1
 

@@ -319,10 +319,12 @@ class StatuteService:
                 p.explanation,
                 p.source_url,
                 p.effective_date,
+                p.status AS provision_status,
                 a.title AS act_title,
                 a.act_number,
                 a.year AS act_year,
-                a.jurisdiction
+                a.jurisdiction,
+                a.edition AS act_edition
             FROM statutory_provisions p
             JOIN bare_acts a ON p.act_id = a.id
             WHERE (p.act_id = ? OR a.title LIKE ?)
@@ -358,10 +360,12 @@ class StatuteService:
                 p.explanation,
                 p.source_url,
                 p.effective_date,
+                p.status AS provision_status,
                 a.title AS act_title,
                 a.act_number,
                 a.year AS act_year,
-                a.jurisdiction
+                a.jurisdiction,
+                a.edition AS act_edition
             FROM statutory_provisions p
             JOIN bare_acts a ON p.act_id = a.id
             WHERE UPPER(p.section_number) = ?

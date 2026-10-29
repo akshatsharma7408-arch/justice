@@ -1372,10 +1372,37 @@ class LLMService:
             elif prov:
                 heading = prov.get("heading", f"Article {art_num}")
                 body = prov.get("body", "")
-                eff_date = prov.get("effective_date", "1950-01-26")
+                prov_status = (prov.get("provision_status") or "in_force").lower()
+                eff_date = prov.get("effective_date") or ""
                 src_url = prov.get("source_url", "https://legislative.gov.in/constitution-of-india/")
-                expl = prov.get("explanation") or body[:250]
-                ans_str = f"Article {art_num} of the Constitution of India governs '{heading}'. {expl} "
+                expl = prov.get("explanation")
+                if prov_status != "in_force":
+                    # Omitted/repealed provision: report the omission note verbatim, never
+                    # present it as operative law, never attach precedents as if live.
+                    ans_str = (
+                        f"Article {art_num} of the Constitution of India ('{heading}') is not in force. {body} "
+                        f"(Source: official Legislative Department edition; see source link.)"
+                    )
+                    cits = [f"Constitution of India, Article {art_num} ({heading}, omitted)"]
+                    badged_ans = citation_checker.check_and_badge_text(ans_str, is_tier2=False)
+                    badged_cits = citation_checker.badge_citations_list(cits)
+                    return {
+                        "answer": badged_ans,
+                        "ratio_decidendi": citation_checker.check_and_badge_text(body, is_tier2=False),
+                        "citations": badged_cits,
+                        "results": [],
+                        "model_used": "statutory_provision_omitted",
+                        "tier": "tier1",
+                        "tier_label": "Omitted constitutional provision (historical reference)",
+                        "no_strong_case_match": True,
+                        "source_url": src_url,
+                        "effective_date": None
+                    }
+                # In force: verbatim statutory text leads; curated explanation follows.
+                ans_str = f"Article {art_num} of the Constitution of India governs '{heading}'. {body}"
+                if expl:
+                    ans_str += f" {expl}"
+                ans_str += " "
                 if matching_cases:
                     c0 = matching_cases[0]
                     ans_str += f"In {c0.get('title')} ({c0.get('citation')}), the Supreme Court held: {clean_case_summary(c0)}"
@@ -1537,11 +1564,36 @@ class LLMService:
                 ]
                 heading = prov.get("heading", f"Section {sec_num}")
                 act_title = prov.get("act_title", "Central Act")
-                expl = prov.get("explanation") or prov.get("body", "")[:250]
+                prov_status = (prov.get("provision_status") or "in_force").lower()
+                body = prov.get("body", "")
+                expl = prov.get("explanation")
                 eff_date = prov.get("effective_date", "")
                 src_url = prov.get("source_url", "")
 
-                ans_str = f"Section {sec_num} of the {act_title} governs '{heading}'. {expl} "
+                if prov_status != "in_force":
+                    ans_str = (
+                        f"Section {sec_num} of the {act_title} ('{heading}') is not in force. {body} "
+                        f"(Source: official Legislative Department edition; see source link.)"
+                    )
+                    cits = [f"{act_title}, Section {sec_num} ({heading}, omitted)"]
+                    badged_ans = citation_checker.check_and_badge_text(ans_str, is_tier2=False)
+                    return {
+                        "answer": badged_ans,
+                        "ratio_decidendi": citation_checker.check_and_badge_text(body, is_tier2=False),
+                        "citations": citation_checker.badge_citations_list(cits),
+                        "results": [],
+                        "model_used": "statutory_provision_omitted",
+                        "tier": "tier1",
+                        "tier_label": "Omitted/repealed statutory provision (historical reference)",
+                        "no_strong_case_match": True,
+                        "source_url": src_url,
+                        "effective_date": None
+                    }
+
+                ans_str = f"Section {sec_num} of the {act_title} governs '{heading}'. {body}"
+                if expl:
+                    ans_str += f" {expl}"
+                ans_str += " "
                 if matching_cases:
                     c0 = matching_cases[0]
                     ans_str += f"In {c0.get('title')} ({c0.get('citation')}), the Supreme Court held: {clean_case_summary(c0)}"
