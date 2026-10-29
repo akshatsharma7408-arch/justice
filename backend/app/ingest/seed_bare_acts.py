@@ -102,14 +102,16 @@ BARE_ACTS_DATA = [
         "title": "The Code of Criminal Procedure, 1973",
         "act_number": "Act No. 2 of 1974",
         "year": 1973,
-        "jurisdiction": "India"
+        "jurisdiction": "India",
+        "edition": "Repealed by the Bharatiya Nagarik Suraksha Sanhita, 2023 w.e.f. 1 July 2024; indexed for pending-matter/historical reference"
     },
     {
         "id": "ipc-1860",
         "title": "The Indian Penal Code, 1860",
         "act_number": "Act No. 45 of 1860",
         "year": 1860,
-        "jurisdiction": "India"
+        "jurisdiction": "India",
+        "edition": "Repealed by the Bharatiya Nyaya Sanhita, 2023 w.e.f. 1 July 2024; indexed for pending-matter/historical reference"
     },
     {
         "id": "specific-relief-act-1963",
@@ -355,14 +357,12 @@ STATUTORY_PROVISIONS_DATA = [
         "section_number": "161",
         "heading": "Special provisions as to compensation in case of hit and run motor accident",
         "body": (
-            "(1) For the purposes of this section, section 162 and section 163—\n"
-            "(a) 'grievous hurt' shall have the same meaning as in the Indian Penal Code, 1860;\n"
-            "(b) 'hit and run motor accident' means an accident arising out of the use of a motor vehicle or motor vehicles the identity whereof cannot be ascertained in spite of reasonable efforts for the purpose;\n"
-            "(c) 'scheme' means the scheme framed under sub-section (2).\n\n"
-            "(2) Notwithstanding anything contained in this Act or in any other law for the time being in force or any instrument having the force of law, the Central Government shall provide for the payment of compensation in respect of the death of, or grievous hurt to, persons resulting from hit and run motor accidents.\n\n"
-            "(3) Subject to the provisions of this Act and the scheme made under sub-section (2), there shall be paid as compensation—\n"
+            "(1) Notwithstanding anything contained in any other law for the time being in force or any instrument having the force of law, the Central Government shall provide for paying in accordance with the provisions of this Act and the scheme made under sub-section (3), compensation in respect of the death of, or grievous hurt to, persons resulting from hit and run motor accidents.\n"
+            "(2) Subject to the provisions of this Act and the scheme made under sub-section (3), there shall be paid as compensation, -\n"
             "(a) in respect of the death of any person resulting from a hit and run motor accident, a fixed sum of two lakh rupees or such higher amount as may be prescribed by the Central Government;\n"
-            "(b) in respect of grievous hurt to any person resulting from a hit and run motor accident, a fixed sum of fifty thousand rupees or such higher amount as may be prescribed by the Central Government."
+            "(b) in respect of grievous hurt to any person resulting from a hit and run motor accident, a fixed sum of fifty thousand rupees or such higher amount as may be prescribed by the Central Government.\n"
+            "(3) The Central Government may, by notification in the Official Gazette, make a scheme specifying the manner in which the scheme shall be administered by the Central Government or General Insurance Council, the form, manner and the time within which applications for compensation may be made, the officers or authorities to whom such applications may be made, the procedure to be followed by such officers or authorities for considering and passing orders on such applications, and all other matters connected with, or incidental to, the administration of the scheme and the payment of compensation under this section.\n"
+            "(4) A scheme made under sub-section (3) may provide that, - (a) a payment of such sum as may be prescribed by the Central Government as interim relief to any claimant under such scheme; (b) a contravention of any provision thereof shall be punishable with imprisonment which may extend to two years, or with fine which shall not be less than twenty-five thousand rupees but may extend to five lakh rupees or with both; (c) the powers, functions or duties conferred or imposed on any officer or authority by such scheme may be delegated, with the prior approval in writing of Central Government, by such officer or authority to any other officer or authority."
         ),
         "explanation": (
             "Section 161 of the Motor Vehicles Act, 1988 provides statutory solatium relief specifically for hit-and-run accidents where the identity of the offending vehicle cannot be ascertained (untraced vehicle).\n"
@@ -375,8 +375,8 @@ STATUTORY_PROVISIONS_DATA = [
             "4. Grievous Hurt vs Disability: Compenses statutory 'grievous hurt' as defined in Section 320 IPC, distinct from medical disability percentages.\n"
             "5. Refund/Clawback: Under Section 161(5) and Section 162, if MACT compensation is subsequently awarded for the same accident (e.g. if the offending vehicle is later identified), the Section 161 relief amount must be refunded to the Fund."
         ),
-        "source_url": "https://www.indiacode.nic.in/handle/123456789/1798",
-        "effective_date": "1 April 2022 (Scheme notified 25 February 2022 vide G.S.R. 163(E))"
+        "source_url": "https://api.sci.gov.in/supremecourt/2012/20376/20376_2012_7_1501_49426_Judgement_12-Jan-2024.pdf",
+        "effective_date": "1 April 2022 (s.161 as substituted by Act 32 of 2019; Scheme G.S.R. 163(E) dated 25-2-2022)"
     },
     {
         "id": "mva-1988-sec-164",
@@ -394,7 +394,7 @@ STATUTORY_PROVISIONS_DATA = [
             "Provides statutory structured compensation on a no-fault basis where the offending vehicle is identified/traced. "
             "The claimant is not required to plead or prove wrongful act, neglect, or default."
         ),
-        "source_url": "https://www.indiacode.nic.in/handle/123456789/1798",
+        "source_url": "https://www.indiacode.nic.in/bitstream/123456789/15390/1/the_motor_vehicles_act%2C_1988.pdf",
         "effective_date": "1 September 2019 (inserted by Act 32 of 2019)"
     },
     {
@@ -414,7 +414,7 @@ STATUTORY_PROVISIONS_DATA = [
             "of an identified offending vehicle. Compensation is calculated judicially under the structured multiplier system (Sarla Verma (2009) 6 SCC 121 "
             "and National Insurance Co. v. Pranay Sethi (2017) 16 SCC 680) based on age, verified monthly income, future prospects, dependency, and permanent disability percentage."
         ),
-        "source_url": "https://www.indiacode.nic.in/handle/123456789/1798",
+        "source_url": "https://www.indiacode.nic.in/bitstream/123456789/15390/1/the_motor_vehicles_act%2C_1988.pdf",
         "effective_date": "1 July 1989 (as amended by Act 32 of 2019)"
     },
 
@@ -438,7 +438,7 @@ STATUTORY_PROVISIONS_DATA = [
             "Foundational statutory limit on contract freedom under Indian law. Contracts contrary to statutory mandates "
             "or public policy are void ab initio and cannot be cured by estoppel or party consent."
         ),
-        "source_url": "https://www.indiacode.nic.in/handle/123456789/2187",
+        "source_url": "https://www.indiacode.nic.in/bitstream/123456789/2187/2/A187209.pdf",
         "effective_date": "1 September 1872"
     },
     {
@@ -460,7 +460,7 @@ STATUTORY_PROVISIONS_DATA = [
             "operating post-termination is void ab initio. The English common law rule of partial restraint or reasonableness "
             "does not apply under Indian law, except strictly under the statutory goodwill exception."
         ),
-        "source_url": "https://www.indiacode.nic.in/handle/123456789/2187",
+        "source_url": "https://www.indiacode.nic.in/bitstream/123456789/2187/2/A187209.pdf",
         "effective_date": "1 September 1872"
     },
     {
@@ -479,7 +479,7 @@ STATUTORY_PROVISIONS_DATA = [
             "Agreements that extinguish rights or curtail statutory limitation periods are void. "
             "Arbitration agreements are expressly protected under Exceptions 1 and 2."
         ),
-        "source_url": "https://www.indiacode.nic.in/handle/123456789/2187",
+        "source_url": "https://www.indiacode.nic.in/bitstream/123456789/2187/2/A187209.pdf",
         "effective_date": "1 September 1872"
     },
     {
@@ -500,7 +500,7 @@ STATUTORY_PROVISIONS_DATA = [
             "the Supreme Court settled that Section 56 is exhaustive on the subject of supervening impossibility, superseding English common law theories of implied terms. "
             "When the fundamental basis of a contract is destroyed by an unforeseen supervening event without fault of either party, the contract is discharged by frustration."
         ),
-        "source_url": "https://www.indiacode.nic.in/handle/123456789/2187",
+        "source_url": "https://www.indiacode.nic.in/bitstream/123456789/2187/2/A187209.pdf",
         "effective_date": "1 September 1872"
     },
     {
@@ -519,7 +519,7 @@ STATUTORY_PROVISIONS_DATA = [
             "Codifies the common law rule of Hadley v. Baxendale. Only direct, proximate, and foreseeable damages "
             "are compensable; speculative, punitive, or remote damages are barred."
         ),
-        "source_url": "https://www.indiacode.nic.in/handle/123456789/2187",
+        "source_url": "https://www.indiacode.nic.in/bitstream/123456789/2187/2/A187209.pdf",
         "effective_date": "1 September 1872"
     },
     {
@@ -538,7 +538,7 @@ STATUTORY_PROVISIONS_DATA = [
             "Where loss can be proved, it must be proved (Kailash Nath Associates v. DDA). Genuine pre-estimates are treated as "
             "ceilings rather than forfeitable penalties."
         ),
-        "source_url": "https://www.indiacode.nic.in/handle/123456789/2187",
+        "source_url": "https://www.indiacode.nic.in/bitstream/123456789/2187/2/A187209.pdf",
         "effective_date": "1 September 1872"
     },
 
@@ -558,7 +558,7 @@ STATUTORY_PROVISIONS_DATA = [
             "Governs arrest without warrant. Under Arnesh Kumar v. State of Bihar (2014) 8 SCC 273 and D.K. Basu (1997) 1 SCC 416, "
             "police cannot arrest mechanically for offences punishable up to 7 years without satisfying the statutory checklist of necessity and recording reasons."
         ),
-        "source_url": "https://www.indiacode.nic.in/handle/123456789/16225",
+        "source_url": "https://www.indiacode.nic.in/bitstream/123456789/15272/1/the_code_of_criminal_procedure%2C_1973.pdf",
         "effective_date": "1 April 1974"
     },
     {
@@ -574,7 +574,7 @@ STATUTORY_PROVISIONS_DATA = [
         "explanation": (
             "Mandates issuance of a notice of appearance instead of arrest for offences punishable up to 7 years where arrest is not strictly necessary."
         ),
-        "source_url": "https://www.indiacode.nic.in/handle/123456789/16225",
+        "source_url": "https://www.indiacode.nic.in/bitstream/123456789/15272/1/the_code_of_criminal_procedure%2C_1973.pdf",
         "effective_date": "1 November 2010 (inserted by Act 5 of 2009)"
     },
     {
@@ -590,7 +590,7 @@ STATUTORY_PROVISIONS_DATA = [
             "Statutory procedural mandate giving effect to Article 22(2) of the Constitution: every person arrested without a warrant must be brought "
             "before a Magistrate or police station officer in charge without unnecessary delay."
         ),
-        "source_url": "https://www.indiacode.nic.in/handle/123456789/16225",
+        "source_url": "https://www.indiacode.nic.in/bitstream/123456789/15272/1/the_code_of_criminal_procedure%2C_1973.pdf",
         "effective_date": "1 April 1974"
     },
     {
@@ -612,7 +612,7 @@ STATUTORY_PROVISIONS_DATA = [
             "Statements recorded under Section 161 cannot be signed by the witness and cannot be used as substantive evidence at trial; "
             "they may only be used to contradict the witness under Section 162 CrPC and Section 145 Evidence Act."
         ),
-        "source_url": "https://www.indiacode.nic.in/handle/123456789/16225",
+        "source_url": "https://www.indiacode.nic.in/bitstream/123456789/15272/1/the_code_of_criminal_procedure%2C_1973.pdf",
         "effective_date": "1 April 1974"
     },
 
@@ -629,7 +629,7 @@ STATUTORY_PROVISIONS_DATA = [
             "Codifies the doctrine of absolute doli incapax under Indian criminal jurisprudence. "
             "A child under 7 years is conclusively presumed to lack the capacity to form criminal intent (mens rea) and cannot be convicted of any offence."
         ),
-        "source_url": "https://www.indiacode.nic.in/handle/123456789/2263",
+        "source_url": "https://www.indiacode.nic.in/bitstream/123456789/4219/1/THE-INDIAN-PENAL-CODE-1860.pdf",
         "effective_date": "1 May 1861"
     },
     {
@@ -644,7 +644,7 @@ STATUTORY_PROVISIONS_DATA = [
         "explanation": (
             "Provides qualified immunity (doli capax inquiry) for children between 7 and 12 years of age. Criminal liability depends on proof of sufficient maturity."
         ),
-        "source_url": "https://www.indiacode.nic.in/handle/123456789/2263",
+        "source_url": "https://www.indiacode.nic.in/bitstream/123456789/4219/1/THE-INDIAN-PENAL-CODE-1860.pdf",
         "effective_date": "1 May 1861"
     },
     {
@@ -667,7 +667,7 @@ STATUTORY_PROVISIONS_DATA = [
             "Defines statutory categories of 'grievous hurt' across Indian law, specifically referenced by Section 161 of the Motor Vehicles Act, 1988 "
             "for fixed statutory relief under the Compensation to Victims of Hit and Run Motor Accidents Scheme, 2022."
         ),
-        "source_url": "https://www.indiacode.nic.in/handle/123456789/2263",
+        "source_url": "https://www.indiacode.nic.in/bitstream/123456789/4219/1/THE-INDIAN-PENAL-CODE-1860.pdf",
         "effective_date": "1 May 1861"
     },
 
@@ -879,14 +879,15 @@ def seed_database(conn: sqlite3.Connection) -> Tuple[int, int]:
     acts_inserted = 0
     for act in BARE_ACTS_DATA:
         cursor.execute("""
-            INSERT INTO bare_acts (id, title, act_number, year, jurisdiction)
-            VALUES (?, ?, ?, ?, ?)
+            INSERT INTO bare_acts (id, title, act_number, year, jurisdiction, edition)
+            VALUES (?, ?, ?, ?, ?, ?)
             ON CONFLICT(id) DO UPDATE SET
                 title=excluded.title,
                 act_number=excluded.act_number,
                 year=excluded.year,
-                jurisdiction=excluded.jurisdiction;
-        """, (act["id"], act["title"], act["act_number"], act["year"], act.get("jurisdiction", "India")))
+                jurisdiction=excluded.jurisdiction,
+                edition=excluded.edition;
+        """, (act["id"], act["title"], act["act_number"], act["year"], act.get("jurisdiction", "India"), act.get("edition")))
         acts_inserted += 1
 
     # 2. Insert statutory provisions (Constitution handled separately from the verified corpus)

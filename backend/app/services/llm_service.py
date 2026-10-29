@@ -1472,15 +1472,18 @@ class LLMService:
                         if any(alias in (c.get("text", "") + " " + c.get("title", "")).lower() for alias in aliases)
                     ]
                     
+                    act_ctx = statute_service.get_act_edition(target_act_id) or ""
                     ans_str = (
                         f"Section {sec_num} of {act_title} ({short_name}) is a recognized Central enactment provision. "
                         f"However, the primary statutory text for {short_name} is not currently indexed in our verified bare acts database. "
                     )
+                    if act_ctx:
+                        ans_str += f"Statute context: {act_ctx}. " 
                     if matching_cases:
                         c0 = matching_cases[0]
                         ans_str += f"In {c0.get('title')} ({c0.get('citation')}), the Supreme Court considered Section {sec_num} {short_name}: {clean_case_summary(c0)}"
                         cits = [f"{c0.get('title')} ({c0.get('citation')})"]
-                        tier_label = "AI summary based on the cases below"
+                        tier_label = "Precedent-based summary - statutory text not in our verified database"
                         no_strong = False
                     else:
                         ans_str += f"Please refer to official primary sources such as India Code (indiacode.nic.in) for the authoritative text of Section {sec_num} of {act_title}."
@@ -1590,9 +1593,13 @@ class LLMService:
                         "effective_date": None
                     }
 
-                ans_str = f"Section {sec_num} of the {act_title} governs '{heading}'. {body}"
+                title_disp = act_title if not act_title.lower().startswith("the ") else act_title[4:]
+                ans_str = f"Section {sec_num} of the {title_disp} governs '{heading}'. {body}"
                 if expl:
                     ans_str += f" {expl}"
+                act_edition = prov.get("act_edition")
+                if act_edition and "constitution" not in (prov.get("act_id") or ""):
+                    ans_str += f" Statute context: {act_edition}."
                 ans_str += " "
                 if matching_cases:
                     c0 = matching_cases[0]

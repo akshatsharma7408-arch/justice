@@ -445,6 +445,16 @@ class StatuteService:
 
         return results
 
+    def get_act_edition(self, act_id: str) -> Optional[str]:
+        """Returns the edition/repeal-context string recorded for an act, if any."""
+        try:
+            with self._get_connection() as conn:
+                cur = conn.execute("SELECT edition FROM bare_acts WHERE id = ? LIMIT 1;", (act_id,))
+                row = cur.fetchone()
+                return row["edition"] if row else None
+        except Exception:
+            return None
+
     def get_all_bare_acts(self) -> List[Dict[str, Any]]:
         """Lists all seeded Bare Acts."""
         try:
