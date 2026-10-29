@@ -382,13 +382,20 @@ async def upload_document_endpoint(
                 # Fail closed per page: never issue a verdict on a partially read document.
                 # Distinguish OCR service failures (worker timeout/crash, e.g. memory limit) from
                 # genuinely illegible pages so the user gets the right remediation.
-                svc = [m for m in failed_pages if (m.get("error_reason") or "").startswith(("[Error: OCR processing", "[Error: OCR worker", "[Error: Exception during OCR", "[Error: OCR"))]
+                svc = [m for m in failed_pages if (m.get("error_reason") or "").startswith("[Error: OCR")]
                 if svc:
                     names = ", ".join(f"Page {m['page']} ({m['filename']})" for m in svc)
+                    if any("OCR capacity" in (m.get("error_reason") or "") for m in svc):
+                        raise HTTPException(
+                            status_code=503,
+                            detail=(f"Document/image text extraction is unavailable on this server's current memory plan ({names}). "
+                                    "This is a fixed server capacity limit, not a problem with your upload. "
+                                    "Search and chat features remain available.")
+                        )
                     raise HTTPException(
                         status_code=503,
-                        detail=(f"OCR is temporarily unavailable for {names} (service resource limit, not an image problem). "
-                                "No compliance verdict is issued. Please retry in a few minutes.")
+                        detail=(f"OCR is temporarily unavailable for {names} due to current server memory pressure "
+                                "(not an image problem). No compliance verdict is issued. Please retry in a few minutes.")
                     )
                 names = ", ".join(f"Page {m['page']} ({m['filename']})" for m in failed_pages)
                 raise HTTPException(

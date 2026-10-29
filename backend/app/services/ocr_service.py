@@ -37,10 +37,14 @@ _OCR_LOCK = threading.Lock()
 DEFAULT_OCR_WORKER_PEAK_MB = 768
 
 
-def _memory_allows_ocr() -> bool:
-    """True only when available memory plausibly exceeds the measured OCR worker peak.
+def _ocr_memory_status() -> str:
+    """Returns "ok", "contention", or "capacity" for running the OCR worker now.
+    "capacity" = the instance's memory limit itself is below the measured worker peak plus
+    a baseline reserve for the web process (a fixed plan limit; retrying soon will not help).
+    "contention" = the limit is sufficient but current usage leaves too little headroom now.
     Prefers cgroup limits (containers) over host /proc/meminfo."""
     peak_mb = int(os.environ.get("JUSTICE_OCR_WORKER_PEAK_MB", str(DEFAULT_OCR_WORKER_PEAK_MB)))
+    reserve_mb = int(os.environ.get("JUSTICE_OCR_RESERVE_MB", "256"))
     need = peak_mb * 1024 * 1024
     try:
         v2_max = "/sys/fs/cgroup/memory.max"
@@ -49,23 +53,38 @@ def _memory_allows_ocr() -> bool:
             raw = open(v2_max).read().strip()
             if raw != "max":
                 limit = int(raw)
+                if limit < (peak_mb + reserve_mb) * 1024 * 1024:
+                    return "capacity"
                 current = int(open(v2_cur).read().strip())
-                return (limit - current) >= need
-            # no cgroup limit: fall through to proc
+                return "ok" if (limit - current) >= need else "contention"
         v1_max = "/sys/fs/cgroup/memory/memory.limit_in_bytes"
         v1_cur = "/sys/fs/cgroup/memory/memory.usage_in_bytes"
         if os.path.exists(v1_max) and os.path.exists(v1_cur):
             limit = int(open(v1_max).read().strip())
             if limit < (1 << 60):  # huge sentinel means "no limit"
+                if limit < (peak_mb + reserve_mb) * 1024 * 1024:
+                    return "capacity"
                 current = int(open(v1_cur).read().strip())
-                return (limit - current) >= need
+                return "ok" if (limit - current) >= need else "contention"
+        total = avail = None
         with open("/proc/meminfo") as f:
             for line in f:
-                if line.startswith("MemAvailable:"):
-                    return int(line.split()[1]) * 1024 >= need
+                if line.startswith("MemTotal:"):
+                    total = int(line.split()[1]) * 1024
+                elif line.startswith("MemAvailable:"):
+                    avail = int(line.split()[1]) * 1024
+        if total is not None and total < (peak_mb + reserve_mb) * 1024 * 1024:
+            return "capacity"
+        if avail is not None:
+            return "ok" if avail >= need else "contention"
     except Exception:
         pass
-    return True  # undetectable limits: do not block local/dev usage
+    return "ok"  # undetectable limits: do not block local/dev usage
+
+
+def _memory_allows_ocr() -> bool:
+    return _ocr_memory_status() == "ok"
+
 
 def get_ocr_engine():
     global _RAPID_OCR_ENGINE
@@ -177,10 +196,13 @@ def process_image_bytes(image_bytes: bytes, filename: str = "image.png") -> Tupl
             f.write(image_bytes)
             tmp_file = f.name
 
-        if not _memory_allows_ocr():
-            peak = int(os.environ.get("JUSTICE_OCR_WORKER_PEAK_MB", str(DEFAULT_OCR_WORKER_PEAK_MB)))
-            logger.warning(f"OCR skipped for '{filename}': available memory below measured worker peak ({peak}MB).")
-            return ("[Error: OCR processing unavailable: insufficient server memory for image text extraction]",
+        mem_status = _ocr_memory_status()
+        if mem_status != "ok":
+            logger.warning(f"OCR skipped for '{filename}': memory status={mem_status}.")
+            if mem_status == "capacity":
+                return ("[Error: OCR capacity: document/image text extraction is unavailable on this server's "
+                        "current memory plan]", True, 0.0)
+            return ("[Error: OCR contention: OCR is temporarily unavailable due to current server memory pressure]",
                     True, 0.0)
 
         env = os.environ.copy()
@@ -218,9 +240,13 @@ def process_image_bytes(image_bytes: bytes, filename: str = "image.png") -> Tupl
             return res.get("text", ""), res.get("is_unreadable", False), res.get("confidence", 0.0)
 
     except Exception as e:
-        if not _memory_allows_ocr():
-            logger.warning(f"OCR subprocess failed ({e}) and memory too tight for in-process fallback; refusing '{filename}'.")
-            return ("[Error: OCR processing unavailable: insufficient server memory for image text extraction]",
+        fb_status = _ocr_memory_status()
+        if fb_status != "ok":
+            logger.warning(f"OCR subprocess failed ({e}) and memory status={fb_status}; refusing in-process fallback for '{filename}'.")
+            if fb_status == "capacity":
+                return ("[Error: OCR capacity: document/image text extraction is unavailable on this server's "
+                        "current memory plan]", True, 0.0)
+            return ("[Error: OCR contention: OCR is temporarily unavailable due to current server memory pressure]",
                     True, 0.0)
         logger.warning(f"OCR subprocess execution encountered exception: {e}; falling back to in-process OCR.")
         return process_image_bytes_in_process(image_bytes, filename)
