@@ -37,14 +37,17 @@ _OCR_LOCK = threading.Lock()
 DEFAULT_OCR_WORKER_PEAK_MB = 768
 
 
-def _ocr_memory_status() -> str:
-    """Returns "ok", "contention", or "capacity" for running the OCR worker now.
-    "capacity" = the instance's memory limit itself is below the measured worker peak plus
+def _ocr_memory_status(peak_mb: int = None, reserve_mb: int = None) -> str:
+    """Returns "ok", "contention", or "capacity" for running an OCR worker of the given
+    peak footprint now. Defaults to the RapidOCR worker's measured peak.
+    "capacity" = the instance's memory limit itself is below the worker peak plus
     a baseline reserve for the web process (a fixed plan limit; retrying soon will not help).
     "contention" = the limit is sufficient but current usage leaves too little headroom now.
     Prefers cgroup limits (containers) over host /proc/meminfo."""
-    peak_mb = int(os.environ.get("JUSTICE_OCR_WORKER_PEAK_MB", str(DEFAULT_OCR_WORKER_PEAK_MB)))
-    reserve_mb = int(os.environ.get("JUSTICE_OCR_RESERVE_MB", "256"))
+    if peak_mb is None:
+        peak_mb = int(os.environ.get("JUSTICE_OCR_WORKER_PEAK_MB", str(DEFAULT_OCR_WORKER_PEAK_MB)))
+    if reserve_mb is None:
+        reserve_mb = int(os.environ.get("JUSTICE_OCR_RESERVE_MB", "256"))
     need = peak_mb * 1024 * 1024
     try:
         v2_max = "/sys/fs/cgroup/memory.max"
@@ -84,6 +87,118 @@ def _ocr_memory_status() -> str:
 
 def _memory_allows_ocr() -> bool:
     return _ocr_memory_status() == "ok"
+
+
+# Tesseract fallback engine: measured peak RSS ~132MB OCRing a dense 300 DPI
+# two-column Gazette page (~14s/page); far lighter than the RapidOCR ONNX worker
+# (~600-700MB). Used when the RapidOCR worker is memory-blocked or unavailable.
+TESSERACT_PEAK_MB_DEFAULT = 192
+TESSERACT_TIMEOUT_S = 90
+
+
+def _tesseract_status() -> str:
+    """Memory status for the tesseract fallback worker."""
+    peak = int(os.environ.get("JUSTICE_TESSERACT_PEAK_MB", str(TESSERACT_PEAK_MB_DEFAULT)))
+    return _ocr_memory_status(peak_mb=peak, reserve_mb=64)
+
+
+def _tesseract_available() -> bool:
+    import shutil
+    return shutil.which("tesseract") is not None
+
+
+def _process_image_bytes_tesseract(image_bytes: bytes, filename: str = "image.png") -> Tuple[str, bool, float]:
+    """
+    OCR one image via the tesseract CLI (subprocess, tsv output for real confidence).
+    Returns (text, is_unreadable, confidence) in the same 0-1 confidence scale as RapidOCR.
+    """
+    import subprocess
+    import tempfile
+
+    try:
+        img = Image.open(io.BytesIO(image_bytes))
+    except Exception as e:
+        logger.warning(f"Tesseract: failed to open image '{filename}': {e}")
+        return f"[Error: Could not read image format for '{filename}']", True, 0.0
+
+    try:
+        img = ImageOps.exif_transpose(img)
+    except Exception:
+        pass
+
+    # Bound input size: keeps tesseract memory/time predictable
+    max_dim = 1600
+    if max(img.width, img.height) > max_dim:
+        scale = max_dim / float(max(img.width, img.height))
+        img = img.resize((max(1, int(img.width * scale)), max(1, int(img.height * scale))), Image.Resampling.LANCZOS)
+    img = img.convert("L")
+
+    tmp_file = None
+    try:
+        with tempfile.NamedTemporaryFile(suffix=".png", delete=False) as f:
+            img.save(f.name, format="PNG")
+            tmp_file = f.name
+        del img
+        gc.collect()
+
+        proc = subprocess.run(
+            ["tesseract", tmp_file, "stdout", "-l", "eng", "tsv"],
+            stdout=subprocess.PIPE, stderr=subprocess.PIPE, timeout=TESSERACT_TIMEOUT_S,
+        )
+        if proc.returncode != 0:
+            err = proc.stderr.decode("utf-8", errors="ignore").strip()[:200]
+            logger.warning(f"Tesseract failed on '{filename}': {err}")
+            return f"[Error: OCR processing failed on '{filename}']", True, 0.0
+
+        tsv = proc.stdout.decode("utf-8", errors="ignore")
+        words, confs = [], []
+        for line in tsv.splitlines()[1:]:
+            cols = line.split("\t")
+            if len(cols) == 12:
+                try:
+                    conf = float(cols[10])
+                except ValueError:
+                    continue
+                text = cols[11].strip()
+                if text and conf >= 0:
+                    words.append(text)
+                    confs.append(conf)
+        combined_raw = " ".join(words).strip()
+        avg_score = (sum(confs) / len(confs) / 100.0) if confs else 0.0
+
+        if avg_score < 0.30 or len(combined_raw) < 20:
+            logger.warning(f"Tesseract flagged '{filename}' blurry/unreadable (score={avg_score:.2f}, chars={len(combined_raw)})")
+            return "This image is too blurry or unclear to read reliably. Please upload a clearer photo.", True, avg_score
+
+        cleaned = clean_ocr_noise(combined_raw)
+        return cleaned, False, avg_score
+    except subprocess.TimeoutExpired:
+        logger.error(f"Tesseract timed out after {TESSERACT_TIMEOUT_S}s on '{filename}'")
+        return f"[Error: OCR processing timed out on '{filename}']", True, 0.0
+    except Exception as e:
+        logger.error(f"Tesseract fallback error on '{filename}': {e}")
+        return f"[Error: OCR processing failed on '{filename}']", True, 0.0
+    finally:
+        if tmp_file and os.path.exists(tmp_file):
+            try:
+                os.remove(tmp_file)
+            except Exception:
+                pass
+
+
+def _memory_blocked_response(image_bytes: bytes, filename: str, mem_status: str) -> Tuple[str, bool, float]:
+    """
+    RapidOCR is memory-blocked. Try the lighter tesseract engine before giving up;
+    only return the capacity/contention error when no engine can run.
+    """
+    if _tesseract_available() and _tesseract_status() == "ok":
+        logger.info(f"RapidOCR memory status={mem_status}; using tesseract fallback for '{filename}'.")
+        return _process_image_bytes_tesseract(image_bytes, filename)
+    if mem_status == "capacity":
+        return ("[Error: OCR capacity: document/image text extraction is unavailable on this server's "
+                "current memory plan]", True, 0.0)
+    return ("[Error: OCR contention: OCR is temporarily unavailable due to current server memory pressure]",
+            True, 0.0)
 
 
 def get_ocr_engine():
@@ -131,6 +246,9 @@ def process_image_bytes_in_process(image_bytes: bytes, filename: str = "image.pn
     # 4. RapidOCR inference
     engine = get_ocr_engine()
     if not engine:
+        if _tesseract_available():
+            logger.warning(f"RapidOCR engine unavailable; using tesseract for '{filename}'.")
+            return _process_image_bytes_tesseract(image_bytes, filename)
         return "[Error: OCR engine is currently unavailable]", True, 0.0
 
     try:
@@ -198,12 +316,8 @@ def process_image_bytes(image_bytes: bytes, filename: str = "image.png") -> Tupl
 
         mem_status = _ocr_memory_status()
         if mem_status != "ok":
-            logger.warning(f"OCR skipped for '{filename}': memory status={mem_status}.")
-            if mem_status == "capacity":
-                return ("[Error: OCR capacity: document/image text extraction is unavailable on this server's "
-                        "current memory plan]", True, 0.0)
-            return ("[Error: OCR contention: OCR is temporarily unavailable due to current server memory pressure]",
-                    True, 0.0)
+            logger.warning(f"RapidOCR blocked for '{filename}': memory status={mem_status}.")
+            return _memory_blocked_response(image_bytes, filename, mem_status)
 
         env = os.environ.copy()
         backend_dir = str(Path(__file__).resolve().parent.parent.parent)
@@ -242,13 +356,14 @@ def process_image_bytes(image_bytes: bytes, filename: str = "image.png") -> Tupl
     except Exception as e:
         fb_status = _ocr_memory_status()
         if fb_status != "ok":
-            logger.warning(f"OCR subprocess failed ({e}) and memory status={fb_status}; refusing in-process fallback for '{filename}'.")
-            if fb_status == "capacity":
-                return ("[Error: OCR capacity: document/image text extraction is unavailable on this server's "
-                        "current memory plan]", True, 0.0)
-            return ("[Error: OCR contention: OCR is temporarily unavailable due to current server memory pressure]",
-                    True, 0.0)
-        logger.warning(f"OCR subprocess execution encountered exception: {e}; falling back to in-process OCR.")
+            logger.warning(f"OCR subprocess failed ({e}) and memory status={fb_status}; trying tesseract for '{filename}'.")
+            return _memory_blocked_response(image_bytes, filename, fb_status)
+        if _tesseract_available():
+            logger.warning(f"OCR subprocess execution encountered exception: {e}; trying tesseract fallback.")
+            text, unreadable, conf = _process_image_bytes_tesseract(image_bytes, filename)
+            if not unreadable or not str(text).startswith("[Error"):
+                return text, unreadable, conf
+        logger.warning(f"Falling back to in-process OCR for '{filename}'.")
         return process_image_bytes_in_process(image_bytes, filename)
     finally:
         if tmp_file and os.path.exists(tmp_file):
