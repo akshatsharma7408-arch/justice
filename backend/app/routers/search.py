@@ -223,7 +223,7 @@ async def search_precedents_post(payload: SearchRequest):
         results, 
         force_fallback=payload.force_fallback
     )
-    tier1_results = synthesis.get("results", [])
+    tier1_results = synthesis.get("results") if "results" in synthesis else results
 
     from app.services.citation_checker import citation_checker
     is_tier2 = "tier2" in synthesis.get("model_used", "").lower()
@@ -372,15 +372,16 @@ async def search_answer_post(payload: SearchAnswerRequest):
             hide_badge = True
         else:
             tier = "tier2"
-            tier_label = "AI summary, check the cases below"
+            tier_label = synthesis.get("tier_label") or "AI summary, check the cases below"
             hide_badge = False
-        source_cases = synthesis.get("results", []) or []
-        no_strong = len(source_cases) == 0
+        source_cases = synthesis.get("results") if "results" in synthesis else (results or [])
+        no_strong = synthesis.get("no_strong_case_match", len(source_cases) == 0)
     else:
-        tier = "tier1"
-        tier_label = "AI summary based on the cases below"
-        source_cases = synthesis.get("results", []) or results or []
-        no_strong = len(source_cases) == 0
+        tier = synthesis.get("tier") or "tier1"
+        tier_label = synthesis.get("tier_label") or "AI summary based on the cases below"
+        source_cases = synthesis.get("results") if "results" in synthesis else (results or [])
+        no_strong = synthesis.get("no_strong_case_match", len(source_cases) == 0)
+        hide_badge = synthesis.get("hide_badge", False)
 
     resp = SearchAnswerResponse(
         query=effective_query,

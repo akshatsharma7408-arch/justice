@@ -48,7 +48,7 @@ class EmbeddingService:
         try:
             import os
             from fastembed import TextEmbedding
-            threads = min(os.cpu_count() or 4, 12)
+            threads = int(os.environ.get("EMBEDDING_THREADS", "1"))
             self._model = TextEmbedding(model_name="sentence-transformers/all-MiniLM-L6-v2", threads=threads)
             self._engine = "fastembed_onnx"
             self.mode = "local_semantic_onnx"

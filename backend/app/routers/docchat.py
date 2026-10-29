@@ -244,20 +244,18 @@ async def upload_document_endpoint(
     page_count = 1
     IMAGE_EXTS = {".jpg", ".jpeg", ".png", ".webp", ".heic"}
 
-    # 1. Collect all uploaded files (from 'files' list, single 'file', or multipart form)
+    # 1. Collect all uploaded files (from multipart form or FastAPI bindings)
     all_files: List[UploadFile] = []
-    if files and isinstance(files, list):
-        all_files.extend([f for f in files if isinstance(f, UploadFile) and hasattr(f, "filename") and f.filename])
-    if isinstance(file, UploadFile) and hasattr(file, "filename") and file.filename and file not in all_files:
-        all_files.append(file)
-
     content_type = request.headers.get("content-type", "")
 
-    if "multipart/form-data" in content_type and not all_files and not (isinstance(text, str) and text.strip()):
+    if "multipart/form-data" in content_type:
         try:
             form = await request.form()
-            form_file = form.get("file")
-            form_files = form.getlist("files")
+            # In HTML multipart forms and TestClient, multi-file uploads can use field "files" or repeated "file"
+            raw_file_items = form.getlist("files") + form.getlist("file")
+            for ff in raw_file_items:
+                if hasattr(ff, "filename") and ff.filename and ff not in all_files:
+                    all_files.append(ff)
             form_text = form.get("text") or form.get("raw_text")
             form_title = form.get("title")
             form_doc_id = form.get("doc_id")
@@ -266,17 +264,16 @@ async def upload_document_endpoint(
                 doc_title = form_title.strip()
             if form_doc_id and isinstance(form_doc_id, str) and form_doc_id.strip():
                 doc_id = form_doc_id.strip()
-
-            if form_files:
-                for ff in form_files:
-                    if hasattr(ff, "filename") and ff.filename:
-                        all_files.append(ff)
-            elif form_file and hasattr(form_file, "filename") and form_file.filename:
-                all_files.append(form_file)
             if form_text and isinstance(form_text, str) and form_text.strip():
                 text = form_text.strip()
         except Exception as e:
             logger.warning(f"Error reading multipart form: {e}")
+
+    if not all_files:
+        if files and isinstance(files, list):
+            all_files.extend([f for f in files if isinstance(f, UploadFile) and hasattr(f, "filename") and f.filename])
+        if isinstance(file, UploadFile) and hasattr(file, "filename") and file.filename and file not in all_files:
+            all_files.append(file)
 
     # Priority A: Raw/edited text passed directly
     if isinstance(text, str) and text.strip():
@@ -292,6 +289,15 @@ async def upload_document_endpoint(
             raise HTTPException(status_code=400, detail="Maximum 10 files allowed per upload.")
 
         ALLOWED_EXTENSIONS = {".pdf", ".docx", ".txt", ".jpg", ".jpeg", ".png", ".webp", ".heic"}
+
+        # Check for executables upfront
+        for f in all_files:
+            fname = (f.filename or "").lower()
+            if fname.endswith(".exe") or fname.endswith(".bat") or fname.endswith(".cmd") or fname.endswith(".sh") or fname.endswith(".bin"):
+                raise HTTPException(
+                    status_code=400,
+                    detail=f"Executable file '{f.filename}' is not permitted."
+                )
 
         # Validate file extensions before reading
         for f in all_files:
@@ -381,6 +387,21 @@ async def upload_document_endpoint(
                             "No partial compliance verdict is issued. Please re-upload clear photos of every page.")
                 )
 
+            # Structured per-page outcome check: fail closed if ANY page failed
+            failed_pages = [m for m in meta_list if m.get("is_unreadable")]
+            if failed_pages:
+                failed_page_nums = [str(m["page"]) for m in failed_pages]
+                failed_desc = ", ".join(f"Page {p}" for p in failed_page_nums)
+                logger.warning(f"Rejecting multi-image upload: OCR failed on {failed_desc}")
+                raise HTTPException(
+                    status_code=422,
+                    detail=(
+                        f"OCR failed to read {failed_desc}. "
+                        "All pages in a multi-page upload must be clearly legible before compliance auditing can proceed. "
+                        "Please replace or re-scan the unreadable page(s) and retry."
+                    )
+                )
+
     elif "application/json" in content_type:
         try:
             body = await request.json()
@@ -401,12 +422,16 @@ async def upload_document_endpoint(
     substantive_text = re.sub(r'--- Page \d+.*?---\n?', '', extracted_text or '')
     substantive_text = re.sub(r'\[(?:Warning|Error):[^\]]+\]', '', substantive_text).strip()
 
-    # If images were uploaded but produced no readable text, or warnings contain unreadable/blurry/error
+    # If any images or scanned PDF pages produced OCR warnings/failures, fail closed unconditionally
     has_ocr_failure = any("too blurry or unclear" in w.lower() or "error:" in w.lower() or "ocr" in w.lower() for w in warnings)
-    if (image_items and not substantive_text) or (has_ocr_failure and len(substantive_text) < 30):
+    if has_ocr_failure:
         raise HTTPException(
             status_code=422,
-            detail="Document text is unreadable, too blurry, or contains OCR extraction errors. Please upload a clear document or digital PDF."
+            detail=(
+                "One or more pages could not be read clearly by OCR. "
+                "All pages in the document must be legible before statutory compliance auditing can proceed. "
+                "Please upload higher-resolution scans or a digital PDF and retry."
+            )
         )
 
     if not substantive_text or len(substantive_text) < 15:
