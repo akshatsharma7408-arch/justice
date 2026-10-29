@@ -191,9 +191,13 @@ def _memory_blocked_response(image_bytes: bytes, filename: str, mem_status: str)
     RapidOCR is memory-blocked. Try the lighter tesseract engine before giving up;
     only return the capacity/contention error when no engine can run.
     """
-    if _tesseract_available() and _tesseract_status() == "ok":
+    tess_avail = _tesseract_available()
+    tess_status = _tesseract_status() if tess_avail else "no-binary"
+    if tess_avail and tess_status == "ok":
         logger.info(f"RapidOCR memory status={mem_status}; using tesseract fallback for '{filename}'.")
         return _process_image_bytes_tesseract(image_bytes, filename)
+    logger.warning(f"OCR fallback unavailable for '{filename}': tesseract_available={tess_avail}, "
+                   f"tesseract_memory_status={tess_status}.")
     if mem_status == "capacity":
         return ("[Error: OCR capacity: document/image text extraction is unavailable on this server's "
                 "current memory plan]", True, 0.0)
