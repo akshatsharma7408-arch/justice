@@ -141,7 +141,7 @@ def load_constitution_provisions(curated: Dict[str, Dict[str, Any]]) -> List[Dic
     return provisions
 
 # Authoritative Curated Statutory Datasets
-SEED_VERSION = "2026-10-29.v8"  # bump on any seed content/corpus correction; self-heal reseeds on mismatch
+SEED_VERSION = "2026-10-29.v9"  # v9: BNSS s.531 caveat cleared after exact gazette body+reading-order verification  # bump on any seed content/corpus correction; self-heal reseeds on mismatch
 
 BARE_ACTS_DATA = [
     {
