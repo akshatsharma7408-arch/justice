@@ -32,6 +32,69 @@ CONSTITUTION_CORPUS_PATHS = [
 ]
 
 
+CRIMINAL_REFORMS_CORPUS_PATH = CURRENT_DIR / "criminal_reforms_corpus.json"
+BNS_SOURCE_URL = "https://prsindia.org/files/bills_acts/acts_parliament/2023/The%20Bharatiya%20Nyaya%20Sanhita,%202023.pdf"
+BNS_COMMENCEMENT_URL = "https://www.mha.gov.in/sites/default/files/BhartiyaNyayaSanhita_24022024.pdf"
+BNSS_SOURCE_URL = "https://prsindia.org/files/bills_acts/acts_parliament/2023/The%20Bharatiya%20Nagarik%20Suraksha%20Sanhita,%202023.pdf"
+BNSS_COMMENCEMENT_URL = "https://www.mha.gov.in/sites/default/files/BharatiyaNagarikSurakshaSanhita_24022024.pdf"
+
+# Section-number sort for numeric sections (1..531).
+def _section_sort_key(num: str):
+    m = re.match(r"(\d+)([A-Z]*)", num)
+    return (int(m.group(1)), m.group(2))
+
+
+def load_criminal_reforms_provisions() -> List[Dict[str, Any]]:
+    """Build BNS/BNSS provision rows from the verified corpus JSON.
+
+    Bodies/headings come from criminal_reforms_corpus.json, whose text was
+    cross-checked against the official Gazette PDFs (eGazette CG-DL-E-25122023-250883
+    for the BNS and CG-DL-E-25122023-250884 for the BNSS, mirrored byte-for-byte by PRS).
+    Verification classes per act are recorded in scripts/criminal_reforms/VERIFICATION.md.
+    """
+    import json as _json
+    if not CRIMINAL_REFORMS_CORPUS_PATH.exists():
+        logger.warning("Criminal reforms corpus JSON not found; BNS/BNSS will be unseeded")
+        return []
+    corpus = _json.loads(CRIMINAL_REFORMS_CORPUS_PATH.read_text(encoding="utf-8"))
+    meta = {
+        "bharatiya-nyaya-sanhita-2023": {
+            "id_prefix": "bns-2023-s-",
+            "source_url": BNS_SOURCE_URL,
+            "effective_date": "1 July 2024 (S.O. 850(E), 23.02.2024; s.106(2) excepted)",
+        },
+        "bharatiya-nagarik-suraksha-sanhita-2023": {
+            "id_prefix": "bnss-2023-s-",
+            "source_url": BNSS_SOURCE_URL,
+            "effective_date": "1 July 2024 (S.O. 848(E), 23.02.2024; First Schedule entries relating to BNS s.106(2) excepted)",
+        },
+    }
+    provisions = []
+    for act_id, m in meta.items():
+        entries = corpus.get(act_id, {})
+        for num in sorted(entries, key=_section_sort_key):
+            e = entries[num]
+            explanation = None
+            if act_id == "bharatiya-nyaya-sanhita-2023" and num == "106":
+                explanation = ("Commencement caveat: sub-section (2) of section 106 (causing death by rash/negligent "
+                               "driving and fleeing without reporting) has NOT been brought into force. S.O. 850(E) "
+                               "(23.02.2024) commenced the BNS w.e.f. 1 July 2024 except s.106(2), which remained "
+                               "uncommenced as of late October 2026. Sub-section (1) is in force.")
+            provisions.append({
+                "id": f"{m['id_prefix']}{num.lower()}",
+                "act_id": act_id,
+                "section_number": num,
+                "heading": e["heading"],
+                "body": e["body"],
+                "explanation": explanation,
+                "source_url": m["source_url"],
+                "effective_date": m["effective_date"],
+                "status": "in_force",
+            })
+    logger.info(f"Criminal reforms corpus loaded: {len(provisions)} provisions (BNS + BNSS)")
+    return provisions
+
+
 def _article_sort_key(num: str):
     m = re.match(r"(\d+)([A-Z]*)", num)
     return (int(m.group(1)), m.group(2))
@@ -75,7 +138,7 @@ def load_constitution_provisions(curated: Dict[str, Dict[str, Any]]) -> List[Dic
     return provisions
 
 # Authoritative Curated Statutory Datasets
-SEED_VERSION = "2026-10-29.v7"  # bump on any seed content/corpus correction; self-heal reseeds on mismatch
+SEED_VERSION = "2026-10-29.v8"  # bump on any seed content/corpus correction; self-heal reseeds on mismatch
 
 BARE_ACTS_DATA = [
     {
@@ -105,7 +168,7 @@ BARE_ACTS_DATA = [
         "act_number": "Act No. 2 of 1974",
         "year": 1973,
         "jurisdiction": "India",
-        "edition": "Repealed by the Bharatiya Nagarik Suraksha Sanhita, 2023 (BNSS) w.e.f. 1 July 2024, subject to savings: proceedings initiated before that date generally continue under the CrPC, while matters arising on or after it fall under the BNSS. The BNSS is not yet in our verified database, so current criminal-procedure coverage is a gap. Which text applies depends on when the proceeding arose."
+        "edition": "Repealed by the Bharatiya Nagarik Suraksha Sanhita, 2023 (BNSS) w.e.f. 1 July 2024, subject to savings: proceedings initiated before that date generally continue under the CrPC, while matters arising on or after it fall under the BNSS. The BNSS is in this database (as-enacted text); for matters arising on or after 1 July 2024 consult the BNSS. Which text applies depends on when the proceeding arose."
     },
     {
         "id": "ipc-1860",
@@ -113,7 +176,7 @@ BARE_ACTS_DATA = [
         "act_number": "Act No. 45 of 1860",
         "year": 1860,
         "jurisdiction": "India",
-        "edition": "Repealed by the Bharatiya Nyaya Sanhita, 2023 (BNS) w.e.f. 1 July 2024, subject to savings: offences committed before that date are generally still governed by the IPC, while offences on or after it fall under the BNS. The BNS is not yet in our verified database, so current criminal-law coverage for recent offences is a gap. Which text applies depends on the date of the offence."
+        "edition": "Repealed by the Bharatiya Nyaya Sanhita, 2023 (BNS) w.e.f. 1 July 2024, subject to savings: offences committed before that date are generally still governed by the IPC, while offences on or after it fall under the BNS. The BNS is in this database (as-enacted text); for offences committed on or after 1 July 2024 consult the BNS. Which text applies depends on the date of the offence."
     },
     {
         "id": "specific-relief-act-1963",
@@ -128,6 +191,22 @@ BARE_ACTS_DATA = [
         "act_number": "Act No. 26 of 1996",
         "year": 1996,
         "jurisdiction": "India"
+    },
+    {
+        "id": "bharatiya-nyaya-sanhita-2023",
+        "title": "The Bharatiya Nyaya Sanhita, 2023",
+        "act_number": "Act No. 45 of 2023",
+        "year": 2023,
+        "jurisdiction": "India",
+        "edition": "In force w.e.f. 1 July 2024 (S.O. 850(E), 23.02.2024), EXCEPT section 106(2) (hit-and-run), which has not been commenced as of 29 October 2026. Repeals the Indian Penal Code, 1860 subject to s.358 savings (pre-1 July 2024 offences remain under the IPC). Text: official Gazette PDF (eGazette CG-DL-E-25122023-250883) as enacted on 25.12.2023; subsequent amendments, if any, are not incorporated."
+    },
+    {
+        "id": "bharatiya-nagarik-suraksha-sanhita-2023",
+        "title": "The Bharatiya Nagarik Suraksha Sanhita, 2023",
+        "act_number": "Act No. 46 of 2023",
+        "year": 2023,
+        "jurisdiction": "India (except s.1(2) carve-outs: Chapters IX, XI and XII do not apply to Nagaland and tribal areas unless the State Government notifies otherwise; modifications possible for those areas)",
+        "edition": "In force w.e.f. 1 July 2024 (S.O. 848(E), 23.02.2024), except First Schedule entries relating to BNS s.106(2). Repeals the Code of Criminal Procedure, 1973 subject to s.531 savings (pending proceedings continue under the CrPC). Text: official Gazette PDF (eGazette CG-DL-E-25122023-250884) as enacted on 25.12.2023; subsequent amendments, if any, are not incorporated."
     }
 ]
 
@@ -1004,6 +1083,19 @@ def seed_database(conn: sqlite3.Connection) -> Tuple[int, int]:
     cursor.execute("DELETE FROM statutory_provisions WHERE act_id = 'constitution-of-india-1950';")
     cursor.execute("UPDATE bare_acts SET edition = ? WHERE id = 'constitution-of-india-1950';", (CONSTITUTION_EDITION,))
     for prov in load_constitution_provisions(constitution_curated):
+        cursor.execute("""
+            INSERT INTO statutory_provisions (id, act_id, section_number, heading, body, explanation, source_url, effective_date, status)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?);
+        """, (
+            prov["id"], prov["act_id"], prov["section_number"], prov["heading"],
+            prov["body"], prov["explanation"], prov.get("source_url"),
+            prov.get("effective_date"), prov.get("status", "in_force"),
+        ))
+        provisions_inserted += 1
+
+    # 4. Criminal reforms (BNS/BNSS): replace any prior provisions with the verified corpus
+    cursor.execute("DELETE FROM statutory_provisions WHERE act_id IN ('bharatiya-nyaya-sanhita-2023', 'bharatiya-nagarik-suraksha-sanhita-2023');")
+    for prov in load_criminal_reforms_provisions():
         cursor.execute("""
             INSERT INTO statutory_provisions (id, act_id, section_number, heading, body, explanation, source_url, effective_date, status)
             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?);
