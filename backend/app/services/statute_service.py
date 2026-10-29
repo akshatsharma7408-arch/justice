@@ -165,17 +165,27 @@ class StatuteService:
         """Ensures the SQLite database exists and reflects the current statute corpus.
 
         Seeds when missing, and re-seeds when the database predates the verified
-        Constitution corpus (499 articles) so stale local/deployed copies self-heal.
+        Constitution corpus (499 articles) or carries an older seed content version,
+        so stale local/deployed copies self-heal including content corrections.
         """
         needs_seed = not self.db_path.exists()
         if not needs_seed:
             try:
+                from app.ingest.seed_bare_acts import SEED_VERSION
                 with self._get_connection() as conn:
                     n = conn.execute(
                         "SELECT COUNT(*) FROM statutory_provisions WHERE act_id='constitution-of-india-1950'"
                     ).fetchone()[0]
+                    try:
+                        row = conn.execute("SELECT value FROM seed_meta WHERE key='seed_version'").fetchone()
+                        ver = row[0] if row else None
+                    except Exception:
+                        ver = None
                 if n < 499:
                     logger.info(f"Statute DB stale (Constitution provisions: {n} < 499); reseeding...")
+                    needs_seed = True
+                elif ver != SEED_VERSION:
+                    logger.info(f"Statute DB seed version {ver!r} != current {SEED_VERSION!r}; reseeding for content corrections...")
                     needs_seed = True
             except Exception:
                 needs_seed = True

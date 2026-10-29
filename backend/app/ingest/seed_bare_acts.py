@@ -75,6 +75,8 @@ def load_constitution_provisions(curated: Dict[str, Dict[str, Any]]) -> List[Dic
     return provisions
 
 # Authoritative Curated Statutory Datasets
+SEED_VERSION = "2026-10-29.v4"  # bump on any seed content/corpus correction; self-heal reseeds on mismatch
+
 BARE_ACTS_DATA = [
     {
         "id": "constitution-of-india-1950",
@@ -103,7 +105,7 @@ BARE_ACTS_DATA = [
         "act_number": "Act No. 2 of 1974",
         "year": 1973,
         "jurisdiction": "India",
-        "edition": "Repealed by the Bharatiya Nagarik Suraksha Sanhita, 2023 w.e.f. 1 July 2024; indexed for pending-matter/historical reference"
+        "edition": "Repealed by the Bharatiya Nagarik Suraksha Sanhita, 2023 (BNSS) w.e.f. 1 July 2024, subject to savings: proceedings initiated before that date generally continue under the CrPC, while matters arising on or after it fall under the BNSS. The BNSS is not yet in our verified database, so current criminal-procedure coverage is a gap. Which text applies depends on when the proceeding arose."
     },
     {
         "id": "ipc-1860",
@@ -111,7 +113,7 @@ BARE_ACTS_DATA = [
         "act_number": "Act No. 45 of 1860",
         "year": 1860,
         "jurisdiction": "India",
-        "edition": "Repealed by the Bharatiya Nyaya Sanhita, 2023 w.e.f. 1 July 2024; indexed for pending-matter/historical reference"
+        "edition": "Repealed by the Bharatiya Nyaya Sanhita, 2023 (BNS) w.e.f. 1 July 2024, subject to savings: offences committed before that date are generally still governed by the IPC, while offences on or after it fall under the BNS. The BNS is not yet in our verified database, so current criminal-law coverage for recent offences is a gap. Which text applies depends on the date of the offence."
     },
     {
         "id": "specific-relief-act-1963",
@@ -833,6 +835,12 @@ def init_db(db_path: Path) -> sqlite3.Connection:
             );
         """)
         conn.execute("""
+            CREATE TABLE IF NOT EXISTS seed_meta (
+                key TEXT PRIMARY KEY,
+                value TEXT
+            );
+        """)
+        conn.execute("""
             CREATE TABLE IF NOT EXISTS statutory_provisions (
                 id TEXT PRIMARY KEY,
                 act_id TEXT NOT NULL,
@@ -934,6 +942,10 @@ def seed_database(conn: sqlite3.Connection) -> Tuple[int, int]:
         ))
         provisions_inserted += 1
 
+    cursor.execute("""
+        INSERT INTO seed_meta (key, value) VALUES ('seed_version', ?)
+        ON CONFLICT(key) DO UPDATE SET value=excluded.value;
+    """, (SEED_VERSION,))
     conn.commit()
     return acts_inserted, provisions_inserted
 
