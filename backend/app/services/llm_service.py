@@ -1439,6 +1439,72 @@ class LLMService:
         # -------------------------------------------------------------
         re_secs = re.findall(r'\b(?:sections?|secs?\.?|s\.)\s*(\d+[a-zA-Z]*)\b', query, re.IGNORECASE)
         sec_list = [s.upper() for s in (entities.get("sections") or re_secs)]
+        # -------------------------------------------------------------
+        # Route B2: Repeal/savings transition intent (IPC->BNS, CrPC->BNSS)
+        # Ground the answer on the gazette-verified savings sections instead of
+        # an uncited model summary. Both bodies verified verbatim against the
+        # official gazette PDFs (Act 45/46 of 2023) on 2026-10-29.
+        # -------------------------------------------------------------
+        _q_transition = query.lower()
+        _transition_intent = (
+            any(w in _q_transition for w in [
+                "pending trial", "pending investigation", "pending inquiry", "pending appeal",
+                "pending application", "pending proceeding", "repeal", "savings", "transition",
+                "old code", "new code", "before july 2024", "before 1 july 2024",
+                "prior to 1 july 2024", "prior to july 2024",
+            ])
+            and any(w in _q_transition for w in [
+                "crpc", "cr.p.c", "criminal procedure", "ipc", "indian penal",
+                "bnss", "bns", "nyaya sanhita", "nagarik suraksha",
+            ])
+        )
+        if _transition_intent and not sec_list:
+            procedural = any(w in _q_transition for w in [
+                "crpc", "cr.p.c", "criminal procedure", "bnss", "nagarik suraksha",
+                "trial", "investigation", "inquiry", "appeal", "bail", "procedure",
+            ])
+            substantive = any(w in _q_transition for w in [
+                "ipc", "indian penal", "bns", "nyaya sanhita", "offence", "punish",
+            ])
+            provs = []
+            if procedural or not substantive:
+                p531 = statute_service.get_provision("bharatiya-nagarik-suraksha-sanhita-2023", "531")
+                if p531:
+                    provs.append(p531)
+            if substantive or not procedural:
+                p358 = statute_service.get_provision("bharatiya-nyaya-sanhita-2023", "358")
+                if p358:
+                    provs.append(p358)
+            if provs:
+                parts = []
+                cits = []
+                for pv in provs:
+                    t = pv.get("act_title", "")
+                    sn = pv.get("section_number", "")
+                    parts.append(f"Section {sn} of the {t} ('{pv.get('heading', '')}') provides: {pv.get('body', '')}")
+                    cits.append(f"{t}, Section {sn} (Repeal and savings)")
+                expl = (
+                    "In short: proceedings (appeal, application, trial, inquiry or investigation) pending immediately "
+                    "before 1 July 2024 continue under the Code of Criminal Procedure, 1973 as if the BNSS had not come "
+                    "into force (BNSS s.531(2)(a)); offences committed before 1 July 2024 remain punishable under the IPC, "
+                    "and investigations and proceedings in respect of them continue (BNS s.358(2)). New offences and new "
+                    "proceedings on or after 1 July 2024 are governed by the BNS and BNSS respectively. This is a general "
+                    "statement of the savings provisions; the applicable code for a specific matter can depend on its facts."
+                )
+                ans_str = " ".join(parts) + " " + expl
+                return {
+                    "answer": citation_checker.check_and_badge_text(ans_str, is_tier2=False),
+                    "ratio_decidendi": citation_checker.check_and_badge_text(expl, is_tier2=False),
+                    "citations": citation_checker.badge_citations_list(cits),
+                    "results": [],
+                    "model_used": "statutory_transition_savings",
+                    "tier": "tier1",
+                    "tier_label": "Authoritative statutory provision",
+                    "no_strong_case_match": True,
+                    "source_url": provs[0].get("source_url", ""),
+                    "effective_date": provs[0].get("effective_date", ""),
+                }
+
         if sec_list:
             sec_num = sec_list[0]
             # 1. Resolve requested enactment identity BEFORE section matching
