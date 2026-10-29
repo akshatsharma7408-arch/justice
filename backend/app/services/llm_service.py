@@ -1610,7 +1610,12 @@ class LLMService:
                 else:
                     ans_str += f"Our verified database does not currently contain judicial dispute precedents interpreting Section {sec_num} of the {act_title}."
                     cits = [f"{act_title}, Section {sec_num} ({heading})"]
-                    tier_label = "Authoritative statutory provision"
+                    if act_edition and "Repealed" in act_edition:
+                        # Repealed Acts (IPC/CrPC): savings context applies, and per-section body
+                        # verification against the official source is still pending - no authoritative badge.
+                        tier_label = "Statutory text of a repealed Act (historical reference) - body pending official-source verification"
+                    else:
+                        tier_label = "Authoritative statutory provision"
                     no_strong = True
 
                 # Self-check holding direction for Section 27 and other doctrines
