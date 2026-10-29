@@ -75,7 +75,7 @@ def load_constitution_provisions(curated: Dict[str, Dict[str, Any]]) -> List[Dic
     return provisions
 
 # Authoritative Curated Statutory Datasets
-SEED_VERSION = "2026-10-29.v4"  # bump on any seed content/corpus correction; self-heal reseeds on mismatch
+SEED_VERSION = "2026-10-29.v5"  # bump on any seed content/corpus correction; self-heal reseeds on mismatch
 
 BARE_ACTS_DATA = [
     {
@@ -471,15 +471,26 @@ STATUTORY_PROVISIONS_DATA = [
         "section_number": "28",
         "heading": "Agreements in restraint of legal proceedings, void",
         "body": (
-            "Every agreement, by which any party thereto is restricted absolutely from enforcing his rights under or in respect "
-            "of any contract, by the usual legal proceedings in the ordinary tribunals, or which limits the time within which "
-            "he may thus enforce his rights, is void to that extent.\n\n"
-            "Exception 1.—Saving of contract to refer to arbitration dispute that may arise.\n"
-            "Exception 2.—Saving of contract to refer questions that have already arisen."
+            "Every agreement,\u2014\n"
+            "(a) by which any party thereto is restricted absolutely from enforcing his rights under or in respect of any contract, "
+            "by the usual legal proceedings in the ordinary tribunals, or which limits the time within which he may thus enforce his rights; or\n"
+            "(b) which extinguishes the rights of any party thereto, or discharges any party thereto, from any liability, "
+            "under or in respect of any contract on the expiry of a specified period so as to restrict any party from enforcing his rights,\n"
+            "is void to that extent.\n\n"
+            "Exception 1.\u2014Saving of contract to refer to arbitration dispute that may arise.\u2014This section shall not render illegal "
+            "a contract, by which two or more persons agree that any dispute which may arise between them in respect of any subject or "
+            "class of subjects shall be referred to arbitration, and that only the amount awarded in such arbitration shall be recoverable "
+            "in respect of the dispute so referred.\n\n"
+            "Exception 2.\u2014Saving of contract to refer questions that have already arisen.\u2014Nor shall this section render illegal "
+            "any contract in writing, by which two or more persons agree to refer to arbitration any question between them which has "
+            "already arisen, or affect any provision of any law in force for the time being as to references to arbitration."
         ),
         "explanation": (
-            "Agreements that extinguish rights or curtail statutory limitation periods are void. "
-            "Arbitration agreements are expressly protected under Exceptions 1 and 2."
+            "Main para as substituted by the Indian Contract (Amendment) Act, 1996 (Act 1 of 1997) w.e.f. 8-1-1997: clause (b) newly "
+            "voids extinguishment/time-bar clauses. The Supreme Court in Union of India v. IndusInd Bank Ltd. (decided 15-09-2016) held "
+            "the amendment prospective, so the pre-1997 single-clause text governs agreements entered into before 8-1-1997. "
+            "Exception 3 in the current edition saves bank/financial-institution guarantee terms providing extinguishment or "
+            "discharge on expiry of a specified period of not less than one year (full text in the source PDF)."
         ),
         "source_url": "https://www.indiacode.nic.in/bitstream/123456789/2187/2/A187209.pdf",
         "effective_date": "1 September 1872"
@@ -488,10 +499,10 @@ STATUTORY_PROVISIONS_DATA = [
         "id": "contract-1872-sec-56",
         "act_id": "contract-act-1872",
         "section_number": "56",
-        "heading": "Agreement to do impossible act / Contract to do act afterwards becoming impossible or unlawful",
+        "heading": "Agreement to do impossible act / Contract to do an act afterwards becoming impossible or unlawful",
         "body": (
             "An agreement to do an act impossible in itself is void.\n\n"
-            "Contract to do act afterwards becoming impossible or unlawful.—A contract to do an act which, after the contract is made, "
+            "Contract to do an act afterwards becoming impossible or unlawful.—A contract to do an act which, after the contract is made, "
             "becomes impossible, or, by reason of some event which the promisor could not prevent, unlawful, becomes void when the act becomes impossible or unlawful.\n\n"
             "Compensation for loss through non-performance of act known to be impossible or unlawful.—Where one person has promised to do something which he knew, "
             "or, with reasonable diligence, might have known, and which the promisee did not know, to be impossible or unlawful, such promisor must make compensation "
