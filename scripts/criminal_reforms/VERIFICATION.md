@@ -30,9 +30,12 @@ segment (remaining differences = marginal-note words and section-number tokens o
   where kanoon disagrees - every such disagreement quantified by word-multiset diff and classified:
   direction is kanoon omissions (dropped chapeaus/parenthetical act citations, e.g. s.2) or <=10-word
   formatting noise; 4 kanoon-body patches (ss.26, 147, 237, 342), each verified as a superset of the
-  gazette segment's words.
+  gazette segment's words. s.358 re-verified verbatim against the gazette on 2026-10-29
+  (reclassified gazette-direct).
 - BNSS (531): 276 gazette-derived word-identical; 236 gazette-derived with classified kanoon
-  disagreement (same classes); 9 kanoon-body patches (ss.4, 132, 158, 191, 205, 228, 285, 428, 531);
+  disagreement (same classes); 9 kanoon-body patches (ss.4, 132, 158, 191, 205, 228, 285, 428, 531; s.531 re-verified
+  verbatim against the gazette on 2026-10-29 after stripping a page-furniture/footnote
+  interleaving artifact, and reclassified gazette-direct);
   10 scramble-zone sections (ss.150-152, 169-171, 230, 261, 409, 453) from kanoon, verified against
   the whole gazette stream.
 - 11 sections manually diffed end-to-end before corpus assembly (BNS 2,3,4,14,26,49,341,358;

@@ -103,3 +103,16 @@ secret the backend reads (with `GEMINI_API_KEY` supported as fallback).
 JUSTICE is a research aid, not legal advice. Retrieval summaries are
 editorial paraphrases; verify against the linked full judgments before
 relying on anything.
+
+
+## OCR on scanned documents (status: unavailable on the free plan)
+
+Image/PDF OCR uses a RapidOCR worker (~600-700MB peak) guarded by a memory check; on the 512MB
+free plan the guard returns an honest capacity error. A lighter tesseract fallback exists
+(measured ~163MB peak per page locally), but live verification on the free instance (0.1 CPU)
+showed it engaging only on a cold container and timing out at 90s, with memory-contention
+refusals once the app is warm - so scanned-document OCR remains unavailable in practice on the
+current plan. The locally measured 0.95 figure is tesseract's own engine confidence, not measured
+legal-text extraction accuracy, and two-column page interleaving has not been validated as
+adequate for document-chat use. Smaller-input, queued, or client-side OCR designs are unproven
+alternatives, not committed work.
