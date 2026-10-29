@@ -347,7 +347,7 @@ async def upload_document_endpoint(
                     raise HTTPException(
                         status_code=422,
                         detail=("Some pages of the PDF are unreadable or OCR failed (" + "; ".join(pdf_warns[:5]) + "). "
-                                "No partial compliance verdict is issued. Please upload a clearer scan or a digital PDF.")
+                                "No partial compliance verdict is issued. Please retry with a clearer scan or a digital PDF.")
                     )
                 break
             elif fname_lower.endswith(".docx"):
@@ -380,11 +380,11 @@ async def upload_document_endpoint(
             failed_pages = [m for m in meta_list if m.get("is_unreadable")]
             if failed_pages:
                 # Fail closed per page: never issue a verdict on a partially read document
-                names = ", ".join(f"page {m['page']} ({m['filename']})" for m in failed_pages)
+                names = ", ".join(f"Page {m['page']} ({m['filename']})" for m in failed_pages)
                 raise HTTPException(
                     status_code=422,
                     detail=(f"{len(failed_pages)} of {len(meta_list)} page(s) are unreadable (OCR failed): {names}. "
-                            "No partial compliance verdict is issued. Please re-upload clear photos of every page.")
+                            "No partial compliance verdict is issued. Please retry with clearly legible photos of every page.")
                 )
 
             # Structured per-page outcome check: fail closed if ANY page failed
