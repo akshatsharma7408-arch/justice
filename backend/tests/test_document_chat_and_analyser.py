@@ -252,6 +252,33 @@ def test_upload_images_with_drawn_text_ocr():
     assert resp.status_code == 200
     data = resp.json()
     assert "doc_id" in data
+def test_multi_image_one_unreadable_page_fails_closed():
+    """Regression (reported defect): a batch with one unreadable page must NOT get a
+    compliance verdict from the readable pages alone - the whole upload fails closed."""
+    import io
+    from PIL import Image, ImageDraw
+
+    good = Image.new("RGB", (800, 300), color="white")
+    d = ImageDraw.Draw(good)
+    d.text((40, 80), "TENANCY AGREEMENT: Notice period is 45 days.", fill="black")
+    buf_good = io.BytesIO(); good.save(buf_good, format="PNG")
+
+    blank = Image.new("RGB", (200, 200), color="white")
+    buf_blank = io.BytesIO(); blank.save(buf_blank, format="PNG")
+
+    resp = client.post(
+        "/api/v1/doc/upload-images",
+        files=[
+            ("files", ("page_1_blank.png", buf_blank.getvalue(), "image/png")),
+            ("files", ("page_2_legible.png", buf_good.getvalue(), "image/png")),
+        ]
+    )
+    assert resp.status_code == 422
+    detail = resp.json().get("detail", "").lower()
+    assert "could not be read" in detail or "unreadable" in detail
+    assert "page 1" in detail
+
+
 def test_upload_oversized_file_rejected():
     """Verify upload of file > 10MB returns 400."""
     fake_huge_bytes = b"x" * (10 * 1024 * 1024 + 1024)
