@@ -382,7 +382,7 @@ async def upload_document_endpoint(
                 # Fail closed per page: never issue a verdict on a partially read document.
                 # Distinguish OCR service failures (worker timeout/crash, e.g. memory limit) from
                 # genuinely illegible pages so the user gets the right remediation.
-                svc = [m for m in failed_pages if (m.get("error_reason") or "").startswith(("[Error: OCR processing", "[Error: OCR worker", "[Error: Exception during OCR"))]
+                svc = [m for m in failed_pages if (m.get("error_reason") or "").startswith(("[Error: OCR processing", "[Error: OCR worker", "[Error: Exception during OCR", "[Error: OCR"))]
                 if svc:
                     names = ", ".join(f"Page {m['page']} ({m['filename']})" for m in svc)
                     raise HTTPException(

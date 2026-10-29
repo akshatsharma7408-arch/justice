@@ -10,6 +10,7 @@ Handles multi-image contract uploads (PDF, DOCX, TXT, JPG, PNG, WEBP, HEIC):
 
 import io
 import logging
+import os
 import threading
 import gc
 import numpy as np
@@ -29,6 +30,42 @@ logger = logging.getLogger("justice.ocr")
 # Lazy-loaded RapidOCR engine instance
 _RAPID_OCR_ENGINE = None
 _OCR_LOCK = threading.Lock()
+
+# Measured OCR worker peak RSS ~600-700MB regardless of input size (ONNX runtime overhead).
+# Never spawn the worker when the instance plausibly lacks that headroom: on a shared cgroup
+# the OOM killer can terminate the WEB process, not just the child.
+DEFAULT_OCR_WORKER_PEAK_MB = 768
+
+
+def _memory_allows_ocr() -> bool:
+    """True only when available memory plausibly exceeds the measured OCR worker peak.
+    Prefers cgroup limits (containers) over host /proc/meminfo."""
+    peak_mb = int(os.environ.get("JUSTICE_OCR_WORKER_PEAK_MB", str(DEFAULT_OCR_WORKER_PEAK_MB)))
+    need = peak_mb * 1024 * 1024
+    try:
+        v2_max = "/sys/fs/cgroup/memory.max"
+        v2_cur = "/sys/fs/cgroup/memory.current"
+        if os.path.exists(v2_max) and os.path.exists(v2_cur):
+            raw = open(v2_max).read().strip()
+            if raw != "max":
+                limit = int(raw)
+                current = int(open(v2_cur).read().strip())
+                return (limit - current) >= need
+            # no cgroup limit: fall through to proc
+        v1_max = "/sys/fs/cgroup/memory/memory.limit_in_bytes"
+        v1_cur = "/sys/fs/cgroup/memory/memory.usage_in_bytes"
+        if os.path.exists(v1_max) and os.path.exists(v1_cur):
+            limit = int(open(v1_max).read().strip())
+            if limit < (1 << 60):  # huge sentinel means "no limit"
+                current = int(open(v1_cur).read().strip())
+                return (limit - current) >= need
+        with open("/proc/meminfo") as f:
+            for line in f:
+                if line.startswith("MemAvailable:"):
+                    return int(line.split()[1]) * 1024 >= need
+    except Exception:
+        pass
+    return True  # undetectable limits: do not block local/dev usage
 
 def get_ocr_engine():
     global _RAPID_OCR_ENGINE
@@ -140,6 +177,12 @@ def process_image_bytes(image_bytes: bytes, filename: str = "image.png") -> Tupl
             f.write(image_bytes)
             tmp_file = f.name
 
+        if not _memory_allows_ocr():
+            peak = int(os.environ.get("JUSTICE_OCR_WORKER_PEAK_MB", str(DEFAULT_OCR_WORKER_PEAK_MB)))
+            logger.warning(f"OCR skipped for '{filename}': available memory below measured worker peak ({peak}MB).")
+            return ("[Error: OCR processing unavailable: insufficient server memory for image text extraction]",
+                    True, 0.0)
+
         env = os.environ.copy()
         backend_dir = str(Path(__file__).resolve().parent.parent.parent)
         env["PYTHONPATH"] = backend_dir
@@ -175,6 +218,10 @@ def process_image_bytes(image_bytes: bytes, filename: str = "image.png") -> Tupl
             return res.get("text", ""), res.get("is_unreadable", False), res.get("confidence", 0.0)
 
     except Exception as e:
+        if not _memory_allows_ocr():
+            logger.warning(f"OCR subprocess failed ({e}) and memory too tight for in-process fallback; refusing '{filename}'.")
+            return ("[Error: OCR processing unavailable: insufficient server memory for image text extraction]",
+                    True, 0.0)
         logger.warning(f"OCR subprocess execution encountered exception: {e}; falling back to in-process OCR.")
         return process_image_bytes_in_process(image_bytes, filename)
     finally:
