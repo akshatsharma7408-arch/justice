@@ -379,7 +379,17 @@ async def upload_document_endpoint(
             page_count = len(image_items)
             failed_pages = [m for m in meta_list if m.get("is_unreadable")]
             if failed_pages:
-                # Fail closed per page: never issue a verdict on a partially read document
+                # Fail closed per page: never issue a verdict on a partially read document.
+                # Distinguish OCR service failures (worker timeout/crash, e.g. memory limit) from
+                # genuinely illegible pages so the user gets the right remediation.
+                svc = [m for m in failed_pages if (m.get("error_reason") or "").startswith(("[Error: OCR processing", "[Error: OCR worker", "[Error: Exception during OCR"))]
+                if svc:
+                    names = ", ".join(f"Page {m['page']} ({m['filename']})" for m in svc)
+                    raise HTTPException(
+                        status_code=503,
+                        detail=(f"OCR is temporarily unavailable for {names} (service resource limit, not an image problem). "
+                                "No compliance verdict is issued. Please retry in a few minutes.")
+                    )
                 names = ", ".join(f"Page {m['page']} ({m['filename']})" for m in failed_pages)
                 raise HTTPException(
                     status_code=422,
