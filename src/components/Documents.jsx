@@ -85,13 +85,19 @@ export default function Documents({ onTriggerAgentAnalysis }) {
         setUploadError("Maximum 10 images allowed per upload.");
         return;
       }
-      // Create previews
-      const staged = files.map((file, idx) => ({
+      // Create previews as data URLs (blob: object URLs can race the renderer and break)
+      const readAsDataURL = (file) => new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = () => resolve(reader.result);
+        reader.onerror = () => reject(reader.error || new Error('read failed'));
+        reader.readAsDataURL(file);
+      });
+      const staged = await Promise.all(files.map(async (file, idx) => ({
         id: `img-${Date.now()}-${idx}`,
         file,
         name: file.name,
-        previewUrl: URL.createObjectURL(file)
-      }));
+        previewUrl: await readAsDataURL(file)
+      })));
       setPendingImages(staged);
     } else {
       // Direct upload for single PDF/DOCX/TXT
@@ -449,7 +455,20 @@ export default function Documents({ onTriggerAgentAnalysis }) {
                 {pendingImages.map((img, idx) => (
                   <div key={img.id} className="staged-thumbnail-item">
                     <div className="thumbnail-page-badge mono">Page {idx + 1}</div>
-                    <img src={img.previewUrl} alt={`Page ${idx + 1}`} className="thumbnail-img" />
+                    <img
+                      src={img.previewUrl}
+                      alt={`Page ${idx + 1}`}
+                      className="thumbnail-img"
+                      onError={(e) => {
+                        // Retry once: a transient decode race can leave the thumbnail broken
+                        if (!e.currentTarget.dataset.retried) {
+                          e.currentTarget.dataset.retried = '1';
+                          const u = e.currentTarget.src;
+                          e.currentTarget.src = '';
+                          e.currentTarget.src = u;
+                        }
+                      }}
+                    />
                     <div className="thumbnail-overlay">
                       <span className="thumbnail-name" title={img.name}>{img.name}</span>
                       <div className="thumbnail-controls">

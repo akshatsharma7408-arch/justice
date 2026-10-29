@@ -1,6 +1,8 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { motion } from 'framer-motion';
 import { Search, ArrowRight, ArrowUpRight, Scale, ShieldCheck, Check, MessageSquare, BookOpen, FileText, SlidersHorizontal, Sparkles, ChevronRight, AlertTriangle, ExternalLink } from 'lucide-react';
+import { LANDMARK_PRECEDENTS } from '../data/legalCorpus';
+import { BACKEND_URL } from '../config/gemini';
 import {
   ScrollProgressBar,
   SoftCursorFollower,
@@ -50,6 +52,29 @@ export default function LandingPage({
   const [mouseParallax, setMouseParallax] = useState({ x: 0, y: 0 });
   const [toastMessage, setToastMessage] = useState(null);
   const [copiedCitationId, setCopiedCitationId] = useState(null);
+  const [corpusStats, setCorpusStats] = useState(null);
+
+  // Ground the stat cards in the live backend corpus instead of static claims
+  useEffect(() => {
+    let cancelled = false;
+    fetch(`${BACKEND_URL}/health`)
+      .then(r => (r.ok ? r.json() : null))
+      .then(d => {
+        if (cancelled || !d || !d.services) return;
+        const points = d.services?.qdrant?.points_count;
+        const provisions = d.services?.statutes_sqlite?.statutory_provisions_count;
+        const acts = d.services?.statutes_sqlite?.bare_acts_count;
+        if (Number.isFinite(points) || Number.isFinite(provisions)) {
+          setCorpusStats({
+            points: Number.isFinite(points) ? points : null,
+            provisions: Number.isFinite(provisions) ? provisions : null,
+            acts: Number.isFinite(acts) ? acts : null
+          });
+        }
+      })
+      .catch(() => {});
+    return () => { cancelled = true; };
+  }, []);
 
   // Rotating placeholder
   useEffect(() => {
@@ -246,16 +271,16 @@ export default function LandingPage({
             {/* Real Number Counters Strip (Scrolled into view count-up) */}
             <div className="landing-stats-strip" aria-label="Corpus Statistics">
               <div className="stat-card-box">
-                <span className="stat-number-val font-serif"><CountUpNumber target={1736} suffix="+" /></span>
-                <span className="stat-label-text">Supreme Court Judgments</span>
+                <span className="stat-number-val font-serif"><CountUpNumber target={corpusStats?.points ?? 36000} suffix="+" /></span>
+                <span className="stat-label-text">Indexed Judgment Chunks</span>
               </div>
               <div className="stat-card-box">
-                <span className="stat-number-val font-serif"><CountUpNumber target={12} suffix="" /></span>
-                <span className="stat-label-text">Landmark Rulings</span>
+                <span className="stat-number-val font-serif"><CountUpNumber target={LANDMARK_PRECEDENTS.length} suffix="" /></span>
+                <span className="stat-label-text">Curated Landmark Rulings</span>
               </div>
               <div className="stat-card-box">
-                <span className="stat-number-val font-serif"><CountUpNumber target={33} suffix="k+" /></span>
-                <span className="stat-label-text">Indexed Chunks</span>
+                <span className="stat-number-val font-serif"><CountUpNumber target={corpusStats?.provisions ?? 522} suffix="" /></span>
+                <span className="stat-label-text">Statutory Provisions Seeded</span>
               </div>
               <div className="stat-card-box">
                 <span className="stat-number-val font-serif" style={{ fontSize: '1.25rem', lineHeight: 1.3 }}>Primary Law</span>

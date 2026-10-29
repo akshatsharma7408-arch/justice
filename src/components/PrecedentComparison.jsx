@@ -312,7 +312,7 @@ function SearchableCasePicker({
           >
             {isSearching && candidates.length === 0 ? (
               <div className="picker-searching-notice mono">
-                Searching 1,740+ Supreme Court & High Court cases...
+                Searching the indexed Supreme Court & High Court archive...
               </div>
             ) : candidates.length === 0 ? (
               <div className="picker-no-results mono">
@@ -363,7 +363,7 @@ function SearchableCasePicker({
 }
 
 export default function PrecedentComparison({ onSwitchToWorkspace }) {
-  // Stable case IDs across the 1,740+ collection
+  // Stable case IDs across the indexed collection
   const [case1Id, setCase1Id] = useState('sc-2006-percept');
   const [case2Id, setCase2Id] = useState('sc-1967-niranjan');
 
@@ -553,7 +553,7 @@ export default function PrecedentComparison({ onSwitchToWorkspace }) {
         </div>
         <h1 className="module-heading font-serif">Precedent Comparison & Doctrine Matrix</h1>
         <p className="module-description">
-          Side-by-side comparative jurisprudence across the entire archive of 1,740+ Supreme Court and High Court decisions. Inspect bench strength, ratio decidendi differences, statutory provisions, and verified treatment relationships.
+          Side-by-side comparative jurisprudence across the indexed archive of Supreme Court and High Court decisions. Inspect bench strength, ratio decidendi differences, statutory provisions, and verified treatment relationships.
         </p>
 
         {/* Featured Comparison Presets Strip */}

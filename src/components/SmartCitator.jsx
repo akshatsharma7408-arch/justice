@@ -338,7 +338,7 @@ export default function SmartCitator({ initialCaseId, onActiveCaseChange }) {
         </div>
         <h1 className="module-title font-serif">Smart Citator</h1>
         <p className="module-subtitle">
-          Automated Article 141 constitutional Shepardizer. Maps judicial lineage across Supreme Court and High Courts, evaluates bench strength hierarchy, and flags overruling risks in real time.
+          Maps judicial lineage, bench strength and treatment relationships across the indexed corpus of Supreme Court and High Court decisions. Treatment signals reflect available indexed data; always verify against the official report before citing.
         </p>
 
         {/* Dataset Case Lookup & Precedent Selector */}

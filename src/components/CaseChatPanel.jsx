@@ -290,7 +290,7 @@ export default function CaseChatPanel({
               </div>
               <h3 className="empty-state-heading font-judicial">Have questions on this judgment?</h3>
               <p className="empty-state-desc">
-                Answers are verified and grounded strictly in the recorded text of this judgment. Pick a suggested prompt below or type your question.
+                Answers are grounded in the recorded text available for this judgment. Coverage can be partial, so verify against the official report before citing. Pick a suggested prompt below or type your question.
               </p>
             </div>
           ) : (
