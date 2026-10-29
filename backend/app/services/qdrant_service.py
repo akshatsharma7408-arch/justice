@@ -785,7 +785,7 @@ def extract_query_aliases(query: str) -> List[str]:
     matched = []
 
     try:
-        from app.ingest.landmark_pipeline import LANDMARK_CASES
+        from app.landmark_cases import LANDMARK_CASES
     except Exception:
         LANDMARK_CASES = []
 
@@ -1508,7 +1508,7 @@ class QdrantService:
 
         # 1. Landmark cases
         try:
-            from app.ingest.landmark_pipeline import LANDMARK_CASES
+            from app.landmark_cases import LANDMARK_CASES
         except Exception:
             LANDMARK_CASES = []
 

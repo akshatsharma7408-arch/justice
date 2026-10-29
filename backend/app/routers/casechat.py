@@ -325,10 +325,14 @@ def get_case_chunks(case_id: str) -> List[Dict[str, Any]]:
         if k.lower() == cid.lower():
             return v
 
-    # 4. Fetch chunks from Qdrant service
+    # 4. Fetch chunks from Qdrant service (try the mapped SC id first for landmark aliases)
     try:
         from app.services.qdrant_service import qdrant_service
-        q_chunks = qdrant_service.get_case_chunks_by_id(cid)
+        q_chunks = []
+        if mapped_sc_id:
+            q_chunks = qdrant_service.get_case_chunks_by_id(mapped_sc_id)
+        if not q_chunks:
+            q_chunks = qdrant_service.get_case_chunks_by_id(cid)
         if q_chunks:
             _CHUNKS_BY_CASE[cid] = q_chunks
             if cid not in _CASE_METADATA_INDEX:

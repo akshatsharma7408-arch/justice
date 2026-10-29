@@ -70,6 +70,43 @@ class CaseDetailResponse(BaseModel):
     text: Optional[str] = None
 
 
+
+_REPORTER_DOT_FORMS = {
+    "SCR": "S.C.R.", "SCC": "S.C.C.", "AIR": "A.I.R.", "SCALE": "S.C.A.L.E.", "JT": "J.T.",
+}
+
+def _parse_citation_components(q: str):
+    """Parse a citation-like query into (year, volume, reporter, page) when possible."""
+    m = re.search(
+        r'[\(\[]?(\d{4})[\)\]]?\s*(?:\(?([\dA-Z]+)\)?\s+)?(?:AIR|A\.I\.R\.|SCC|S\.C\.C\.|SCR|S\.C\.R\.|SCALE|JT|INSC)(?:\s+(\d+))?',
+        q, re.IGNORECASE)
+    if not m:
+        return None
+    year = m.group(1)
+    vol = m.group(2)
+    page = m.group(3)
+    rm = re.search(r'(AIR|A\.I\.R\.|SCC|S\.C\.C\.|SCR|S\.C\.R\.|SCALE|JT|INSC)', q, re.IGNORECASE)
+    reporter = rm.group(1).upper().replace('.', '') if rm else None
+    return year, vol, reporter, page
+
+def _punctuated_citation_candidates(q: str) -> List[str]:
+    """Build punctuated citation candidate strings matching Qdrant full-text token shapes."""
+    parsed = _parse_citation_components(q)
+    if not parsed:
+        return []
+    year, vol, reporter, page = parsed
+    dotted = _REPORTER_DOT_FORMS.get(reporter or "", reporter or "")
+    candidates = []
+    volpart = f"{vol} " if vol else ""
+    pagepart = f" {page}" if page else ""
+    for y in (f"[{year}]", f"({year})", year):
+        candidates.append(f"{y} {volpart}{dotted}{pagepart}".strip())
+        candidates.append(f"{y} {volpart}{reporter}{pagepart}".strip())
+    if reporter == "AIR" and page:
+        candidates.append(f"AIR {year} SC {page}")
+    # de-duplicate preserving order
+    return list(dict.fromkeys(candidates))
+
 def _search_full_case_collection(query: str, limit: int = 20) -> List[Dict[str, Any]]:
     """
     Searches across all records available to the application:
@@ -233,6 +270,11 @@ def _search_full_case_collection(query: str, limit: int = 20) -> List[Dict[str, 
             if len(q_cit_tokens) >= 2:
                 filter_conditions.append(FieldCondition(key="citation", match=MatchText(text=" ".join(q_cit_tokens))))
 
+            # Punctuated candidates matching Qdrant full-text token shapes ([1975] 3 S.C.R. 1)
+            q_components = _parse_citation_components(q)
+            for cand in _punctuated_citation_candidates(q):
+                filter_conditions.append(FieldCondition(key="citation", match=MatchText(text=cand)))
+
             target_collection = qdrant_service.sc_collection_name
             try:
                 available = {col.name for col in client.get_collections().collections}
@@ -244,7 +286,7 @@ def _search_full_case_collection(query: str, limit: int = 20) -> List[Dict[str, 
             records, _ = client.scroll(
                 collection_name=target_collection,
                 scroll_filter=Filter(should=filter_conditions),
-                limit=limit * 2,
+                limit=(limit * 20 if q_components else limit * 2),
                 with_payload=True,
                 with_vectors=False
             )
@@ -277,6 +319,17 @@ def _search_full_case_collection(query: str, limit: int = 20) -> List[Dict[str, 
                     score += 95.0
                 elif q_low in cit.lower():
                     score += 50.0
+
+                # Component-level citation scoring: year + page + reporter agreement
+                if q_components and cit:
+                    c_comp = _parse_citation_components(cit)
+                    if c_comp:
+                        if c_comp[0] == q_components[0]:
+                            score += 45.0
+                        if q_components[3] and c_comp[3] == q_components[3]:
+                            score += 45.0
+                        if q_components[2] and c_comp[2] == q_components[2]:
+                            score += 20.0
 
                 case_record = {
                     "id": cid,

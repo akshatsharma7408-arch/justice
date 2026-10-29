@@ -173,7 +173,7 @@ def _init_master_vocabulary():
 
     # Ingest words from landmark definitions if available
     try:
-        from app.ingest.landmark_pipeline import LANDMARK_CASES
+        from app.landmark_cases import LANDMARK_CASES
         for c in LANDMARK_CASES:
             for field in [c.get("common_name", ""), c.get("short_name", "")] + c.get("extra_aliases", []):
                 for w in re.findall(r'[a-zA-Z]{3,}', field.lower()):
@@ -315,7 +315,7 @@ def _init_correction_targets() -> Set[str]:
         "homicide", "culpable", "anticipatory", "bail"
     })
     try:
-        from app.ingest.landmark_pipeline import LANDMARK_CASES
+        from app.landmark_cases import LANDMARK_CASES
         for c in LANDMARK_CASES:
             for field in [c.get("common_name", ""), c.get("short_name", "")] + c.get("extra_aliases", []):
                 for w in re.findall(r'[a-zA-Z]{3,}', field.lower()):
