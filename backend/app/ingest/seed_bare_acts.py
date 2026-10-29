@@ -77,9 +77,12 @@ def load_criminal_reforms_provisions() -> List[Dict[str, Any]]:
             explanation = None
             if act_id == "bharatiya-nyaya-sanhita-2023" and num == "106":
                 explanation = ("Commencement caveat: sub-section (2) of section 106 (causing death by rash/negligent "
-                               "driving and fleeing without reporting) has NOT been brought into force. S.O. 850(E) "
-                               "(23.02.2024) commenced the BNS w.e.f. 1 July 2024 except s.106(2), which remained "
-                               "uncommenced as of late October 2026. Sub-section (1) is in force.")
+                               "driving and fleeing without reporting) was excepted from commencement by the official "
+                               "notification S.O. 850(E) (23.02.2024), which brought the BNS into force w.e.f. "
+                               "1 July 2024 except s.106(2). No later notification commencing s.106(2) has been "
+                               "located, and press reporting (Hindustan Times, 25-26 Oct 2026) describes it as still "
+                               "not in force; its current status rests on that reporting, not a fresh official check. "
+                               "Sub-section (1) is in force.")
             provisions.append({
                 "id": f"{m['id_prefix']}{num.lower()}",
                 "act_id": act_id,
