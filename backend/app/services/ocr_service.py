@@ -10,6 +10,8 @@ Handles multi-image contract uploads (PDF, DOCX, TXT, JPG, PNG, WEBP, HEIC):
 
 import io
 import logging
+import threading
+import gc
 import numpy as np
 from typing import List, Tuple, Dict, Any, Optional
 from PIL import Image, ImageOps
@@ -26,6 +28,7 @@ logger = logging.getLogger("justice.ocr")
 
 # Lazy-loaded RapidOCR engine instance
 _RAPID_OCR_ENGINE = None
+_OCR_LOCK = threading.Lock()
 
 def get_ocr_engine():
     global _RAPID_OCR_ENGINE
@@ -40,10 +43,10 @@ def get_ocr_engine():
     return _RAPID_OCR_ENGINE
 
 
-def process_image_bytes(image_bytes: bytes, filename: str = "image.png") -> Tuple[str, bool, float]:
+def process_image_bytes_in_process(image_bytes: bytes, filename: str = "image.png") -> Tuple[str, bool, float]:
     """
-    Processes a single image:
-    Returns (extracted_text, is_unreadable, avg_confidence).
+    Direct in-process image OCR inference using RapidOCR engine.
+    Called inside worker subprocess or as direct fallback.
     """
     try:
         img = Image.open(io.BytesIO(image_bytes))
@@ -57,8 +60,8 @@ def process_image_bytes(image_bytes: bytes, filename: str = "image.png") -> Tupl
     except Exception as e:
         logger.debug(f"EXIF transpose skipped: {e}")
 
-    # 2. Resize to max 2000px on longest side
-    max_dim = 2000
+    # 2. Resize to max 1024px on longest side (strict memory limit)
+    max_dim = 1024
     if max(img.width, img.height) > max_dim:
         scale = max_dim / float(max(img.width, img.height))
         new_w = max(1, int(img.width * scale))
@@ -75,10 +78,16 @@ def process_image_bytes(image_bytes: bytes, filename: str = "image.png") -> Tupl
         return "[Error: OCR engine is currently unavailable]", True, 0.0
 
     try:
-        results, _ = engine(np_img)
+        with _OCR_LOCK:
+            results, _ = engine(np_img)
     except Exception as e:
         logger.error(f"RapidOCR execution failed on '{filename}': {e}")
         return f"[Error: OCR processing error on '{filename}']", True, 0.0
+    finally:
+        del rgb_img
+        del np_img
+        del img
+        gc.collect()
 
     if not results:
         return "This image is too blurry or unclear to read reliably. Please upload a clearer photo.", True, 0.0
@@ -87,7 +96,6 @@ def process_image_bytes(image_bytes: bytes, filename: str = "image.png") -> Tupl
     lines = []
     scores = []
     for item in results:
-        # RapidOCR format: [box, text, score]
         if len(item) >= 3:
             text = str(item[1]).strip()
             score = float(item[2])
@@ -108,10 +116,80 @@ def process_image_bytes(image_bytes: bytes, filename: str = "image.png") -> Tupl
     return cleaned, False, avg_score
 
 
+def process_image_bytes(image_bytes: bytes, filename: str = "image.png") -> Tuple[str, bool, float]:
+    """
+    Processes a single image via an ephemeral isolated subprocess to prevent ONNX Runtime
+    native memory pools from accumulating inside the main server process.
+    Falls back gracefully to in-process OCR if subprocess spawning fails.
+    """
+    import os
+    import sys
+    import subprocess
+    import tempfile
+    import json
+    from pathlib import Path
+
+    # If already running inside an ocr_worker subprocess, run in-process directly to avoid recursion
+    if "ocr_worker" in sys.argv[0]:
+        return process_image_bytes_in_process(image_bytes, filename)
+
+    tmp_file = None
+    try:
+        suffix = os.path.splitext(filename)[1] or ".png"
+        with tempfile.NamedTemporaryFile(suffix=suffix, delete=False) as f:
+            f.write(image_bytes)
+            tmp_file = f.name
+
+        env = os.environ.copy()
+        backend_dir = str(Path(__file__).resolve().parent.parent.parent)
+        env["PYTHONPATH"] = backend_dir
+
+        cmd = [sys.executable, "-m", "app.services.ocr_worker", tmp_file]
+        with _OCR_LOCK:
+            proc = subprocess.Popen(
+                cmd,
+                stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE,
+                env=env
+            )
+            try:
+                stdout_bytes, stderr_bytes = proc.communicate(timeout=25.0)
+            except subprocess.TimeoutExpired:
+                logger.error(f"OCR subprocess timed out after 25s for '{filename}'")
+                proc.kill()
+                proc.communicate()
+                return f"[Error: OCR processing timed out on '{filename}']", True, 0.0
+
+            if proc.returncode != 0:
+                err_msg = stderr_bytes.decode("utf-8", errors="ignore").strip()
+                logger.warning(f"OCR worker returned non-zero code {proc.returncode} for '{filename}': {err_msg}")
+                if stdout_bytes:
+                    try:
+                        res = json.loads(stdout_bytes.decode("utf-8"))
+                        return res.get("text", ""), res.get("is_unreadable", True), res.get("confidence", 0.0)
+                    except Exception:
+                        pass
+                return f"[Error: OCR processing failed on '{filename}']", True, 0.0
+
+            res = json.loads(stdout_bytes.decode("utf-8"))
+            return res.get("text", ""), res.get("is_unreadable", False), res.get("confidence", 0.0)
+
+    except Exception as e:
+        logger.warning(f"OCR subprocess execution encountered exception: {e}; falling back to in-process OCR.")
+        return process_image_bytes_in_process(image_bytes, filename)
+    finally:
+        if tmp_file and os.path.exists(tmp_file):
+            try:
+                os.remove(tmp_file)
+            except Exception:
+                pass
+
+
 def process_multi_images(images: List[Tuple[str, bytes]]) -> Tuple[str, List[Dict[str, Any]], List[str]]:
     """
     Processes up to 10 images in order:
     Returns (concatenated_text, page_metadata, warnings).
+    Includes structured outcome status per page.
     """
     pages_text = []
     pages_meta = []
@@ -133,8 +211,11 @@ def process_multi_images(images: List[Tuple[str, bytes]]) -> Tuple[str, List[Dic
             "filename": fname,
             "char_count": len(page_text),
             "confidence": round(conf, 3),
-            "is_unreadable": is_unreadable
+            "is_unreadable": is_unreadable,
+            "status": "FAILED" if is_unreadable else "SUCCESS",
+            "error_reason": page_text if is_unreadable else None
         })
+        gc.collect()
 
     full_text = "\n\n".join(pages_text)
     return full_text, pages_meta, warnings

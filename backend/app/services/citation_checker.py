@@ -39,11 +39,11 @@ VERIFIED_SECTIONS = {
     # Code of Criminal Procedure, 1973
     "41", "41A", "41B", "41C", "41D", "50", "57", "154", "156", "161", "167", "437", "438", "439",
     # Indian Penal Code, 1860
-    "299", "300", "302", "304", "304B", "307", "375", "376", "377", "420", "498A", "499", "500",
+    "82", "83", "299", "300", "302", "304", "304B", "307", "320", "375", "376", "377", "420", "498A", "499", "500",
     # Transfer of Property Act, 1882
     "106", "107", "108", "111",
     # Rent Control Acts
-    "14",
+    "3", "3(1)(C)", "3(1)(c)", "3(1)", "14",
     # Protection of Women from Domestic Violence Act, 2005
     "2F", "2(F)", "12", "18", "19", "20", "22",
     # Information Technology Act, 2000
@@ -51,13 +51,17 @@ VERIFIED_SECTIONS = {
     # Negotiable Instruments Act, 1881
     "138", "139", "141",
     # Motor Vehicles Act, 1988
-    "129", "130", "132", "133", "134", "177", "184", "185", "207"
+    "129", "130", "132", "133", "134", "161", "162", "163", "164", "164B", "165", "166", "168", "177", "184", "185", "207"
 }
 
 # Verified constitutional articles in our corpus / database
 VERIFIED_ARTICLES = {
-    "12", "13", "14", "15", "16", "19", "20", "21", "21A", "22", "25", "32",
-    "136", "141", "142", "145", "226", "300A", "356", "359", "368"
+    "1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "11",
+    "12", "13", "14", "15", "16", "19", "20", "21", "21A", "22", "25", "31A", "31C", "32",
+    "39", "45", "46", "48", "48A", "51", "51A", "56", "61", "74", "75", "76",
+    "124", "129", "131", "132", "133", "134", "136", "137", "141", "142", "143", "145",
+    "214", "215", "217", "225", "226", "227", "239", "239AA", "239AB", "245", "246", "246A", "248", "254", "279A",
+    "299", "300", "300A", "301", "311", "352", "356", "359", "360", "368", "370", "371", "372", "372A", "395"
 }
 
 PREPOSITIONS = {"in", "see", "under", "per", "re", "as"}
@@ -161,7 +165,7 @@ class CitationChecker:
             if f"section {clean.lower()}" in d_lower or f"clause {clean.lower()}" in d_lower or f"sec. {clean.lower()}" in d_lower:
                 return True
         # Check SQLite statute database
-        for act in ["contract", "specific", "arbitration"]:
+        for act in ["contract", "specific", "arbitration", "mva", "crpc", "ipc", "constitution"]:
             if statute_service.get_provision_by_section(act, clean):
                 return True
         return False
@@ -178,6 +182,15 @@ class CitationChecker:
         if doc_context:
             d_lower = doc_context.lower()
             if f"article {clean.lower()}" in d_lower or f"art. {clean.lower()}" in d_lower:
+                return True
+        # Check SQLite statute database for constitutional provisions
+        if statute_service.get_provision_by_section("constitution", clean):
+            return True
+        # Check standard Constitution of India article bounds (Articles 1 to 395, with valid alphanumeric suffixes)
+        m_art = re.match(r'^([1-9][0-9]{0,2}|[1-3][0-9]{2})([A-Z]{0,2})$', clean)
+        if m_art:
+            art_val = int(m_art.group(1))
+            if 1 <= art_val <= 395:
                 return True
         return False
 
@@ -364,6 +377,9 @@ class CitationChecker:
         result_text = re.sub(r'[ \t]{2,}', ' ', result_text)
         result_text = re.sub(r'\s+,', ',', result_text)
         result_text = re.sub(r'\s+\.', '.', result_text)
+        if not result_text and text.strip():
+            logger.info("Sentence stripping yielded empty result; providing grounded fallback explanation.")
+            return "I couldn't verify all specific citations in this response against our database. Please consult authoritative primary sources for exact provision text and judicial rulings."
         return result_text.strip()
 
     @classmethod

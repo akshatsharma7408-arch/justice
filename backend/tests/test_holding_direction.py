@@ -128,7 +128,11 @@ def test_holding_5_section27_during_term_valid():
     ans = data.get("ai_answer", "").lower()
     cits = " ".join(data.get("citations", []))
 
-    assert "valid" in ans or "enforceable" in ans or "not in restraint" in ans, f"Answer must confirm restraint during term is valid: {ans}"
+    # Accept legally equivalent affirmations (enforced, enforceable, valid, allowed, permissible, not in restraint)
+    affirming_terms = ["valid", "enforceable", "enforced", "permissible", "allowed", "not in restraint", "can be enforced"]
+    assert any(term in ans for term in affirming_terms), f"Answer must affirm restraint during term is legally valid/enforceable/enforced: {ans}"
+    # Reject reversed/overbroad holdings asserting restraints during employment are void or illegal
+    assert not re.search(r'\b(?:during\s+(?:employment|the\s+term|subsistence))\s+(?:is|are)\s+(?:void|unenforceable|prohibited|illegal)\b', ans), f"Answer must not state restraint during term is void: {ans}"
     assert "golikari" in ans or "golikari" in cits.lower() or "gujarat bottling" in ans or "gujarat bottling" in cits.lower(), f"Expected Golikari or Gujarat Bottling citation: {cits}"
     print(" [PASS] Holding 5: Section 27 Negative Covenants During Employment are Valid (Niranjan Golikari 1967)")
 

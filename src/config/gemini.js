@@ -391,7 +391,14 @@ export async function uploadDocumentForChatWithBackend(input, title = "Uploaded 
       body: input
     });
     if (!res.ok) {
-      throw new Error(`Document upload for chat failed (HTTP ${res.status})`);
+      let detail = `Document upload failed (HTTP ${res.status})`;
+      try {
+        const errJson = await res.json();
+        if (errJson && errJson.detail) {
+          detail = errJson.detail;
+        }
+      } catch (_) {}
+      throw new Error(detail);
     }
     return await res.json();
   } else {
@@ -404,7 +411,14 @@ export async function uploadDocumentForChatWithBackend(input, title = "Uploaded 
       })
     });
     if (!res.ok) {
-      throw new Error(`Document upload for chat failed (HTTP ${res.status})`);
+      let detail = `Document upload failed (HTTP ${res.status})`;
+      try {
+        const errJson = await res.json();
+        if (errJson && errJson.detail) {
+          detail = errJson.detail;
+        }
+      } catch (_) {}
+      throw new Error(detail);
     }
     return await res.json();
   }
