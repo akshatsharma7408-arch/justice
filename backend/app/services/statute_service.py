@@ -162,11 +162,27 @@ class StatuteService:
         self._ensure_db_exists()
 
     def _ensure_db_exists(self):
-        """Ensures the SQLite database is created and seeded if missing."""
-        if not self.db_path.exists():
+        """Ensures the SQLite database exists and reflects the current statute corpus.
+
+        Seeds when missing, and re-seeds when the database predates the verified
+        Constitution corpus (499 articles) so stale local/deployed copies self-heal.
+        """
+        needs_seed = not self.db_path.exists()
+        if not needs_seed:
+            try:
+                with self._get_connection() as conn:
+                    n = conn.execute(
+                        "SELECT COUNT(*) FROM statutory_provisions WHERE act_id='constitution-of-india-1950'"
+                    ).fetchone()[0]
+                if n < 499:
+                    logger.info(f"Statute DB stale (Constitution provisions: {n} < 499); reseeding...")
+                    needs_seed = True
+            except Exception:
+                needs_seed = True
+        if needs_seed:
             try:
                 from app.ingest.seed_bare_acts import init_db, seed_database
-                logger.info(f"Database not found at {self.db_path}. Automatically seeding Phase 1 statutes...")
+                logger.info(f"Seeding statute database at {self.db_path}...")
                 conn = init_db(self.db_path)
                 seed_database(conn)
                 conn.close()
