@@ -1406,9 +1406,6 @@ class LLMService:
                 if matching_cases:
                     c0 = matching_cases[0]
                     ans_str += f"In {c0.get('title')} ({c0.get('citation')}), the Supreme Court held: {clean_case_summary(c0)}"
-                    if has_unresolved_caveat:
-                        ans_str += (" Note: the statutory text quoted above carries an unresolved verification caveat "
-                                    "and is not authoritative; the case summary is independent of it.")
                     cits = [f"Constitution of India, Article {art_num} ({heading})", f"{c0.get('title')} ({c0.get('citation')})"]
                     tier_label = "AI summary based on the cases below"
                     no_strong = False
@@ -1593,6 +1590,26 @@ class LLMService:
                             break
 
                     if chosen_prov is None:
+                        # Content-based disambiguation: the multi-act corpus makes same-numbered
+                        # sections common; resolve by query-content overlap with each candidate's
+                        # heading and body, choosing only a clear winner (otherwise clarify).
+                        _stop = {"what", "does", "mean", "section", "under", "india", "indian", "tell", "about", "explain", "please", "with", "that", "this", "from", "when", "which", "there", "their", "would", "could", "should"}
+                        q_words = {w for w in re.findall(r"[a-z]+", q_low) if len(w) > 3 and w not in _stop}
+                        if q_words:
+                            scored = []
+                            for p in provisions:
+                                hay = ((p.get("heading") or "") + " " + (p.get("body") or "")[:600] + " " + (p.get("explanation") or "")).lower()
+                                hay_words = set(re.findall(r"[a-z]+", hay))
+                                score = sum(
+                                    1 for w in q_words
+                                    if w in hay or any(hw.startswith(w[:5]) for hw in hay_words)
+                                )
+                                scored.append((score, p))
+                            scored.sort(key=lambda sp: -sp[0])
+                            if scored[0][0] >= 1 and (len(scored) == 1 or scored[0][0] > scored[1][0]):
+                                chosen_prov = scored[0][1]
+
+                    if chosen_prov is None:
                         # Genuinely ambiguous statutory inquiry across multiple major enactments!
                         prov_descriptions = []
                         for idx, p in enumerate(provisions, 1):
@@ -1616,7 +1633,9 @@ class LLMService:
                             "answer": clarification_text,
                             "ratio_decidendi": f"Ambiguous statutory reference: Section {sec_num} exists in multiple central enactments.",
                             "citations": citation_checker.badge_citations_list(cits),
-                            "results": [],
+                            # Ambiguity of the statutory reference does not invalidate the
+                            # retrieved precedents for the query's subject matter; return them.
+                            "results": retrieved_cases[:5],
                             "model_used": "statutory_ambiguity_clarification",
                             "tier": "tier1",
                             "tier_label": "Authoritative statutory provision",
