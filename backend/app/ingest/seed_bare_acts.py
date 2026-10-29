@@ -74,7 +74,7 @@ def load_criminal_reforms_provisions() -> List[Dict[str, Any]]:
         entries = corpus.get(act_id, {})
         for num in sorted(entries, key=_section_sort_key):
             e = entries[num]
-            explanation = None
+            explanation = e.get("caveat")
             if act_id == "bharatiya-nyaya-sanhita-2023" and num == "106":
                 explanation = ("Commencement caveat: sub-section (2) of section 106 (causing death by rash/negligent "
                                "driving and fleeing without reporting) was excepted from commencement by the official "
