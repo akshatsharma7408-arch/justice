@@ -1406,6 +1406,9 @@ class LLMService:
                 if matching_cases:
                     c0 = matching_cases[0]
                     ans_str += f"In {c0.get('title')} ({c0.get('citation')}), the Supreme Court held: {clean_case_summary(c0)}"
+                    if has_unresolved_caveat:
+                        ans_str += (" Note: the statutory text quoted above carries an unresolved verification caveat "
+                                    "and is not authoritative; the case summary is independent of it.")
                     cits = [f"Constitution of India, Article {art_num} ({heading})", f"{c0.get('title')} ({c0.get('citation')})"]
                     tier_label = "AI summary based on the cases below"
                     no_strong = False
@@ -1594,9 +1597,21 @@ class LLMService:
                     }
 
                 title_disp = act_title if not act_title.lower().startswith("the ") else act_title[4:]
-                ans_str = f"Section {sec_num} of the {title_disp} governs '{heading}'. {body}"
-                if expl:
-                    ans_str += f" {expl}"
+                has_unresolved_caveat = bool(expl) and (expl.startswith("Layout note") or expl.startswith("Provenance note"))
+                if has_unresolved_caveat:
+                    # Reference-only: unresolved reading order/provenance - do not present as a
+                    # confident legal conclusion; the caveat and reliance warning must be visible
+                    # in the answer text itself, not only in the tier label.
+                    ans_str = (
+                        f"Section {sec_num} of the {title_disp} ('{heading}') - reference text with an unresolved verification caveat. {body}"
+                        f" {expl} This text is provided for reference only: its reading order or provenance is not fully "
+                        f"resolved against the official gazette edition, so do not rely on its exact wording or ordering as "
+                        f"authoritative; verify against the official edition (see source link) before relying on it."
+                    )
+                else:
+                    ans_str = f"Section {sec_num} of the {title_disp} governs '{heading}'. {body}"
+                    if expl:
+                        ans_str += f" {expl}"
                 act_edition = prov.get("act_edition")
                 if act_edition and "constitution" not in (prov.get("act_id") or ""):
                     ans_str += f" Statute context: {act_edition}."
@@ -1604,6 +1619,9 @@ class LLMService:
                 if matching_cases:
                     c0 = matching_cases[0]
                     ans_str += f"In {c0.get('title')} ({c0.get('citation')}), the Supreme Court held: {clean_case_summary(c0)}"
+                    if has_unresolved_caveat:
+                        ans_str += (" Note: the statutory text quoted above carries an unresolved verification caveat "
+                                    "and is not authoritative; the case summary is independent of it.")
                     cits = [f"{act_title}, Section {sec_num} ({heading})", f"{c0.get('title')} ({c0.get('citation')})"]
                     tier_label = "AI summary based on the cases below"
                     no_strong = False
@@ -1614,6 +1632,11 @@ class LLMService:
                         # Repealed Acts (IPC/CrPC): savings context applies, and per-section body
                         # verification against the official source is still pending - no authoritative badge.
                         tier_label = "Statutory text of a repealed Act (historical reference) - body pending official-source verification"
+                    elif has_unresolved_caveat:
+                        # Sections whose reading order or provenance is not fully resolved against the
+                        # official gazette edition must not carry the authoritative badge: the caveat
+                        # text is served with the body and the badge is downgraded.
+                        tier_label = "Statutory provision with an unresolved verification caveat (see note) - not authoritative"
                     else:
                         tier_label = "Authoritative statutory provision"
                     no_strong = True
