@@ -75,7 +75,7 @@ def load_constitution_provisions(curated: Dict[str, Dict[str, Any]]) -> List[Dic
     return provisions
 
 # Authoritative Curated Statutory Datasets
-SEED_VERSION = "2026-10-29.v5"  # bump on any seed content/corpus correction; self-heal reseeds on mismatch
+SEED_VERSION = "2026-10-29.v6"  # bump on any seed content/corpus correction; self-heal reseeds on mismatch
 
 BARE_ACTS_DATA = [
     {
@@ -386,17 +386,23 @@ STATUTORY_PROVISIONS_DATA = [
         "section_number": "164",
         "heading": "Payment of compensation in case of death or grievous hurt, etc.",
         "body": (
-            "(1) Notwithstanding anything contained in this Act or in any other law for the time being in force or instrument having the force of law, "
-            "the owner of the motor vehicle or the authorised insurer shall be liable to pay in the case of death or grievous hurt due to any accident "
-            "arising out of the use of the motor vehicle, a compensation, of a sum of five lakh rupees in case of death or of two and a half lakh rupees in case of grievous hurt "
-            "to the legal heirs or the victim, as the case may be.\n"
-            "(2) In any claim for compensation under sub-section (1), the claimant shall not be required to plead or establish that the death or grievous hurt in respect of which the claim has been made was due to any wrongful act or neglect or default of the owner or of the vehicle."
+            "(1) Notwithstanding anything contained in this Act or in any other law for the time being in force or instrument "
+            "having the force of law, the owner of the motor vehicle or the authorised insurer shall be liable to pay in the case "
+            "of death or grievous hurt due to any accident arising out of the use of motor vehicle, a compensation, of a sum of "
+            "five lakh rupees in case of death or of two and a half lakh rupees in case of grievous hurt to the legal heirs or "
+            "the victim, as the case may be.\n\n"
+            "(2) In any claim for compensation under sub-section (1), the claimant shall not be required to plead or establish "
+            "that the death or grievous hurt in respect of which the claim has been made was due to any wrongful act or neglect "
+            "or default of the owner of the vehicle or of the vehicle concerned or of any other person.\n\n"
+            "(3) Where, in respect of death or grievous hurt due to an accident arising out of the use of motor vehicle, "
+            "compensation has been paid under any other law for the time being in force, such amount of compensation shall be "
+            "reduced from the amount of compensation payable under this section."
         ),
         "explanation": (
             "Provides statutory structured compensation on a no-fault basis where the offending vehicle is identified/traced. "
-            "The claimant is not required to plead or prove wrongful act, neglect, or default."
+            "The claimant is not required to plead or prove wrongful act, neglect, or default. Body verified verbatim against the Motor Vehicles (Amendment) Act, 2019 (Act 32 of 2019; official ref: India Code A2019-32)."
         ),
-        "source_url": "https://www.indiacode.nic.in/bitstream/123456789/15390/1/the_motor_vehicles_act%2C_1988.pdf",
+        "source_url": "https://prsindia.org/files/bills_acts/bills_parliament/2019/Motor%20Vehicles%20(Amendment)%20Act,%202019.pdf",
         "effective_date": "1 September 2019 (inserted by Act 32 of 2019)"
     },
     {
