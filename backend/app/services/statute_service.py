@@ -127,6 +127,15 @@ KNOWN_ENACTMENTS: Dict[str, Dict[str, Any]] = {
         "aliases": ["indian evidence act", "evidence act"],
         "is_real_act": True
     },
+    "bsa": {
+        "canonical_id": "bharatiya-sakshya-adhiniyam-2023",
+        "title": "The Bharatiya Sakshya Adhiniyam, 2023",
+        "short_name": "BSA",
+        "year": "2023",
+        "jurisdiction": "Central",
+        "aliases": ["bharatiya sakshya adhiniyam", "sakshya adhiniyam", "bsa"],
+        "is_real_act": True
+    },
     "mva": {
         "canonical_id": "motor-vehicles-act-1988",
         "title": "The Motor Vehicles Act, 1988",

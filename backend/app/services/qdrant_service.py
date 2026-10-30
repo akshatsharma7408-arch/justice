@@ -137,6 +137,7 @@ ACT_MAP: Dict[str, List[str]] = {
     "ipc": ["ipc", "i.p.c", "indian penal code", "penal code"],
     "bns": ["bns", "bharatiya nyaya sanhita"],
     "bnss": ["bnss", "bharatiya nagarik suraksha sanhita"],
+    "bsa": ["bsa", "bharatiya sakshya adhiniyam"],
     "cpc": ["cpc", "c.p.c", "code of civil procedure", "civil procedure code"],
     "it act": ["it act", "information technology act", "it"],
     "contract act": ["contract act", "indian contract act", "contract"],

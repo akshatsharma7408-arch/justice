@@ -98,6 +98,43 @@ def load_criminal_reforms_provisions() -> List[Dict[str, Any]]:
     return provisions
 
 
+
+BSA_CORPUS_PATH = CURRENT_DIR / "bsa_corpus.json"
+BSA_ACT_ID = "bharatiya-sakshya-adhiniyam-2023"
+BSA_SOURCE_URL = "https://prsindia.org/files/bills_acts/acts_parliament/2023/The%20Bharatiya%20Sakshya%20Bill,%202023.pdf"
+BSA_INDIACODE_URL = "https://www.indiacode.nic.in/handle/123456789/20063"
+
+
+def load_bsa_provisions() -> List[Dict[str, Any]]:
+    """Bharatiya Sakshya Adhiniyam, 2023 (Act 47 of 2023) from bsa_corpus.json.
+
+    Bodies come from the official Gazette PDF (eGazette CG-DL-E-25122023-250882, byte mirror on PRS)
+    with marginal notes removed by font size; headings from the India Code arrangement of sections.
+    Provenance and verification: scripts/bsa/VERIFICATION.md.
+    """
+    import json as _json
+    if not BSA_CORPUS_PATH.exists():
+        logger.warning("BSA corpus JSON not found; BSA will be unseeded")
+        return []
+    corpus = _json.loads(BSA_CORPUS_PATH.read_text(encoding="utf-8"))
+    rows = []
+    for num in sorted(corpus, key=_section_sort_key):
+        e = corpus[num]
+        rows.append({
+            "id": f"bsa-2023-s-{num.lower()}",
+            "act_id": BSA_ACT_ID,
+            "section_number": num,
+            "heading": e["heading"],
+            "body": e["body"],
+            "explanation": e.get("caveat"),
+            "source_url": BSA_SOURCE_URL,
+            "effective_date": "1 July 2024 (S.O. 849(E), 23.02.2024)",
+            "status": "in_force",
+        })
+    logger.info(f"BSA corpus loaded: {len(rows)} provisions")
+    return rows
+
+
 def _article_sort_key(num: str):
     m = re.match(r"(\d+)([A-Z]*)", num)
     return (int(m.group(1)), m.group(2))
@@ -141,7 +178,8 @@ def load_constitution_provisions(curated: Dict[str, Dict[str, Any]]) -> List[Dic
     return provisions
 
 # Authoritative Curated Statutory Datasets
-SEED_VERSION = "2026-10-29.v9"  # v9: BNSS s.531 caveat cleared after exact gazette body+reading-order verification  # bump on any seed content/corpus correction; self-heal reseeds on mismatch
+SEED_VERSION = "2026-10-30.v10"  # v10: BSA 2023 added (170 sections) + s.1, 63, 170 caveats
+_PREV_SEED_VERSION = "2026-10-29.v9"  # v9: BNSS s.531 caveat cleared after exact gazette body+reading-order verification  # bump on any seed content/corpus correction; self-heal reseeds on mismatch
 
 BARE_ACTS_DATA = [
     {
@@ -210,6 +248,14 @@ BARE_ACTS_DATA = [
         "year": 2023,
         "jurisdiction": "India (except s.1(2) carve-outs: Chapters IX, XI and XII do not apply to Nagaland and tribal areas unless the State Government notifies otherwise; modifications possible for those areas)",
         "edition": "In force w.e.f. 1 July 2024 (S.O. 848(E), 23.02.2024), except First Schedule entries relating to BNS s.106(2). Repeals the Code of Criminal Procedure, 1973 subject to s.531 savings (pending proceedings continue under the CrPC). Text: official Gazette PDF (eGazette CG-DL-E-25122023-250884) as enacted on 25.12.2023; subsequent amendments, if any, are not incorporated."
+    },
+    {
+        "id": "bharatiya-sakshya-adhiniyam-2023",
+        "title": "The Bharatiya Sakshya Adhiniyam, 2023",
+        "act_number": "Act No. 47 of 2023",
+        "year": 2023,
+        "jurisdiction": "India",
+        "edition": "In force w.e.f. 1 July 2024 (S.O. 849(E), 23.02.2024). Repeals the Indian Evidence Act, 1872 subject to s.170 savings (proceedings pending on 1 July 2024 continue under the 1872 Act). Text: official Gazette PDF (eGazette CG-DL-E-25122023-250882) as enacted on 25.12.2023; subsequent amendments, if any, are not incorporated. Section 63 (electronic records) replaces s.65B of the Evidence Act."
     }
 ]
 
@@ -1099,6 +1145,19 @@ def seed_database(conn: sqlite3.Connection) -> Tuple[int, int]:
     # 4. Criminal reforms (BNS/BNSS): replace any prior provisions with the verified corpus
     cursor.execute("DELETE FROM statutory_provisions WHERE act_id IN ('bharatiya-nyaya-sanhita-2023', 'bharatiya-nagarik-suraksha-sanhita-2023');")
     for prov in load_criminal_reforms_provisions():
+        cursor.execute("""
+            INSERT INTO statutory_provisions (id, act_id, section_number, heading, body, explanation, source_url, effective_date, status)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?);
+        """, (
+            prov["id"], prov["act_id"], prov["section_number"], prov["heading"],
+            prov["body"], prov["explanation"], prov.get("source_url"),
+            prov.get("effective_date"), prov.get("status", "in_force"),
+        ))
+        provisions_inserted += 1
+
+    # 5. Bharatiya Sakshya Adhiniyam, 2023: replace any prior provisions with the verified corpus
+    cursor.execute("DELETE FROM statutory_provisions WHERE act_id = ?;", (BSA_ACT_ID,))
+    for prov in load_bsa_provisions():
         cursor.execute("""
             INSERT INTO statutory_provisions (id, act_id, section_number, heading, body, explanation, source_url, effective_date, status)
             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?);

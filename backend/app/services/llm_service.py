@@ -1653,6 +1653,17 @@ class LLMService:
                     c for c in retrieved_cases
                     if match_case_to_query_entities({"case_names": [], "citations": [], "sections": [sec_num.lower()], "articles": []}, c)
                 ]
+                # 2023 criminal-law codes: a bare section-number match is not enough because pre-2024
+                # judgments use the same numbers for the IPC/CrPC/Evidence Act. Keep a case only when its
+                # own text names the new code.
+                _new_code_markers = {
+                    "bharatiya-sakshya-adhiniyam-2023": ("bharatiya sakshya adhiniyam", " bsa ", "bsa,", "bsa."),
+                }.get(prov.get("act_id") or "")
+                if _new_code_markers:
+                    def _names_new_code(c):
+                        txt = " " + " ".join(str(c.get(k) or "") for k in ("title", "text", "ratioSummary", "summary")).lower() + " " + " ".join(c.get("statutes", []) or []).lower() + " "
+                        return any(m in txt for m in _new_code_markers)
+                    matching_cases = [c for c in matching_cases if _names_new_code(c)]
                 heading = prov.get("heading", f"Section {sec_num}")
                 act_title = prov.get("act_title", "Central Act")
                 prov_status = (prov.get("provision_status") or "in_force").lower()
