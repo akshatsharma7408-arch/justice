@@ -452,7 +452,11 @@ def check_holding_direction(
     # Indian Law (Kailash Nath Associates 2015 4 SCC 136):
     # Where damage/loss is capable of proof, it must be proved; liquidated damages / earnest money
     # cannot be forfeited without legal injury or proven loss.
-    is_sec74 = "section 74" in q_lower or "74" in q_lower or "liquidated damages" in q_lower or "penalty" in q_lower
+    # Contract-law context is required: a bare "74" or "penalty" (e.g. "section 74 of the Bharatiya Nyaya
+    # Sanhita", "penalty for murder") must never trigger the Contract Act s.74 holding override.
+    _sec74_ctx = bool(re.search(r"\bcontract|liquidated|earnest|forfeit|kailash|stipulat|breach", q_lower))
+    _other_act = bool(re.search(r"bharatiya|\bbns\b|\bbnss\b|\bbsa\b|\bipc\b|penal code|\bcrpc\b|criminal procedure|constitution|article\s*\d", q_lower))
+    is_sec74 = _sec74_ctx and not _other_act and ("section 74" in q_lower or re.search(r"\b74\b", q_lower) is not None or "liquidated damages" in q_lower or "penalty" in q_lower or "earnest" in q_lower)
     if is_sec74:
         is_inverted = (
             bool(re.search(r'\bcan\s+be\s+forfeited\s+without\s+(?:any\s+)?proof\b', combined_ans))
@@ -1656,13 +1660,16 @@ class LLMService:
                 # 2023 criminal-law codes: a bare section-number match is not enough because pre-2024
                 # judgments use the same numbers for the IPC/CrPC/Evidence Act. Keep a case only when its
                 # own text names the new code.
-                _new_code_markers = {
-                    "bharatiya-sakshya-adhiniyam-2023": ("bharatiya sakshya adhiniyam", " bsa ", "bsa,", "bsa."),
-                }.get(prov.get("act_id") or "")
-                if _new_code_markers:
-                    def _names_new_code(c):
-                        txt = " " + " ".join(str(c.get(k) or "") for k in ("title", "text", "ratioSummary", "summary")).lower() + " " + " ".join(c.get("statutes", []) or []).lower() + " "
-                        return any(m in txt for m in _new_code_markers)
+                _new_code_patterns = {
+                    "bharatiya-sakshya-adhiniyam-2023": r"bharatiya\s+sakshya\s+adhiniyam|\bb\.?s\.?a\.?\b",
+                    "bharatiya-nyaya-sanhita-2023": r"bharatiya\s+nyaya\s+sanhita|\bb\.?n\.?s\.?\b(?!s)",
+                    "bharatiya-nagarik-suraksha-sanhita-2023": r"bharatiya\s+nagarik\s+suraksha\s+sanhita|\bb\.?n\.?s\.?s\.?\b",
+                }
+                _new_code_re = _new_code_patterns.get(prov.get("act_id") or "")
+                if _new_code_re:
+                    def _names_new_code(c, _rx=_new_code_re):
+                        txt = " ".join(str(c.get(k) or "") for k in ("title", "text", "ratioSummary", "summary")).lower() + " " + " ".join(c.get("statutes", []) or []).lower()
+                        return re.search(_rx, txt) is not None
                     matching_cases = [c for c in matching_cases if _names_new_code(c)]
                 heading = prov.get("heading", f"Section {sec_num}")
                 act_title = prov.get("act_title", "Central Act")

@@ -43,3 +43,37 @@ def test_bsa_section_answer_has_caveat_and_no_unrelated_case():
     assert "Admissibility of electronic records" in a and "Schedule" in a and "as enacted" in a.lower()
     assert "the Supreme Court held" not in a  # no case in the corpus names the BSA; sec-number-only matches are unrelated
     assert all("Bharatiya Sakshya" in x for x in j['citations'])
+
+
+def test_new_codes_never_attach_case_that_does_not_name_the_code():
+    """BNS/BNSS/BSA section answers: a case matched only on the section number (pre-2024 IPC/CrPC/other Act) must not be attached."""
+    import re, logging; logging.disable(logging.CRITICAL)
+    from fastapi.testclient import TestClient
+    from app.main import app
+    c = TestClient(app)
+    rx = {"Bharatiya Nyaya Sanhita": r"bharatiya\s+nyaya\s+sanhita|\bb\.?n\.?s\.?\b(?!s)",
+          "Bharatiya Nagarik Suraksha Sanhita": r"bharatiya\s+nagarik\s+suraksha\s+sanhita|\bb\.?n\.?s\.?s\.?\b"}
+    for act, nums in (("Bharatiya Nyaya Sanhita", (3, 4, 34, 74, 106, 356)), ("Bharatiya Nagarik Suraksha Sanhita", (41,))):
+        for n in nums:
+            j = c.post('/api/v1/search/answer', json={'query': f'what is section {n} of the {act}', 'force_fallback': True}).json()
+            for r in (j.get('source_cases') or j.get('results') or []):
+                txt = (str(r.get('text', '')) + str(r.get('title', '')) + str(r.get('ratioSummary', '')) + str(r.get('statutes', ''))).lower()
+                assert re.search(rx[act], txt), (act, n, r.get('title'))
+            assert "the Supreme Court held" not in j['ai_answer'] or any(re.search(rx[act], (str(r.get('text',''))+str(r.get('title',''))).lower()) for r in (j.get('source_cases') or j.get('results') or [])), (act, n)
+
+
+def test_named_new_code_is_not_hijacked_by_other_act_routes():
+    """'section 74 of the Bharatiya Nyaya Sanhita' must answer BNS s.74, not the Contract Act s.74 holding override;
+    'section 74 BNS' must resolve to BNS (explicit act abbreviation), not an ambiguity list."""
+    import logging; logging.disable(logging.CRITICAL)
+    from fastapi.testclient import TestClient
+    from app.main import app
+    c = TestClient(app)
+    for q in ("what is section 74 of the Bharatiya Nyaya Sanhita", "section 74 BNS"):
+        j = c.post('/api/v1/search/answer', json={'query': q, 'force_fallback': True}).json()
+        assert j['ai_answer'].startswith("Section 74 of the Bharatiya Nyaya Sanhita, 2023"), (q, j['ai_answer'][:120])
+        assert "Contract Act" not in j['ai_answer'] and "Kailash" not in j['ai_answer']
+    j = c.post('/api/v1/search/answer', json={'query': 'section 173 BNSS FIR', 'force_fallback': True}).json()
+    assert j['ai_answer'].startswith("Section 173 of the Bharatiya Nagarik Suraksha Sanhita, 2023")
+    j = c.post('/api/v1/search/answer', json={'query': 'what is section 74 of the contract act', 'force_fallback': True}).json()
+    assert "Indian Contract Act, 1872" in j['ai_answer'] and "Kailash" in j['ai_answer']

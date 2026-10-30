@@ -127,6 +127,24 @@ KNOWN_ENACTMENTS: Dict[str, Dict[str, Any]] = {
         "aliases": ["indian evidence act", "evidence act"],
         "is_real_act": True
     },
+    "bns": {
+        "canonical_id": "bharatiya-nyaya-sanhita-2023",
+        "title": "The Bharatiya Nyaya Sanhita, 2023",
+        "short_name": "BNS",
+        "year": "2023",
+        "jurisdiction": "Central",
+        "aliases": ["bharatiya nyaya sanhita", "nyaya sanhita", "bns"],
+        "is_real_act": True
+    },
+    "bnss": {
+        "canonical_id": "bharatiya-nagarik-suraksha-sanhita-2023",
+        "title": "The Bharatiya Nagarik Suraksha Sanhita, 2023",
+        "short_name": "BNSS",
+        "year": "2023",
+        "jurisdiction": "Central",
+        "aliases": ["bharatiya nagarik suraksha sanhita", "nagarik suraksha sanhita", "bnss"],
+        "is_real_act": True
+    },
     "bsa": {
         "canonical_id": "bharatiya-sakshya-adhiniyam-2023",
         "title": "The Bharatiya Sakshya Adhiniyam, 2023",
