@@ -28,6 +28,8 @@ from app.services.statute_service import statute_service
 logger = logging.getLogger("justice.llm")
 
 # Pydantic schemas for structured JSON responses
+_AS_ENACTED_ACT_IDS = ("bharatiya-nyaya-sanhita-2023", "bharatiya-nagarik-suraksha-sanhita-2023", "bharatiya-sakshya-adhiniyam-2023")
+
 class ClauseVerificationSchema(BaseModel):
     status: str = Field(description="'NON-COMPLIANT' or 'COMPLIANT'")
     risk_level: str = Field(description="'CRITICAL', 'MODERATE', or 'LOW'")
@@ -1700,6 +1702,7 @@ class LLMService:
                     }
 
                 title_disp = act_title if not act_title.lower().startswith("the ") else act_title[4:]
+                statute_notice = None
                 has_unresolved_caveat = bool(expl) and (expl.startswith("Layout note") or expl.startswith("Provenance note"))
                 if has_unresolved_caveat:
                     # Reference-only: unresolved reading order/provenance - do not present as a
@@ -1740,9 +1743,19 @@ class LLMService:
                         # official gazette edition must not carry the authoritative badge: the caveat
                         # text is served with the body and the badge is downgraded.
                         tier_label = "Statutory provision with an unresolved verification caveat (see note) - not authoritative"
+                    elif act_edition and "as enacted" in act_edition.lower() and (prov.get("act_id") or "") in _AS_ENACTED_ACT_IDS:
+                        # As-enacted gazette text only: do not show an unqualified "authoritative"
+                        # badge; the limit must be visible at the top of the answer card.
+                        tier_label = "Statutory text as enacted - amendments not checked"
                     else:
                         tier_label = "Authoritative statutory provision"
                     no_strong = True
+                    if act_edition and "as enacted" in act_edition.lower() and (prov.get("act_id") or "") in _AS_ENACTED_ACT_IDS:
+                        statute_notice = ("As-enacted gazette text (25.12.2023). Later amendments are not incorporated and "
+                                          "this was not independently verified against a second edition; check the official "
+                                          "text before relying on it.")
+                        if (prov.get("act_id") == "bharatiya-sakshya-adhiniyam-2023") and str(sec_num) == "63":
+                            statute_notice += " The Schedule certificate form required by s.63(4) is not in this database."
 
                 # Self-check holding direction for Section 27 and other doctrines
                 holding_correction = check_holding_direction(query, ans_str, expl, retrieved_cases)
@@ -1766,7 +1779,8 @@ class LLMService:
                     "tier_label": tier_label,
                     "no_strong_case_match": no_strong,
                     "source_url": src_url,
-                    "effective_date": eff_date
+                    "effective_date": eff_date,
+                    "statute_notice": statute_notice
                 }
 
         # -------------------------------------------------------------

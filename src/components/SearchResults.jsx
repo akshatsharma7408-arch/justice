@@ -443,6 +443,12 @@ export default function SearchResults({
                     {query}
                   </h2>
 
+                  {answerData.statute_notice && (
+                    <p className="answer-statute-notice" role="note">
+                      <strong>Note: </strong>{answerData.statute_notice}
+                    </p>
+                  )}
+
                   {/* Answer Body Prose */}
                   <div className="answer-card-prose font-serif">
                     {answerData.ai_answer.split('\n\n').map((paragraph, pIdx) => {

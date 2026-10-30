@@ -7467,3 +7467,13 @@
   .documents-workspace-grid.view-analysis .doc-col-chat,
   .documents-workspace-grid.view-chat .doc-col-analysis { display: none; }
 }
+
+.answer-statute-notice {
+  margin: 0 0 14px;
+  padding: 10px 14px;
+  border-left: 3px solid var(--accent, #c8793a);
+  background: rgba(200, 121, 58, 0.09);
+  color: var(--text-body);
+  font-size: 0.9rem;
+  line-height: 1.5;
+}

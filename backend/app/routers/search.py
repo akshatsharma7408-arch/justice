@@ -106,6 +106,7 @@ class SearchAnswerResponse(BaseModel):
     source_cases: Optional[List[Dict[str, Any]]] = []
     no_strong_case_match: bool = False
     hide_badge: bool = False
+    statute_notice: Optional[str] = None
 
 def is_pure_case_lookup_query(query: str) -> bool:
     """
@@ -397,7 +398,8 @@ async def search_answer_post(payload: SearchAnswerRequest):
         is_case_lookup=False,
         source_cases=source_cases,
         no_strong_case_match=no_strong,
-        hide_badge=hide_badge
+        hide_badge=hide_badge,
+        statute_notice=(synthesis.get("statute_notice") if not is_not_found else None)
     )
     if payload.results is None:
         _ANSWER_CACHE.set(cache_key, resp)

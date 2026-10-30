@@ -77,3 +77,23 @@ def test_named_new_code_is_not_hijacked_by_other_act_routes():
     assert j['ai_answer'].startswith("Section 173 of the Bharatiya Nagarik Suraksha Sanhita, 2023")
     j = c.post('/api/v1/search/answer', json={'query': 'what is section 74 of the contract act', 'force_fallback': True}).json()
     assert "Indian Contract Act, 1872" in j['ai_answer'] and "Kailash" in j['ai_answer']
+
+
+def test_as_enacted_codes_show_notice_and_qualified_badge():
+    """BNS/BNSS/BSA section answers must not carry the bare 'Authoritative' badge; a short as-enacted notice is returned
+    as a separate field so the UI shows it at the top. BSA s.63 also flags the missing Schedule form."""
+    import logging; logging.disable(logging.CRITICAL)
+    from fastapi.testclient import TestClient
+    from app.main import app
+    c = TestClient(app)
+    for q, extra in (("section 63 BSA electronic records", "Schedule"), ("what is section 106 of the Bharatiya Nyaya Sanhita", None),
+                     ("section 41 of the Bharatiya Nagarik Suraksha Sanhita", None)):
+        j = c.post('/api/v1/search/answer', json={'query': q, 'force_fallback': True}).json()
+        assert "as enacted" in j['tier_label'].lower(), (q, j['tier_label'])
+        assert j['tier_label'] != "Authoritative statutory provision"
+        assert j.get('statute_notice') and "amendments" in j['statute_notice'].lower(), q
+        if extra:
+            assert extra in j['statute_notice'], q
+    # Other acts keep their existing label and have no notice
+    j = c.post('/api/v1/search/answer', json={'query': 'what is section 74 of the contract act', 'force_fallback': True}).json()
+    assert not j.get('statute_notice')
