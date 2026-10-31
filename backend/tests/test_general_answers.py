@@ -63,3 +63,21 @@ def test_timing_expiry_not_rewritten_as_after():
     src = "The President may at any time and shall, at the expiration of ten years from the commencement, appoint a Commission."
     o = _svc("1 | The President may at any time | OK")
     assert asyncio.run(o._explanation_is_grounded(src, "The President must act after ten years from the start.")) is False
+
+
+def test_cheque_bounce_returns_verbatim_statute_not_model_text():
+    from app.services.verified_statute_notes import verified_note_for
+    n = verified_note_for("my cheque bounced what can i do")
+    assert n and "within thirty days of the receipt of information" in n["answer"]
+    assert "within fifteen days of the receipt of the said notice" in n["answer"]
+    assert "within one month of the date on which the cause of action arises" in n["answer"]
+    assert verified_note_for("cheque book request letter") is None
+    assert verified_note_for("article 14") is None
+
+
+def test_cheque_route_in_synthesis_skips_llm():
+    import asyncio
+    from app.services.llm_service import LLMService
+    s = LLMService.__new__(LLMService)
+    r = asyncio.run(s.synthesize_search_answer("cheque bounce notice period", []))
+    assert r["model_used"] == "verified_statute_text" and "Dishonour of cheque" in r["answer"]

@@ -1366,6 +1366,21 @@ class LLMService:
         """
         q_low = query.lower()
 
+        from app.services.verified_statute_notes import verified_note_for
+        _vn = verified_note_for(query)
+        if _vn:
+            return {
+                "answer": _vn["answer"],
+                "ratio_decidendi": None,
+                "citations": [],
+                "results": [],
+                "model_used": "verified_statute_text",
+                "tier": "statute_text",
+                "tier_label": "Verified statute text (Supreme Court quotation; amendments not checked)",
+                "no_strong_case_match": True,
+                "hide_badge": False,
+            }
+
         # Non-legal queries gate: "cricket world cup", sports, recipes, etc.
         if any(w in q_low for w in ["cricket", "world cup", "bake a cake", "weather forecast", "football", "recipe"]) and not any(w in q_low for w in ["court", "judgment", "section", "article", "petition", "law", "act", "rights", "legal", "advocate"]):
             return {

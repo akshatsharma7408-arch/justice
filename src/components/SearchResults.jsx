@@ -426,7 +426,7 @@ export default function SearchResults({
                   {/* Card Top Strip: Kicker + Tier Badge */}
                   <div className="answer-card-top-strip">
                     <span className="answer-kicker mono">
-                      {answerData.tier === 'unreliable' ? 'LEGAL NOTICE' : 'AI SUMMARY'}
+                      {answerData.tier === 'unreliable' ? 'LEGAL NOTICE' : answerData.tier === 'statute_text' ? 'STATUTE TEXT' : 'AI SUMMARY'}
                     </span>
                     <div className="answer-badge-wrap">
                       {answerData.hide_badge || answerData.tier === 'unreliable' || answerData.tier === 'not_found' ? null : (
@@ -515,6 +515,8 @@ export default function SearchResults({
                         ? 'Statutory text from the verified database; any AI explanation is not verified \u2022 Not formal legal advice'
                         : answerData.tier === 'tier1'
                         ? 'AI summary based on the cases below \u2022 Not formal legal advice'
+                        : answerData.tier === 'statute_text'
+                          ? 'Exact statute wording quoted from Supreme Court judgments \u2022 Amendments not checked \u2022 Not legal advice'
                         : answerData.tier === 'unreliable'
                           ? 'Authoritative Supreme Court precedents are indexed below'
                           : 'General legal information \u2022 Not legal advice \u2022 Verify with a lawyer or primary statute'}
