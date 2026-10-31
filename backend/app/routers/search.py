@@ -125,6 +125,36 @@ def normalize_article_suffix(query: str) -> str:
     return _ART_SUFFIX_RE.sub(lambda m: m.group(1) + m.group(2).upper(), query or "")
 
 
+_MULTI_ART_RE = re.compile(
+    r"\barticles?\s+(\d{1,3}[A-Za-z]{0,2})\s*(?:,|\bor\b|\band\b|&|/)\s*(?:articles?\s+)?(\d{1,3}[A-Za-z]{0,2})\b(?:\s*(?:,|\bor\b|\band\b|&|/)\s*(?:articles?\s+)?(\d{1,3}[A-Za-z]{0,2})\b)?",
+    re.I)
+_BARE_ART_RE = re.compile(r"^\s*(?:what\s+is|explain|define|meaning\s+of)?\s*(\d{1,3}\s?[A-Za-z]{1,2})\s*\??\s*$", re.I)
+
+
+def split_multi_article(query: str):
+    """'article 14 or 15' -> ['14', '15'] (max 3); otherwise None."""
+    m = _MULTI_ART_RE.search(query or "")
+    if not m:
+        return None
+    nums = [g.upper() for g in m.groups() if g]
+    return nums if len(set(nums)) >= 2 else None
+
+
+def resolve_bare_article(query: str) -> str:
+    """A bare number with a letter suffix ("300A", "what is 21A") is routed as an article only when
+    that exact article exists in the Constitution text we hold; otherwise unchanged."""
+    m = _BARE_ART_RE.match(query or "")
+    if not m:
+        return query
+    num = m.group(1).replace(" ", "").upper()
+    try:
+        from app.services.statute_service import statute_service
+        if statute_service.get_provision("constitution", num):
+            return f"article {num}"
+    except Exception:
+        pass
+    return query
+
 
 def is_pure_case_lookup_query(query: str) -> bool:
     """
@@ -278,12 +308,32 @@ async def search_answer_post(payload: SearchAnswerRequest):
     - Unreliable: Plain message without AI badge (hide_badge=True)
     - No strong match: Tier 2 explanation with no_strong_case_match=True
     """
-    raw_query = normalize_article_suffix((payload.query or "").strip())
+    raw_query = resolve_bare_article(normalize_article_suffix((payload.query or "").strip()))
     if len(raw_query) > 300:
         raise HTTPException(
             status_code=400,
             detail="Please shorten your question. Queries are limited to 300 characters."
         )
+
+    _multi = split_multi_article(raw_query)
+    if _multi and not getattr(payload, "_sub", False):
+        parts = []
+        for n in _multi:
+            sub = SearchAnswerRequest(query=f"article {n}")
+            parts.append((n, await search_answer_post(sub)))
+        first = parts[0][1]
+        body = "\n\n".join(f"=== Article {n}" + (f" [{r.tier_label}]" if r.tier_label else "") + f" ===\n{r.ai_answer or 'No verified source found for this article number.'}" for n, r in parts)
+        merged = first.model_copy(deep=True)
+        merged.ai_answer = f"Your question names several articles; each is answered separately below.\n\n{body}"
+        merged.query = raw_query
+        merged.original_query = raw_query
+        for _n, r in parts[1:]:
+            merged.citations = list(merged.citations or []) + [c for c in (r.citations or []) if c not in (merged.citations or [])]
+            merged.source_cases = list(merged.source_cases or []) + list(r.source_cases or [])
+        if len({r.tier_label for _n, r in parts}) > 1:
+            merged.tier_label = "Several provisions - see the label under each article"
+        merged.statute_notice = None
+        return merged
 
     if not raw_query:
         return SearchAnswerResponse(

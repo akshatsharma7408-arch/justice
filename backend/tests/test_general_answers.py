@@ -30,3 +30,14 @@ def test_relevance_gate_keeps_only_listed_and_fails_closed():
     assert asyncio.run(_svc("NONE")._filter_topically_relevant_cases("q", cases)) == []
     o = LLMService.__new__(LLMService); o._client = None; o.is_active = False; o.api_key = ""
     assert asyncio.run(o._filter_topically_relevant_cases("q", cases)) == []
+
+
+def test_multi_article_split_and_bare_article():
+    from app.routers.search import split_multi_article, resolve_bare_article
+    assert split_multi_article("article 14 or 15") == ["14", "15"]
+    assert split_multi_article("articles 14, 15 and 16") == ["14", "15", "16"]
+    assert split_multi_article("article 21") is None
+    assert resolve_bare_article("300A") == "article 300A"
+    assert resolve_bare_article("what is 21A") == "article 21A"
+    assert resolve_bare_article("498A") == "498A"
+    assert resolve_bare_article("what is bail") == "what is bail"

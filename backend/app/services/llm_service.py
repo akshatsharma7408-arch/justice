@@ -660,6 +660,12 @@ _NUMERIC_CLAIM_RE = re.compile(
     r"(?:[- ]\w+)?\s+(?:days?|weeks?|months?|years?|hours?|rupees|lakh|%|percent)\b|₹\s*\d|\brs\.?\s*\d", re.I)
 
 
+def _tier2_with_gap_note(text: str) -> str:
+    note = ("Note: no verified statute or case in our database was found for this question, so this answer does not state "
+            "what the law provides. Use it only to know what to check.")
+    return f"{note}\n\n{text}"
+
+
 def _tier2_numeric_claim(text: str):
     """General (unsourced) answers must not state specific periods or amounts."""
     m = _NUMERIC_CLAIM_RE.search(text or "")
@@ -1157,6 +1163,7 @@ class LLMService:
             "1. Explain practical rights, concrete steps, and what the person should actually do in simple words.\n"
             "2. Explicitly mention which general area of law applies in general terms (for example, 'traffic and criminal procedure laws in India', 'contract and equity principles in India', or 'tenancy and rent control laws in India').\n"
             "3. STRICT PROHIBITION: NEVER name or cite any specific case, court, judge, citation (such as SCC, AIR, SCR), section number (such as Section 27), or article number (such as Article 21). Keep all statutory and legal references strictly generalized (e.g. 'under motor vehicle regulations', 'under tenancy laws', 'under general contract principles', 'under constitutional principles').\n"
+            "3a. You have NO verified statute or case for this question. So do NOT state who has the burden of proof, what a party is entitled to or allowed to do, which court, forum, authority or remedy has jurisdiction, or that a rule exists. Write only: (i) the general area of law that probably governs, (ii) what the person should find out or check in the specific Act and their State, (iii) documents and evidence worth keeping, (iv) sensible practical next steps such as a written request or consulting a lawyer. Phrase uncertain points as 'this depends on...' or 'check whether...'.\n"
             "3b. Do NOT state any specific time limit, deadline, notice period, fine, fee or amount, and do not say a rule is the same in every State. These differ by Act and State; say they depend on the specific law and must be checked in it. Do not claim what the law 'currently' provides.\n"
             "4. You MUST end your response directly with the exact text: 'This is general information, not legal advice. Check a primary source or a lawyer before relying on it.'"
         )
@@ -1169,6 +1176,7 @@ class LLMService:
             f"- Explain practical rights, what to do, and practical next steps.\n"
             f"- Mention the general area of law in general terms (e.g. 'traffic and criminal procedure laws in India').\n"
             f"- STRICTLY NO specific case names, citations, section numbers, or article numbers.\n"
+            f"- NO claims about entitlements, burden of proof, or which court/forum/authority applies; only what to check, what to keep, and practical next steps.\n"
             f"- NO specific time limits, deadlines, notice periods, fines or amounts; say they depend on the specific law and State.\n"
             f"- End with 'This is general information, not legal advice. Check a primary source or a lawyer before relying on it.'"
         )
@@ -1189,7 +1197,7 @@ class LLMService:
             if response and response.text:
                 attempt_1_rejected_reason = check_tier2_prohibited_entities(response.text) or _tier2_numeric_claim(response.text)
                 if attempt_1_rejected_reason is None:
-                    return format_tier2_response(response.text)
+                    return _tier2_with_gap_note(format_tier2_response(response.text))
                 else:
                     logger.warning(
                         "Tier 2 answer safety check rejected attempt 1: %s. Retrying once with stricter prompt.",
@@ -1226,7 +1234,7 @@ class LLMService:
             if response_retry and response_retry.text:
                 attempt_2_rejected_reason = check_tier2_prohibited_entities(response_retry.text) or _tier2_numeric_claim(response_retry.text)
                 if attempt_2_rejected_reason is None:
-                    return format_tier2_response(response_retry.text)
+                    return _tier2_with_gap_note(format_tier2_response(response_retry.text))
                 else:
                     logger.warning(
                         "Tier 2 answer safety check rejected attempt 2: %s. Returning unreliable message.",
@@ -1574,7 +1582,7 @@ class LLMService:
                     c0 = matching_cases[0]
                     ans_str += f"In {c0.get('title')} ({c0.get('citation')}), the Supreme Court held: {clean_case_summary(c0)}"
                     cits = [f"Constitution of India, Article {art_num} ({heading})", f"{c0.get('title')} ({c0.get('citation')})"]
-                    tier_label = "AI summary based on the cases below"
+                    tier_label = "Statutory text + AI explanation (AI part not verified) + case summary below" if _ai_shown else "AI summary based on the cases below"
                     no_strong = False
                 else:
                     ans_str += f"Our verified database does not currently contain judicial dispute precedents under Article {art_num}."
@@ -1900,7 +1908,7 @@ class LLMService:
                         ans_str += (" Note: the statutory text quoted above carries an unresolved verification caveat "
                                     "and is not authoritative; the case summary is independent of it.")
                     cits = [f"{act_title}, Section {sec_num} ({heading})", f"{c0.get('title')} ({c0.get('citation')})"]
-                    tier_label = "AI summary based on the cases below"
+                    tier_label = "Statutory text + AI explanation (AI part not verified) + case summary below" if _ai_shown else "AI summary based on the cases below"
                     no_strong = False
                 else:
                     ans_str += f"Our verified database does not currently contain judicial dispute precedents interpreting Section {sec_num} of the {act_title}."
