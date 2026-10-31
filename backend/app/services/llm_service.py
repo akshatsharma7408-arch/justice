@@ -959,6 +959,46 @@ class LLMService:
         res["citations"] = citation_checker.badge_citations_list(res["citations"])
         return res
 
+    async def explain_provision_ai(self, label: str, source_text: str, force_fallback: bool = False) -> Optional[str]:
+        """Plain-English explanation of a statutory provision, written ONLY from the supplied text.
+
+        Returns None (caller shows the verbatim text alone) when the LLM is unavailable, force_fallback is
+        set, or the output fails the safety check: it must not name a case or citation, and every
+        article/section number it mentions must appear in the supplied text or label.
+        """
+        if force_fallback or not self.client or not source_text or len(source_text.strip()) < 20:
+            return None
+        system = (
+            "You explain a provision of Indian law in plain English for a non-lawyer. Use ONLY the provision text "
+            "you are given. Do not add facts, exceptions, amendments, penalties, time limits or court decisions that "
+            "are not in the text. Do not name any case or citation. Do not mention any article or section number "
+            "other than the one(s) in the text. If the text is a definition or procedure, say what it means in "
+            "practice. Do not add requirements, tests or conditions that are not stated. 3 to 6 short sentences. Do not repeat the text word for word."
+        )
+        prompt = f"PROVISION: {label}\n\nTEXT:\n{source_text[:6000]}\n\nExplain this provision in plain English."
+        for _ in range(2):
+            try:
+                cfg = types.GenerateContentConfig(system_instruction=system, temperature=0.1, max_output_tokens=450)
+                resp = await asyncio.to_thread(self.client.models.generate_content, model=self.model, contents=prompt, config=cfg)
+                out = (getattr(resp, "text", None) or "").strip()
+            except Exception as e:
+                logger.warning("Provision explainer failed: %s", e)
+                return None
+            if not out:
+                continue
+            if re.search(r"\bv\.?s?\.?\s+[A-Z]|\b(?:SCC|AIR|SCR)\b|supreme court (?:held|ruled)|\bheld that\b", out):
+                continue
+            ref = (label + " " + source_text).lower()
+            bad = False
+            for m in re.finditer(r"\b(article|section|clause)\s+(\d+[A-Za-z]*)", out, re.IGNORECASE):
+                if m.group(2).lower() not in ref:
+                    bad = True
+                    break
+            if bad:
+                continue
+            return out
+        return None
+
     async def generate_tier2_explanation(self, query: str, force_fallback: bool = False) -> str:
         """
         Generates a Tier 2 general practical and conceptual explanation for a query
@@ -1412,6 +1452,10 @@ class LLMService:
                 ans_str = f"Article {art_num} of the Constitution of India governs '{heading}'. {body}"
                 if expl:
                     ans_str += f" {expl}"
+                if not expl:
+                    _ai = await self.explain_provision_ai(f"Article {art_num} of the Constitution of India ({heading})", body, force_fallback=force_fallback)
+                    if _ai:
+                        ans_str += f" Plain-English explanation (AI-written from the text above; not a verified statement of law): {_ai}"
                 ans_str += " "
                 if matching_cases:
                     c0 = matching_cases[0]
@@ -1727,6 +1771,10 @@ class LLMService:
                 act_edition = prov.get("act_edition")
                 if act_edition and "constitution" not in (prov.get("act_id") or ""):
                     ans_str += f" Statute context: {act_edition}."
+                if not expl and not has_unresolved_caveat and not (act_edition and "Repealed" in act_edition):
+                    _ai = await self.explain_provision_ai(f"Section {sec_num} of the {title_disp} ({heading})", body, force_fallback=force_fallback)
+                    if _ai:
+                        ans_str += f" Plain-English explanation (AI-written from the text above; not a verified statement of law): {_ai}"
                 ans_str += " "
                 if matching_cases:
                     c0 = matching_cases[0]
