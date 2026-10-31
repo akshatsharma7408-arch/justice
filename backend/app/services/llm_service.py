@@ -655,6 +655,18 @@ def check_tier2_prohibited_entities(text: str) -> Optional[str]:
     return None
 
 
+_NUMERIC_CLAIM_RE = re.compile(
+    r"\b(?:\d+|one|two|three|four|five|six|seven|eight|nine|ten|twelve|fifteen|thirty|forty[- ]five|sixty|ninety)"
+    r"(?:[- ]\w+)?\s+(?:days?|weeks?|months?|years?|hours?|rupees|lakh|%|percent)\b|₹\s*\d|\brs\.?\s*\d", re.I)
+
+
+def _tier2_numeric_claim(text: str):
+    """General (unsourced) answers must not state specific periods or amounts."""
+    m = _NUMERIC_CLAIM_RE.search(text or "")
+    return f"specific period/amount stated: {m.group(0)!r}" if m else None
+
+
+
 class LLMService:
     def __init__(self):
         self.api_key = os.environ.get("GROQ_API_KEY") or settings.LLM_API_KEY
@@ -1002,6 +1014,33 @@ class LLMService:
             return out
         return None
 
+    async def _filter_topically_relevant_cases(self, query: str, cases: list) -> list:
+        """Keep only cases that are about the legal issue asked. Fails closed (returns [])."""
+        if not self.client or not cases:
+            return []
+        top = cases[:6]
+        listing = "\n".join(
+            f"{i+1}. {c.get('title','')}: {(c.get('ratioSummary') or c.get('text') or '')[:350]}" for i, c in enumerate(top))
+        try:
+            cfg = types.GenerateContentConfig(
+                system_instruction=(
+                    "You decide whether court cases are directly about the legal issue in a user's question. "
+                    "A case is relevant only if it decides or squarely discusses that same issue (not merely the same Act, "
+                    "a similar word, or a related procedural point). Reply with only the numbers of the relevant cases, "
+                    "comma separated, or NONE."),
+                temperature=0.0, max_output_tokens=30)
+            resp = await asyncio.to_thread(
+                self.client.models.generate_content, model=self.model,
+                contents=f"QUESTION: {query}\n\nCASES:\n{listing}", config=cfg)
+            txt = (getattr(resp, "text", None) or "").strip()
+        except Exception as e:
+            logger.warning("Relevance gate failed: %s", e)
+            return []
+        if not txt or txt.upper().startswith("NONE"):
+            return []
+        idx = {int(n) - 1 for n in re.findall(r"\d+", txt)}
+        return [c for i, c in enumerate(top) if i in idx]
+
     async def _explanation_is_grounded(self, source_text: str, explanation: str) -> bool:
         """Sentence-by-sentence grounding: each explanation sentence must be tied to an exact fragment of the text.
 
@@ -1118,6 +1157,7 @@ class LLMService:
             "1. Explain practical rights, concrete steps, and what the person should actually do in simple words.\n"
             "2. Explicitly mention which general area of law applies in general terms (for example, 'traffic and criminal procedure laws in India', 'contract and equity principles in India', or 'tenancy and rent control laws in India').\n"
             "3. STRICT PROHIBITION: NEVER name or cite any specific case, court, judge, citation (such as SCC, AIR, SCR), section number (such as Section 27), or article number (such as Article 21). Keep all statutory and legal references strictly generalized (e.g. 'under motor vehicle regulations', 'under tenancy laws', 'under general contract principles', 'under constitutional principles').\n"
+            "3b. Do NOT state any specific time limit, deadline, notice period, fine, fee or amount, and do not say a rule is the same in every State. These differ by Act and State; say they depend on the specific law and must be checked in it. Do not claim what the law 'currently' provides.\n"
             "4. You MUST end your response directly with the exact text: 'This is general information, not legal advice. Check a primary source or a lawyer before relying on it.'"
         )
 
@@ -1129,6 +1169,7 @@ class LLMService:
             f"- Explain practical rights, what to do, and practical next steps.\n"
             f"- Mention the general area of law in general terms (e.g. 'traffic and criminal procedure laws in India').\n"
             f"- STRICTLY NO specific case names, citations, section numbers, or article numbers.\n"
+            f"- NO specific time limits, deadlines, notice periods, fines or amounts; say they depend on the specific law and State.\n"
             f"- End with 'This is general information, not legal advice. Check a primary source or a lawyer before relying on it.'"
         )
 
@@ -1146,7 +1187,7 @@ class LLMService:
                 config=config
             )
             if response and response.text:
-                attempt_1_rejected_reason = check_tier2_prohibited_entities(response.text)
+                attempt_1_rejected_reason = check_tier2_prohibited_entities(response.text) or _tier2_numeric_claim(response.text)
                 if attempt_1_rejected_reason is None:
                     return format_tier2_response(response.text)
                 else:
@@ -1162,7 +1203,7 @@ class LLMService:
             "You are a helpful legal information assistant. "
             "Explain the requested legal concept or question in plain, simple English. "
             "STRICT REQUIREMENT: Do not name any case, court, judge, citation, section number, or article number. "
-            "Explain only the legal concept in plain words without naming any specific case, section, or article.\n"
+            "Explain only the legal concept in plain words without naming any specific case, section, or article. Give no specific time limits, notice periods or amounts; say they depend on the specific law and State.\n"
             "End with: 'This is general information, not legal advice. Check a primary source or a lawyer before relying on it.'"
         )
         stricter_prompt = (
@@ -1183,7 +1224,7 @@ class LLMService:
                 config=config_retry
             )
             if response_retry and response_retry.text:
-                attempt_2_rejected_reason = check_tier2_prohibited_entities(response_retry.text)
+                attempt_2_rejected_reason = check_tier2_prohibited_entities(response_retry.text) or _tier2_numeric_claim(response_retry.text)
                 if attempt_2_rejected_reason is None:
                     return format_tier2_response(response_retry.text)
                 else:
@@ -1986,6 +2027,17 @@ class LLMService:
                     "hide_badge": True
                 }
             retrieved_cases = tenancy_cases
+
+        # Topical relevance gate (LLM, fails closed): cases must be about the asked legal issue
+        if not entities["has_specific_entity"] and retrieved_cases:
+            retrieved_cases = await self._filter_topically_relevant_cases(query, retrieved_cases)
+            if not retrieved_cases:
+                tier2_ans = await self.generate_tier2_explanation(query, force_fallback=force_fallback)
+                return {
+                    "answer": tier2_ans, "ratio_decidendi": None, "citations": [], "results": [],
+                    "model_used": "tier2_general_explanation",
+                    "hide_badge": (tier2_ans == UNRELIABLE_TIER2_MSG),
+                }
 
         # Build clean precedent context for synthesis
         cases_context = []

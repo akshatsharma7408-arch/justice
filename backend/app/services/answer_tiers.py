@@ -75,11 +75,17 @@ def needs_specific_source(query: str) -> bool:
         from app.services.qdrant_service import fuzzy_word_match
         q_words = re.findall(r'[a-zA-Z0-9]{4,}', q)
         for name in outside_landmark_cases:
-            name_words = re.findall(r'[a-zA-Z0-9]{4,}', name)
-            for qw in q_words:
-                for nw in name_words:
-                    if len(nw) >= 4 and fuzzy_word_match(qw, nw):
-                        return True
+            name_words = [w for w in re.findall(r'[a-zA-Z0-9]{4,}', name)]
+            if not name_words:
+                continue
+            hit = [any(len(nw) >= 4 and fuzzy_word_match(qw, nw) for qw in q_words) for nw in name_words]
+            # multi-word names need every word matched (so "in india" no longer matches "indira gandhi");
+            # single-word names need a reasonably long word to tolerate typos
+            if len(name_words) >= 2:
+                if all(hit):
+                    return True
+            elif hit[0] and len(name_words[0]) >= 6:
+                return True
     except Exception:
         pass
 

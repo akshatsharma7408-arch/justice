@@ -391,7 +391,7 @@ async def search_answer_post(payload: SearchAnswerRequest):
             hide_badge = True
         else:
             tier = "tier2"
-            tier_label = synthesis.get("tier_label") or "AI summary, check the cases below"
+            tier_label = synthesis.get("tier_label") or "AI general information (not verified against any legal source)"
             hide_badge = False
         source_cases = synthesis.get("results") if "results" in synthesis else (results or [])
         no_strong = synthesis.get("no_strong_case_match", len(source_cases) == 0)
