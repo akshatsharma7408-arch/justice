@@ -97,6 +97,30 @@ def clean_ocr_noise(text: str) -> str:
     return t
 
 
+import time as _time
+_RL_UNTIL = 0.0
+
+
+def _note_rate_limit(err) -> None:
+    """Circuit breaker: after a daily-token (TPD) 429, stop calling the model for 10 minutes instead of hammering it."""
+    global _RL_UNTIL
+    m = str(err)
+    if "429" in m and ("per day" in m or "TPD" in m):
+        _RL_UNTIL = _time.time() + 600
+
+
+def model_rate_limited() -> bool:
+    return _time.time() < _RL_UNTIL
+
+
+def explanation_unavailable_note() -> str:
+    if model_rate_limited():
+        return ("AI explanation temporarily unavailable: the AI service has reached its usage limit. "
+                "Only the statutory text is shown. Try again later.")
+    return "AI explanation unavailable for this provision: it did not pass the faithfulness check, so only the statutory text is shown."
+
+
+
 def summary_is_usable(text: str) -> bool:
     """False for OCR junk such as '430 A B c D E F G H (1992) 3 S.C.R.' or the generic placeholder."""
     t = (text or "").strip()
@@ -1015,6 +1039,8 @@ class LLMService:
         """
         if force_fallback or not self.client or not source_text or len(source_text.strip()) < 20:
             return None
+        if model_rate_limited():
+            return None
         system = (
             "You explain a provision of Indian law in plain English for a non-lawyer. Use ONLY the provision text "
             "you are given. Do not add facts, exceptions, amendments, penalties, time limits or court decisions that "
@@ -1046,6 +1072,7 @@ class LLMService:
                 out = (getattr(resp, "text", None) or "").strip()
             except Exception as e:
                 logger.warning("Provision explainer failed: %s", e)
+                _note_rate_limit(e)
                 if "429" in str(e) and _attempt < 2:
                     await asyncio.sleep(4)
                     continue
@@ -1138,6 +1165,7 @@ class LLMService:
             lines = [l.strip() for l in (getattr(resp, "text", None) or "").splitlines() if "|" in l]
         except Exception as e:
             logger.warning("Grounding checker failed: %s", e)
+            _note_rate_limit(e)
             return False
         if len(lines) != len(sents):
             return False
@@ -1178,6 +1206,7 @@ class LLMService:
             return verdict.startswith("SUPPORTED")
         except Exception as e:
             logger.warning("Explanation verifier failed: %s", e)
+            _note_rate_limit(e)
             return False
 
     async def generate_tier2_explanation(self, query: str, force_fallback: bool = False) -> str:
@@ -1662,7 +1691,7 @@ class LLMService:
                         ans_str += f"\n\nPlain-English explanation (AI-written from the text above; not a verified statement of law): {_ai}\n\n"
                         _ai_shown = True
                     elif (not force_fallback) and self.client:
-                        ans_str += "\n\nAI explanation unavailable for this provision: it did not pass the faithfulness check, so only the statutory text is shown.\n\n"
+                        ans_str += "\n\n" + explanation_unavailable_note() + "\n\n"
                 ans_str += " "
                 matching_cases = [_c for _c in matching_cases if summary_is_usable(clean_case_summary(_c))]
                 if matching_cases:
@@ -1986,7 +2015,7 @@ class LLMService:
                         ans_str += f"\n\nPlain-English explanation (AI-written from the text above; not a verified statement of law): {_ai}\n\n"
                         _ai_shown = True
                     elif (not force_fallback) and self.client:
-                        ans_str += "\n\nAI explanation unavailable for this provision: it did not pass the faithfulness check, so only the statutory text is shown.\n\n"
+                        ans_str += "\n\n" + explanation_unavailable_note() + "\n\n"
                 ans_str += " "
                 matching_cases = [_c for _c in matching_cases if summary_is_usable(clean_case_summary(_c))]
                 if matching_cases:

@@ -469,7 +469,7 @@ async def search_answer_post(payload: SearchAnswerRequest):
         hide_badge=hide_badge,
         statute_notice=(synthesis.get("statute_notice") if not is_not_found else None)
     )
-    if payload.results is None and "AI explanation unavailable" not in (resp.ai_answer or ""):
+    if payload.results is None and not re.search(r"AI explanation (?:temporarily )?unavailable", resp.ai_answer or ""):
         # A temporary rate-limit or rejected explanation must not be frozen into the cache.
         _ANSWER_CACHE.set(cache_key, resp)
     return resp

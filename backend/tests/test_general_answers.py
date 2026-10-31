@@ -100,4 +100,16 @@ def test_unavailable_explanation_is_not_cached():
     import inspect
     from app.routers import search
     src = inspect.getsource(search.search_answer_post)
-    assert 'AI explanation unavailable" not in' in src
+    assert 'temporarily )?unavailable' in src
+
+
+def test_tpd_429_trips_breaker_and_changes_note():
+    import app.services.llm_service as m
+    m._RL_UNTIL = 0.0
+    assert "faithfulness" in m.explanation_unavailable_note()
+    m._note_rate_limit(Exception("429 Rate limit reached ... on tokens per day (TPD): Limit 200000"))
+    try:
+        assert m.model_rate_limited()
+        assert "usage limit" in m.explanation_unavailable_note()
+    finally:
+        m._RL_UNTIL = 0.0
