@@ -9,6 +9,7 @@ from fastapi import APIRouter, Query, HTTPException
 from pydantic import BaseModel, Field
 from typing import List, Dict, Any, Optional
 import logging
+import re
 
 from app.config import settings
 from app.services.llm_service import llm_service
@@ -108,6 +109,23 @@ class SearchAnswerResponse(BaseModel):
     hide_badge: bool = False
     statute_notice: Optional[str] = None
 
+_ART_SUFFIX_RE = re.compile(
+    r'\b((?i:articles?|arts?\.?)\s*\d{1,3})\s+([A-Z]{1,2}|aa|ab|ba|bb)\b(?!\s*[A-Za-z])'
+)
+
+
+def normalize_article_suffix(query: str) -> str:
+    """Join a spaced letter suffix to its article number ("article 339 AA" -> "article 339AA").
+
+    Without this the lookup silently dropped the letters and answered the bare
+    article (339) as if it were what was asked. Suffix must be uppercase (1-2
+    letters) or aa/ab/ba/bb, so ordinary words ("article 21 in", "article 14 or")
+    are untouched.
+    """
+    return _ART_SUFFIX_RE.sub(lambda m: m.group(1) + m.group(2).upper(), query or "")
+
+
+
 def is_pure_case_lookup_query(query: str) -> bool:
     """
     Returns True only if the query is a pure case title, landmark case name,
@@ -173,7 +191,7 @@ async def search_precedents_post(payload: SearchRequest):
     If enable_hyde is False, returns retrieved cases immediately without synthesis.
     If enable_hyde is True, synthesizes judicial holding strictly from retrieved precedents with source citations.
     """
-    raw_query = (payload.query or "").strip()
+    raw_query = normalize_article_suffix((payload.query or "").strip())
     if not raw_query:
         raise HTTPException(
             status_code=400,
@@ -260,7 +278,7 @@ async def search_answer_post(payload: SearchAnswerRequest):
     - Unreliable: Plain message without AI badge (hide_badge=True)
     - No strong match: Tier 2 explanation with no_strong_case_match=True
     """
-    raw_query = (payload.query or "").strip()
+    raw_query = normalize_article_suffix((payload.query or "").strip())
     if len(raw_query) > 300:
         raise HTTPException(
             status_code=400,
