@@ -121,6 +121,23 @@ def explanation_unavailable_note() -> str:
 
 
 
+_NUMWORDS = {"two":2,"three":3,"four":4,"five":5,"six":6,"seven":7,"eight":8,"nine":9,"ten":10,"eleven":11,"twelve":12,
+             "fifteen":15,"twenty":20,"thirty":30,"sixty":60,"ninety":90,"hundred":100}
+
+
+def _numbers_in(text: str) -> set:
+    t = (text or "").lower()
+    out = {int(x) for x in re.findall(r"(?<![\w.])\d{1,6}(?![\w])", t)}
+    out |= {v for w, v in _NUMWORDS.items() if re.search(r"\b" + w + r"\b", t)}
+    return out
+
+
+def explanation_numbers_ok(source: str, explanation: str) -> bool:
+    """Cheap offline check, run before any verifier call: every number or number-word in the
+    explanation must also appear in the provision text, so invented limits never reach the model verifiers."""
+    return _numbers_in(explanation) <= _numbers_in(source)
+
+
 def summary_is_usable(text: str) -> bool:
     """False for OCR junk such as '430 A B c D E F G H (1992) 3 S.C.R.' or the generic placeholder."""
     t = (text or "").strip()
@@ -1087,7 +1104,7 @@ class LLMService:
                 if m.group(2).lower() not in ref:
                     bad = True
                     break
-            if bad:
+            if bad or not explanation_numbers_ok(source_text, out):
                 continue
             if not await self._explanation_is_grounded(source_text, out) or not await self._explanation_is_supported(source_text, out):
                 logger.warning("Provision explanation rejected: unsupported claim")

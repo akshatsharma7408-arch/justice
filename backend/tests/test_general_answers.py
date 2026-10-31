@@ -113,3 +113,18 @@ def test_tpd_429_trips_breaker_and_changes_note():
         assert "usage limit" in m.explanation_unavailable_note()
     finally:
         m._RL_UNTIL = 0.0
+
+
+def test_explanation_numbers_must_come_from_source():
+    from app.services.llm_service import explanation_numbers_ok as ok
+    src = "The President shall, at the expiration of ten years, appoint a Commission."
+    assert ok(src, "The President must appoint a commission at the end of ten years.")
+    assert ok(src, "Appoint a commission after 10 years.")
+    assert not ok(src, "The commission must report within two years.")
+    assert not ok(src, "Appoint within 30 days.")
+    assert ok("any person within 6 months", "Within six months any person may act.")
+
+
+def test_pronoun_one_is_not_a_number():
+    from app.services.llm_service import explanation_numbers_ok as ok
+    assert ok("No person shall be deprived of his property save by authority of law.", "No one can be deprived of property unless a law allows it.")
