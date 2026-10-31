@@ -8,11 +8,11 @@ def _svc(outputs):
     async def _g(src, out):
         return True
     s._explanation_is_grounded = _g
-    it = iter(outputs)
+    seq = list(outputs)
 
     class M:
         def generate_content(self, **kw):
-            return SimpleNamespace(text=next(it))
+            return SimpleNamespace(text=seq.pop(0) if len(seq) > 1 else seq[0])
 
     s._client = SimpleNamespace(models=M())
     s.is_active = True

@@ -50,3 +50,16 @@ def test_forum_claims_rejected_and_bullets_split():
     assert _tier2_numeric_claim("Check which forum applies and ask a lawyer.") is None
     out = _tier2_with_gap_note("- One thing. - Another thing.")
     assert "\n\n- Another" in out
+
+
+def test_summary_usable_rejects_ocr_junk():
+    from app.services.llm_service import summary_is_usable
+    assert not summary_is_usable("430 A B c D E F G H (1992) 3 S.C.R.")
+    assert not summary_is_usable("This precedent establishes authoritative judicial doctrine on the issue.")
+    assert summary_is_usable("The protection of this Article is available to any person including a legal person.")
+
+
+def test_timing_expiry_not_rewritten_as_after():
+    src = "The President may at any time and shall, at the expiration of ten years from the commencement, appoint a Commission."
+    o = _svc("1 | The President may at any time | OK")
+    assert asyncio.run(o._explanation_is_grounded(src, "The President must act after ten years from the start.")) is False

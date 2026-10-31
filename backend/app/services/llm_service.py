@@ -97,6 +97,19 @@ def clean_ocr_noise(text: str) -> str:
     return t
 
 
+def summary_is_usable(text: str) -> bool:
+    """False for OCR junk such as '430 A B c D E F G H (1992) 3 S.C.R.' or the generic placeholder."""
+    t = (text or "").strip()
+    if len(t.split()) < 6 or "establishes authoritative judicial doctrine" in t:
+        return False
+    toks = t.split()
+    singles = sum(1 for w in toks if len(w.strip(".,;:()[]")) == 1 and w.strip(".,;:()[]").isalpha())
+    letters = sum(ch.isalpha() for ch in t)
+    if singles / len(toks) > 0.25 or letters / max(len(t), 1) < 0.6:
+        return False
+    return not re.search(r"(?:\b[A-Ha-h]\b\s+){3,}", t)
+
+
 def clean_case_summary(case: Dict[str, Any]) -> str:
     """
     Rule (4): Never output raw chunk text in an answer. Show only a clean short summary
@@ -120,6 +133,7 @@ def clean_case_summary(case: Dict[str, Any]) -> str:
         cleaned = re.sub(r'^[A-Z\s\.,]{3,}\s+v(?:s)?\.\s+[A-Z\s\.,]{3,}', '', cleaned, flags=re.IGNORECASE).strip()
     # Strip SCR margin lettering like 'B C D E F G H 352 11.'
     cleaned = re.sub(r'^(?:[A-H]\s+)+\d*\s*\d*\.?\s*', '', cleaned).strip()
+    cleaned = re.sub(r'^\d{1,4}\s+(?:[A-H]\s+)?(?=[a-z])', '', cleaned).strip()  # page no. + margin letter, e.g. "718 A as fetter"
     
     # Extract the most meaningful 1-2 sentences, avoiding raw chunk dumps and bench rosters
     sentences = [s.strip() for s in re.split(r'(?<=[.!?])\s+', cleaned) if len(s.strip()) > 20 and not re.search(r'^\s*\[?[A-Z\s\.,]+\]?\s*$', s)]
@@ -1006,13 +1020,32 @@ class LLMService:
             "practice. Do not add requirements, tests or conditions that are not stated. Keep every modal word (may, shall, must, can) and every time period or number exactly as the text uses it; never turn a one-time or conditional rule into an ongoing duty, and never change who may do what. Where the text says something happens at the end of a period, use the words 'at the end of <period>' and do not say 'once' or 'whenever'. Only restate what the text says: do not add consequences, examples, or 'in other words' expansions. 2 to 5 short sentences, each restating one part of the text. Do not repeat the text word for word."
         )
         prompt = f"PROVISION: {label}\n\nTEXT:\n{source_text[:6000]}\n\nExplain this provision in plain English."
-        for _ in range(2):
+        import hashlib
+        _ck = hashlib.sha256((label + "\x00" + source_text).encode()).hexdigest()
+        _cache = self.__dict__.setdefault("_expl_cache", {})
+        if _ck in _cache:
+            return _cache[_ck]
+        _res = await self._explain_provision_ai_uncached(label, source_text, system, prompt)
+        if _res:
+            _cache[_ck] = _res  # only accepted explanations are cached
+        return _res
+
+    async def _explain_provision_ai_uncached(self, label: str, source_text: str, system: str, prompt: str) -> Optional[str]:
+        _hint = ""
+        for _attempt in range(3):
+            if _attempt:
+                _hint = ("\n\nYour previous explanation was rejected because it changed a timing or modal word. "
+                         "Reuse the text's own timing phrase (for example 'at the expiration of ten years' or 'at the end of ten years', "
+                         "never 'after ten years' or 'once ten years have passed') and keep may/shall/must as the text has them.")
             try:
                 cfg = types.GenerateContentConfig(system_instruction=system, temperature=0.1, max_output_tokens=450)
-                resp = await asyncio.to_thread(self.client.models.generate_content, model=self.model, contents=prompt, config=cfg)
+                resp = await asyncio.to_thread(self.client.models.generate_content, model=self.model, contents=prompt + _hint, config=cfg)
                 out = (getattr(resp, "text", None) or "").strip()
             except Exception as e:
                 logger.warning("Provision explainer failed: %s", e)
+                if "429" in str(e) and _attempt < 2:
+                    await asyncio.sleep(4)
+                    continue
                 return None
             if not out:
                 continue
@@ -1069,6 +1102,10 @@ class LLMService:
         sents = [x.strip() for x in re.split(r"(?<=[.!?])\s+", explanation.strip()) if x.strip()]
         if not sents or len(sents) > 8:
             return False
+        # timing: "at the expiration of <period>" must not become an open-ended "after <period>"
+        if re.search(r"expiration of|expiry of|at the end of", source_text, re.I) and re.search(
+                r"\bafter\s+(?:\w+\s+){0,3}(?:years?|months?|days?)\b|\bonce\s+\w+\s+(?:years?|months?|days?)\b", explanation, re.I):
+            return False
         norm = lambda t: re.sub(r"\s+", " ", re.sub(r"[\u2018\u2019]", "'", t)).strip().lower()
         src = norm(source_text)
         numbered = "\n".join(f"{i+1}. {x}" for i, x in enumerate(sents))
@@ -1084,9 +1121,17 @@ class LLMService:
                 ),
                 temperature=0.0, max_output_tokens=500,
             )
-            resp = await asyncio.to_thread(
-                self.client.models.generate_content, model=self.model,
-                contents=f"TEXT:\n{source_text[:6000]}\n\nEXPLANATION SENTENCES:\n{numbered}", config=cfg)
+            for _try in range(2):
+                try:
+                    resp = await asyncio.to_thread(
+                        self.client.models.generate_content, model=self.model,
+                        contents=f"TEXT:\n{source_text[:6000]}\n\nEXPLANATION SENTENCES:\n{numbered}", config=cfg)
+                    break
+                except Exception as _e:
+                    if "429" in str(_e) and _try == 0:
+                        await asyncio.sleep(6)
+                        continue
+                    raise
             lines = [l.strip() for l in (getattr(resp, "text", None) or "").splitlines() if "|" in l]
         except Exception as e:
             logger.warning("Grounding checker failed: %s", e)
@@ -1115,9 +1160,17 @@ class LLMService:
                 ),
                 temperature=0.0, max_output_tokens=10,
             )
-            resp = await asyncio.to_thread(
-                self.client.models.generate_content, model=self.model,
-                contents=f"TEXT:\n{source_text[:6000]}\n\nEXPLANATION:\n{explanation}", config=cfg)
+            for _try in range(3):
+                try:
+                    resp = await asyncio.to_thread(
+                        self.client.models.generate_content, model=self.model,
+                        contents=f"TEXT:\n{source_text[:6000]}\n\nEXPLANATION:\n{explanation}", config=cfg)
+                    break
+                except Exception as _e:
+                    if "429" in str(_e) and _try < 2:
+                        await asyncio.sleep(5)
+                        continue
+                    raise
             verdict = (getattr(resp, "text", None) or "").strip().upper()
             return verdict.startswith("SUPPORTED")
         except Exception as e:
@@ -1593,6 +1646,7 @@ class LLMService:
                     elif (not force_fallback) and self.client:
                         ans_str += "\n\nAI explanation unavailable for this provision: it did not pass the faithfulness check, so only the statutory text is shown.\n\n"
                 ans_str += " "
+                matching_cases = [_c for _c in matching_cases if summary_is_usable(clean_case_summary(_c))]
                 if matching_cases:
                     c0 = matching_cases[0]
                     ans_str += f"In {c0.get('title')} ({c0.get('citation')}), the Supreme Court held: {clean_case_summary(c0)}"
@@ -1916,6 +1970,7 @@ class LLMService:
                     elif (not force_fallback) and self.client:
                         ans_str += "\n\nAI explanation unavailable for this provision: it did not pass the faithfulness check, so only the statutory text is shown.\n\n"
                 ans_str += " "
+                matching_cases = [_c for _c in matching_cases if summary_is_usable(clean_case_summary(_c))]
                 if matching_cases:
                     c0 = matching_cases[0]
                     ans_str += f"In {c0.get('title')} ({c0.get('citation')}), the Supreme Court held: {clean_case_summary(c0)}"
@@ -2256,6 +2311,14 @@ class LLMService:
         else:
             # Grounded synthesis citing retrieved cases directly
             c1_summary = clean_case_summary(c1)
+            if not summary_is_usable(c1_summary):
+                return {
+                    "answer": "No strong match found: the closest precedent in our database could not be summarised reliably, so no holding is stated.",
+                    "ratio_decidendi": None, "citations": [], "results": [],
+                    "model_used": "no_precedent_found", "hide_badge": True,
+                }
+            if c2 and not summary_is_usable(clean_case_summary(c2)):
+                c2 = None
             c2_part = f" Furthermore, in {c2.get('title')} ({c2.get('decisionYear') or c2.get('year')}, {bench_c2}), the Court affirmed that {clean_case_summary(c2)}" if c2 else ""
             ans_str = (
                 f"Based on the verified precedents in our database, in {c1.get('title')} ({c1.get('decisionYear') or c1.get('year')}, {bench_c1}), the Supreme Court held that {c1_summary}.{c2_part}"
