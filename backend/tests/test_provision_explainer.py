@@ -23,7 +23,7 @@ def run(s, **kw):
 
 
 def test_accepts_plain_explanation():
-    assert run(_svc(["The State cannot take your property unless a law allows it."])) == "The State cannot take your property unless a law allows it."
+    assert run(_svc(["The State cannot take your property unless a law allows it.", "SUPPORTED"])) == "The State cannot take your property unless a law allows it."
 
 
 def test_rejects_case_names_and_foreign_numbers_then_none():
@@ -31,8 +31,12 @@ def test_rejects_case_names_and_foreign_numbers_then_none():
 
 
 def test_retry_recovers():
-    assert run(_svc(["Under Section 99 you can sue.", "Property can be taken only under a law."])) == "Property can be taken only under a law."
+    assert run(_svc(["Under Section 99 you can sue.", "Property can be taken only under a law.", "SUPPORTED"])) == "Property can be taken only under a law."
 
 
 def test_force_fallback_returns_none():
     assert run(_svc(["x"]), force_fallback=True) is None
+
+
+def test_unsupported_claim_rejected_by_verifier():
+    assert run(_svc(["Property can be taken after a court order.", "UNSUPPORTED", "Property can be taken after a court order.", "UNSUPPORTED"])) is None

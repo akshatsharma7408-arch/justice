@@ -996,8 +996,32 @@ class LLMService:
                     break
             if bad:
                 continue
+            if not await self._explanation_is_supported(source_text, out):
+                logger.warning("Provision explanation rejected: unsupported claim")
+                continue
             return out
         return None
+
+    async def _explanation_is_supported(self, source_text: str, explanation: str) -> bool:
+        """Second pass: every claim in the explanation must be stated in or directly follow from the text."""
+        try:
+            cfg = types.GenerateContentConfig(
+                system_instruction=(
+                    "You are a strict checker. Compare an EXPLANATION to the legal TEXT it explains. Reply with exactly "
+                    "SUPPORTED if every statement in the explanation is stated in the text or is a plain restatement of it. "
+                    "Reply with exactly UNSUPPORTED if the explanation adds any fact, condition, requirement, sequence, "
+                    "exception, consequence or example that the text does not state, or changes who may do what."
+                ),
+                temperature=0.0, max_output_tokens=10,
+            )
+            resp = await asyncio.to_thread(
+                self.client.models.generate_content, model=self.model,
+                contents=f"TEXT:\n{source_text[:6000]}\n\nEXPLANATION:\n{explanation}", config=cfg)
+            verdict = (getattr(resp, "text", None) or "").strip().upper()
+            return verdict.startswith("SUPPORTED")
+        except Exception as e:
+            logger.warning("Explanation verifier failed: %s", e)
+            return False
 
     async def generate_tier2_explanation(self, query: str, force_fallback: bool = False) -> str:
         """
@@ -1455,7 +1479,7 @@ class LLMService:
                 if not expl:
                     _ai = await self.explain_provision_ai(f"Article {art_num} of the Constitution of India ({heading})", body, force_fallback=force_fallback)
                     if _ai:
-                        ans_str += f" Plain-English explanation (AI-written from the text above; not a verified statement of law): {_ai}"
+                        ans_str += f"\n\nPlain-English explanation (AI-written from the text above; not a verified statement of law): {_ai}\n\n"
                 ans_str += " "
                 if matching_cases:
                     c0 = matching_cases[0]
@@ -1774,7 +1798,7 @@ class LLMService:
                 if not expl and not has_unresolved_caveat and not (act_edition and "Repealed" in act_edition):
                     _ai = await self.explain_provision_ai(f"Section {sec_num} of the {title_disp} ({heading})", body, force_fallback=force_fallback)
                     if _ai:
-                        ans_str += f" Plain-English explanation (AI-written from the text above; not a verified statement of law): {_ai}"
+                        ans_str += f"\n\nPlain-English explanation (AI-written from the text above; not a verified statement of law): {_ai}\n\n"
                 ans_str += " "
                 if matching_cases:
                     c0 = matching_cases[0]

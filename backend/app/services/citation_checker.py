@@ -297,6 +297,12 @@ class CitationChecker:
         # -------------------------------------------------------------
         # Tier 1 / Normal AI answer: Verify each sentence
         # -------------------------------------------------------------
+        if "\n\n" in text:
+            # Keep paragraph breaks (the UI renders each paragraph separately): verify paragraph by paragraph.
+            return "\n\n".join(
+                cls.check_and_badge_text(part, is_tier2=False, allowed_cases=allowed_cases)
+                for part in text.split("\n\n") if part.strip()
+            )
         sentences = split_legal_sentences(text.strip())
         verified_sentences = []
 
