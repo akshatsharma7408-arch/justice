@@ -973,7 +973,7 @@ class LLMService:
             "you are given. Do not add facts, exceptions, amendments, penalties, time limits or court decisions that "
             "are not in the text. Do not name any case or citation. Do not mention any article or section number "
             "other than the one(s) in the text. If the text is a definition or procedure, say what it means in "
-            "practice. Do not add requirements, tests or conditions that are not stated. Keep every modal word (may, shall, must, can) and every time period or number exactly as the text uses it; never turn a one-time or conditional rule into an ongoing duty, and never change who may do what. Where the text says something happens at the end of a period, use the words 'at the end of <period>' and do not say 'once' or 'whenever'. Only restate what the text says: do not add consequences, examples, or 'in other words' expansions. 3 to 6 short sentences. Do not repeat the text word for word."
+            "practice. Do not add requirements, tests or conditions that are not stated. Keep every modal word (may, shall, must, can) and every time period or number exactly as the text uses it; never turn a one-time or conditional rule into an ongoing duty, and never change who may do what. Where the text says something happens at the end of a period, use the words 'at the end of <period>' and do not say 'once' or 'whenever'. Only restate what the text says: do not add consequences, examples, or 'in other words' expansions. 2 to 5 short sentences, each restating one part of the text. Do not repeat the text word for word."
         )
         prompt = f"PROVISION: {label}\n\nTEXT:\n{source_text[:6000]}\n\nExplain this provision in plain English."
         for _ in range(2):
@@ -996,11 +996,54 @@ class LLMService:
                     break
             if bad:
                 continue
-            if not await self._explanation_is_supported(source_text, out):
+            if not await self._explanation_is_grounded(source_text, out) or not await self._explanation_is_supported(source_text, out):
                 logger.warning("Provision explanation rejected: unsupported claim")
                 continue
             return out
         return None
+
+    async def _explanation_is_grounded(self, source_text: str, explanation: str) -> bool:
+        """Sentence-by-sentence grounding: each explanation sentence must be tied to an exact fragment of the text.
+
+        The checker model returns lines `<n> | <exact quote from TEXT> | OK or CHANGED`. We require one line per
+        sentence, every quote to be a literal substring of the text (so the support is mechanically checkable),
+        and no CHANGED verdicts (meaning, modal word, actor or timing altered).
+        """
+        sents = [x.strip() for x in re.split(r"(?<=[.!?])\s+", explanation.strip()) if x.strip()]
+        if not sents or len(sents) > 8:
+            return False
+        norm = lambda t: re.sub(r"\s+", " ", re.sub(r"[\u2018\u2019]", "'", t)).strip().lower()
+        src = norm(source_text)
+        numbered = "\n".join(f"{i+1}. {x}" for i, x in enumerate(sents))
+        try:
+            cfg = types.GenerateContentConfig(
+                system_instruction=(
+                    "You audit an explanation of a legal TEXT. For each numbered explanation sentence output exactly one "
+                    "line: <number> | <the shortest exact fragment copied from TEXT that supports it> | OK or CHANGED. "
+                    "Use CHANGED if the sentence alters the meaning: a different actor (who may or must act), a different "
+                    "modal word (may/shall/must/can), a different time or condition, an added requirement, exception or "
+                    "consequence, or a narrower or wider scope than the text. Use OK only when the fragment really "
+                    "supports the whole sentence. Output only these lines."
+                ),
+                temperature=0.0, max_output_tokens=500,
+            )
+            resp = await asyncio.to_thread(
+                self.client.models.generate_content, model=self.model,
+                contents=f"TEXT:\n{source_text[:6000]}\n\nEXPLANATION SENTENCES:\n{numbered}", config=cfg)
+            lines = [l.strip() for l in (getattr(resp, "text", None) or "").splitlines() if "|" in l]
+        except Exception as e:
+            logger.warning("Grounding checker failed: %s", e)
+            return False
+        if len(lines) != len(sents):
+            return False
+        for l in lines:
+            parts = [x.strip() for x in l.split("|")]
+            if len(parts) < 3 or parts[-1].upper() != "OK":
+                return False
+            quote = norm(parts[1].strip('"\' '))
+            if len(quote) < 8 or quote not in src:
+                return False
+        return True
 
     async def _explanation_is_supported(self, source_text: str, explanation: str) -> bool:
         """Second pass: every claim in the explanation must be stated in or directly follow from the text."""
