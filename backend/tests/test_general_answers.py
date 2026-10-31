@@ -94,3 +94,10 @@ def test_cheque_note_flags_current_applicability_unverified():
     from app.services.verified_statute_notes import verified_note_for
     a = verified_note_for("cheque bounce")["answer"]
     assert "CURRENT APPLICABILITY NOT VERIFIED" in a and "three months" in a and "rbi.org.in" in a
+
+
+def test_unavailable_explanation_is_not_cached():
+    import inspect
+    from app.routers import search
+    src = inspect.getsource(search.search_answer_post)
+    assert 'AI explanation unavailable" not in' in src
