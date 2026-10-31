@@ -41,3 +41,12 @@ def test_multi_article_split_and_bare_article():
     assert resolve_bare_article("what is 21A") == "article 21A"
     assert resolve_bare_article("498A") == "498A"
     assert resolve_bare_article("what is bail") == "what is bail"
+
+
+def test_forum_claims_rejected_and_bullets_split():
+    from app.services.llm_service import _tier2_with_gap_note
+    assert _tier2_numeric_claim("You can approach the consumer forum.")
+    assert _tier2_numeric_claim("File a suit in the civil court.")
+    assert _tier2_numeric_claim("Check which forum applies and ask a lawyer.") is None
+    out = _tier2_with_gap_note("- One thing. - Another thing.")
+    assert "\n\n- Another" in out

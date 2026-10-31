@@ -661,15 +661,27 @@ _NUMERIC_CLAIM_RE = re.compile(
 
 
 def _tier2_with_gap_note(text: str) -> str:
+    # one bullet per paragraph (sanitising had collapsed them into one block)
+    text = re.sub(r"(?<=[.!?])\s+[-\u2022]\s+", "\n\n- ", text)
+    text = re.sub(r"\n(?=[-\u2022]\s)", "\n\n", text)
     note = ("Note: no verified statute or case in our database was found for this question, so this answer does not state "
             "what the law provides. Use it only to know what to check.")
     return f"{note}\n\n{text}"
 
 
+_FORUM_CLAIM_RE = re.compile(
+    r"\b(?:consumer\s+(?:forum|commission|court)|rent\s+(?:controller|control\s+(?:authority|court|tribunal))|civil\s+court|small\s+causes|"
+    r"(?:high|supreme|district|magistrate'?s?)\s+court|magistrate|police|tribunal|ombudsman|lok\s+adalat|"
+    r"(?:file|lodge)\s+(?:a\s+)?(?:suit|complaint|fir|petition))\b", re.I)
+
+
 def _tier2_numeric_claim(text: str):
-    """General (unsourced) answers must not state specific periods or amounts."""
+    """General (unsourced) answers must not state specific periods, amounts, or which forum has jurisdiction."""
     m = _NUMERIC_CLAIM_RE.search(text or "")
-    return f"specific period/amount stated: {m.group(0)!r}" if m else None
+    if m:
+        return f"specific period/amount stated: {m.group(0)!r}"
+    m = _FORUM_CLAIM_RE.search(text or "")
+    return f"forum/remedy claim stated: {m.group(0)!r}" if m else None
 
 
 
@@ -1164,6 +1176,7 @@ class LLMService:
             "2. Explicitly mention which general area of law applies in general terms (for example, 'traffic and criminal procedure laws in India', 'contract and equity principles in India', or 'tenancy and rent control laws in India').\n"
             "3. STRICT PROHIBITION: NEVER name or cite any specific case, court, judge, citation (such as SCC, AIR, SCR), section number (such as Section 27), or article number (such as Article 21). Keep all statutory and legal references strictly generalized (e.g. 'under motor vehicle regulations', 'under tenancy laws', 'under general contract principles', 'under constitutional principles').\n"
             "3a. You have NO verified statute or case for this question. So do NOT state who has the burden of proof, what a party is entitled to or allowed to do, which court, forum, authority or remedy has jurisdiction, or that a rule exists. Write only: (i) the general area of law that probably governs, (ii) what the person should find out or check in the specific Act and their State, (iii) documents and evidence worth keeping, (iv) sensible practical next steps such as a written request or consulting a lawyer. Phrase uncertain points as 'this depends on...' or 'check whether...'.\n"
+            "3c. Never name a court, forum, tribunal, police or other authority to approach; say the person should check which forum applies to their situation or ask a lawyer.\n"
             "3b. Do NOT state any specific time limit, deadline, notice period, fine, fee or amount, and do not say a rule is the same in every State. These differ by Act and State; say they depend on the specific law and must be checked in it. Do not claim what the law 'currently' provides.\n"
             "4. You MUST end your response directly with the exact text: 'This is general information, not legal advice. Check a primary source or a lawyer before relying on it.'"
         )
@@ -1211,11 +1224,13 @@ class LLMService:
             "You are a helpful legal information assistant. "
             "Explain the requested legal concept or question in plain, simple English. "
             "STRICT REQUIREMENT: Do not name any case, court, judge, citation, section number, or article number. "
-            "Explain only the legal concept in plain words without naming any specific case, section, or article. Give no specific time limits, notice periods or amounts; say they depend on the specific law and State.\n"
+            "You have NO verified source: do NOT say what a party is entitled to do, who must prove what, or that a rule exists. Write only the likely area of law, what to check in the specific Act and State, what documents to keep, and practical next steps, using phrases like 'check whether' and 'this depends on'. "
+            "Explain only the legal concept in plain words without naming any specific case, section, or article. Do not name any court, forum, tribunal or authority. Give no specific time limits, notice periods or amounts; say they depend on the specific law and State.\n"
             "End with: 'This is general information, not legal advice. Check a primary source or a lawyer before relying on it.'"
         )
         stricter_prompt = (
             "STRICT REQUIREMENT: Do not name any case, court, judge, citation, section number, or article number. "
+            "Do not say what a party is entitled to do or must prove; only what to check, what to keep, and practical next steps.\n"
             "Explain only the legal concept in plain words without naming any specific case, section, or article.\n\n"
             f"USER QUESTION: {query}"
         )
