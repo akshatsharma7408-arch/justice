@@ -322,7 +322,7 @@ async def search_answer_post(payload: SearchAnswerRequest):
             sub = SearchAnswerRequest(query=f"article {n}")
             parts.append((n, await search_answer_post(sub)))
         first = parts[0][1]
-        body = "\n\n".join(f"=== Article {n}" + (f" [{r.tier_label}]" if r.tier_label else "") + f" ===\n{r.ai_answer or 'No verified source found for this article number.'}" for n, r in parts)
+        body = "\n\n".join(f"ARTICLE {n}" + (f" ({r.tier_label})" if r.tier_label else "") + f"\n\n{r.ai_answer or 'No verified source found for this article number.'}" for n, r in parts)
         merged = first.model_copy(deep=True)
         merged.ai_answer = f"Your question names several articles; each is answered separately below.\n\n{body}"
         merged.query = raw_query
@@ -330,7 +330,7 @@ async def search_answer_post(payload: SearchAnswerRequest):
         for _n, r in parts[1:]:
             merged.citations = list(merged.citations or []) + [c for c in (r.citations or []) if c not in (merged.citations or [])]
             merged.source_cases = list(merged.source_cases or []) + list(r.source_cases or [])
-        if len({r.tier_label for _n, r in parts}) > 1:
+        if True:
             merged.tier_label = "Several provisions - see the label under each article"
         merged.statute_notice = None
         return merged

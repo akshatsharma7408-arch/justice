@@ -102,6 +102,9 @@ def summary_is_usable(text: str) -> bool:
     t = (text or "").strip()
     if len(t.split()) < 6 or "establishes authoritative judicial doctrine" in t:
         return False
+    # A holding starts as a sentence. A fragment that starts mid-clause or quotes statute sub-clauses is not one.
+    if re.match(r"^(?:\(|(?:or|and)\s+\()", t) or len(re.findall(r"\((?:[a-z]|[ivx]+|\d)\)", t)) >= 2:
+        return False
     toks = t.split()
     singles = sum(1 for w in toks if len(w.strip(".,;:()[]")) == 1 and w.strip(".,;:()[]").isalpha())
     letters = sum(ch.isalpha() for ch in t)
@@ -1376,7 +1379,7 @@ class LLMService:
                 "results": [],
                 "model_used": "verified_statute_text",
                 "tier": "statute_text",
-                "tier_label": "Verified statute text (Supreme Court quotation; amendments not checked)",
+                "tier_label": "Statute text as quoted by the Supreme Court - current applicability NOT verified",
                 "no_strong_case_match": True,
                 "hide_badge": False,
             }

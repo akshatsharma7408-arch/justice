@@ -81,3 +81,16 @@ def test_cheque_route_in_synthesis_skips_llm():
     s = LLMService.__new__(LLMService)
     r = asyncio.run(s.synthesize_search_answer("cheque bounce notice period", []))
     assert r["model_used"] == "verified_statute_text" and "Dishonour of cheque" in r["answer"]
+
+
+def test_summary_fragments_are_not_usable():
+    from app.services.llm_service import summary_is_usable
+    assert not summary_is_usable("or (b) the use of wells, tanks, bathing ghats, roads and places of public resort maintained wholly")
+    assert not summary_is_usable("(a) access to shops, public restaurants, hotels and places of public entertainment; or (b) the use")
+    assert summary_is_usable("Equality and arbitrariness are sworn enemies; an act that is arbitrary necessarily violates equality.")
+
+
+def test_cheque_note_flags_current_applicability_unverified():
+    from app.services.verified_statute_notes import verified_note_for
+    a = verified_note_for("cheque bounce")["answer"]
+    assert "CURRENT APPLICABILITY NOT VERIFIED" in a and "three months" in a and "rbi.org.in" in a

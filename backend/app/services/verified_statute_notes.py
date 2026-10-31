@@ -33,9 +33,14 @@ def verified_note_for(query: str) -> Optional[Dict[str, str]]:
     if not _CHEQUE.search(query or ""):
         return None
     answer = (
-        "Verified statute text (Negotiable Instruments Act, 1881, sections 138 and 142). "
+        "Statute text (Negotiable Instruments Act, 1881, sections 138 and 142). "
         "The exact words of the law are below; nothing has been paraphrased.\n\n"
         + _S138 + "\n\n" + _S142 + "\n\n"
+        "CURRENT APPLICABILITY NOT VERIFIED. The six-month wording in section 138(a) is quoted as it appears in those judgments; "
+        "it is not confirmed here as the period that applies to a cheque today. The Reserve Bank of India's official circular of 4 November 2011 "
+        "(https://www.rbi.org.in/scripts/NotificationUser.aspx?Id=6805&Mode=0) directed banks to honour cheques presented within three months "
+        "of the date of the instrument for instruments issued on or after 1 April 2012. How that interacts with section 138(a), and any later "
+        "RBI direction or amendment, was not checked. Do not rely on any deadline here without checking with a lawyer or your bank.\n\n"
         "Source: both sections are quoted in Supreme Court of India judgments on the court's own site. "
         "Edition: the text as quoted there (section 142 as amended in 2002). Later amendments, rules and "
         "state-specific changes are not checked here. This is not legal advice."
