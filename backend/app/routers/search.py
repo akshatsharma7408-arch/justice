@@ -1,3 +1,4 @@
+import asyncio
 """
 JUSTICE Legal AI Backend — Search Router (/api/v1/search)
 Executes grounded precedent retrieval over verified Indian Supreme Court & High Court jurisprudence.
@@ -295,6 +296,9 @@ async def search_precedents_post(payload: SearchRequest):
     _SEARCH_CACHE.set(cache_key, resp)
     return resp
 
+ANSWER_TIME_BUDGET_S = 45
+
+
 @router.post("/search/answer", response_model=SearchAnswerResponse)
 async def search_answer_post(payload: SearchAnswerRequest):
     """
@@ -411,11 +415,20 @@ async def search_answer_post(payload: SearchAnswerRequest):
             limit=5
         )
 
-    synthesis = await llm_service.synthesize_search_answer(
-        effective_query,
-        results,
-        force_fallback=payload.force_fallback
-    )
+    _timed_out = False
+    try:
+        # Whole-request time budget: a rate-limited model must not leave the user waiting for minutes.
+        synthesis = await asyncio.wait_for(
+            llm_service.synthesize_search_answer(effective_query, results, force_fallback=payload.force_fallback),
+            timeout=ANSWER_TIME_BUDGET_S,
+        )
+    except asyncio.TimeoutError:
+        logger.warning("Answer synthesis exceeded %ss; returning the model-free answer", ANSWER_TIME_BUDGET_S)
+        _timed_out = True
+        synthesis = await llm_service.synthesize_search_answer(effective_query, results, force_fallback=True)
+        if isinstance(synthesis.get("answer"), str):
+            synthesis["answer"] += ("\n\nThe AI service was too slow to finish an explanation in time, "
+                                    "so only the verified source text above is shown. AI explanation temporarily unavailable.")
 
     from app.services.citation_checker import citation_checker
     model_used = synthesis.get("model_used", "")
@@ -469,7 +482,7 @@ async def search_answer_post(payload: SearchAnswerRequest):
         hide_badge=hide_badge,
         statute_notice=(synthesis.get("statute_notice") if not is_not_found else None)
     )
-    if payload.results is None and not re.search(r"AI explanation (?:temporarily )?unavailable", resp.ai_answer or ""):
+    if payload.results is None and not _timed_out and not re.search(r"AI explanation (?:temporarily )?unavailable", resp.ai_answer or ""):
         # A temporary rate-limit or rejected explanation must not be frozen into the cache.
         _ANSWER_CACHE.set(cache_key, resp)
     return resp

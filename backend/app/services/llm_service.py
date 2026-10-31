@@ -1073,9 +1073,9 @@ class LLMService:
             return _cache[_ck]
         try:
             # Hard time budget so a rate-limited or slow model never leaves the user waiting.
-            _res = await asyncio.wait_for(self._explain_provision_ai_uncached(label, source_text, system, prompt), timeout=40)
+            _res = await asyncio.wait_for(self._explain_provision_ai_uncached(label, source_text, system, prompt), timeout=25)
         except asyncio.TimeoutError:
-            logger.warning("Provision explanation timed out after 40s")
+            logger.warning("Provision explanation timed out after 25s")
             return None
         if _res:
             _cache[_ck] = _res  # only accepted explanations are cached

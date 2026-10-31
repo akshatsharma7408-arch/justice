@@ -128,3 +128,27 @@ def test_explanation_numbers_must_come_from_source():
 def test_pronoun_one_is_not_a_number():
     from app.services.llm_service import explanation_numbers_ok as ok
     assert ok("No person shall be deprived of his property save by authority of law.", "No one can be deprived of property unless a law allows it.")
+
+
+def test_answer_request_has_overall_time_budget(monkeypatch):
+    import asyncio
+    from fastapi.testclient import TestClient
+    from app.main import app
+    from app.routers import search as sr
+
+    calls = []
+
+    async def fake(query, results, force_fallback=False):
+        calls.append(force_fallback)
+        if not force_fallback:
+            await asyncio.sleep(5)
+        return {"answer": "Verified text only.", "ratio_decidendi": None, "citations": [], "results": [],
+                "model_used": "statutory_provision_authoritative", "tier": "tier1", "tier_label": "Authoritative statutory provision"}
+
+    monkeypatch.setattr(sr.llm_service, "synthesize_search_answer", fake)
+    monkeypatch.setattr(sr, "ANSWER_TIME_BUDGET_S", 0.1)
+    r = TestClient(app).post("/api/v1/search/answer", json={"query": "zzz budget probe 51A", "results": []})
+    assert r.status_code == 200
+    body = r.json()
+    assert calls == [False, True]
+    assert "temporarily unavailable" in body["ai_answer"] and body["ai_answer"].startswith("Verified text only.")
