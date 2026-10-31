@@ -135,6 +135,40 @@ def load_bsa_provisions() -> List[Dict[str, Any]]:
     return rows
 
 
+CPA_CORPUS_PATH = CURRENT_DIR / "cpa_corpus.json"
+CPA_ACT_ID = "consumer-protection-act-2019"
+CPA_SOURCE_URL = "https://egazette.gov.in/WriteReadData/2019/210422.pdf"
+
+
+def load_cpa_provisions() -> List[Dict[str, Any]]:
+    """Consumer Protection Act, 2019 (Act 35 of 2019), text as enacted, from cpa_corpus.json.
+
+    Source: Gazette of India Extraordinary, 9 Aug 2019, No. 54 (40-page PDF, byte-identical copies on
+    egazette-linked government hosts and Wikimedia Commons). Provenance and checks: scripts/cpa2019/VERIFICATION.md.
+    """
+    import json as _json
+    if not CPA_CORPUS_PATH.exists():
+        logger.warning("CPA corpus JSON not found; Consumer Protection Act 2019 will be unseeded")
+        return []
+    corpus = _json.loads(CPA_CORPUS_PATH.read_text(encoding="utf-8"))
+    rows = []
+    for num in sorted(corpus, key=_section_sort_key):
+        e = corpus[num]
+        rows.append({
+            "id": f"cpa-2019-s-{num.lower()}",
+            "act_id": CPA_ACT_ID,
+            "section_number": num,
+            "heading": e["heading"],
+            "body": e["body"],
+            "explanation": e.get("caveat"),
+            "source_url": CPA_SOURCE_URL,
+            "effective_date": "Commencement by notification under s.1(3); notified dates not recorded here",
+            "status": "in_force",
+        })
+    logger.info(f"CPA corpus loaded: {len(rows)} provisions")
+    return rows
+
+
 def _article_sort_key(num: str):
     m = re.match(r"(\d+)([A-Z]*)", num)
     return (int(m.group(1)), m.group(2))
@@ -178,8 +212,8 @@ def load_constitution_provisions(curated: Dict[str, Dict[str, Any]]) -> List[Dic
     return provisions
 
 # Authoritative Curated Statutory Datasets
-SEED_VERSION = "2026-10-30.v10"  # v10: BSA 2023 added (170 sections) + s.1, 63, 170 caveats
-_PREV_SEED_VERSION = "2026-10-29.v9"  # v9: BNSS s.531 caveat cleared after exact gazette body+reading-order verification  # bump on any seed content/corpus correction; self-heal reseeds on mismatch
+SEED_VERSION = "2026-10-31.v11"  # v11: Consumer Protection Act 2019 added (107 sections, as enacted). v10: BSA 2023 added (170 sections) + s.1, 63, 170 caveats
+_PREV_SEED_VERSION = "2026-10-30.v10"  # v9: BNSS s.531 caveat cleared after exact gazette body+reading-order verification  # bump on any seed content/corpus correction; self-heal reseeds on mismatch
 
 BARE_ACTS_DATA = [
     {
@@ -256,6 +290,14 @@ BARE_ACTS_DATA = [
         "year": 2023,
         "jurisdiction": "India",
         "edition": "In force w.e.f. 1 July 2024 (S.O. 849(E), 23.02.2024). Repeals the Indian Evidence Act, 1872 subject to s.170 savings (proceedings pending on 1 July 2024 continue under the 1872 Act). Text: official Gazette PDF (eGazette CG-DL-E-25122023-250882) as enacted on 25.12.2023; subsequent amendments, if any, are not incorporated. Section 63 (electronic records) replaces s.65B of the Evidence Act."
+    },
+    {
+        "id": "consumer-protection-act-2019",
+        "title": "The Consumer Protection Act, 2019",
+        "act_number": "Act No. 35 of 2019",
+        "year": 2019,
+        "jurisdiction": "India",
+        "edition": "Text as enacted (assent 9 August 2019, Gazette of India Extraordinary, Part II Section 1, No. 54). Commencement is by notification under s.1(3), with different dates possible for different provisions; notified dates are not recorded here. Amendments, rules and notifications after enactment are not incorporated. Repeals the Consumer Protection Act, 1986 subject to s.107 savings."
     }
 ]
 
@@ -1158,6 +1200,19 @@ def seed_database(conn: sqlite3.Connection) -> Tuple[int, int]:
     # 5. Bharatiya Sakshya Adhiniyam, 2023: replace any prior provisions with the verified corpus
     cursor.execute("DELETE FROM statutory_provisions WHERE act_id = ?;", (BSA_ACT_ID,))
     for prov in load_bsa_provisions():
+        cursor.execute("""
+            INSERT INTO statutory_provisions (id, act_id, section_number, heading, body, explanation, source_url, effective_date, status)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?);
+        """, (
+            prov["id"], prov["act_id"], prov["section_number"], prov["heading"],
+            prov["body"], prov["explanation"], prov.get("source_url"),
+            prov.get("effective_date"), prov.get("status", "in_force"),
+        ))
+        provisions_inserted += 1
+
+    # 6. Consumer Protection Act, 2019 (as enacted): replace any prior provisions with the verified corpus
+    cursor.execute("DELETE FROM statutory_provisions WHERE act_id = ?;", (CPA_ACT_ID,))
+    for prov in load_cpa_provisions():
         cursor.execute("""
             INSERT INTO statutory_provisions (id, act_id, section_number, heading, body, explanation, source_url, effective_date, status)
             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?);

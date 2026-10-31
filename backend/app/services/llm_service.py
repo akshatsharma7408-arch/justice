@@ -28,7 +28,11 @@ from app.services.statute_service import statute_service
 logger = logging.getLogger("justice.llm")
 
 # Pydantic schemas for structured JSON responses
-_AS_ENACTED_ACT_IDS = ("bharatiya-nyaya-sanhita-2023", "bharatiya-nagarik-suraksha-sanhita-2023", "bharatiya-sakshya-adhiniyam-2023")
+def _edition_is_as_enacted(edition, act_id) -> bool:
+    """Metadata-driven: an Act whose edition note says its text is 'as enacted' (amendments not incorporated) gets the
+    qualified badge and top-of-card notice. Repealed Acts and the Constitution keep their own labelling."""
+    e = (edition or "").lower()
+    return bool(e) and "as enacted" in e and "repealed by" not in e and "constitution" not in (act_id or "")
 
 class ClauseVerificationSchema(BaseModel):
     status: str = Field(description="'NON-COMPLIANT' or 'COMPLIANT'")
@@ -1587,7 +1591,7 @@ class LLMService:
                         if (
                             any(kw in q_low for kw in act_name.split() if len(kw) > 3)
                             or (act_id in q_low)
-                            or ("contract" in act_id and any(kw in q_low for kw in ["contract", "agreement", "frustration", "impossible"]))
+                            or ("contract" in act_id and any(kw in q_low for kw in ["contract", "agreement", "frustration", "impossible", "non-compete", "noncompete", "restraint of trade", "covenant"]))
                             or ("crpc" in act_id and any(kw in q_low for kw in ["crpc", "criminal", "police", "arrest", "magistrate"]))
                             or ("mva" in act_id and any(kw in q_low for kw in ["mva", "motor", "vehicle", "accident", "hit and run"]))
                             or ("ipc" in act_id and any(kw in q_low for kw in ["ipc", "penal", "offence", "crime"]))
@@ -1666,6 +1670,8 @@ class LLMService:
                     "bharatiya-sakshya-adhiniyam-2023": r"bharatiya\s+sakshya\s+adhiniyam|\bb\.?s\.?a\.?\b",
                     "bharatiya-nyaya-sanhita-2023": r"bharatiya\s+nyaya\s+sanhita|\bb\.?n\.?s\.?\b(?!s)",
                     "bharatiya-nagarik-suraksha-sanhita-2023": r"bharatiya\s+nagarik\s+suraksha\s+sanhita|\bb\.?n\.?s\.?s\.?\b",
+                    # 2019 Act: older consumer judgments apply the 1986 Act with the same section numbers
+                    "consumer-protection-act-2019": r"consumer\s+protection\s+act,?\s*(?:\(?no\.?\s*35\s+of\s+)?2019",
                 }
                 _new_code_re = _new_code_patterns.get(prov.get("act_id") or "")
                 if _new_code_re:
@@ -1743,15 +1749,16 @@ class LLMService:
                         # official gazette edition must not carry the authoritative badge: the caveat
                         # text is served with the body and the badge is downgraded.
                         tier_label = "Statutory provision with an unresolved verification caveat (see note) - not authoritative"
-                    elif act_edition and "as enacted" in act_edition.lower() and (prov.get("act_id") or "") in _AS_ENACTED_ACT_IDS:
+                    elif _edition_is_as_enacted(act_edition, prov.get("act_id")):
                         # As-enacted gazette text only: do not show an unqualified "authoritative"
                         # badge; the limit must be visible at the top of the answer card.
                         tier_label = "Statutory text as enacted - amendments not checked"
                     else:
                         tier_label = "Authoritative statutory provision"
                     no_strong = True
-                    if act_edition and "as enacted" in act_edition.lower() and (prov.get("act_id") or "") in _AS_ENACTED_ACT_IDS:
-                        statute_notice = ("As-enacted gazette text (25.12.2023). Later amendments are not incorporated and "
+                    if _edition_is_as_enacted(act_edition, prov.get("act_id")):
+                        _enacted = "As-enacted gazette text (25.12.2023)." if "2023" in (prov.get("act_id") or "") else "As-enacted gazette text."
+                        statute_notice = (_enacted + " Later amendments are not incorporated and "
                                           "this was not independently verified against a second edition; check the official "
                                           "text before relying on it.")
                         if (prov.get("act_id") == "bharatiya-sakshya-adhiniyam-2023") and str(sec_num) == "63":

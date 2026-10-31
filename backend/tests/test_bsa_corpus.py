@@ -97,3 +97,34 @@ def test_as_enacted_codes_show_notice_and_qualified_badge():
     # Other acts keep their existing label and have no notice
     j = c.post('/api/v1/search/answer', json={'query': 'what is section 74 of the contract act', 'force_fallback': True}).json()
     assert not j.get('statute_notice')
+
+
+def test_cpa2019_corpus_integrity_and_lookup():
+    import json
+    from pathlib import Path
+    from app.services.statute_service import statute_service
+    corpus = json.loads((Path(__file__).resolve().parents[1] / "app" / "ingest" / "cpa_corpus.json").read_text(encoding="utf-8"))
+    assert sorted(map(int, corpus)) == list(range(1, 108))
+    for k, v in corpus.items():
+        assert v["heading"] and len(v["body"]) > 30, k
+        assert "GAZETTE" not in v["body"] and "CHAPTER" not in v["body"] and "NARAYANA" not in v["body"], k
+    p = statute_service.get_provision("consumer-protection-act-2019", "35")
+    assert p and "Manner in which complaint shall be made" in p["heading"]
+    assert "electronic form" in p["body"]
+
+
+def test_cpa2019_answer_carries_as_enacted_notice():
+    from fastapi.testclient import TestClient
+    from app.main import app
+    j = TestClient(app).post("/api/v1/search/answer", json={"query": "section 35 of the consumer protection act 2019", "force_fallback": True}).json()
+    assert "Consumer Protection Act, 2019" in j["ai_answer"]
+    assert "as enacted" in j["tier_label"].lower()
+    assert j.get("statute_notice") and "amendments" in j["statute_notice"].lower() and "25.12.2023" not in j["statute_notice"]
+
+
+def test_same_numbered_section_non_compete_still_resolves_to_contract_act():
+    """Adding the 2019 Consumer Act (s.27) must not hijack the bare 'Section 27' non-compete query."""
+    from fastapi.testclient import TestClient
+    from app.main import app
+    j = TestClient(app).post("/api/v1/search/answer", json={"query": "non-compete after employment ends under Section 27", "force_fallback": True}).json()
+    assert "Contract Act" in j["ai_answer"] and "Consumer Protection" not in j["ai_answer"]
