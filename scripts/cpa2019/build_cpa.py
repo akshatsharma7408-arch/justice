@@ -11,5 +11,9 @@ out['1']['caveat'] = ("Commencement: under s.1(3) the Act comes into force on da
                       "and different dates may apply to different provisions. The notified dates are not recorded in this database.")
 out['107']['caveat'] = ("Repeals the Consumer Protection Act, 1986 (68 of 1986) subject to the savings in sub-section (2); "
                         "the effect on pending matters is as stated in the section text.")
+PECUNIARY = ("Pecuniary jurisdiction: the value limits in this section are as enacted in 2019. Later rules may have changed them, and this database "
+             "has not checked current rules, so do not rely on it for which Commission currently has jurisdiction.")
+for k in ('34', '47', '58'):
+    out[k]['caveat'] = PECUNIARY
 json.dump(out, open(sys.argv[2], 'w'), indent=1, ensure_ascii=False)
 print(len(out), 'sections')

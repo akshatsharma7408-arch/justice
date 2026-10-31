@@ -1,6 +1,6 @@
 # Consumer Protection Act, 2019 (Act 35 of 2019) - corpus verification
 
-Status: text as enacted (assent 9 Aug 2019). NOT promoted to production (deploy-live) at the time of writing.
+Status: text as enacted (assent 9 Aug 2019).
 
 ## Source identity
 Gazette of India Extraordinary, Part II Sec 1, No. 54, 9 Aug 2019, 40 pages, title "2606GI.p65", Acrobat Distiller 7.0, created 9 Aug 2019 23:04 IST.
@@ -20,8 +20,12 @@ Not obtained: a copy from egazette.gov.in or India Code downloaded in full.
 - Token diff corpus (20,139 tokens) vs PyMuPDF (20,492): 47 differences, all non-statutory page furniture: 39 running page headers ("THE GAZETTE OF INDIA EXTRAORDINARY", page numbers), 7 chapter headings (II, III, IV, V, VI, VII, VIII; I excluded) and the gazette signature line after s.107. Zero differing words inside any section body.
 - Heading check: 0 of 107 headings fail (every heading's words occur in order in the marginal text of its page).
 
+## Pixel-based check (OCR of rendered pages)
+ocr_check.py: PDF pages rendered at 250 dpi and OCR'd with tesseract 4.1.1 (does not use the PDF text layer), token-diffed against the corpus. 106 corpus-side differing ops, all inspected: single-character OCR slips (clause numerals "(1)", "(h)", "(l)", "(i)", "18"->"8", "10"->"j0", "12"->"72"), "a copy"->"acopy" joins, and words next to marginal notes where OCR merged margin text (s.19, 21, 39, 47, 66, 86, 90, 95; contexts read in the OCR text). No word or number dropped or changed in the corpus. Every rupee amount (42 "crore/lakh/rupees" occurrences, incl. s.34/47/58 pecuniary limits and s.21/72/88-93 penalties) matches OCR count and context. Page-boundary continuity: no deleted or duplicated text at boundaries.
+
 ## Limits
-- Both extractions read the same PDF text layer; an error in the text layer itself would not show. No rendered-image comparison was done.
+- The two extractors (pdfplumber, PyMuPDF) read the same text layer and are not independent editions; the OCR check is the pixel-level cross-check. OCR is noisy next to marginal notes, so it is a check for dropped or changed words/numbers, not a second edition.
 - Amendments, rules, notifications and schedules after enactment are not incorporated. Commencement is by notification under s.1(3); notified dates are not recorded here.
+- Pecuniary jurisdiction (s.34, 47, 58) values are as enacted 2019; later rules may have changed them. The caveat is stored on those sections and shown at the top of the answer; no current-jurisdiction advice from this text.
 - Not a consolidated or current text. Served with the "as enacted - amendments not checked" badge and notice.
 - Case attachment: a case is kept only if its text names the 2019 Act; this guard is not proof of a holding.

@@ -128,3 +128,15 @@ def test_same_numbered_section_non_compete_still_resolves_to_contract_act():
     from app.main import app
     j = TestClient(app).post("/api/v1/search/answer", json={"query": "non-compete after employment ends under Section 27", "force_fallback": True}).json()
     assert "Contract Act" in j["ai_answer"] and "Consumer Protection" not in j["ai_answer"]
+
+
+def test_cpa2019_pecuniary_jurisdiction_warning_visible():
+    from fastapi.testclient import TestClient
+    from app.main import app
+    c = TestClient(app)
+    for sec in ("34", "47", "58"):
+        j = c.post("/api/v1/search/answer", json={"query": f"section {sec} of the consumer protection act 2019", "force_fallback": True}).json()
+        n = j.get("statute_notice") or ""
+        assert "pecuniary" in n.lower() and "later rules" in n.lower(), sec
+    j = c.post("/api/v1/search/answer", json={"query": "section 35 of the consumer protection act 2019", "force_fallback": True}).json()
+    assert "pecuniary" not in (j.get("statute_notice") or "").lower()

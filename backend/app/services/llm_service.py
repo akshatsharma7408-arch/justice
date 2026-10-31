@@ -1761,6 +1761,11 @@ class LLMService:
                         statute_notice = (_enacted + " Later amendments are not incorporated and "
                                           "this was not independently verified against a second edition; check the official "
                                           "text before relying on it.")
+                        if prov.get("act_id") == "consumer-protection-act-2019":
+                            statute_notice += " Commencement dates and rules made under the Act are not checked here."
+                            if str(sec_num) in ("34", "47", "58"):
+                                statute_notice += (" The pecuniary jurisdiction limits in this section are as enacted in 2019; later rules may have "
+                                                   "changed them, so do not use this text to decide which Commission currently has jurisdiction.")
                         if (prov.get("act_id") == "bharatiya-sakshya-adhiniyam-2023") and str(sec_num) == "63":
                             statute_notice += " The Schedule certificate form required by s.63(4) is not in this database."
 
