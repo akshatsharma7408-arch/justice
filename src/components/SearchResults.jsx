@@ -454,6 +454,18 @@ export default function SearchResults({
                     {answerData.ai_answer.split('\n\n').map((paragraph, pIdx) => {
                       const trimmedP = paragraph.trim();
                       if (!trimmedP) return null;
+                      const aiPrefix = 'Plain-English explanation (AI-written from the text above; not a verified statement of law):';
+                      if (trimmedP.startsWith(aiPrefix) || trimmedP.startsWith('AI explanation unavailable')) {
+                        const isExpl = trimmedP.startsWith(aiPrefix);
+                        return (
+                          <div key={pIdx} className="answer-ai-explainer" style={{ margin: '14px 0', padding: '12px 16px', borderLeft: '3px solid #c97d3c', background: 'rgba(201,125,60,0.08)', borderRadius: 6 }}>
+                            <div className="mono" style={{ fontSize: 11, letterSpacing: '0.08em', color: '#c97d3c', marginBottom: 6 }}>
+                              {isExpl ? 'AI EXPLANATION - NOT VERIFIED, WRITTEN FROM THE STATUTORY TEXT ABOVE' : 'AI EXPLANATION'}
+                            </div>
+                            <p className="answer-prose-paragraph" style={{ margin: 0 }}>{isExpl ? trimmedP.slice(aiPrefix.length).trim() : trimmedP}</p>
+                          </div>
+                        );
+                      }
                       return (
                         <p key={pIdx} className="answer-prose-paragraph">
                           {answerData.tier === 'tier1' ? renderWithBadges(trimmedP) : trimmedP}
@@ -499,7 +511,9 @@ export default function SearchResults({
                     </button>
 
                     <span className="answer-disclaimer-text mono">
-                      {answerData.tier === 'tier1'
+                      {answerData.tier === 'tier1' && (answerData.no_strong_case_match || !(answerData.source_cases && answerData.source_cases.length))
+                        ? 'Statutory text from the verified database; any AI explanation is not verified \u2022 Not formal legal advice'
+                        : answerData.tier === 'tier1'
                         ? 'AI summary based on the cases below \u2022 Not formal legal advice'
                         : answerData.tier === 'unreliable'
                           ? 'Authoritative Supreme Court precedents are indexed below'

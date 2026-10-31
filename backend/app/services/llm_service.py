@@ -973,7 +973,7 @@ class LLMService:
             "you are given. Do not add facts, exceptions, amendments, penalties, time limits or court decisions that "
             "are not in the text. Do not name any case or citation. Do not mention any article or section number "
             "other than the one(s) in the text. If the text is a definition or procedure, say what it means in "
-            "practice. Do not add requirements, tests or conditions that are not stated. 3 to 6 short sentences. Do not repeat the text word for word."
+            "practice. Do not add requirements, tests or conditions that are not stated. Keep every modal word (may, shall, must, can) and every time period or number exactly as the text uses it; never turn a one-time or conditional rule into an ongoing duty, and never change who may do what. Where the text says something happens at the end of a period, use the words 'at the end of <period>' and do not say 'once' or 'whenever'. Only restate what the text says: do not add consequences, examples, or 'in other words' expansions. 3 to 6 short sentences. Do not repeat the text word for word."
         )
         prompt = f"PROVISION: {label}\n\nTEXT:\n{source_text[:6000]}\n\nExplain this provision in plain English."
         for _ in range(2):
@@ -1010,7 +1010,8 @@ class LLMService:
                     "You are a strict checker. Compare an EXPLANATION to the legal TEXT it explains. Reply with exactly "
                     "SUPPORTED if every statement in the explanation is stated in the text or is a plain restatement of it. "
                     "Reply with exactly UNSUPPORTED if the explanation adds any fact, condition, requirement, sequence, "
-                    "exception, consequence or example that the text does not state, or changes who may do what."
+                    "exception, consequence or example that the text does not state, changes who may do what, or changes a modal word (may/shall/must) "
+                    "or a time period (for example turning a rule that applies at the end of a period into a continuing duty)."
                 ),
                 temperature=0.0, max_output_tokens=10,
             )
@@ -1476,10 +1477,14 @@ class LLMService:
                 ans_str = f"Article {art_num} of the Constitution of India governs '{heading}'. {body}"
                 if expl:
                     ans_str += f" {expl}"
+                _ai_shown = False
                 if not expl:
                     _ai = await self.explain_provision_ai(f"Article {art_num} of the Constitution of India ({heading})", body, force_fallback=force_fallback)
                     if _ai:
                         ans_str += f"\n\nPlain-English explanation (AI-written from the text above; not a verified statement of law): {_ai}\n\n"
+                        _ai_shown = True
+                    elif (not force_fallback) and self.client:
+                        ans_str += "\n\nAI explanation unavailable for this provision: it did not pass the faithfulness check, so only the statutory text is shown.\n\n"
                 ans_str += " "
                 if matching_cases:
                     c0 = matching_cases[0]
@@ -1490,7 +1495,7 @@ class LLMService:
                 else:
                     ans_str += f"Our verified database does not currently contain judicial dispute precedents under Article {art_num}."
                     cits = [f"Constitution of India, Article {art_num} ({heading}, w.e.f. {eff_date})"]
-                    tier_label = "Authoritative statutory provision"
+                    tier_label = "Statutory text + AI explanation (AI part not verified)" if _ai_shown else "Authoritative statutory provision"
                     no_strong = True
 
                 badged_ans = citation_checker.check_and_badge_text(ans_str, is_tier2=False)
@@ -1795,10 +1800,14 @@ class LLMService:
                 act_edition = prov.get("act_edition")
                 if act_edition and "constitution" not in (prov.get("act_id") or ""):
                     ans_str += f" Statute context: {act_edition}."
+                _ai_shown = False
                 if not expl and not has_unresolved_caveat and not (act_edition and "Repealed" in act_edition):
                     _ai = await self.explain_provision_ai(f"Section {sec_num} of the {title_disp} ({heading})", body, force_fallback=force_fallback)
                     if _ai:
                         ans_str += f"\n\nPlain-English explanation (AI-written from the text above; not a verified statement of law): {_ai}\n\n"
+                        _ai_shown = True
+                    elif (not force_fallback) and self.client:
+                        ans_str += "\n\nAI explanation unavailable for this provision: it did not pass the faithfulness check, so only the statutory text is shown.\n\n"
                 ans_str += " "
                 if matching_cases:
                     c0 = matching_cases[0]
@@ -1828,6 +1837,8 @@ class LLMService:
                     else:
                         tier_label = "Authoritative statutory provision"
                     no_strong = True
+                    if _ai_shown:
+                        tier_label = "Statutory text + AI explanation (AI part not verified)"
                     if _edition_is_as_enacted(act_edition, prov.get("act_id")):
                         _enacted = "As-enacted gazette text (25.12.2023)." if "2023" in (prov.get("act_id") or "") else "As-enacted gazette text."
                         statute_notice = (_enacted + " Later amendments are not incorporated and "
