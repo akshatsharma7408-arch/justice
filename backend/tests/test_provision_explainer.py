@@ -63,3 +63,17 @@ def test_grounded_check_requires_literal_quotes_and_ok():
     assert asyncio.run(mk("1 | No person shall be deprived of his property | OK")._explanation_is_grounded(src, ex)) is True
     assert asyncio.run(mk("1 | an officer may seize property | OK")._explanation_is_grounded(src, ex)) is False
     assert asyncio.run(mk("1 | No person shall be deprived of his property | CHANGED")._explanation_is_grounded(src, ex)) is False
+
+
+def test_explainer_has_a_time_budget(monkeypatch):
+    import app.services.llm_service as m
+    s = _svc(["x"])
+    async def slow(*a, **k):
+        await asyncio.sleep(5)
+        return "late"
+    s._explain_provision_ai_uncached = slow
+    real = asyncio.wait_for
+    async def fast_wait_for(coro, timeout):
+        return await real(coro, timeout=0.05)
+    monkeypatch.setattr(m.asyncio, "wait_for", fast_wait_for)
+    assert run(s) is None

@@ -1071,7 +1071,12 @@ class LLMService:
         _cache = self.__dict__.setdefault("_expl_cache", {})
         if _ck in _cache:
             return _cache[_ck]
-        _res = await self._explain_provision_ai_uncached(label, source_text, system, prompt)
+        try:
+            # Hard time budget so a rate-limited or slow model never leaves the user waiting.
+            _res = await asyncio.wait_for(self._explain_provision_ai_uncached(label, source_text, system, prompt), timeout=40)
+        except asyncio.TimeoutError:
+            logger.warning("Provision explanation timed out after 40s")
+            return None
         if _res:
             _cache[_ck] = _res  # only accepted explanations are cached
         return _res
