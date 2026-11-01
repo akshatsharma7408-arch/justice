@@ -44,4 +44,4 @@ def test_dva_case_gate_requires_the_act_to_be_named():
 
 def test_ai_explanation_paragraphs_are_not_split_out_of_the_labelled_box():
     src = (Path(__file__).resolve().parents[1] / "app" / "services" / "llm_service.py").read_text(encoding="utf-8")
-    assert src.count("chr(10), _ai") == 2 and "not a verified statement of law): {_ai}" not in src
+    assert src.count("_one_paragraph(_ai)") == 2 and "not a verified statement of law): {_ai}" not in src

@@ -195,6 +195,11 @@ def split_into_clauses(text: str):
     return [s for s in segs if len(re.findall(r"[A-Za-z]{3,}", s)) >= 2]
 
 
+def _one_paragraph(text: str) -> str:
+    """Join paragraph breaks so the whole AI explanation stays inside its labelled box in the UI."""
+    return re.sub(r"\n\s*\n", "\n", text or "")
+
+
 def summary_is_about_other_article(summary: str, art_num: str) -> bool:
     """True when a case summary cites constitutional articles but never the one asked about (so it is about something else)."""
     cited = {a.upper() for a in re.findall(r"\bArticles?\s+(\d+[A-Za-z]*)", summary or "", re.IGNORECASE)}
@@ -1781,7 +1786,7 @@ class LLMService:
                 if not expl:
                     _ai = await self.explain_provision_ai(f"Article {art_num} of the Constitution of India ({heading})", body, force_fallback=force_fallback)
                     if _ai:
-                        ans_str += f"\n\nPlain-English explanation (AI-written from the text above; not a verified statement of law): {re.sub(r"\n\s*\n", chr(10), _ai)}\n\n"
+                        ans_str += f"\n\nPlain-English explanation (AI-written from the text above; not a verified statement of law): {_one_paragraph(_ai)}\n\n"
                         _ai_shown = True
                     elif (not force_fallback) and self.client:
                         ans_str += "\n\n" + explanation_unavailable_note() + "\n\n"
@@ -2109,7 +2114,7 @@ class LLMService:
                 if not expl and not has_unresolved_caveat and not (act_edition and "Repealed" in act_edition):
                     _ai = await self.explain_provision_ai(f"Section {sec_num} of the {title_disp} ({heading})", body, force_fallback=force_fallback)
                     if _ai:
-                        ans_str += f"\n\nPlain-English explanation (AI-written from the text above; not a verified statement of law): {re.sub(r"\n\s*\n", chr(10), _ai)}\n\n"
+                        ans_str += f"\n\nPlain-English explanation (AI-written from the text above; not a verified statement of law): {_one_paragraph(_ai)}\n\n"
                         _ai_shown = True
                     elif (not force_fallback) and self.client:
                         ans_str += "\n\n" + explanation_unavailable_note() + "\n\n"
