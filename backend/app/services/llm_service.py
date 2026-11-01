@@ -181,7 +181,7 @@ def vetted_clause_explanation(source_text: str):
         pairs.append((f"({m.group(1)})" if m else None, e["gloss"] if e else None))
     if sum(1 for _, g in pairs if g) * 2 < len(pairs):
         return None
-    return render_clause_explanation(pairs) + "\n(Wording prepared in advance by an AI assistant and compared clause by clause with the statute text above; no lawyer has reviewed it and it is not legal advice.)"
+    return render_clause_explanation(pairs) + "\n(Wording prepared in advance by an AI assistant and compared clause by clause with the statute text above; no lawyer has reviewed it and it is not legal advice. Statute text checked against the Legislative Department edition as on May 2022; later amendments were not checked.)"
 
 
 

@@ -36,3 +36,7 @@ def test_works_with_no_llm():
     svc = LLMService()
     out = asyncio.run(svc.explain_provision_ai("Article 51A", CORPUS["51A"]["body"]))
     assert out and "(c): to uphold and protect the sovereignty" in out
+
+def test_note_states_edition_and_review_limits():
+    out = vetted_clause_explanation(CORPUS["19"]["body"])
+    assert "May 2022" in out and "no lawyer has reviewed" in out and "not explained here" in out
