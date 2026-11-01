@@ -1,0 +1,38 @@
+import json, re, hashlib, os, asyncio
+from app.services.llm_service import vetted_clause_explanation, split_into_clauses, LLMService
+
+DATA = os.path.join(os.path.dirname(__file__), "..", "app", "data")
+CORPUS = json.load(open(os.path.join(DATA, "..", "ingest", "constitution_corpus.json")))
+G = json.load(open(os.path.join(DATA, "..", "ingest", "vetted_clause_glosses.json")))
+MODALS = ("shall", "may", "must", "nothing", "not ", "no ")
+
+def test_each_gloss_keeps_numbers_and_negation_of_its_clause():
+    for e in G.values():
+        s, g = e["source"].lower(), e["gloss"].lower()
+        assert not re.findall(r"\b\d+\b", re.sub(r"\(\w+\)", "", s)) and not re.findall(r"\b\d+\b", re.sub(r"\(\w+\)", "", g))
+        for w in ("six", "fourteen"):
+            assert (w in s) == (w in g)
+        assert ("nothing" in s) == ("does not" in g or "do not" in g)
+        for t in ("sovereignty", "humanism", "composite", "scheduled tribe", "defamation", "contempt of court"):
+            assert (t in s) == (t in g), (e["article"], e["clause_index"], t)
+
+def test_glosses_match_current_corpus_text():
+    for e in G.values():
+        segs = split_into_clauses(CORPUS[e["article"]]["body"])
+        assert segs[e["clause_index"] - 1] == e["source"]
+
+def test_art_51a_full_and_art_19_partial_names_omitted():
+    a = vetted_clause_explanation(CORPUS["51A"]["body"])
+    assert a and "PARTIAL" not in a and "(k):" in a
+    b = vetted_clause_explanation(CORPUS["19"]["body"])
+    assert b and "PARTIAL EXPLANATION" in b and "(6)" in b.split("PARTIAL EXPLANATION")[1] and "(i)" in b.split("PARTIAL EXPLANATION")[1]
+
+def test_changed_source_is_not_explained():
+    body = CORPUS["51A"]["body"].replace("six and fourteen", "six and sixteen")
+    out = vetted_clause_explanation(body)
+    assert out and "PARTIAL EXPLANATION" in out and "(k)" in out.split("PARTIAL EXPLANATION")[1]
+
+def test_works_with_no_llm():
+    svc = LLMService()
+    out = asyncio.run(svc.explain_provision_ai("Article 51A", CORPUS["51A"]["body"]))
+    assert out and "(c): to uphold and protect the sovereignty" in out

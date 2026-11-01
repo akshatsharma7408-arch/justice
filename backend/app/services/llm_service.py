@@ -138,6 +138,63 @@ def explanation_numbers_ok(source: str, explanation: str) -> bool:
     return _numbers_in(explanation) <= _numbers_in(source)
 
 
+_CLAUSE_SPLIT = re.compile(r"(?<=[;:\u2014.\]])\s*(?:\]\s*)?(?:\[\s*)*(?=\(\w{1,4}\)(?![\w*]))")
+PROTECTED_LEGAL_TERMS = ("sovereignty", "sovereign", "integrity", "humanism", "jurisdiction", "cognizable", "non-bailable",
+                         "bailable", "prejudice", "habeas corpus", "mandamus", "certiorari", "quo warranto", "injunction")
+
+def render_clause_explanation(pairs):
+    """Text for a clause-by-clause explanation. A partial result is labelled as partial and names the clauses
+    that are not explained, so the reader does not take the shown part as the whole provision."""
+    lines, omitted = [], []
+    for n, (marker, sentence) in enumerate(pairs, 1):
+        label = marker or ("opening words" if n == 1 else f"clause {n}")
+        if sentence:
+            lines.append(f"{label}: {sentence}")
+        else:
+            omitted.append(label)
+    if omitted:
+        lines.append("PARTIAL EXPLANATION: not explained here (read the statute text above for these, they may add conditions or "
+                     "exceptions that change the meaning of the rest): " + ", ".join(omitted) + ".")
+    return "\n".join(lines)
+
+_VETTED_GLOSSES = None
+
+def vetted_clause_explanation(source_text: str):
+    """Plain wording prepared ahead of time, per clause, keyed by the hash of that clause's exact source text. A clause whose
+    text changed (or that has no prepared wording) is named as not explained. Returns None unless at least half the clauses match."""
+    global _VETTED_GLOSSES
+    import hashlib, json, os
+    if _VETTED_GLOSSES is None:
+        try:
+            with open(os.path.join(os.path.dirname(__file__), "..", "ingest", "vetted_clause_glosses.json"), encoding="utf-8") as f:
+                _VETTED_GLOSSES = json.load(f)
+        except Exception:
+            _VETTED_GLOSSES = {}
+    segs = split_into_clauses(source_text)
+    if len(segs) < 2 or not _VETTED_GLOSSES:
+        return None
+    pairs = []
+    for s in segs:
+        h = hashlib.sha256(re.sub(r"\s+", " ", s).strip().encode()).hexdigest()
+        m = re.match(r"\(([A-Za-z0-9]{1,4})\)", s)
+        e = _VETTED_GLOSSES.get(h)
+        pairs.append((f"({m.group(1)})" if m else None, e["gloss"] if e else None))
+    if sum(1 for _, g in pairs if g) * 2 < len(pairs):
+        return None
+    return render_clause_explanation(pairs) + "\n(Wording prepared in advance by an AI assistant and compared clause by clause with the statute text above; no lawyer has reviewed it and it is not legal advice.)"
+
+
+
+
+def split_into_clauses(text: str):
+    """Deterministic split of a provision at its own (a)/(1) markers. A lead-in such as
+    'It shall be the duty of every citizen of India-' is kept as its own segment (number 0 context)."""
+    t = re.sub(r"\s+", " ", text or "").strip()
+    segs = [x.strip(" []") for x in _CLAUSE_SPLIT.split(t) if x.strip(" []")]
+    # drop pieces with no words (repealed-clause asterisks such as '(f)* * * * *')
+    return [s for s in segs if len(re.findall(r"[A-Za-z]{3,}", s)) >= 2]
+
+
 def summary_is_usable(text: str) -> bool:
     """False for OCR junk such as '430 A B c D E F G H (1992) 3 S.C.R.' or the generic placeholder."""
     t = (text or "").strip()
@@ -1054,6 +1111,10 @@ class LLMService:
         set, or the output fails the safety check: it must not name a case or citation, and every
         article/section number it mentions must appear in the supplied text or label.
         """
+        if source_text:
+            _v = vetted_clause_explanation(source_text)
+            if _v:
+                return _v
         if force_fallback or not self.client or not source_text or len(source_text.strip()) < 20:
             return None
         if model_rate_limited():
