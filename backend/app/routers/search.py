@@ -352,7 +352,7 @@ def build_statute_card(query: str) -> str:
 
 
 _OLD_CODE_RE = re.compile(r"\b(?:IPC|CrPC|Cr\.P\.C|Indian Penal Code|Code of Criminal Procedure|Indian Evidence Act)\b", re.I)
-OLD_CODE_NOTE = ("NOTE ON WHICH LAW APPLIES: the Indian Penal Code, 1860, the Code of Criminal Procedure, 1973 and the Indian Evidence "
+OLD_CODE_NOTE = ("NOTE ON WHICH LAW APPLIES: The Indian Penal Code, 1860, the Code of Criminal Procedure, 1973 and the Indian Evidence "
                  "Act, 1872 were repealed and replaced by the Bharatiya Nyaya Sanhita (BNS), the Bharatiya Nagarik Suraksha Sanhita (BNSS) and the "
                  "Bharatiya Sakshya Adhiniyam (BSA), in force from 1 July 2024 (our database records the Gazette notifications "
                  "S.O. 848(E)-850(E) of 23 Feb 2024). Which code governs a matter is set by each new law's repeal and savings section "
