@@ -40,3 +40,10 @@ def test_works_with_no_llm():
 def test_note_states_edition_and_review_limits():
     out = vetted_clause_explanation(CORPUS["19"]["body"])
     assert "May 2022" in out and "no lawyer has reviewed" in out and "not explained here" in out
+
+
+def test_case_header_debris_is_not_a_usable_summary():
+    from app.services.llm_service import summary_is_usable
+    bad = "NA VEEN JINDAL [ V.N. KHARE, CJ.] 1069 Part III of the Constitution of India, apart from clauses 2 to 4 and 6 of Article A 19 of the Constitution of India."
+    assert not summary_is_usable(bad)
+    assert summary_is_usable("The Court held that a statute violating a fundamental right is void to the extent of the inconsistency.")

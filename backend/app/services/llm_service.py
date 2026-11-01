@@ -147,7 +147,7 @@ def render_clause_explanation(pairs):
     that are not explained, so the reader does not take the shown part as the whole provision."""
     lines, omitted = [], []
     for n, (marker, sentence) in enumerate(pairs, 1):
-        label = marker or ("opening words" if n == 1 else f"clause {n}")
+        label = marker or ("Lead-in" if n == 1 else f"clause {n}")
         if sentence:
             lines.append(f"{label}: {sentence}")
         else:
@@ -202,6 +202,9 @@ def summary_is_usable(text: str) -> bool:
         return False
     # A holding starts as a sentence. A fragment that starts mid-clause or quotes statute sub-clauses is not one.
     if re.match(r"^(?:\(|(?:or|and)\s+\()", t) or len(re.findall(r"\((?:[a-z]|[ivx]+|\d)\)", t)) >= 2:
+        return False
+    # Case-header debris: a party name in capitals, a judge roster such as [V.N. KHARE, CJ.], or a page number before a Part.
+    if re.match(r"^[A-Z]{2,}\s+[A-Z]{2,}\b", t) or re.search(r"\b(?:C\.?J|J{1,2})\.?\s*\]", t) or re.search(r"\b\d{3,4}\s+Part\s+[IVX]+\b", t):
         return False
     toks = t.split()
     singles = sum(1 for w in toks if len(w.strip(".,;:()[]")) == 1 and w.strip(".,;:()[]").isalpha())

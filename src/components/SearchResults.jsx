@@ -484,7 +484,7 @@ export default function SearchResults({
                             <div className="mono" style={{ fontSize: 11, letterSpacing: '0.08em', color: '#c97d3c', marginBottom: 6 }}>
                               {isExpl ? 'AI EXPLANATION - NOT VERIFIED, WRITTEN FROM THE STATUTORY TEXT ABOVE' : 'AI EXPLANATION'}
                             </div>
-                            <p className="answer-prose-paragraph" style={{ margin: 0 }}>{isExpl ? trimmedP.slice(aiPrefix.length).trim() : trimmedP}</p>
+                            <p className="answer-prose-paragraph" style={{ margin: 0, whiteSpace: 'pre-line', lineHeight: 1.6 }}>{isExpl ? trimmedP.slice(aiPrefix.length).trim() : trimmedP}</p>
                           </div>
                         );
                       }
