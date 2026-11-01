@@ -1618,7 +1618,7 @@ class LLMService:
                     "The President may also be removed from office for violation of the Constitution by impeachment in the manner provided in Article 61. "
                     "Notwithstanding the expiration of the term, the President continues to hold office until a successor enters upon office. "
                     "Article 56 relates strictly to presidential tenure and executive governance. "
-                    "Our verified database does not currently contain judicial dispute precedents under Article 56."
+                    "No sufficiently relevant case summary was verified for this result."
                 )
                 ratio_str = (
                     "Article 56 provides that the President holds office for a term of five years from the date of entering upon office, "
@@ -1689,7 +1689,7 @@ class LLMService:
                     "in which the administration of the National Capital Territory cannot be carried on in accordance with Article 239AA or that for the proper "
                     "administration of the National Capital Territory it is necessary or expedient so to do, the President may by order suspend the operation of "
                     "any provision of Article 239AA or of all or any of the provisions of any law made in pursuance of that article. "
-                    "Our verified database does not currently contain judicial dispute precedents interpreting Article 239AB."
+                    "No sufficiently relevant case summary was verified for this result."
                 )
                 ratio_str = (
                     "Article 239AB empowers the President to suspend the operation of Article 239AA or provisions thereof upon failure of constitutional machinery "
@@ -1801,7 +1801,7 @@ class LLMService:
                     tier_label = "Statutory text + AI explanation (AI part not verified) + case summary below" if _ai_shown else "AI summary based on the cases below"
                     no_strong = False
                 else:
-                    ans_str += ("No sufficiently relevant case summary was verified for this result." if _withheld else f"Our verified database does not currently contain judicial dispute precedents under Article {art_num}.")
+                    ans_str += "No sufficiently relevant case summary was verified for this result."
                     cits = [f"Constitution of India, Article {art_num} ({heading}, w.e.f. {eff_date})"]
                     tier_label = "Statutory text + AI explanation (AI part not verified)" if _ai_shown else "Authoritative statutory provision"
                     no_strong = True
@@ -2130,7 +2130,7 @@ class LLMService:
                     tier_label = "Statutory text + AI explanation (AI part not verified) + case summary below" if _ai_shown else "AI summary based on the cases below"
                     no_strong = False
                 else:
-                    ans_str += f"Our verified database does not currently contain judicial dispute precedents interpreting Section {sec_num} of the {title_disp}."
+                    ans_str += "No sufficiently relevant case summary was verified for this result."
                     cits = [f"{act_title}, Section {sec_num} ({heading})"]
                     if act_edition and "Repealed" in act_edition:
                         # Repealed Acts (IPC/CrPC): savings context applies, and per-section body
