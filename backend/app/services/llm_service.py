@@ -186,6 +186,38 @@ def vetted_clause_explanation(source_text: str):
 
 
 
+# Words an explanation may not swap in for a legal party term, and qualifiers it may not drop.
+_PARTY_SWAPS = ("abuser", "victim", "perpetrator", "offender", "wrongdoer", "culprit", "guilty", "criminal")
+_QUALIFIERS = ("ordinarily", "endeavour", "endeavor", "prima facie", "reasonable", "forthwith", "immediately", "as nearly as possible",
+               "notwithstanding", "provided that", "without prejudice", "may", "shall", "must", "not")
+
+
+def clause_sentence_preserves(clause: str, sentence: str) -> Optional[str]:
+    """Deterministic guard for a one-clause plain-English sentence. Returns a reason string when the sentence swaps a
+    party term the clause does not use, drops a qualifier or modal word the clause has, or drops a time/number; None when
+    these checks pass. It does not prove the sentence is faithful: it only catches known drift."""
+    c, t = clause.lower(), sentence.lower()
+    for w in _PARTY_SWAPS:
+        if re.search(rf"\b{w}\b", t) and not re.search(rf"\b{w}\b", c):
+            return f"swapped in '{w}'"
+    for q in _QUALIFIERS:
+        if q in ("may", "shall", "must", "not"):
+            if re.search(rf"\b{q}\b", c):
+                alts = {"may": ("may", "can", "could be", "is allowed", "are allowed"), "shall": ("shall", "must", "has to", "have to", "will"),
+                        "must": ("must", "shall", "has to", "have to"), "not": ("not", "no ", "cannot", "never", "n't", "without")}[q]
+                if not any(a in t for a in alts):
+                    return f"modal/negation '{q}' not carried over"
+        elif q in c and q not in t:
+            if q in ("endeavour", "endeavor") and ("try" in t or "endeavour" in t or "endeavor" in t):
+                continue
+            if q == "immediately" and "at once" in t:
+                continue
+            return f"qualifier '{q}' dropped"
+    if not explanation_numbers_ok(clause, sentence):
+        return "number or time period changed"
+    return None
+
+
 def split_into_clauses(text: str):
     """Deterministic split of a provision at its own (a)/(1) markers. A lead-in such as
     'It shall be the duty of every citizen of India-' is kept as its own segment (number 0 context)."""
