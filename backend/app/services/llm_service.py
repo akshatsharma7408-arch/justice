@@ -138,7 +138,7 @@ def explanation_numbers_ok(source: str, explanation: str) -> bool:
     return _numbers_in(explanation) <= _numbers_in(source)
 
 
-_CLAUSE_SPLIT = re.compile(r"(?<=[;:\u2014])\s+(?=\(\w{1,4}\))|(?<=[.;])\s+(?=\(\d+[A-Za-z]?\))")
+_CLAUSE_SPLIT = re.compile(r"(?<=[;:\u2014.\]])\s*(?:\]\s*)?(?:\[\s*)*(?=\(\w{1,4}\)(?![\w*]))")
 MAX_CLAUSES = 14
 
 
@@ -146,7 +146,9 @@ def split_into_clauses(text: str):
     """Deterministic split of a provision at its own (a)/(1) markers. A lead-in such as
     'It shall be the duty of every citizen of India-' is kept as its own segment (number 0 context)."""
     t = re.sub(r"\s+", " ", text or "").strip()
-    return [x.strip() for x in _CLAUSE_SPLIT.split(t) if x.strip()]
+    segs = [x.strip(" []") for x in _CLAUSE_SPLIT.split(t) if x.strip(" []")]
+    # drop pieces with no words (repealed-clause asterisks such as '(f)* * * * *')
+    return [s for s in segs if len(re.findall(r"[A-Za-z]{3,}", s)) >= 2]
 
 
 def summary_is_usable(text: str) -> bool:
@@ -1107,6 +1109,7 @@ class LLMService:
             "For EACH numbered clause write exactly one line: <number> | <one short plain sentence>. "
             "Use only what that clause says (a clause that is only a lead-in applies to the clauses after it, so restate it on its own). "
             "Keep every may, shall, must, can and every period or number exactly as in the clause. "
+            "Time phrases: write 'at the end of ten years' for 'at the expiration of ten years'; never use 'after' or 'once' for such a phrase. "
             "Do not add emphasis, examples, reasons, consequences, exceptions or anything about what happens in practice. "
             "REWRITE in simpler everyday words and a shorter sentence than the clause; never copy the clause's wording or its (a)/(b) markers. "
             "Example: clause 'to safeguard public property and to abjure violence' -> 'Look after public property and stay away from violence.' "
@@ -1148,7 +1151,7 @@ class LLMService:
                             r"\bafter\s+(?:\w+\s+){0,3}(?:years?|months?|days?)\b|\bonce\s+\w+\s+(?:years?|months?|days?)\b", s, re.I):
                         reason = f"timing changed in clause {i}"
                         break
-                    if len(seg) > 25 and difflib.SequenceMatcher(None, re.sub(r"^\(\w+\)\s*", "", seg).lower(), s.lower()).ratio() > 0.8:
+                    if len(seg) > 60 and difflib.SequenceMatcher(None, re.sub(r"^\(\w+\)\s*", "", seg).lower(), s.lower()).ratio() > 0.85:
                         reason = f"too close to clause {i}"
                         break
             if reason is None:
