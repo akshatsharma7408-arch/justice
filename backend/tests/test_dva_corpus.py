@@ -30,3 +30,13 @@ def test_dva_lookup_and_qualified_label():
     assert "later amendments not checked" in j["tier_label"].lower()
     assert "authoritative" not in j["tier_label"].lower()
     assert j.get("statute_notice") and "India Code" in j["statute_notice"]
+
+
+def test_dva_case_gate_requires_the_act_to_be_named():
+    import re
+    src = (Path(__file__).resolve().parents[1] / "app" / "services" / "llm_service.py").read_text(encoding="utf-8")
+    m = re.search(r'"protection-of-women-from-domestic-violence-act-2005": r"([^"]+)"', src)
+    assert m
+    rx = m.group(1)
+    assert not re.search(rx, "suit filed under section 18 of the act is not maintainable consent terms maintenance")
+    assert re.search(rx, "application under section 12 of the protection of women from domestic violence act, 2005")

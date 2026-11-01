@@ -2048,6 +2048,8 @@ class LLMService:
                     "bharatiya-nagarik-suraksha-sanhita-2023": r"bharatiya\s+nagarik\s+suraksha\s+sanhita|\bb\.?n\.?s\.?s\.?\b",
                     # 2019 Act: older consumer judgments apply the 1986 Act with the same section numbers
                     "consumer-protection-act-2019": r"consumer\s+protection\s+act,?\s*(?:\(?no\.?\s*35\s+of\s+)?2019",
+                    # Domestic Violence Act: other Acts also have a s.18/s.20 etc. (for example maintenance or land laws)
+                    "protection-of-women-from-domestic-violence-act-2005": r"protection\s+of\s+women\s+from\s+domestic\s+violence|domestic\s+violence\s+act|\bpwdva\b|\bd\.?v\.?\s+act\b",
                 }
                 _new_code_re = _new_code_patterns.get(prov.get("act_id") or "")
                 if _new_code_re:
