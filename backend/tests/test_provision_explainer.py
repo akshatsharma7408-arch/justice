@@ -5,9 +5,6 @@ from app.services.llm_service import LLMService
 
 def _svc(outputs):
     s = LLMService.__new__(LLMService)
-    async def _g(src, out):
-        return True
-    s._explanation_is_grounded = _g
     seq = list(outputs)
 
     class M:
@@ -26,7 +23,7 @@ def run(s, **kw):
 
 
 def test_accepts_plain_explanation():
-    assert run(_svc(["The State cannot take your property unless a law allows it.", "SUPPORTED"])) == "The State cannot take your property unless a law allows it."
+    assert run(_svc(["The State cannot take your property unless a law allows it.", "1 | No person shall be deprived of his property | OK\nVERDICT | SUPPORTED"])) == "The State cannot take your property unless a law allows it."
 
 
 def test_rejects_case_names_and_foreign_numbers_then_none():
@@ -34,7 +31,7 @@ def test_rejects_case_names_and_foreign_numbers_then_none():
 
 
 def test_retry_recovers():
-    assert run(_svc(["Under Section 99 you can sue.", "Property can be taken only under a law.", "SUPPORTED"])) == "Property can be taken only under a law."
+    assert run(_svc(["Under Section 99 you can sue.", "Property can be taken only under a law.", "1 | No person shall be deprived of his property | OK\nVERDICT | SUPPORTED"])) == "Property can be taken only under a law."
 
 
 def test_force_fallback_returns_none():
@@ -42,7 +39,7 @@ def test_force_fallback_returns_none():
 
 
 def test_unsupported_claim_rejected_by_verifier():
-    assert run(_svc(["Property can be taken after a court order.", "UNSUPPORTED", "Property can be taken after a court order.", "UNSUPPORTED"])) is None
+    assert run(_svc(["Property can be taken after a court order.", "1 | No person shall be deprived of his property | OK\nVERDICT | UNSUPPORTED", "Property can be taken after a court order.", "1 | No person shall be deprived of his property | OK\nVERDICT | UNSUPPORTED"])) is None
 
 
 def test_grounded_check_requires_literal_quotes_and_ok():
@@ -77,3 +74,29 @@ def test_explainer_has_a_time_budget(monkeypatch):
         return await real(coro, timeout=0.05)
     monkeypatch.setattr(m.asyncio, "wait_for", fast_wait_for)
     assert run(s) is None
+
+
+def test_merged_verifier_uses_one_call_per_attempt():
+    calls = []
+    s = _svc(["The State cannot take your property unless a law allows it.",
+              "1 | No person shall be deprived of his property | OK\nVERDICT | SUPPORTED"])
+    orig = s._client.models.generate_content
+    def counting(**kw):
+        calls.append(1)
+        return orig(**kw)
+    s._client.models.generate_content = counting
+    assert run(s) == "The State cannot take your property unless a law allows it."
+    assert len(calls) == 2  # one generation + one merged verification
+
+
+def test_merged_verifier_rejects_missing_verdict_changed_and_bad_quote():
+    src = "No person shall be deprived of his property save by authority of law."
+    ex = "Nobody can lose property without a law."
+    def v(txt):
+        s = _svc([txt])
+        return asyncio.run(s._explanation_verified_merged(src, ex))
+    assert v("1 | No person shall be deprived of his property | OK\nVERDICT | SUPPORTED") is True
+    assert v("1 | No person shall be deprived of his property | OK") is False
+    assert v("1 | No person shall be deprived of his property | CHANGED\nVERDICT | SUPPORTED") is False
+    assert v("1 | an officer may seize property | OK\nVERDICT | SUPPORTED") is False
+    assert v("1 | No person shall be deprived of his property | OK\nVERDICT | UNSUPPORTED") is False

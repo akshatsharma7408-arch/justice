@@ -1111,7 +1111,7 @@ class LLMService:
                     break
             if bad or not explanation_numbers_ok(source_text, out):
                 continue
-            if not await self._explanation_is_grounded(source_text, out) or not await self._explanation_is_supported(source_text, out):
+            if not await self._explanation_verified_merged(source_text, out):
                 logger.warning("Provision explanation rejected: unsupported claim")
                 continue
             return out
@@ -1143,6 +1143,65 @@ class LLMService:
             return []
         idx = {int(n) - 1 for n in re.findall(r"\d+", txt)}
         return [c for i, c in enumerate(top) if i in idx]
+
+    async def _explanation_verified_merged(self, source_text: str, explanation: str) -> bool:
+        """One verifier call instead of two: per-sentence grounded quotes (mechanically checked as literal
+        substrings of the text, all must be OK) plus a final overall verdict that must be SUPPORTED."""
+        sents = [x.strip() for x in re.split(r"(?<=[.!?])\s+", explanation.strip()) if x.strip()]
+        if not sents or len(sents) > 8:
+            return False
+        if re.search(r"expiration of|expiry of|at the end of", source_text, re.I) and re.search(
+                r"\bafter\s+(?:\w+\s+){0,3}(?:years?|months?|days?)\b|\bonce\s+\w+\s+(?:years?|months?|days?)\b", explanation, re.I):
+            return False
+        norm = lambda s: re.sub(r"\s+", " ", re.sub(r"[\u2018\u2019]", "'", s)).strip().lower()
+        src = norm(source_text)
+        numbered = "\n".join(f"{i+1}. {x}" for i, x in enumerate(sents))
+        cfg = types.GenerateContentConfig(
+            system_instruction=(
+                "You audit an explanation of a legal TEXT. For each numbered explanation sentence output exactly one "
+                "line: <number> | <the shortest exact fragment copied from TEXT that supports it> | OK or CHANGED. "
+                "Use CHANGED if the sentence alters the meaning: a different actor (who may or must act), a different "
+                "modal word (may/shall/must/can), a different time or condition, an added requirement, exception, "
+                "consequence or example, or a narrower or wider scope than the text. Also use CHANGED for any emphasis or "
+                "characterisation the text does not make (for example 'absolute', 'only way', 'always', 'never', 'strict'), "
+                "for examples of things or people not named in the text, and for any claim about what happens in practice. "
+                "Use OK only when the fragment really supports the whole sentence. After the sentence lines output one final line: VERDICT | SUPPORTED or "
+                "VERDICT | UNSUPPORTED. SUPPORTED means every statement in the explanation is stated in the text or is a plain "
+                "restatement of it. Output only these lines."
+            ),
+            temperature=0.0, max_output_tokens=600,
+        )
+        try:
+            for _try in range(2):
+                try:
+                    resp = await asyncio.to_thread(
+                        self.client.models.generate_content, model=self.model,
+                        contents=f"TEXT:\n{source_text[:6000]}\n\nEXPLANATION SENTENCES:\n{numbered}", config=cfg)
+                    break
+                except Exception as _e:
+                    if "429" in str(_e) and _try == 0:
+                        await asyncio.sleep(5)
+                        continue
+                    raise
+            lines = [l.strip() for l in (getattr(resp, "text", None) or "").splitlines() if "|" in l]
+        except Exception as e:
+            logger.warning("Merged verifier failed: %s", e)
+            _note_rate_limit(e)
+            return False
+        verdicts = [l for l in lines if l.upper().startswith("VERDICT")]
+        body = [l for l in lines if not l.upper().startswith("VERDICT")]
+        if len(verdicts) != 1 or len(body) != len(sents):
+            return False
+        if not verdicts[0].split("|")[-1].strip().upper().startswith("SUPPORTED"):
+            return False
+        for l in body:
+            parts = [x.strip() for x in l.split("|")]
+            if len(parts) < 3 or parts[-1].upper() != "OK":
+                return False
+            quote = norm(parts[1].strip('"\' '))
+            if len(quote) < 8 or quote not in src:
+                return False
+        return True
 
     async def _explanation_is_grounded(self, source_text: str, explanation: str) -> bool:
         """Sentence-by-sentence grounding: each explanation sentence must be tied to an exact fragment of the text.
