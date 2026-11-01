@@ -2125,7 +2125,7 @@ class LLMService:
                     tier_label = "Statutory text + AI explanation (AI part not verified) + case summary below" if _ai_shown else "AI summary based on the cases below"
                     no_strong = False
                 else:
-                    ans_str += f"Our verified database does not currently contain judicial dispute precedents interpreting Section {sec_num} of the {act_title}."
+                    ans_str += f"Our verified database does not currently contain judicial dispute precedents interpreting Section {sec_num} of the {title_disp}."
                     cits = [f"{act_title}, Section {sec_num} ({heading})"]
                     if act_edition and "Repealed" in act_edition:
                         # Repealed Acts (IPC/CrPC): savings context applies, and per-section body
