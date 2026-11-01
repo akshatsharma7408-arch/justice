@@ -540,7 +540,7 @@ export default function SearchResults({
                         : answerData.tier === 'statute_text'
                           ? 'Exact statute wording as quoted in Supreme Court judgments \u2022 Current applicability not verified \u2022 Not legal advice'
                         : answerData.tier === 'unreliable'
-                          ? 'Authoritative Supreme Court precedents are indexed below'
+                          ? 'No AI explanation available \u2022 Not legal advice \u2022 Check the primary source or a lawyer'
                           : 'General legal information \u2022 Not legal advice \u2022 Verify with a lawyer or primary statute'}
                     </span>
                   </div>

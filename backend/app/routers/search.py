@@ -328,9 +328,13 @@ def build_statute_card(query: str) -> str:
                      "(possibly including provisos, explanations or exceptions) is not shown")
         edition = (m.get("edition") or "edition not recorded").strip()
         src = m.get("source_url")
+        if src and "prsindia.org" in src:
+            src_label = "Third-party reference copy (PRS India, not the Gazette; the text above is from the Gazette named in the edition note)"
+        else:
+            src_label = "Source"
         blocks.append(
             f"{m.get('act_title')}, Section {m.get('section_number')} - {m.get('heading')}\n"
-            f"Edition: {edition}\n{label}:\n\"{body}\"" + (f"\nRead the full provision at: {src}" if (src and cut) else ("\nThe full provision is not linked here; check the official Act." if cut else "")) + (f"\nSource: {src}" if (src and not cut) else "")
+            f"Edition: {edition}\n{label}:\n\"{body}\"" + (f"\nRead the full provision - {src_label}: {src}" if (src and cut) else ("\nThe full provision is not linked here; check the official Act." if cut else "")) + (f"\n{src_label}: {src}" if (src and not cut) else "")
         )
     if not blocks:
         return ""
@@ -341,12 +345,13 @@ def build_statute_card(query: str) -> str:
 
 _OLD_CODE_RE = re.compile(r"\b(?:IPC|CrPC|Cr\.P\.C|Indian Penal Code|Code of Criminal Procedure|Indian Evidence Act)\b", re.I)
 OLD_CODE_NOTE = ("NOTE ON WHICH LAW APPLIES: the Indian Penal Code, 1860, the Code of Criminal Procedure, 1973 and the Indian Evidence "
-                 "Act, 1872 were repealed and replaced by the Bharatiya Nyaya Sanhita, the Bharatiya Nagarik Suraksha Sanhita and the "
-                 "Bharatiya Sakshya Adhiniyam, which came into force on 1 July 2024 (BNS s.358 and BNSS s.531 are the repeal and savings "
-                 "provisions in our database; commencement per the Gazette notifications S.O. 848(E)-850(E) of 23 Feb 2024). Offences "
-                 "committed before 1 July 2024 are generally dealt with under the old code, and later ones under the new code. The "
-                 "section numbers above come from a judgment or text that uses the old code, so check the new section number and "
-                 "which code covers your date before relying on them.")
+                 "Act, 1872 were repealed and replaced by the Bharatiya Nyaya Sanhita (BNS), the Bharatiya Nagarik Suraksha Sanhita (BNSS) and the "
+                 "Bharatiya Sakshya Adhiniyam (BSA), in force from 1 July 2024 (our database records the Gazette notifications "
+                 "S.O. 848(E)-850(E) of 23 Feb 2024). Which code governs a matter is set by each new law's repeal and savings section "
+                 "and is not a single date test. BNS s.358 saves the previous operation of the IPC and anything done or suffered under it. "
+                 "BNSS s.531(2)(a) says an appeal, application, trial, inquiry or investigation pending immediately before commencement "
+                 "continues under the CrPC; the BSA has its own savings section (s.170). Read those sections and check the facts and stage of the "
+                 "matter before relying on any section number shown from an older judgment or the old codes.")
 
 
 def old_code_note_needed(text: str, model_used: str) -> bool:
@@ -498,8 +503,12 @@ async def search_answer_post(payload: SearchAnswerRequest):
             if ai_ans == UNRELIABLE_TIER2_MSG:
                 ai_ans = "No AI explanation is available for this question. The provision text below is shown word for word."
             ai_ans = f"{ai_ans}\n\n{_card}"
+    _withheld = False
     if not is_not_found and old_code_note_needed(ai_ans, model_used):
-        ai_ans = f"{ai_ans}\n\n{OLD_CODE_NOTE}"
+        _withheld = True
+        ai_ans = ("A case-based AI summary was withheld here: it depends on section numbers of the old Indian Penal Code, "
+                  "Code of Criminal Procedure or Indian Evidence Act, and which code applies depends on the facts and stage of the "
+                  "matter. The cases found are listed below as sources to read, not as a stated answer.\n\n" + OLD_CODE_NOTE)
         if not is_tier2:
             _c2 = build_statute_card(effective_query)
             if _c2:
@@ -510,6 +519,8 @@ async def search_answer_post(payload: SearchAnswerRequest):
         if _c3:
             ai_ans = f"{ai_ans}\n\nThe AI answer could not be checked, so no AI explanation is shown. Related text from the statute database:\n\n{_c3}"
     ratio = None if (is_tier2 or is_not_found) else citation_checker.check_and_badge_text(synthesis.get("ratio_decidendi") or _base_ans, is_tier2=False)
+    if _withheld:
+        ratio = None
     citations = citation_checker.badge_citations_list(synthesis.get("citations", [])) if not is_tier2 else []
 
     # Determine source cases and Tier/Label
@@ -538,6 +549,8 @@ async def search_answer_post(payload: SearchAnswerRequest):
         no_strong = synthesis.get("no_strong_case_match", len(source_cases) == 0)
         hide_badge = synthesis.get("hide_badge", False)
 
+    if _withheld:
+        tier_label = "Case summary withheld: relies on old-code section numbers"
     resp = SearchAnswerResponse(
         query=effective_query,
         corrected_query=corrected_q if has_spelling else None,

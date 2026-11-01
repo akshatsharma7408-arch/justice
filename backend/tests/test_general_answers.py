@@ -207,3 +207,21 @@ def test_unverifiable_answer_gets_card_not_blank():
          patch.object(llm_service, "synthesize_search_answer", fake):
         r = TestClient(app).post("/api/v1/search/answer", json={"query": "what is the punishment for murder", "results": []}).json()
     assert "Section 103 - Punishment for murder" in r["ai_answer"] and "no AI explanation is shown" in r["ai_answer"]
+
+
+def test_old_code_case_lead_is_withheld_and_note_is_savings_based():
+    from unittest.mock import patch
+    from fastapi.testclient import TestClient
+    from app.main import app
+    from app.services.llm_service import llm_service
+    async def fake(*a, **k):
+        return {"answer": "Under Section 302 of the Indian Penal Code, the punishment for murder is death.", "ratio_decidendi": None,
+                "citations": [], "results": [], "model_used": "openai/gpt-oss-120b", "tier": "tier1"}
+    with patch.object(llm_service, "synthesize_search_answer", fake):
+        r = TestClient(app).post("/api/v1/search/answer", json={"query": "what is the punishment for murder", "results": []}).json()
+    a = r["ai_answer"]
+    assert "Section 302" not in a and "withheld" in a
+    assert "s.531(2)(a)" in a and "not a single date test" in a
+    assert r["ratio_decidendi"] is None
+    assert "Section 103 - Punishment for murder" in a
+    assert "Third-party reference copy" in a
