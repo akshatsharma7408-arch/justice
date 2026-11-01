@@ -47,3 +47,13 @@ def test_case_header_debris_is_not_a_usable_summary():
     bad = "NA VEEN JINDAL [ V.N. KHARE, CJ.] 1069 Part III of the Constitution of India, apart from clauses 2 to 4 and 6 of Article A 19 of the Constitution of India."
     assert not summary_is_usable(bad)
     assert summary_is_usable("The Court held that a statute violating a fundamental right is void to the extent of the inconsistency.")
+
+
+def test_summary_about_a_different_article_is_withheld():
+    from app.services.llm_service import summary_is_about_other_article as f
+    s = "the level of nutrition and the standard of living and to improve the public health. Under Article 48, the State is duty bound to endeavour to organise agriculture."
+    assert f(s, "51A")
+    assert not f(s, "48")
+    assert not f("The Court held duties under Article 51A are enforceable alongside Article 48.", "51A")
+    assert not f("The Court held that the right is not absolute.", "51A")
+    assert f("Duties under Article 51A are enforceable.", "51")

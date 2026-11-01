@@ -195,6 +195,13 @@ def split_into_clauses(text: str):
     return [s for s in segs if len(re.findall(r"[A-Za-z]{3,}", s)) >= 2]
 
 
+def summary_is_about_other_article(summary: str, art_num: str) -> bool:
+    """True when a case summary cites constitutional articles but never the one asked about (so it is about something else)."""
+    cited = {a.upper() for a in re.findall(r"\bArticles?\s+(\d+[A-Za-z]*)", summary or "", re.IGNORECASE)}
+    cited |= {a.upper() for a in re.findall(r"\band\s+(\d+[A-Za-z]*)\b(?=[^.]{0,3}(?:of the Constitution|\.|,|\s))", " ".join(re.findall(r"Articles?\s+[\d A-Za-z,]+?\band\s+\d+[A-Za-z]*", summary or "", re.IGNORECASE)), re.IGNORECASE)}
+    return bool(cited) and art_num.upper() not in cited
+
+
 def summary_is_usable(text: str) -> bool:
     """False for OCR junk such as '430 A B c D E F G H (1992) 3 S.C.R.' or the generic placeholder."""
     t = (text or "").strip()
@@ -1779,7 +1786,9 @@ class LLMService:
                     elif (not force_fallback) and self.client:
                         ans_str += "\n\n" + explanation_unavailable_note() + "\n\n"
                 ans_str += " "
-                matching_cases = [_c for _c in matching_cases if summary_is_usable(clean_case_summary(_c))]
+                _n_before = len(matching_cases)
+                matching_cases = [_c for _c in matching_cases if summary_is_usable(clean_case_summary(_c)) and not summary_is_about_other_article(clean_case_summary(_c), art_num)]
+                _withheld = _n_before > len(matching_cases)
                 if matching_cases:
                     c0 = matching_cases[0]
                     ans_str += f"In {c0.get('title')} ({c0.get('citation')}), the Supreme Court held: {clean_case_summary(c0)}"
@@ -1787,7 +1796,7 @@ class LLMService:
                     tier_label = "Statutory text + AI explanation (AI part not verified) + case summary below" if _ai_shown else "AI summary based on the cases below"
                     no_strong = False
                 else:
-                    ans_str += f"Our verified database does not currently contain judicial dispute precedents under Article {art_num}."
+                    ans_str += ("No sufficiently relevant case summary was verified for this result." if _withheld else f"Our verified database does not currently contain judicial dispute precedents under Article {art_num}.")
                     cits = [f"Constitution of India, Article {art_num} ({heading}, w.e.f. {eff_date})"]
                     tier_label = "Statutory text + AI explanation (AI part not verified)" if _ai_shown else "Authoritative statutory provision"
                     no_strong = True
