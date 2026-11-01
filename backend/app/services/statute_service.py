@@ -91,6 +91,15 @@ KNOWN_ENACTMENTS: Dict[str, Dict[str, Any]] = {
         "aliases": ["limitation act"],
         "is_real_act": True
     },
+    "domestic_violence": {
+        "canonical_id": "protection-of-women-from-domestic-violence-act-2005",
+        "title": "The Protection of Women from Domestic Violence Act, 2005",
+        "short_name": "Domestic Violence Act",
+        "year": "2005",
+        "jurisdiction": "Central",
+        "aliases": ["protection of women from domestic violence act", "domestic violence act", "pwdva", "dv act"],
+        "is_real_act": True
+    },
     "consumer_protection": {
         "canonical_id": "consumer-protection-act-2019",
         "title": "The Consumer Protection Act, 2019",

@@ -169,6 +169,37 @@ def load_cpa_provisions() -> List[Dict[str, Any]]:
     return rows
 
 
+DVA_CORPUS_PATH = CURRENT_DIR / "dva_corpus.json"
+DVA_ACT_ID = "protection-of-women-from-domestic-violence-act-2005"
+DVA_SOURCE_URL = "https://www.indiacode.nic.in/bitstream/123456789/15436/1/protection_of_women_from_domestic_violence_act%2C_2005.pdf"
+
+
+def load_dva_provisions() -> List[Dict[str, Any]]:
+    """Protection of Women from Domestic Violence Act, 2005 (Act 43 of 2005), India Code text, 37 sections."""
+    import json as _json
+    if not DVA_CORPUS_PATH.exists():
+        logger.warning("DVA corpus JSON not found; Domestic Violence Act 2005 will be unseeded")
+        return []
+    corpus = _json.loads(DVA_CORPUS_PATH.read_text(encoding="utf-8"))
+    rows = []
+    for num in sorted(corpus, key=_section_sort_key):
+        e = corpus[num]
+        rows.append({
+            "id": f"dva-2005-s-{num.lower()}",
+            "act_id": DVA_ACT_ID,
+            "section_number": num,
+            "heading": e["heading"].rstrip("."),
+            "body": e["body"],
+            "explanation": e.get("caveat"),
+            "source_url": DVA_SOURCE_URL,
+            "effective_date": "26 October 2006 (S.O. 1776(E), per India Code footnote)",
+            "status": "in_force",
+        })
+    logger.info(f"DVA corpus loaded: {len(rows)} provisions")
+    return rows
+
+
+
 def _article_sort_key(num: str):
     m = re.match(r"(\d+)([A-Z]*)", num)
     return (int(m.group(1)), m.group(2))
@@ -212,8 +243,8 @@ def load_constitution_provisions(curated: Dict[str, Dict[str, Any]]) -> List[Dic
     return provisions
 
 # Authoritative Curated Statutory Datasets
-SEED_VERSION = "2026-10-31.v11"  # v11: Consumer Protection Act 2019 added (107 sections, as enacted). v10: BSA 2023 added (170 sections) + s.1, 63, 170 caveats
-_PREV_SEED_VERSION = "2026-10-30.v10"  # v9: BNSS s.531 caveat cleared after exact gazette body+reading-order verification  # bump on any seed content/corpus correction; self-heal reseeds on mismatch
+SEED_VERSION = "2026-11-01.v12"  # v12: Protection of Women from Domestic Violence Act 2005 added (37 sections, India Code text). v11: Consumer Protection Act 2019 added (107 sections, as enacted). v10: BSA 2023 added (170 sections) + s.1, 63, 170 caveats
+_PREV_SEED_VERSION = "2026-10-31.v11"  # v9: BNSS s.531 caveat cleared after exact gazette body+reading-order verification  # bump on any seed content/corpus correction; self-heal reseeds on mismatch
 
 BARE_ACTS_DATA = [
     {
@@ -298,6 +329,14 @@ BARE_ACTS_DATA = [
         "year": 2019,
         "jurisdiction": "India",
         "edition": "Text as enacted (assent 9 August 2019, Gazette of India Extraordinary, Part II Section 1, No. 54). Commencement is by notification under s.1(3), with different dates possible for different provisions; notified dates are not recorded here. Amendments, rules and notifications after enactment are not incorporated. Repeals the Consumer Protection Act, 1986 subject to s.107 savings."
+    },
+    {
+        "id": "protection-of-women-from-domestic-violence-act-2005",
+        "title": "The Protection of Women from Domestic Violence Act, 2005",
+        "act_number": "Act No. 43 of 2005",
+        "year": 2005,
+        "jurisdiction": "India",
+        "edition": "Text from India Code (indiacode.nic.in), 37 sections, with the words 'except the State of Jammu and Kashmir' omitted by Act 34 of 2019 (w.e.f. 31-10-2019). In force from 26 October 2006 (S.O. 1776(E)). Compared with a second India Code file of the Act: only layout and that amendment differ, plus two spelling variants (s.10(2)(b) 'repot'/'report', s.18 'favour'/'favor'). Rules, notifications and any other later amendments are not incorporated; later amendments not checked."
     }
 ]
 
@@ -1213,6 +1252,19 @@ def seed_database(conn: sqlite3.Connection) -> Tuple[int, int]:
     # 6. Consumer Protection Act, 2019 (as enacted): replace any prior provisions with the verified corpus
     cursor.execute("DELETE FROM statutory_provisions WHERE act_id = ?;", (CPA_ACT_ID,))
     for prov in load_cpa_provisions():
+        cursor.execute("""
+            INSERT INTO statutory_provisions (id, act_id, section_number, heading, body, explanation, source_url, effective_date, status)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?);
+        """, (
+            prov["id"], prov["act_id"], prov["section_number"], prov["heading"],
+            prov["body"], prov["explanation"], prov.get("source_url"),
+            prov.get("effective_date"), prov.get("status", "in_force"),
+        ))
+        provisions_inserted += 1
+
+    # 7. Protection of Women from Domestic Violence Act, 2005 (India Code text)
+    cursor.execute("DELETE FROM statutory_provisions WHERE act_id = ?;", (DVA_ACT_ID,))
+    for prov in load_dva_provisions():
         cursor.execute("""
             INSERT INTO statutory_provisions (id, act_id, section_number, heading, body, explanation, source_url, effective_date, status)
             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?);

@@ -32,7 +32,7 @@ def _edition_is_as_enacted(edition, act_id) -> bool:
     """Metadata-driven: an Act whose edition note says its text is 'as enacted' (amendments not incorporated) gets the
     qualified badge and top-of-card notice. Repealed Acts and the Constitution keep their own labelling."""
     e = (edition or "").lower()
-    return bool(e) and "as enacted" in e and "repealed by" not in e and "constitution" not in (act_id or "")
+    return bool(e) and ("as enacted" in e or "later amendments not checked" in e) and "repealed by" not in e and "constitution" not in (act_id or "")
 
 class ClauseVerificationSchema(BaseModel):
     status: str = Field(description="'NON-COMPLIANT' or 'COMPLIANT'")
@@ -2137,7 +2137,8 @@ class LLMService:
                     elif _edition_is_as_enacted(act_edition, prov.get("act_id")):
                         # As-enacted gazette text only: do not show an unqualified "authoritative"
                         # badge; the limit must be visible at the top of the answer card.
-                        tier_label = "Statutory text as enacted - amendments not checked"
+                        tier_label = ("Statutory text as enacted - amendments not checked" if "as enacted" in (act_edition or "").lower()
+                                      else "Statutory text (India Code copy) - later amendments not checked")
                     else:
                         tier_label = "Authoritative statutory provision"
                     no_strong = True
@@ -2148,6 +2149,10 @@ class LLMService:
                         statute_notice = (_enacted + " Later amendments are not incorporated and "
                                           "this was not independently verified against a second edition; check the official "
                                           "text before relying on it.")
+                        if "as enacted" not in (act_edition or "").lower():
+                            statute_notice = ("Text from the India Code copy of this Act. Amendments after those noted in the edition line, "
+                                              "rules and notifications are not checked, and it was compared only with a second India Code file, not the gazette; "
+                                              "check the official text before relying on it.")
                         if prov.get("act_id") == "consumer-protection-act-2019":
                             statute_notice += " Commencement dates and rules made under the Act are not checked here."
                             if str(sec_num) in ("34", "47", "58"):
