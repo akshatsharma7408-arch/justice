@@ -482,6 +482,55 @@ class StatuteService:
 
         return results
 
+    _CARD_STOP = frozenset("a an the of or and to in on for is are can i my me do does what how when who which with without by be at as it its if any under this that from have has not no was were will shall may your you they their there than then them his her he she we our about tell explain law india indian legal right rights".split())
+    _CARD_GENERIC = frozenset({"punishment", "offence", "offense", "act", "power", "procedure", "provision", "general", "court", "person", "case", "order", "case", "law"})
+
+    @staticmethod
+    def _card_stem(w: str) -> str:
+        for suf in ("ing", "ed", "es", "s"):
+            if len(w) > 4 and w.endswith(suf):
+                return w[: -len(suf)]
+        return w
+
+    def _card_tokens(self, text: str) -> set:
+        import re as _re
+        return {self._card_stem(w) for w in _re.findall(r"[a-z]+", (text or "").lower()) if w not in self._CARD_STOP and len(w) > 2}
+
+    def match_provisions_for_general_query(self, query: str, limit: int = 2) -> List[Dict[str, Any]]:
+        """Non-LLM: provisions of the bare acts in the database whose HEADING is covered by the query words.
+        Precision first: every heading word that is not generic must be in the query, and at least one
+        non-generic word must match. Constitution articles are excluded (they have their own route)."""
+        qt = self._card_tokens(query)
+        if not qt:
+            return []
+        scored = []
+        try:
+            with self._get_connection() as conn:
+                rows = conn.execute(
+                    "SELECT p.act_id, p.section_number, p.heading, p.body, p.source_url, a.title AS act_title, a.edition AS edition "
+                    "FROM statutory_provisions p JOIN bare_acts a ON a.id = p.act_id WHERE p.act_id NOT LIKE 'constitution%'"
+                ).fetchall()
+        except Exception as e:
+            logger.error("general provision match failed: %s", e)
+            return []
+        for r in rows:
+            ht = self._card_tokens(r["heading"])
+            core = {w for w in ht if w not in self._CARD_GENERIC}
+            if not core or not (core <= qt):
+                continue
+            hit = qt & ht
+            scored.append((len(core), len(hit), dict(r)))
+        scored.sort(key=lambda x: (-x[0], -x[1], x[2]["act_id"], len(x[2]["section_number"] or ""), x[2]["section_number"] or ""))
+        out, seen = [], set()
+        for _, _, d in scored:
+            key = (d["act_id"], d["section_number"])
+            if key not in seen:
+                seen.add(key)
+                out.append(d)
+            if len(out) >= limit:
+                break
+        return out
+
     def get_act_edition(self, act_id: str) -> Optional[str]:
         """Returns the edition/repeal-context string recorded for an act, if any."""
         try:

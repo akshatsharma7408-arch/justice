@@ -17,6 +17,7 @@ from app.services.llm_service import llm_service
 from app.services.qdrant_service import qdrant_service
 from app.services.spelling_service import correct_query
 from app.services.answer_tiers import UNRELIABLE_TIER2_MSG
+from app.services.statute_service import statute_service
 
 from collections import OrderedDict
 import time
@@ -299,6 +300,37 @@ async def search_precedents_post(payload: SearchRequest):
 ANSWER_TIME_BUDGET_S = 45
 
 
+
+STATUTE_CARD_MAX_CHARS = 900
+
+
+def build_statute_card(query: str) -> str:
+    """Non-LLM, verbatim provisions from the bare acts in the database whose heading is covered by the query.
+    Returned as a separate, labelled block; it is source text, not an AI explanation."""
+    try:
+        matches = statute_service.match_provisions_for_general_query(query, limit=2)
+    except Exception:
+        return ""
+    if not matches:
+        return ""
+    blocks = []
+    for m in matches:
+        body = re.sub(r"\s+", " ", (m.get("body") or "")).strip()
+        if not body:
+            continue
+        cut = len(body) > STATUTE_CARD_MAX_CHARS
+        if cut:
+            body = body[:STATUTE_CARD_MAX_CHARS].rsplit(" ", 1)[0] + " ... (text shortened; open the full provision)"
+        edition = (m.get("edition") or "edition not recorded").strip()
+        blocks.append(
+            f"{m.get('act_title')}, Section {m.get('section_number')} - {m.get('heading')}\n"
+            f"Edition: {edition}\n\"{body}\"" + (f"\nSource: {m['source_url']}" if m.get("source_url") else "")
+        )
+    if not blocks:
+        return ""
+    return ("RELATED PROVISION TEXT FROM OUR STATUTE DATABASE (word for word, matched by section heading, "
+            "not an AI explanation; amendments and current applicability are not checked here)\n\n" + "\n\n".join(blocks))
+
 @router.post("/search/answer", response_model=SearchAnswerResponse)
 async def search_answer_post(payload: SearchAnswerRequest):
     """
@@ -436,6 +468,12 @@ async def search_answer_post(payload: SearchAnswerRequest):
     is_not_found = "not_found" in model_used.lower()
 
     ai_ans = citation_checker.check_and_badge_text(synthesis.get("answer") or "", is_tier2=is_tier2)
+    if is_tier2 and not _timed_out:
+        _card = build_statute_card(effective_query)
+        if _card:
+            if ai_ans == UNRELIABLE_TIER2_MSG:
+                ai_ans = "No AI explanation is available for this question. The provision text below is shown word for word."
+            ai_ans = f"{ai_ans}\n\n{_card}"
     ratio = None if (is_tier2 or is_not_found) else citation_checker.check_and_badge_text(synthesis.get("ratio_decidendi") or ai_ans, is_tier2=False)
     citations = citation_checker.badge_citations_list(synthesis.get("citations", [])) if not is_tier2 else []
 

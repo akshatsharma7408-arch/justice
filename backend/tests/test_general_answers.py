@@ -152,3 +152,28 @@ def test_answer_request_has_overall_time_budget(monkeypatch):
     body = r.json()
     assert calls == [False, True]
     assert "temporarily unavailable" in body["ai_answer"] and body["ai_answer"].startswith("Verified text only.")
+
+
+def test_statute_card_matches_heading_and_is_verbatim():
+    from app.routers.search import build_statute_card
+    from app.services.statute_service import statute_service
+    card = build_statute_card("what is rioting")
+    assert "Rioting" in card and "not an AI explanation" in card and "Edition:" in card
+    prov = statute_service.get_provision("bharatiya-nyaya-sanhita-2023", "191")
+    first = " ".join(prov["body"].split())[:80]
+    assert first in card
+
+
+def test_statute_card_empty_when_no_heading_match():
+    from app.routers.search import build_statute_card
+    assert build_statute_card("can my landlord keep my security deposit") == ""
+    assert build_statute_card("what is bail") == ""
+    assert build_statute_card("") == ""
+
+
+def test_endpoint_adds_card_to_general_answer_without_model():
+    from fastapi.testclient import TestClient
+    from app.main import app
+    r = TestClient(app).post("/api/v1/search/answer", json={"query": "what is rioting", "results": []}).json()
+    assert "Section 191 - Rioting" in (r["ai_answer"] or "")
+    assert "check the cases below" not in r["ai_answer"]
