@@ -454,6 +454,28 @@ export default function SearchResults({
                     {answerData.ai_answer.split('\n\n').map((paragraph, pIdx) => {
                       const trimmedP = paragraph.trim();
                       if (!trimmedP) return null;
+                      if (trimmedP.startsWith('NOTE ON WHICH LAW APPLIES')) {
+                        return (
+                          <div key={pIdx} className="answer-law-note" role="note" style={{ margin: '14px 0', padding: '12px 16px', borderLeft: '3px solid #b8860b', background: 'rgba(184,134,11,0.10)', borderRadius: 6 }}>
+                            <div className="mono" style={{ fontSize: 11, letterSpacing: '0.08em', color: '#b8860b', marginBottom: 6 }}>WHICH LAW APPLIES</div>
+                            <p className="answer-prose-paragraph" style={{ margin: 0 }}>{trimmedP.replace('NOTE ON WHICH LAW APPLIES:', '').trim()}</p>
+                          </div>
+                        );
+                      }
+                      if (trimmedP.startsWith('POSSIBLY RELEVANT PROVISION')) {
+                        return (
+                          <div key={pIdx} className="mono" style={{ margin: '18px 0 4px', fontSize: 11, letterSpacing: '0.06em', color: '#9aa7a0', lineHeight: 1.5 }}>
+                            SUGGESTED PROVISION TEXT - {trimmedP.replace('POSSIBLY RELEVANT PROVISION', '').trim()}
+                          </div>
+                        );
+                      }
+                      if (trimmedP.includes('\nEdition: ')) {
+                        return (
+                          <div key={pIdx} className="answer-statute-block" style={{ margin: '8px 0', padding: '12px 16px', borderLeft: '3px solid #5f8f7a', background: 'rgba(95,143,122,0.08)', borderRadius: 6, whiteSpace: 'pre-wrap', wordBreak: 'break-word', fontSize: 14, lineHeight: 1.55 }}>
+                            {trimmedP}
+                          </div>
+                        );
+                      }
                       const aiPrefix = 'Plain-English explanation (AI-written from the text above; not a verified statement of law):';
                       if (trimmedP.startsWith(aiPrefix) || trimmedP.startsWith('AI explanation unavailable')) {
                         const isExpl = trimmedP.startsWith(aiPrefix);
