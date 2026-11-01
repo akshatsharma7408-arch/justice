@@ -207,6 +207,16 @@ def summary_is_about_other_article(summary: str, art_num: str) -> bool:
     return bool(cited) and art_num.upper() not in cited
 
 
+def case_passage_text(c: Dict[str, Any]) -> Optional[str]:
+    """Words introducing a retrieved case passage. The corpus stores raw judgment chunks, not holdings, and a
+    cue word can sit in quoted argument, a lower court's view, facts or a negation, so a raw chunk is never
+    called a holding. A mid-sentence fragment is not shown."""
+    s = clean_case_summary(c)
+    if not s or s[:1].islower():
+        return None
+    return f"Passage from {c.get('title')} ({c.get('citation')}) - an excerpt from the judgment, not a verified holding or a finding that it applies to this question: {s}"
+
+
 def summary_is_usable(text: str) -> bool:
     """False for OCR junk such as '430 A B c D E F G H (1992) 3 S.C.R.' or the generic placeholder."""
     t = (text or "").strip()
@@ -1792,11 +1802,11 @@ class LLMService:
                         ans_str += "\n\n" + explanation_unavailable_note() + "\n\n"
                 ans_str += " "
                 _n_before = len(matching_cases)
-                matching_cases = [_c for _c in matching_cases if summary_is_usable(clean_case_summary(_c)) and not summary_is_about_other_article(clean_case_summary(_c), art_num)]
+                matching_cases = [_c for _c in matching_cases if summary_is_usable(clean_case_summary(_c)) and not summary_is_about_other_article(clean_case_summary(_c), art_num) and case_passage_text(_c)]
                 _withheld = _n_before > len(matching_cases)
                 if matching_cases:
                     c0 = matching_cases[0]
-                    ans_str += f"In {c0.get('title')} ({c0.get('citation')}), the Supreme Court held: {clean_case_summary(c0)}"
+                    ans_str += case_passage_text(c0)
                     cits = [f"Constitution of India, Article {art_num} ({heading})", f"{c0.get('title')} ({c0.get('citation')})"]
                     tier_label = "Statutory text + AI explanation (AI part not verified) + case summary below" if _ai_shown else "AI summary based on the cases below"
                     no_strong = False
@@ -2119,10 +2129,10 @@ class LLMService:
                     elif (not force_fallback) and self.client:
                         ans_str += "\n\n" + explanation_unavailable_note() + "\n\n"
                 ans_str += " "
-                matching_cases = [_c for _c in matching_cases if summary_is_usable(clean_case_summary(_c))]
+                matching_cases = [_c for _c in matching_cases if summary_is_usable(clean_case_summary(_c)) and case_passage_text(_c)]
                 if matching_cases:
                     c0 = matching_cases[0]
-                    ans_str += f"In {c0.get('title')} ({c0.get('citation')}), the Supreme Court held: {clean_case_summary(c0)}"
+                    ans_str += case_passage_text(c0)
                     if has_unresolved_caveat:
                         ans_str += (" Note: the statutory text quoted above carries an unresolved verification caveat "
                                     "and is not authoritative; the case summary is independent of it.")
