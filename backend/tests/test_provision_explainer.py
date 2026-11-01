@@ -77,3 +77,50 @@ def test_explainer_has_a_time_budget(monkeypatch):
         return await real(coro, timeout=0.05)
     monkeypatch.setattr(m.asyncio, "wait_for", fast_wait_for)
     assert run(s) is None
+
+
+def _clause_svc(gen, ver):
+    seq = [gen, ver]
+    class M:
+        def generate_content(self, **kw):
+            return SimpleNamespace(text=seq.pop(0))
+    s = LLMService.__new__(LLMService)
+    s._client = SimpleNamespace(models=M()); s.is_active = True; s.api_key = "x"; s.model = "m"
+    return s
+
+CL_SRC = "It shall be the duty of every citizen of India\u2014 (a) to safeguard public property and to abjure violence; (b) to protect the natural environment."
+
+
+def test_split_into_clauses():
+    from app.services.llm_service import split_into_clauses
+    segs = split_into_clauses(CL_SRC)
+    assert len(segs) == 3 and segs[1].startswith("(a)") and segs[2].startswith("(b)")
+
+
+def test_clause_explainer_accepts_faithful_reworded():
+    s = _clause_svc("1 | Every citizen has these duties.\n2 | Look after public property and avoid violence.\n3 | Take care of the natural environment.",
+                    "1 | OK\n2 | OK\n3 | OK")
+    out = asyncio.run(s.explain_provision_by_clause("Article 51A", CL_SRC))
+    assert [m for m, _ in out] == ["", "(a)", "(b)"]
+
+
+def test_clause_explainer_rejects_changed_missing_and_timing():
+    s = _clause_svc("1 | Every citizen has these duties.\n2 | Look after public property and avoid violence.\n3 | Take care of the natural environment.",
+                    "1 | OK\n2 | CHANGED\n3 | OK")
+    assert asyncio.run(s.explain_provision_by_clause("Article 51A", CL_SRC)) is None
+    s = _clause_svc("1 | Every citizen has these duties.\n2 | Look after public property.", "1 | OK\n2 | OK")
+    # two attempts consume the same text, then fail on line count
+    s2 = LLMService.__new__(LLMService)
+    from types import SimpleNamespace as NS
+    class M:
+        def generate_content(self, **kw):
+            return NS(text="1 | Every citizen has these duties.\n2 | Look after public property.")
+    s2._client = NS(models=M()); s2.is_active = True; s2.api_key = "x"; s2.model = "m"
+    assert asyncio.run(s2.explain_provision_by_clause("Article 51A", CL_SRC)) is None
+    src339 = "(1) The President may at any time and shall, at the expiration of ten years from the commencement of this Constitution by order appoint a Commission. (2) The executive power of the Union shall extend to directions."
+    class M2:
+        def generate_content(self, **kw):
+            return NS(text="1 | The President can appoint a Commission any time and must do so after ten years.\n2 | The Union can give directions.")
+    s3 = LLMService.__new__(LLMService)
+    s3._client = NS(models=M2()); s3.is_active = True; s3.api_key = "x"; s3.model = "m"
+    assert asyncio.run(s3.explain_provision_by_clause("Article 339", src339)) is None

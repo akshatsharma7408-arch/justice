@@ -138,6 +138,17 @@ def explanation_numbers_ok(source: str, explanation: str) -> bool:
     return _numbers_in(explanation) <= _numbers_in(source)
 
 
+_CLAUSE_SPLIT = re.compile(r"(?<=[;:\u2014])\s+(?=\(\w{1,4}\))|(?<=[.;])\s+(?=\(\d+[A-Za-z]?\))")
+MAX_CLAUSES = 14
+
+
+def split_into_clauses(text: str):
+    """Deterministic split of a provision at its own (a)/(1) markers. A lead-in such as
+    'It shall be the duty of every citizen of India-' is kept as its own segment (number 0 context)."""
+    t = re.sub(r"\s+", " ", text or "").strip()
+    return [x.strip() for x in _CLAUSE_SPLIT.split(t) if x.strip()]
+
+
 def summary_is_usable(text: str) -> bool:
     """False for OCR junk such as '430 A B c D E F G H (1992) 3 S.C.R.' or the generic placeholder."""
     t = (text or "").strip()
@@ -1080,6 +1091,102 @@ class LLMService:
         if _res:
             _cache[_ck] = _res  # only accepted explanations are cached
         return _res
+
+    async def explain_provision_by_clause(self, label: str, source_text: str):
+        """Plain-English restatement, one short sentence per clause of the provision, in ONE generation call and
+        ONE verification call. Every clause must be covered (line count is checked), so a proviso or exception
+        cannot be dropped silently. Returns a list of (clause_marker, sentence) or None."""
+        if not self.client or model_rate_limited():
+            return None
+        segs = split_into_clauses(source_text)
+        if len(segs) < 2 or len(segs) > MAX_CLAUSES:
+            return None
+        numbered = "\n".join(f"{i+1}. {s}" for i, s in enumerate(segs))
+        system = (
+            "You restate clauses of an Indian legal provision in plain everyday English for a non-lawyer. "
+            "For EACH numbered clause write exactly one line: <number> | <one short plain sentence>. "
+            "Use only what that clause says (a clause that is only a lead-in applies to the clauses after it, so restate it on its own). "
+            "Keep every may, shall, must, can and every period or number exactly as in the clause. "
+            "Do not add emphasis, examples, reasons, consequences, exceptions or anything about what happens in practice. "
+            "REWRITE in simpler everyday words and a shorter sentence than the clause; never copy the clause's wording or its (a)/(b) markers. "
+            "Example: clause 'to safeguard public property and to abjure violence' -> 'Look after public property and stay away from violence.' "
+            "Do not name any case, section or article number. One line per clause, same order, nothing else."
+        )
+        import difflib
+        cfg = types.GenerateContentConfig(system_instruction=system, temperature=0.3, max_output_tokens=1100)
+        ref = (label + " " + source_text).lower()
+        sents = None
+        hint = ""
+        for _attempt in range(2):
+            try:
+                resp = await asyncio.to_thread(self.client.models.generate_content, model=self.model,
+                                               contents=f"PROVISION: {label}\n\nCLAUSES:\n{numbered}{hint}", config=cfg)
+                lines = [l.strip() for l in (getattr(resp, "text", None) or "").splitlines() if "|" in l]
+            except Exception as e:
+                logger.warning("Clause explainer failed: %s", e)
+                _note_rate_limit(e)
+                return None
+            cand = {}
+            for l in lines:
+                n, _, s = l.partition("|")
+                n = n.strip().rstrip(".")
+                if n.isdigit() and s.strip():
+                    cand[int(n)] = s.strip()
+            reason = None
+            if sorted(cand) != list(range(1, len(segs) + 1)):
+                reason = "line count"
+            else:
+                for i, s in cand.items():
+                    seg = segs[i - 1]
+                    if re.search(r"\bv\.?s?\.?\s+[A-Z]|\b(?:SCC|AIR|SCR)\b|\bheld that\b", s):
+                        return None
+                    if any(m.group(2).lower() not in ref for m in re.finditer(r"\b(article|section|clause)\s+(\d+[A-Za-z]*)", s, re.I)):
+                        return None
+                    if not explanation_numbers_ok(seg, s):
+                        return None
+                    if re.search(r"expiration of|expiry of|at the end of", seg, re.I) and re.search(
+                            r"\bafter\s+(?:\w+\s+){0,3}(?:years?|months?|days?)\b|\bonce\s+\w+\s+(?:years?|months?|days?)\b", s, re.I):
+                        reason = f"timing changed in clause {i}"
+                        break
+                    if len(seg) > 25 and difflib.SequenceMatcher(None, re.sub(r"^\(\w+\)\s*", "", seg).lower(), s.lower()).ratio() > 0.8:
+                        reason = f"too close to clause {i}"
+                        break
+            if reason is None:
+                sents = cand
+                break
+            logger.info("clause explainer attempt %s rejected: %s", _attempt + 1, reason)
+            hint = "\n\nYour last answer was rejected (" + reason + "). Use exactly one line per clause, and reword each clause in simpler, shorter words instead of copying it."
+        if sents is None:
+            return None
+        pairs = "\n".join(f"{i}. CLAUSE: {segs[i-1]}\n   RESTATEMENT: {sents[i]}" for i in range(1, len(segs) + 1))
+        vcfg = types.GenerateContentConfig(
+            system_instruction=(
+                "You audit plain-English restatements of legal clauses. For each numbered pair output one line: "
+                "<number> | OK or CHANGED. CHANGED if the restatement changes who may or must act, a modal word (may/shall/must/can), "
+                "a time or number, a condition or scope, or adds emphasis (absolute, only, always, never), an example, a reason, "
+                "a consequence or a claim about practice that the clause does not state, or leaves out a condition or exception in the clause. "
+                "OK only if it is a faithful plain restatement. Output only these lines."),
+            temperature=0.0, max_output_tokens=200)
+        try:
+            vr = await asyncio.to_thread(self.client.models.generate_content, model=self.model, contents=pairs, config=vcfg)
+            vlines = [l.strip() for l in (getattr(vr, "text", None) or "").splitlines() if "|" in l]
+        except Exception as e:
+            logger.warning("Clause verifier failed: %s", e)
+            _note_rate_limit(e)
+            return None
+        verdict = {}
+        for l in vlines:
+            n, _, v = l.partition("|")
+            if n.strip().rstrip(".").isdigit():
+                verdict[int(n.strip().rstrip("."))] = v.strip().upper()
+        if sorted(verdict) != list(range(1, len(segs) + 1)) or any(v != "OK" for v in verdict.values()):
+            logger.info("clause explainer: verifier verdicts %s", verdict)
+            return None
+        out = []
+        for i, seg in enumerate(segs, 1):
+            m = re.match(r"\((\w{1,4})\)", seg)
+            out.append((f"({m.group(1)})" if m else "", sents[i]))
+        return out
 
     async def _explain_provision_ai_uncached(self, label: str, source_text: str, system: str, prompt: str) -> Optional[str]:
         _hint = ""
