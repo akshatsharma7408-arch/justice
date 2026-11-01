@@ -107,3 +107,40 @@ def test_only_one_module_talks_to_a_model_provider():
     hits = sorted(str(p.relative_to(root)) for p in root.rglob("*.py")
                   if "api.groq.com" in p.read_text() or "generativelanguage.googleapis" in p.read_text())
     assert hits == ["services/groq_client.py"], hits
+
+
+def test_flag_does_not_leak_between_requests_or_into_other_routes():
+    """A search request sets the flag; later requests (any route, same server) must still see it off."""
+    import asyncio
+    from fastapi import FastAPI
+    from fastapi.testclient import TestClient
+    import app.routers.search as s
+    probe = FastAPI()
+
+    @probe.get("/search-like")
+    async def search_like():
+        s._allow_question_only_fallback()
+        await asyncio.sleep(0.05)
+        return {"flag": g.ALLOW_EXTERNAL_FALLBACK.get()}
+
+    @probe.get("/doc-like")
+    async def doc_like():
+        await asyncio.sleep(0.01)
+        return {"flag": g.ALLOW_EXTERNAL_FALLBACK.get()}
+
+    @probe.get("/doc-like-thread")
+    def doc_like_thread():
+        return {"flag": g.ALLOW_EXTERNAL_FALLBACK.get()}
+
+    c = TestClient(probe)
+    assert c.get("/search-like").json() == {"flag": True}
+    assert c.get("/doc-like").json() == {"flag": False}
+    assert c.get("/doc-like-thread").json() == {"flag": False}
+
+    async def both():
+        async def a():
+            s._allow_question_only_fallback(); await asyncio.sleep(0.05); return g.ALLOW_EXTERNAL_FALLBACK.get()
+        async def b():
+            await asyncio.sleep(0.02); return g.ALLOW_EXTERNAL_FALLBACK.get()
+        return await asyncio.gather(asyncio.create_task(a()), asyncio.create_task(b()))
+    assert asyncio.run(both()) == [True, False]  # concurrent requests do not see each other's flag
