@@ -193,3 +193,17 @@ def test_old_code_note_trigger():
     assert not old_code_note_needed("Section 103 of the Bharatiya Nyaya Sanhita", "openai/gpt")
     assert not old_code_note_needed("Section 302 IPC", "statutory_provision_authoritative")
     assert not old_code_note_needed("Rent can be raised by agreement", "x")
+
+
+def test_unverifiable_answer_gets_card_not_blank():
+    from unittest.mock import patch
+    from fastapi.testclient import TestClient
+    from app.main import app
+    from app.services.llm_service import llm_service
+    async def fake(*a, **k):
+        return {"answer": "x", "ratio_decidendi": None, "citations": [], "results": [], "model_used": "openai/gpt-oss-120b", "tier": "tier1"}
+    with patch("app.services.citation_checker.CitationChecker.check_and_badge_text",
+               lambda self, text, is_tier2=False: "I couldn't verify all specific citations in this response against our database."), \
+         patch.object(llm_service, "synthesize_search_answer", fake):
+        r = TestClient(app).post("/api/v1/search/answer", json={"query": "what is the punishment for murder", "results": []}).json()
+    assert "Section 103 - Punishment for murder" in r["ai_answer"] and "no AI explanation is shown" in r["ai_answer"]

@@ -504,6 +504,11 @@ async def search_answer_post(payload: SearchAnswerRequest):
             _c2 = build_statute_card(effective_query)
             if _c2:
                 ai_ans = f"{ai_ans}\n\n{_c2}"
+    if (not is_tier2 and not is_not_found and "statut" not in (model_used or "").lower()
+            and ai_ans.startswith("I couldn't verify all specific citations") and "POSSIBLY RELEVANT PROVISION" not in ai_ans):
+        _c3 = build_statute_card(effective_query)
+        if _c3:
+            ai_ans = f"{ai_ans}\n\nThe AI answer could not be checked, so no AI explanation is shown. Related text from the statute database:\n\n{_c3}"
     ratio = None if (is_tier2 or is_not_found) else citation_checker.check_and_badge_text(synthesis.get("ratio_decidendi") or _base_ans, is_tier2=False)
     citations = citation_checker.badge_citations_list(synthesis.get("citations", [])) if not is_tier2 else []
 
