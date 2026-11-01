@@ -536,7 +536,7 @@ export default function SearchResults({
                       {answerData.tier === 'tier1' && (answerData.no_strong_case_match || !(answerData.source_cases && answerData.source_cases.length))
                         ? 'Statutory text from the verified database; any AI explanation is not verified \u2022 Not formal legal advice'
                         : answerData.tier === 'tier1'
-                        ? 'AI summary based on the cases below \u2022 Not formal legal advice'
+                        ? 'Statute text and case excerpts below; any AI explanation is not verified, and an excerpt is not a verified holding \u2022 Not formal legal advice'
                         : answerData.tier === 'statute_text'
                           ? 'Exact statute wording as quoted in Supreme Court judgments \u2022 Current applicability not verified \u2022 Not legal advice'
                         : answerData.tier === 'unreliable'
