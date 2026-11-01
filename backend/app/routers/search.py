@@ -116,6 +116,13 @@ _ART_SUFFIX_RE = re.compile(
 )
 
 
+def _allow_question_only_fallback():
+    """Search answers see only the typed question and public corpus text, so an external fallback model may be
+    used here (when configured). Every other route (uploads, contract audit, case/doc chat) leaves it off."""
+    from app.services.groq_client import ALLOW_EXTERNAL_FALLBACK
+    ALLOW_EXTERNAL_FALLBACK.set(True)
+
+
 def normalize_article_suffix(query: str) -> str:
     """Join a spaced letter suffix to its article number ("article 339 AA" -> "article 339AA").
 
@@ -217,6 +224,7 @@ def is_pure_case_lookup_query(query: str) -> bool:
 
 @router.post("/search", response_model=SearchResponse)
 async def search_precedents_post(payload: SearchRequest):
+    _allow_question_only_fallback()
     """
     POST /api/v1/search
     Conducts dense/sparse retrieval over the verified precedent corpus.
@@ -361,6 +369,7 @@ def old_code_note_needed(text: str, model_used: str) -> bool:
 
 @router.post("/search/answer", response_model=SearchAnswerResponse)
 async def search_answer_post(payload: SearchAnswerRequest):
+    _allow_question_only_fallback()
     """
     POST /api/v1/search/answer
     Dedicated AI answer synthesis endpoint for Universal Search.

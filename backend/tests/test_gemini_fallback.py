@@ -88,3 +88,22 @@ def test_error_text_never_contains_key(monkeypatch):
         assert "SECRETKEY" not in str(ei.value)
     finally:
         g.ALLOW_EXTERNAL_FALLBACK.reset(tok)
+
+
+def test_flag_default_off_and_only_search_routes_enable_it():
+    import pathlib, re
+    assert g.ALLOW_EXTERNAL_FALLBACK.get() is False
+    root = pathlib.Path(g.__file__).resolve().parents[1]
+    users = sorted(str(p.relative_to(root)) for p in root.rglob("*.py")
+                   if "ALLOW_EXTERNAL_FALLBACK" in p.read_text() or "_allow_question_only_fallback" in p.read_text())
+    assert users == ["routers/search.py", "services/groq_client.py"], users
+    src = (root / "routers" / "search.py").read_text()
+    assert len(re.findall(r"^\s+_allow_question_only_fallback\(\)", src, re.M)) == 2
+
+
+def test_only_one_module_talks_to_a_model_provider():
+    import pathlib
+    root = pathlib.Path(g.__file__).resolve().parents[1]
+    hits = sorted(str(p.relative_to(root)) for p in root.rglob("*.py")
+                  if "api.groq.com" in p.read_text() or "generativelanguage.googleapis" in p.read_text())
+    assert hits == ["services/groq_client.py"], hits
