@@ -279,7 +279,8 @@ async def search_precedents_post(payload: SearchRequest):
     from app.services.citation_checker import citation_checker
     is_tier2 = "tier2" in synthesis.get("model_used", "").lower()
     ai_ans = citation_checker.check_and_badge_text(synthesis.get("answer") or "", is_tier2=is_tier2)
-    ratio = None if is_tier2 else citation_checker.check_and_badge_text(synthesis.get("ratio_decidendi") or ai_ans, is_tier2=False)
+    _base_ans = ai_ans
+    ratio = None if is_tier2 else citation_checker.check_and_badge_text(synthesis.get("ratio_decidendi") or _base_ans, is_tier2=False)
     citations = citation_checker.badge_citations_list(synthesis.get("citations", [])) if not is_tier2 else []
 
     resp = SearchResponse(
@@ -301,7 +302,7 @@ ANSWER_TIME_BUDGET_S = 45
 
 
 
-STATUTE_CARD_MAX_CHARS = 900
+STATUTE_CARD_MAX_CHARS = 3000
 
 
 def build_statute_card(query: str) -> str:
@@ -318,18 +319,40 @@ def build_statute_card(query: str) -> str:
         body = re.sub(r"\s+", " ", (m.get("body") or "")).strip()
         if not body:
             continue
-        cut = len(body) > STATUTE_CARD_MAX_CHARS
+        total = len(body)
+        cut = total > STATUTE_CARD_MAX_CHARS
+        label = "Full text of the provision"
         if cut:
-            body = body[:STATUTE_CARD_MAX_CHARS].rsplit(" ", 1)[0] + " ... (text shortened; open the full provision)"
+            body = body[:STATUTE_CARD_MAX_CHARS].rsplit(" ", 1)[0]
+            label = (f"EXCERPT ONLY - first {len(body)} of {total} characters; the rest of the provision "
+                     "(possibly including provisos, explanations or exceptions) is not shown")
         edition = (m.get("edition") or "edition not recorded").strip()
+        src = m.get("source_url")
         blocks.append(
             f"{m.get('act_title')}, Section {m.get('section_number')} - {m.get('heading')}\n"
-            f"Edition: {edition}\n\"{body}\"" + (f"\nSource: {m['source_url']}" if m.get("source_url") else "")
+            f"Edition: {edition}\n{label}:\n\"{body}\"" + (f"\nRead the full provision at: {src}" if (src and cut) else ("\nThe full provision is not linked here; check the official Act." if cut else "")) + (f"\nSource: {src}" if (src and not cut) else "")
         )
     if not blocks:
         return ""
-    return ("RELATED PROVISION TEXT FROM OUR STATUTE DATABASE (word for word, matched by section heading, "
-            "not an AI explanation; amendments and current applicability are not checked here)\n\n" + "\n\n".join(blocks))
+    return ("POSSIBLY RELEVANT PROVISION (a suggestion from matching your words to the section heading; it may not apply "
+            "to your situation and is not a legal conclusion). Text is taken word for word from our statute database; it is not an AI "
+            "explanation, and amendments and current applicability are not checked here.\n\n" + "\n\n".join(blocks))
+
+
+_OLD_CODE_RE = re.compile(r"\b(?:IPC|CrPC|Cr\.P\.C|Indian Penal Code|Code of Criminal Procedure|Indian Evidence Act)\b", re.I)
+OLD_CODE_NOTE = ("NOTE ON WHICH LAW APPLIES: the Indian Penal Code, 1860, the Code of Criminal Procedure, 1973 and the Indian Evidence "
+                 "Act, 1872 were repealed and replaced by the Bharatiya Nyaya Sanhita, the Bharatiya Nagarik Suraksha Sanhita and the "
+                 "Bharatiya Sakshya Adhiniyam, which came into force on 1 July 2024 (BNS s.358 and BNSS s.531 are the repeal and savings "
+                 "provisions in our database; commencement per the Gazette notifications S.O. 848(E)-850(E) of 23 Feb 2024). Offences "
+                 "committed before 1 July 2024 are generally dealt with under the old code, and later ones under the new code. The "
+                 "section numbers above come from a judgment or text that uses the old code, so check the new section number and "
+                 "which code covers your date before relying on them.")
+
+
+def old_code_note_needed(text: str, model_used: str) -> bool:
+    if not text or "statut" in (model_used or "").lower() or "BNS" in text or "Bharatiya" in text or "NOTE ON WHICH LAW APPLIES" in text:
+        return False
+    return bool(_OLD_CODE_RE.search(text))
 
 @router.post("/search/answer", response_model=SearchAnswerResponse)
 async def search_answer_post(payload: SearchAnswerRequest):
@@ -468,13 +491,20 @@ async def search_answer_post(payload: SearchAnswerRequest):
     is_not_found = "not_found" in model_used.lower()
 
     ai_ans = citation_checker.check_and_badge_text(synthesis.get("answer") or "", is_tier2=is_tier2)
+    _base_ans = ai_ans
     if is_tier2 and not _timed_out:
         _card = build_statute_card(effective_query)
         if _card:
             if ai_ans == UNRELIABLE_TIER2_MSG:
                 ai_ans = "No AI explanation is available for this question. The provision text below is shown word for word."
             ai_ans = f"{ai_ans}\n\n{_card}"
-    ratio = None if (is_tier2 or is_not_found) else citation_checker.check_and_badge_text(synthesis.get("ratio_decidendi") or ai_ans, is_tier2=False)
+    if not is_not_found and old_code_note_needed(ai_ans, model_used):
+        ai_ans = f"{ai_ans}\n\n{OLD_CODE_NOTE}"
+        if not is_tier2:
+            _c2 = build_statute_card(effective_query)
+            if _c2:
+                ai_ans = f"{ai_ans}\n\n{_c2}"
+    ratio = None if (is_tier2 or is_not_found) else citation_checker.check_and_badge_text(synthesis.get("ratio_decidendi") or _base_ans, is_tier2=False)
     citations = citation_checker.badge_citations_list(synthesis.get("citations", [])) if not is_tier2 else []
 
     # Determine source cases and Tier/Label

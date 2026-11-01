@@ -177,3 +177,19 @@ def test_endpoint_adds_card_to_general_answer_without_model():
     r = TestClient(app).post("/api/v1/search/answer", json={"query": "what is rioting", "results": []}).json()
     assert "Section 191 - Rioting" in (r["ai_answer"] or "")
     assert "check the cases below" not in r["ai_answer"]
+
+
+def test_card_labels_relevance_and_excerpt():
+    from app.routers.search import build_statute_card
+    card = build_statute_card("what is rioting")
+    assert "POSSIBLY RELEVANT PROVISION" in card and "not a legal conclusion" in card
+    long_card = build_statute_card("what is the punishment for murder")
+    assert ("Full text of the provision" in long_card) or ("EXCERPT ONLY" in long_card)
+
+
+def test_old_code_note_trigger():
+    from app.routers.search import old_code_note_needed
+    assert old_code_note_needed("Section 302 of the Indian Penal Code prescribes death", "openai/gpt")
+    assert not old_code_note_needed("Section 103 of the Bharatiya Nyaya Sanhita", "openai/gpt")
+    assert not old_code_note_needed("Section 302 IPC", "statutory_provision_authoritative")
+    assert not old_code_note_needed("Rent can be raised by agreement", "x")
