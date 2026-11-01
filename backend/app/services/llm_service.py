@@ -1808,7 +1808,7 @@ class LLMService:
                     c0 = matching_cases[0]
                     ans_str += case_passage_text(c0)
                     cits = [f"Constitution of India, Article {art_num} ({heading})", f"{c0.get('title')} ({c0.get('citation')})"]
-                    tier_label = "Statutory text + AI explanation (AI part not verified) + case summary below" if _ai_shown else "AI summary based on the cases below"
+                    tier_label = "Statutory text + AI explanation (AI part not verified) + case excerpt (not a verified holding)" if _ai_shown else "Statutory text + case excerpt (not a verified holding)"
                     no_strong = False
                 else:
                     ans_str += "No sufficiently relevant case summary was verified for this result."
@@ -2137,7 +2137,7 @@ class LLMService:
                         ans_str += (" Note: the statutory text quoted above carries an unresolved verification caveat "
                                     "and is not authoritative; the case summary is independent of it.")
                     cits = [f"{act_title}, Section {sec_num} ({heading})", f"{c0.get('title')} ({c0.get('citation')})"]
-                    tier_label = "Statutory text + AI explanation (AI part not verified) + case summary below" if _ai_shown else "AI summary based on the cases below"
+                    tier_label = "Statutory text + AI explanation (AI part not verified) + case excerpt (not a verified holding)" if _ai_shown else "Statutory text + case excerpt (not a verified holding)"
                     no_strong = False
                 else:
                     ans_str += "No sufficiently relevant case summary was verified for this result."
