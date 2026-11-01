@@ -23,7 +23,9 @@ SPILLOVER_MODEL = os.getenv("GROQ_SPILLOVER_MODEL", "openai/gpt-oss-20b")
 
 # ---- Optional Gemini fallback (OFF unless explicitly configured) -------------------------------------------
 # Used only when BOTH Groq models fail with a rate limit/outage, only for requests whose context allows external
-# fallback (questions and statute text, never uploaded documents), and only up to a daily call cap.
+# fallback (questions and statute text, never uploaded documents), and only while an in-memory counter is under GEMINI_FALLBACK_DAILY_CAP.
+# That counter is a per-process guard for one UTC day: it resets on restart, redeploy or sleep, so it is NOT a durable
+# daily maximum. The provider's own free-tier quota is the only hard stop.
 # The key is read from the server environment; it is sent in a header, never put in a URL, and never logged.
 ALLOW_EXTERNAL_FALLBACK = contextvars.ContextVar("allow_external_fallback", default=False)
 _GEMINI_CALLS = {"day": None, "n": 0}

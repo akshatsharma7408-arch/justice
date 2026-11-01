@@ -78,3 +78,9 @@ All screenshots captured via browser automation in `<appDataDir>\brain\8fa3bc8a-
   - *Precedent Comparison:* Select `Percept D'Mark` vs `Superintendence Co.` -> demonstrates Section 27 post-employment non-compete doctrine comparison.
   - *Smart Citator:* Open `Percept D'Mark` to show affirmed/relied-on downstream tree; open `Vihaan Kumar` to show honest unmapped empty state.
   - *Document Studio:* Upload or test contract clause; demonstrate OCR fail-closed protection on blank/corrupted scans.
+
+## Gemini fallback (added 2026-11-01)
+Off unless GEMINI_FALLBACK_ENABLED=1 plus _API_KEY, _MODEL and _DAILY_CAP are set (Render env). Used only after both Groq models fail
+with 429/5xx/network errors, and only in the two search handlers (typed question plus public corpus text; never uploads).
+GEMINI_FALLBACK_DAILY_CAP limits an in-memory per-process counter for one UTC day. It resets on restart, redeploy or sleep, so it is
+not a durable daily maximum; Google's free-tier quota for the chosen model is the only hard stop. Billing must stay off.
