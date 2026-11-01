@@ -40,3 +40,8 @@ def test_dva_case_gate_requires_the_act_to_be_named():
     rx = m.group(1)
     assert not re.search(rx, "suit filed under section 18 of the act is not maintainable consent terms maintenance")
     assert re.search(rx, "application under section 12 of the protection of women from domestic violence act, 2005")
+
+
+def test_ai_explanation_paragraphs_are_not_split_out_of_the_labelled_box():
+    src = (Path(__file__).resolve().parents[1] / "app" / "services" / "llm_service.py").read_text(encoding="utf-8")
+    assert src.count("chr(10), _ai") == 2 and "not a verified statement of law): {_ai}" not in src

@@ -1781,7 +1781,7 @@ class LLMService:
                 if not expl:
                     _ai = await self.explain_provision_ai(f"Article {art_num} of the Constitution of India ({heading})", body, force_fallback=force_fallback)
                     if _ai:
-                        ans_str += f"\n\nPlain-English explanation (AI-written from the text above; not a verified statement of law): {_ai}\n\n"
+                        ans_str += f"\n\nPlain-English explanation (AI-written from the text above; not a verified statement of law): {re.sub(r"\n\s*\n", chr(10), _ai)}\n\n"
                         _ai_shown = True
                     elif (not force_fallback) and self.client:
                         ans_str += "\n\n" + explanation_unavailable_note() + "\n\n"
@@ -2109,7 +2109,7 @@ class LLMService:
                 if not expl and not has_unresolved_caveat and not (act_edition and "Repealed" in act_edition):
                     _ai = await self.explain_provision_ai(f"Section {sec_num} of the {title_disp} ({heading})", body, force_fallback=force_fallback)
                     if _ai:
-                        ans_str += f"\n\nPlain-English explanation (AI-written from the text above; not a verified statement of law): {_ai}\n\n"
+                        ans_str += f"\n\nPlain-English explanation (AI-written from the text above; not a verified statement of law): {re.sub(r"\n\s*\n", chr(10), _ai)}\n\n"
                         _ai_shown = True
                     elif (not force_fallback) and self.client:
                         ans_str += "\n\n" + explanation_unavailable_note() + "\n\n"
