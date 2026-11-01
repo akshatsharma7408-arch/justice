@@ -214,7 +214,7 @@ def case_passage_text(c: Dict[str, Any]) -> Optional[str]:
     s = clean_case_summary(c)
     if not s or s[:1].islower():
         return None
-    return f"Passage from {c.get('title')} ({c.get('citation')}) - an excerpt from the judgment, not a verified holding or a finding that it applies to this question: {s}"
+    return f"Passage from {c.get('title')} ({c.get('citation')}) - an excerpt from the judgment, not a verified holding or a finding that it applies to this question: {s} [Extracted from scanned text; it may contain character-recognition errors. Check the original judgment.]"
 
 
 def summary_is_usable(text: str) -> bool:

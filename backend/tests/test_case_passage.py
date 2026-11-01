@@ -26,3 +26,10 @@ def test_dynamic_case_routes_do_not_use_ai_summary_badge():
         window = src[m.end(): m.end() + 900]
         assert "case excerpt (not a verified holding)" in window
         assert "AI summary based on the cases below" not in window.split("else:")[0]
+
+
+def test_excerpt_carries_scan_error_warning_and_keeps_text_unchanged():
+    t = "Every citizen has a mndamental right to have the enjoyment of quality of life under Artkte 21."
+    r = case_passage_text(_c(t))
+    assert "mndamental" in r and "Artkte" in r  # judgment text is not silently rewritten
+    assert "character-recognition errors" in r
