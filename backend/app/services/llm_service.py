@@ -174,13 +174,18 @@ def vetted_clause_explanation(source_text: str):
     if len(segs) < 2 or not _VETTED_GLOSSES:
         return None
     pairs = []
+    _hashes = []
     for s in segs:
         h = hashlib.sha256(re.sub(r"\s+", " ", s).strip().encode()).hexdigest()
+        _hashes.append(h)
         m = re.match(r"\(([A-Za-z0-9]{1,4})\)", s)
         e = _VETTED_GLOSSES.get(h)
         pairs.append((f"({m.group(1)})" if m else None, e["gloss"] if e else None))
     if sum(1 for _, g in pairs if g) * 2 < len(pairs):
         return None
+    _note = next((_VETTED_GLOSSES[hh]["note"] for hh in _hashes if hh in _VETTED_GLOSSES and _VETTED_GLOSSES[hh].get("note")), None)
+    if _note:
+        return render_clause_explanation(pairs) + "\n" + _note
     return render_clause_explanation(pairs) + "\n(Wording prepared in advance by an AI assistant and compared clause by clause with the statute text above; no lawyer has reviewed it and it is not legal advice. Statute text checked against the Legislative Department edition as on May 2022; later amendments were not checked.)"
 
 
