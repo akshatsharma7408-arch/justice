@@ -951,7 +951,9 @@ def _unverified_unknown_act(text: str):
             continue
         if low.startswith(_UNV_ACT_OK_PREFIX) or "rent control" in low or "state" in low.split()[:2]:
             continue
-        if not any(low == k or low.endswith(" " + k) or low.endswith(k) for k in _UNV_KNOWN_ACTS):
+        if low.split()[0] in ("relevant", "applicable", "specific", "particular", "concerned", "same", "relevant,"):
+            continue
+        if not any(low == k or low.endswith(" " + k) or low.endswith(k) or k.endswith(" " + low) for k in _UNV_KNOWN_ACTS):
             return name
     return None
 
