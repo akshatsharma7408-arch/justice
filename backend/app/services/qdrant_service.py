@@ -395,7 +395,12 @@ def compute_keyword_score(
     c_text = (case.get("text", "") or case.get("ratioSummary", "") or "").lower()
 
     score = 0.0
+    # With an explicit article/section reference, the structural words say nothing about relevance
+    # (every case tagged "Article 141" would otherwise match a query for "article 14").
+    _structural = {"article", "articles", "section", "sections", "sec"} if statute_info else set()
     for term in query_terms:
+        if term in _structural:
+            continue
         if term in c_title:
             score += 4.0
         if any(term in a for a in c_aliases):
@@ -1774,6 +1779,17 @@ class QdrantService:
                     is_alias_match = True
 
             alias_boost = 0.40 if is_alias_match else 0.0
+
+            # A bare "article N" / "section N" query: only cases that actually cite that exact
+            # provision (token boundary: 14 != 141 != 14A) or match by alias may appear.
+            if statute_info and not is_alias_match:
+                _sub = [x for x in query_terms if x not in {"article", "articles", "section", "sections", "sec"}]
+                if not _sub:
+                    _kind, _num = statute_info["type"], statute_info["number"]
+                    _txt = f"{c.get('title', '')} {c.get('ratioSummary', '')} {c.get('text', '')}".lower()
+                    _cites = any(_ref_in(_kind, _num, s) for s in (c.get("statutes") or [])) or _ref_in(_kind, _num, _txt)
+                    if not _cites:
+                        continue
 
             # Relevance floor: reject if query has substantive terms and no term matches, no statute, no alias
             if query_terms and kw_score == 0 and not is_alias_match and not statute_info:

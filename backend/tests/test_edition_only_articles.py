@@ -48,4 +48,16 @@ def test_14_no_unchecked_note_and_no_article_141_case():
     t = d["ai_answer"]
     assert "Dalmia" not in t and "[Note written for this app" not in t
     assert "Dawoodi" not in t
-    assert all("Dawoodi" not in (x.get("title") or "") for x in d.get("matching_cases", []) or d.get("cases", []) or [])
+    r = c.post("/api/v1/search", json={"query": "article 14"}, auth=("u", "x")).json()
+    assert all("Dawoodi" not in (x.get("title") or "") for x in r.get("results", []))
+    assert not any("Dawoodi" in s for s in r.get("citations", []))
+    # legitimate article 141 query still finds it
+    r2 = c.post("/api/v1/search", json={"query": "article 141"}, auth=("u", "x")).json()
+    assert any("Dawoodi" in (x.get("title") or "") for x in r2.get("results", []))
+
+
+def test_multiarticle_case_still_matches_article_14():
+    from app.services.qdrant_service import _ref_in
+    statutes = ["Article 21", "Article 14", "Article 19", "Passports Act 1967"]
+    assert any(_ref_in("article", "14", s) for s in statutes)
+    assert not any(_ref_in("article", "14", s) for s in ["Article 141, Constitution of India", "Article 145(3), Constitution of India"])
