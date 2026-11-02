@@ -426,7 +426,7 @@ export default function SearchResults({
                   {/* Card Top Strip: Kicker + Tier Badge */}
                   <div className="answer-card-top-strip">
                     <span className="answer-kicker mono">
-                      {answerData.tier === 'unreliable' ? 'LEGAL NOTICE' : answerData.tier === 'statute_text' ? 'STATUTE TEXT' : (() => { const tl = answerData.tier_label || ''; const ex = tl.includes('case excerpt'); const ai = tl.includes('AI explanation'); return ex && ai ? 'STATUTE TEXT, AI EXPLANATION AND CASE EXCERPT' : ex ? 'STATUTE TEXT AND CASE EXCERPT' : ai ? 'STATUTE TEXT AND AI EXPLANATION' : tl === 'Authoritative statutory provision' ? 'STATUTE TEXT' : 'AI SUMMARY'; })()}
+                      {answerData.tier === 'unreliable' ? 'LEGAL NOTICE' : answerData.tier === 'not_found' ? 'NOT FOUND IN THIS DATABASE' : answerData.tier === 'statute_text' ? 'STATUTE TEXT' : (() => { const tl = answerData.tier_label || ''; const ex = tl.includes('case excerpt'); const ai = tl.includes('AI explanation'); return ex && ai ? 'STATUTE TEXT, AI EXPLANATION AND CASE EXCERPT' : ex ? 'STATUTE TEXT AND CASE EXCERPT' : ai ? 'STATUTE TEXT AND AI EXPLANATION' : tl === 'Authoritative statutory provision' ? 'STATUTE TEXT' : 'AI SUMMARY'; })()}
                     </span>
                     <div className="answer-badge-wrap">
                       {answerData.hide_badge || answerData.tier === 'unreliable' || answerData.tier === 'not_found' ? null : (

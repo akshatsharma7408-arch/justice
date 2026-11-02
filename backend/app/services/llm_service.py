@@ -237,6 +237,54 @@ def _one_paragraph(text: str) -> str:
     return re.sub(r"\n\s*\n", "\n", text or "")
 
 
+def _edit1(a: str, b: str) -> bool:
+    """True when a and b differ by at most one inserted, deleted or substituted character."""
+    if a == b:
+        return True
+    if abs(len(a) - len(b)) > 1:
+        return False
+    if len(a) == len(b):
+        return sum(x != y for x, y in zip(a, b)) == 1
+    if len(a) > len(b):
+        a, b = b, a
+    return any(b[:i] + b[i + 1:] == a for i in range(len(b)))
+
+
+def unknown_article_message(art_num: str) -> Optional[str]:
+    """Honest not-found text for a well-formed article number that is not in the database. It says what the database holds,
+    lists article numbers one character away as possible typos (never substituting one), and names the edition limit."""
+    heads = {}
+    try:
+        import json as _json, os as _os
+        with open(_os.path.join(_os.path.dirname(__file__), "..", "ingest", "constitution_corpus.json"), encoding="utf-8") as f:
+            for k, v in _json.load(f).items():
+                heads[str(k).upper()] = (v.get("heading") or "") if isinstance(v, dict) else ""
+        conn = statute_service._get_connection()
+        for r in conn.execute("select section_number, heading from statutory_provisions where act_id='constitution'").fetchall():
+            heads.setdefault(str(r["section_number"]).upper(), r["heading"] or "")
+    except Exception:
+        if not heads:
+            return None
+    want = art_num.upper()
+    if want in heads:
+        return None
+    near = []
+    for n in sorted(heads):
+        if _edit1(want, n):
+            try:
+                _p = statute_service.get_provision("constitution", n) or {}
+            except Exception:
+                _p = {}
+            near.append((n, _p.get("heading") or heads[n]))
+    near = near[:4]
+    msg = (f"Article {art_num} was not found in the Constitution text held in this database (Legislative Department edition as on May 2022, "
+           f"plus any later entries it lists). That can mean a typing slip, an article added or changed by a later amendment, or an article this database does not cover. "
+           f"Nothing has been substituted for it.")
+    if near:
+        msg += " Article numbers in the database that are one character away: " + "; ".join(f"Article {n}" + (f" ({h.strip().rstrip('.')})" if h.strip() else "") for n, h in near) + ". Search for one of them by number if it is what you meant."
+    return msg
+
+
 def summary_is_about_other_article(summary: str, art_num: str) -> bool:
     """True when a case summary cites constitutional articles but never the one asked about (so it is about something else)."""
     cited = {a.upper() for a in re.findall(r"\bArticles?\s+(\d+[A-Za-z]*)", summary or "", re.IGNORECASE)}
@@ -2247,8 +2295,10 @@ class LLMService:
         if entities["has_specific_entity"]:
             matching_cases = [c for c in retrieved_cases if match_case_to_query_entities(entities, c)]
             if not matching_cases:
+                _art_m = re.search(r'\b(?:articles?|arts?\.?)\s*(\d+[a-zA-Z]*)\b', query, re.IGNORECASE)
+                _unk = unknown_article_message(_art_m.group(1)) if _art_m else None
                 return {
-                    "answer": "I couldn't find a verified source in our database matching this specific reference.",
+                    "answer": _unk or "I couldn't find a verified source in our database matching this specific reference.",
                     "ratio_decidendi": None,
                     "citations": [],
                     "results": [],
