@@ -2127,7 +2127,7 @@ class LLMService:
                 _timing = (not _adverse) and TIMING_NOTE_MARKER in (body or "")
                 ans_str = f"Article {art_num} of the Constitution of India governs '{heading}'. {body}"
                 if _adverse:
-                    ans_str = ("Important: the official edition's footnotes say part of this article's wording was struck down or declared invalid by the Supreme Court. "
+                    ans_str = ("Important: the official edition's footnotes say part of this article's wording was struck down, declared invalid or made inoperative (by a court decision or a later order). "
                                "Read the note at the end of the text. ") + ans_str
                 if _timing:
                     ans_str = ("Important: this article does not say by itself when it takes effect; see the note at the end of the text and article 334A. ") + ans_str
@@ -2139,7 +2139,7 @@ class LLMService:
                     ans_str += ("\n\nNo AI explanation is shown for this article: a plain-English summary could make it sound as if the reservation already applies. "
                                 "Only the edition text and the note on when it takes effect are shown.\n\n")
                 elif _adverse:
-                    ans_str += ("\n\nNo AI explanation is shown for this article: a plain-English summary could present the struck-down wording "
+                    ans_str += ("\n\nNo AI explanation is shown for this article: a plain-English summary could present struck-down or inoperative wording "
                                 "as operative law. Only the edition text and its footnote note are shown.\n\n")
                 elif not expl:
                     _ai = await self.explain_provision_ai(f"Article {art_num} of the Constitution of India ({heading})", body, force_fallback=force_fallback)
