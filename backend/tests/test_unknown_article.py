@@ -63,3 +63,37 @@ def test_330a_332a_never_get_ai_explanation_and_point_to_334a():
         d = c.post("/api/v1/search/answer", json={"query": f"article {a}"}, auth=("u", "x")).json()
         t = d["ai_answer"]
         assert "334A" in t and "Plain-English explanation" not in t and "No AI explanation is shown" in t, a
+
+
+def test_scoped_edition_footnote_articles_show_note_and_withhold_explanation():
+    import os
+    os.environ["QDRANT_URL"] = "http://localhost:1"
+    from fastapi.testclient import TestClient
+    from app.main import app
+    c = TestClient(app)
+    want = {
+        "367": ["C.O. 272", "Appendix II", "(w.e.f. 5-8-2019)"],
+        "371A": ["Removal of Difficulties) Order No. X", "1-12-1963", "Minister for Tuensang affairs", "does not say whether that Order is in force today"],
+        "239A": ["made applicable to Union Territory of Jammu and Kashmir", "34 of 2019", "31-10-2019"],
+    }
+    for a, frags in want.items():
+        t = c.post("/api/v1/search/answer", json={"query": f"article {a}"}, auth=("u", "x")).json()["ai_answer"]
+        assert "Note from the official edition's footnotes (reference to another instrument):" in t, a
+        for f in frags:
+            assert f in t, (a, f)
+        assert "No AI explanation is shown for this article" in t, a
+        assert "Plain-English explanation" not in t and "AI RESTATEMENT" not in t, a
+        assert "struck down" not in t.split("Note from the official edition")[0], a  # no inherited struck-down lead
+        assert "Important: the official edition's footnotes say part of this article's wording was struck down" not in t, a
+
+
+def test_124_keeps_njac_note_and_adds_thirty_three_pointer():
+    import os
+    os.environ["QDRANT_URL"] = "http://localhost:1"
+    from fastapi.testclient import TestClient
+    from app.main import app
+    t = TestClient(app).post("/api/v1/search/answer", json={"query": "article 124"}, auth=("u", "x")).json()["ai_answer"]
+    assert "AIR 2016 SC 117" in t and "Important: the official edition's footnotes say" in t
+    assert "Now thirty-three vide the Supreme Court (Number of Judges) Amendment Act, 2019 (37 of 2019)" in t
+    assert "That Act has not been checked here" in t
+    assert "No AI explanation is shown for this article" in t

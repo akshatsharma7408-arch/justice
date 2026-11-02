@@ -66,7 +66,7 @@ VERIFIED_ARTICLES = {
 
 PREPOSITIONS = {"in", "see", "under", "per", "re", "as"}
 
-_EDITION_NOTE_RE = re.compile(r"\[Note from the official edition's footnotes:.*?\]", re.DOTALL)
+_EDITION_NOTE_RE = re.compile(r"\[Note from the official edition's footnotes(?: \([^)]*\))?:.*?\]", re.DOTALL)
 
 # Pre-compiled regex patterns
 PARTY_WORD = r"(?:[A-Za-z0-9&'\.\-]+|\((?![\[\s]*[12]\d{3}\b)[^\)]+\)|\[(?![\[\s]*[12]\d{3}\b)[^\]]+\])"

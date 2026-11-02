@@ -115,6 +115,7 @@ def model_rate_limited() -> bool:
 
 TIMING_NOTE_MARKER = "Note on when this takes effect:"
 ADVERSE_FOOTNOTE_MARKER = "Note from the official edition's footnotes:"
+SCOPED_FOOTNOTE_MARKER = "Note from the official edition's footnotes (reference to another instrument):"
 
 
 def explanation_unavailable_note() -> str:
@@ -2125,10 +2126,13 @@ class LLMService:
                 # In force: verbatim statutory text leads; curated explanation follows.
                 _adverse = ADVERSE_FOOTNOTE_MARKER in (body or "")
                 _timing = (not _adverse) and TIMING_NOTE_MARKER in (body or "")
+                _scoped = (not _adverse) and (not _timing) and SCOPED_FOOTNOTE_MARKER in (body or "")
                 ans_str = f"Article {art_num} of the Constitution of India governs '{heading}'. {body}"
                 if _adverse:
                     ans_str = ("Important: the official edition's footnotes say part of this article's wording was struck down, declared invalid or made inoperative (by a court decision or a later order). "
                                "Read the note at the end of the text. ") + ans_str
+                if _scoped:
+                    ans_str = ("Note: the official edition's footnotes attach a reference to another instrument to this article. Read the note at the end of the text. ") + ans_str
                 if _timing:
                     ans_str = ("Important: this article does not say by itself when it takes effect; see the note at the end of the text and article 334A. ") + ans_str
                 if expl:
@@ -2138,6 +2142,9 @@ class LLMService:
                 if _timing:
                     ans_str += ("\n\nNo AI explanation is shown for this article: a plain-English summary could make it sound as if the reservation already applies. "
                                 "Only the edition text and the note on when it takes effect are shown.\n\n")
+                elif _scoped:
+                    ans_str += ("\n\nNo AI explanation is shown for this article: a plain-English summary could leave out or misstate what the footnote refers to, which has not been checked here. "
+                                "Only the edition text and its footnote note are shown.\n\n")
                 elif _adverse:
                     ans_str += ("\n\nNo AI explanation is shown for this article: a plain-English summary could present struck-down or inoperative wording "
                                 "as operative law. Only the edition text and its footnote note are shown.\n\n")
@@ -2171,6 +2178,8 @@ class LLMService:
 
                 if _adverse or _timing:
                     tier_label = "Edition text with an important note (see the text)"
+                elif _scoped:
+                    tier_label = "Edition text with a footnote note (see the text)"
                 badged_ans = citation_checker.check_and_badge_text(ans_str, is_tier2=False)
                 badged_ratio = citation_checker.check_and_badge_text(expl, is_tier2=False)
                 badged_cits = citation_checker.badge_citations_list(cits)
