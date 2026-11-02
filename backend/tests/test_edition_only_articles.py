@@ -111,3 +111,34 @@ def test_curated_case_prose_withheld_in_answer_and_cards_but_citation_kept():
     assert any("Puttaswamy" in (x.get("title") or "") for x in d["source_cases"])
     r = c.post("/api/v1/search", json={"query": "article 21"}, auth=("u", "x")).json()
     assert all("proportionality test" not in (x.get("ratioSummary") or "") for x in r["results"])
+
+
+def test_case_chat_does_not_reuse_curated_holding():
+    import asyncio
+    from app.routers import casechat
+    casechat._init_case_data()
+    curated = [k for k, v in casechat._CASE_METADATA_INDEX.items()
+               if v.get("_curated_ratio") and v.get("ratioSummary")]
+    assert curated
+    for cid in curated[:25]:
+        meta = casechat._CASE_METADATA_INDEX[cid]
+        assert casechat.is_curated_case_meta(meta)
+        paras = casechat.get_case_chunks(cid)
+        assert not any(meta["ratioSummary"][:60] in p.get("text", "") for p in paras
+                       if "JUDICIAL HOLDING" in p.get("text", "")), cid
+
+
+def test_case_chat_endpoint_refuses_without_judgment_text():
+    import asyncio
+    from app.routers import casechat
+    casechat._init_case_data()
+    cid = next(k for k, v in casechat._CASE_METADATA_INDEX.items()
+               if v.get("_curated_ratio") and not casechat.get_case_chunks(k))
+    class R: client = type("c", (), {"host": "t"})()
+    req = type("Rq", (), {"client": type("c", (), {"host": "testhost"})(), "headers": {}})()
+    payload = casechat.CaseChatRequest(case_id=cid, question="Summarise this case", messages=[])
+    res = asyncio.run(casechat.post_case_chat(payload, req))
+    assert res.model_used == "none"
+    assert "not available in this database" in res.answer
+    meta = casechat._CASE_METADATA_INDEX[cid]
+    assert meta["ratioSummary"][:50] not in res.answer

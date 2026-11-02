@@ -575,7 +575,7 @@ export default function SearchResults({
                       {answerData.tier === 'tier1' && (answerData.no_strong_case_match || !(answerData.source_cases && answerData.source_cases.length))
                         ? 'Statutory text from the verified database; any AI explanation is not verified \u2022 Not formal legal advice'
                         : answerData.tier === 'tier1'
-                        ? 'Statute text and case excerpts below; any AI explanation is not verified, and an excerpt is not a verified holding \u2022 Not formal legal advice'
+                        ? 'Statute text and case citations below; case content is not checked against the judgments, and any AI explanation is not verified \u2022 Not formal legal advice'
                         : answerData.tier === 'statute_text'
                           ? 'Exact statute wording as quoted in Supreme Court judgments \u2022 Current applicability not verified \u2022 Not legal advice'
                         : answerData.tier === 'unreliable'
@@ -760,14 +760,14 @@ export default function SearchResults({
                     {isExpanded && (
                       <div className="card-expanded-drawer animate-fade-in">
                         <div className="drawer-header">
-                          <span className="drawer-kicker mono">PRIMARY JUDGMENT RECORD</span>
+                          <span className="drawer-kicker mono">{precedent.summary_withheld ? 'CASE RECORD (CITATION ONLY)' : 'CASE RECORD'}</span>
                           <span className="drawer-case-chat-hint mono">
                             Case Chat panel active for this judgment
                           </span>
                         </div>
                         <div className="drawer-body">
                           <div className="drawer-para">
-                            <span className="para-num mono">Judicial Holding</span>
+                            <span className="para-num mono">{precedent.summary_withheld ? 'Summary status' : 'Stored holding (not verified)'}</span>
                             <p className="para-text font-serif">{precedent.ratioSummary}</p>
                           </div>
                           {precedent.text && precedent.text !== precedent.ratioSummary && (

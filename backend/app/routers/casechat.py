@@ -164,6 +164,7 @@ def _init_case_data():
                         "court": p.get("court", "Supreme Court of India"),
                         "year": p.get("decisionYear"),
                         "ratioSummary": p.get("ratioSummary", ""),
+                        "_curated_ratio": True,
                         "statutes": p.get("statutes", []),
                         "judges": p.get("judges", []),
                         "keywords": p.get("keywords", []),
@@ -243,6 +244,7 @@ def _init_case_data():
                             "court": "Supreme Court of India",
                             "year": c.get("year"),
                             "ratioSummary": c.get("ratioSummary") or c.get("text", "")[:350],
+                            "_curated_ratio": bool(c.get("ratioSummary")),
                         }
         except Exception as e:
             logger.error("Failed to load landmark_chunks.json: %s", e)
@@ -257,6 +259,26 @@ def _init_case_data():
         len(_LANDMARK_PRECEDENTS),
         len(_CHUNKS_BY_CASE)
     )
+
+
+def is_curated_case_meta(meta: Optional[Dict[str, Any]]) -> bool:
+    """True when the record's holding/ratio prose is an app-written stored summary (not judgment text)."""
+    if not meta:
+        return False
+    if meta.get("_curated_ratio"):
+        return True
+    try:
+        from app.services.qdrant_service import is_curated_summary
+        return is_curated_summary(meta)
+    except Exception:
+        return False
+
+
+UNGROUNDED_CASE_CHAT_MESSAGE = (
+    "The text of this judgment is not available in this database, so this panel cannot answer questions about it. "
+    "The app's stored summary of the case has not been checked against the judgment and is not used here. "
+    "Use the citation and the Smart Citator button to find the source: {citation}."
+)
 
 
 def get_case_record(case_id: str) -> Optional[Dict[str, Any]]:
@@ -343,9 +365,10 @@ def get_case_chunks(case_id: str) -> List[Dict[str, Any]]:
     except Exception as e:
         logger.warning("Could not fetch chunks for case '%s' from Qdrant: %s", cid, e)
 
-    # 5. Synthesize structured paragraphs for landmark cases without raw chunk files
+    # 5. Synthesize structured paragraphs for landmark cases without raw chunk files.
+    # A stored curated holding is app-written, not judgment text, so it must not be presented as judgment paragraphs.
     meta = get_case_record(cid)
-    if meta:
+    if meta and not is_curated_case_meta(meta):
         title = meta.get("title", "Case")
         citation = meta.get("citation", "")
         court = meta.get("court", "Supreme Court of India")
@@ -1032,6 +1055,19 @@ async def post_case_chat(payload: CaseChatRequest, request: Request):
             "court": "Supreme Court of India",
             "year": first_chunk.get("year"),
         }
+
+    if is_curated_case_meta(case_meta):
+        case_meta = {**case_meta, "ratioSummary": ""}
+        if not chunks:
+            return CaseChatResponse(
+                case_id=cid,
+                answer=UNGROUNDED_CASE_CHAT_MESSAGE.format(citation=case_meta.get("citation") or case_meta.get("title") or cid),
+                disclaimer="Not an AI answer. Not legal advice.",
+                based_on="No judgment text available",
+                paragraph_id=None,
+                cached=False,
+                model_used="none"
+            )
 
     # 3. Check if query is "Summarise this case"
     is_summary_request = bool(re.match(r'^(?:summarise|summarize)\s*(?:this\s*case)?[\.?!]*$', q, re.IGNORECASE))

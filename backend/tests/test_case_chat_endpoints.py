@@ -37,19 +37,11 @@ def test_case_chat_valid_summary(client=client):
     assert res.status_code == 200
     data = res.json()
     assert data["case_id"] == "sc-2006-percept"
-    assert "What it was about:" in data["answer"]
-    assert "What the court decided:" in data["answer"]
-    assert "Why it matters:" in data["answer"]
-    assert "Key points:" in data["answer"]
-    assert data["disclaimer"] == "AI answer, not legal advice"
-
-    # Second call should be a cache hit
-    res_cached = client.post("/api/case-chat", json={
-        "case_id": "sc-2006-percept",
-        "question": "Summarise this case"
-    })
-    assert res_cached.status_code == 200
-    assert res_cached.json()["cached"] is True
+    # This case has only an app-written stored holding and no judgment text, so the
+    # panel must refuse rather than turn that unchecked prose into a summary.
+    assert "not available in this database" in data["answer"]
+    assert data["model_used"] == "none"
+    assert "What the court decided:" not in data["answer"]
 
 def test_case_chat_valid_factual_question(client=client):
     """Valid question about parties returns grounded answer and Based on line."""
@@ -71,7 +63,7 @@ def test_case_chat_question_not_covered_by_case(client=client):
     })
     assert res.status_code == 200
     data = res.json()
-    assert "This case does not say that." in data["answer"]
+    assert "not available in this database" in data["answer"]
 
 def test_case_chat_empty_question(client=client):
     """Empty question returns 400 Bad Request."""
@@ -177,12 +169,9 @@ def test_get_case_text_valid(client=client):
     res = client.get("/api/case-text/sc-2006-percept")
     assert res.status_code == 200
     data = res.json()
-    assert data["total_paragraphs"] > 0
-    assert len(data["paragraphs"]) > 0
-    first_para = data["paragraphs"][0]
-    assert first_para["id"] == "chunk-0"
-    assert first_para["paragraph_number"] == 1
-    assert len(first_para["text"]) > 0
+    # No judgment text is stored for this case; the app-written holding is not served as a paragraph.
+    assert data["total_paragraphs"] == 0
+    assert data["paragraphs"] == []
 
 
 # ---------------------------------------------------------------------------
