@@ -71,6 +71,8 @@ class SearchRequest(BaseModel):
     limit: int = Field(8, ge=1, le=20, description="Maximum number of precedents to return (up to 20)")
     force_fallback: bool = Field(False, description="Whether to force deterministic legal fallback")
 
+from app.services.qdrant_service import withhold_curated_summaries as _withhold_curated_summaries
+
 class SearchResponse(BaseModel):
     model_config = {"protected_namespaces": ()}
     query: str
@@ -261,6 +263,7 @@ async def search_precedents_post(payload: SearchRequest):
     )
 
     if not payload.enable_hyde or is_pure_case_lookup_query(effective_query):
+        results = _withhold_curated_summaries(results)
         resp = SearchResponse(
             query=effective_query,
             corrected_query=corrected_q if has_spelling else None,
@@ -283,6 +286,7 @@ async def search_precedents_post(payload: SearchRequest):
         force_fallback=payload.force_fallback
     )
     tier1_results = synthesis.get("results") if "results" in synthesis else results
+    tier1_results = _withhold_curated_summaries(tier1_results)
 
     from app.services.citation_checker import citation_checker
     is_tier2 = "tier2" in synthesis.get("model_used", "").lower()
@@ -558,12 +562,12 @@ async def search_answer_post(payload: SearchAnswerRequest):
             tier = "tier2"
             tier_label = synthesis.get("tier_label") or "AI general information (not verified against any legal source)"
             hide_badge = False
-        source_cases = synthesis.get("results") if "results" in synthesis else (results or [])
+        source_cases = _withhold_curated_summaries(synthesis.get("results") if "results" in synthesis else (results or []))
         no_strong = synthesis.get("no_strong_case_match", len(source_cases) == 0)
     else:
         tier = synthesis.get("tier") or "tier1"
         tier_label = synthesis.get("tier_label") or "AI summary based on the cases below"
-        source_cases = synthesis.get("results") if "results" in synthesis else (results or [])
+        source_cases = _withhold_curated_summaries(synthesis.get("results") if "results" in synthesis else (results or []))
         no_strong = synthesis.get("no_strong_case_match", len(source_cases) == 0)
         hide_badge = synthesis.get("hide_badge", False)
 
@@ -586,7 +590,7 @@ async def search_answer_post(payload: SearchAnswerRequest):
         hide_badge=hide_badge,
         statute_notice=(synthesis.get("statute_notice") if not is_not_found else None)
     )
-    if payload.results is None and not _timed_out and not re.search(r"AI explanation (?:temporarily )?unavailable", resp.ai_answer or ""):
+    if payload.results is None and not _timed_out and not re.search(r"(?:AI explanation (?:temporarily )?unavailable|No AI explanation is shown for this provision)", resp.ai_answer or ""):
         # A temporary rate-limit or rejected explanation must not be frozen into the cache.
         _ANSWER_CACHE.set(cache_key, resp)
     return resp

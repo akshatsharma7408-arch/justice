@@ -85,7 +85,8 @@ def test_labels_match_content_for_notes_and_curated_summaries():
     assert "The statute text is shown above; any separately labelled case material below" in d56["ai_answer"] or "Plain-English explanation" in d56["ai_answer"] or d56["tier_label"] == "Authoritative statutory provision"
     from app.services.llm_service import case_passage_text
     cur = {"title": "X v. Y", "citation": "(2000) 1 SCC 1", "ratioSummary": "The Court explained the rule in plain words here.", "landmark": True}
-    assert case_passage_text(cur).startswith("Case summary written for this app (not text from the judgment")
+    cp = case_passage_text(cur)
+    assert cp.startswith("Case in this database tagged to this provision") and "plain words" not in cp
     raw = {"title": "X v. Y", "citation": "(2000) 1 SCC 1", "ratioSummary": "The Court explained the rule in plain words here."}
     assert "an excerpt from the judgment" in case_passage_text(raw)
 
@@ -94,3 +95,19 @@ def test_initials_do_not_truncate_case_summary():
     from app.services.llm_service import clean_case_summary
     s = clean_case_summary({"title": "K v. U", "ratioSummary": "The right to privacy is a fundamental right intrinsic to Article 21. The nine-judge bench expressly overruled M.P. Sharma (1954) to the extent they denied that status."})
     assert "M.P. Sharma" in s
+
+
+def test_curated_case_prose_withheld_in_answer_and_cards_but_citation_kept():
+    from app.services.qdrant_service import withhold_curated_summaries, WITHHELD_SUMMARY_LABEL
+    cur = {"title": "K v. U", "citation": "(2017) 10 SCC 1", "ratioSummary": "Stored holding prose.", "ratioLabel": "CASE SUMMARY WRITTEN FOR THIS APP (NOT JUDGMENT TEXT; NOT VERIFIED)", "is_verified_ratio": True, "statutes": ["Article 21"]}
+    raw = {"title": "A v. B", "citation": "(2000) 1 SCC 1", "ratioSummary": "Raw chunk text from the judgment.", "ratioLabel": "RELEVANT PASSAGE"}
+    out = withhold_curated_summaries([cur, raw])
+    assert out[0]["ratioLabel"] == WITHHELD_SUMMARY_LABEL and "Stored holding" not in out[0]["ratioSummary"]
+    assert out[0]["citation"] == "(2017) 10 SCC 1" and out[0]["statutes"] == ["Article 21"]
+    assert out[1] == raw
+    d = c.post("/api/v1/search/answer", json={"query": "article 21"}, auth=("u", "x")).json()
+    assert "proportionality test for state interference" not in d["ai_answer"]
+    assert all("proportionality test" not in (x.get("ratioSummary") or "") for x in d["source_cases"])
+    assert any("Puttaswamy" in (x.get("title") or "") for x in d["source_cases"])
+    r = c.post("/api/v1/search", json={"query": "article 21"}, auth=("u", "x")).json()
+    assert all("proportionality test" not in (x.get("ratioSummary") or "") for x in r["results"])

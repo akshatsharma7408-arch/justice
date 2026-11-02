@@ -297,6 +297,10 @@ def summary_is_about_other_article(summary: str, art_num: str) -> bool:
     return bool(cited) and art_num.upper() not in cited
 
 
+def _case_is_curated(c: Dict[str, Any]) -> bool:
+    return bool(c.get("landmark")) or str(c.get("ratioLabel") or "").startswith(("CASE SUMMARY WRITTEN", "SUMMARY NOT SHOWN"))
+
+
 def case_passage_text(c: Dict[str, Any]) -> Optional[str]:
     """Words introducing a retrieved case passage. The corpus stores raw judgment chunks, not holdings, and a
     cue word can sit in quoted argument, a lower court's view, facts or a negation, so a raw chunk is never
@@ -304,8 +308,8 @@ def case_passage_text(c: Dict[str, Any]) -> Optional[str]:
     s = clean_case_summary(c)
     if not s or s[:1].islower():
         return None
-    if c.get("landmark") or str(c.get("ratioLabel") or "").startswith("CASE SUMMARY WRITTEN"):
-        return f"Case summary written for this app (not text from the judgment, and not verified) - {c.get('title')} ({c.get('citation')}): {s}"
+    if c.get("landmark") or str(c.get("ratioLabel") or "").startswith(("CASE SUMMARY WRITTEN", "SUMMARY NOT SHOWN")):
+        return f"Case in this database tagged to this provision: {c.get('title')} ({c.get('citation')}). The app's stored summary of it is not shown because it has not been checked against the judgment."
     return f"Passage from {c.get('title')} ({c.get('citation')}) - an excerpt from the judgment, not a verified holding or a finding that it applies to this question: {s} [Extracted from scanned text; it may contain character-recognition errors. Check the original judgment.]"
 
 
@@ -2023,14 +2027,14 @@ class LLMService:
                             ans_str += "\n\n" + explanation_unavailable_note() + "\n\n"
                 ans_str += " "
                 _n_before = len(matching_cases)
-                matching_cases = [_c for _c in matching_cases if summary_is_usable(clean_case_summary(_c)) and not summary_is_about_other_article(clean_case_summary(_c), art_num) and case_passage_text(_c)]
+                matching_cases = [_c for _c in matching_cases if (_case_is_curated(_c) or summary_is_usable(clean_case_summary(_c))) and not summary_is_about_other_article(clean_case_summary(_c), art_num) and case_passage_text(_c)]
                 _withheld = _n_before > len(matching_cases)
                 if matching_cases:
                     c0 = matching_cases[0]
                     ans_str += case_passage_text(c0)
                     cits = [f"Constitution of India, Article {art_num} ({heading})", f"{c0.get('title')} ({c0.get('citation')})"]
-                    _c0_cur = case_passage_text(c0).startswith("Case summary written for this app")
-                    _ex_word = "case summary written for this app (not judgment text, not a verified holding)" if _c0_cur else "case excerpt (not a verified holding)"
+                    _c0_cur = case_passage_text(c0).startswith("Case in this database tagged")
+                    _ex_word = "case listed (stored summary withheld)" if _c0_cur else "case excerpt (not a verified holding)"
                     tier_label = f"Statute text + AI restatement (NOT independently verified) + {_ex_word}" if _unv_shown else f"Statutory text + AI explanation (AI part not verified) + {_ex_word}" if _ai_shown else f"Statutory text + note written for this app + {_ex_word}" if _app_note else f"Statutory text + {_ex_word}"
                     no_strong = False
                 else:
@@ -2362,7 +2366,7 @@ class LLMService:
                         elif (not force_fallback) and self.client:
                             ans_str += "\n\n" + explanation_unavailable_note() + "\n\n"
                 ans_str += " "
-                matching_cases = [_c for _c in matching_cases if summary_is_usable(clean_case_summary(_c)) and case_passage_text(_c)]
+                matching_cases = [_c for _c in matching_cases if (_case_is_curated(_c) or summary_is_usable(clean_case_summary(_c))) and case_passage_text(_c)]
                 if matching_cases:
                     c0 = matching_cases[0]
                     ans_str += case_passage_text(c0)

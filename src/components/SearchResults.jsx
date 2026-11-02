@@ -426,7 +426,7 @@ export default function SearchResults({
                   {/* Card Top Strip: Kicker + Tier Badge */}
                   <div className="answer-card-top-strip">
                     <span className="answer-kicker mono">
-                      {answerData.tier === 'unreliable' ? 'LEGAL NOTICE' : answerData.tier === 'not_found' ? 'NOT FOUND IN THIS DATABASE' : answerData.tier === 'unverified_ai' ? 'AI-GENERATED ANSWER - NOT CHECKED AGAINST LEGAL SOURCES' : answerData.tier === 'statute_text' ? 'STATUTE TEXT' : (() => { const tl = answerData.tier_label || ''; if (tl.includes('NOT independently verified')) return 'STATUTE TEXT + AI RESTATEMENT (NOT INDEPENDENTLY VERIFIED)'; if (tl.includes('important note')) return 'STATUTE TEXT WITH AN IMPORTANT NOTE'; if (tl.includes('footnote note')) return 'STATUTE TEXT WITH A FOOTNOTE NOTE'; const csum = tl.includes('case summary written for this app'); const ex = tl.includes('case excerpt') || csum; const exw = csum ? 'CASE SUMMARY WRITTEN FOR THIS APP' : 'CASE EXCERPT'; const ai = tl.includes('AI explanation'); const nt = tl.includes('note written for this app'); return nt && ex ? 'STATUTE TEXT, A NOTE WRITTEN FOR THIS APP AND ' + exw : nt ? 'STATUTE TEXT AND A NOTE WRITTEN FOR THIS APP' : ex && ai ? 'STATUTE TEXT, AI EXPLANATION AND ' + exw : ex ? 'STATUTE TEXT AND ' + exw : ai ? 'STATUTE TEXT AND AI EXPLANATION' : tl === 'Authoritative statutory provision' ? 'STATUTE TEXT' : 'AI SUMMARY'; })()}
+                      {answerData.tier === 'unreliable' ? 'LEGAL NOTICE' : answerData.tier === 'not_found' ? 'NOT FOUND IN THIS DATABASE' : answerData.tier === 'unverified_ai' ? 'AI-GENERATED ANSWER - NOT CHECKED AGAINST LEGAL SOURCES' : answerData.tier === 'statute_text' ? 'STATUTE TEXT' : (() => { const tl = answerData.tier_label || ''; if (tl.includes('NOT independently verified')) return 'STATUTE TEXT + AI RESTATEMENT (NOT INDEPENDENTLY VERIFIED)'; if (tl.includes('important note')) return 'STATUTE TEXT WITH AN IMPORTANT NOTE'; if (tl.includes('footnote note')) return 'STATUTE TEXT WITH A FOOTNOTE NOTE'; const csum = tl.includes('case listed'); const ex = tl.includes('case excerpt') || csum; const exw = csum ? 'A CASE LISTED (SUMMARY WITHHELD)' : 'CASE EXCERPT'; const ai = tl.includes('AI explanation'); const nt = tl.includes('note written for this app'); return nt && ex ? 'STATUTE TEXT, A NOTE WRITTEN FOR THIS APP AND ' + exw : nt ? 'STATUTE TEXT AND A NOTE WRITTEN FOR THIS APP' : ex && ai ? 'STATUTE TEXT, AI EXPLANATION AND ' + exw : ex ? 'STATUTE TEXT AND ' + exw : ai ? 'STATUTE TEXT AND AI EXPLANATION' : tl === 'Authoritative statutory provision' ? 'STATUTE TEXT' : 'AI SUMMARY'; })()}
                     </span>
                     <div className="answer-badge-wrap">
                       {answerData.hide_badge || answerData.tier === 'unreliable' || answerData.tier === 'not_found' ? null : (
@@ -538,7 +538,7 @@ export default function SearchResults({
                   {/* Sources Chips (Tier 1 citations or relevant source cases) */}
                   {answerData.citations && answerData.citations.length > 0 && (
                     <div className="answer-sources-block">
-                      <span className="sources-kicker mono">VERIFIED CITATION SOURCES:</span>
+                      <span className="sources-kicker mono">CITATIONS CHECKED (SOURCE NAMES ONLY):</span>
                       <div className="sources-chips-list">
                         {answerData.citations.map((cite, cIdx) => (
                           <span key={cIdx} className="source-citation-chip mono" title={cite}>
@@ -669,7 +669,7 @@ export default function SearchResults({
         ) : (
           <div className="results-cards-list">
             <div className="results-count-banner mono">
-              <span>{results.length} VERIFIED PRECEDENT{results.length !== 1 ? 'S' : ''} RETRIEVED</span>
+              <span>{results.length} PRECEDENT{results.length !== 1 ? 'S' : ''} FOUND - CITATION DETAILS CHECKED, CASE CONTENT NOT VERIFIED</span>
             </div>
 
             {results.map((precedent, index) => {
@@ -752,7 +752,7 @@ export default function SearchResults({
                         {precedent.ratioLabel || (precedent.is_verified_ratio ? 'CASE SUMMARY WRITTEN FOR THIS APP (NOT JUDGMENT TEXT; NOT VERIFIED)' : 'RELEVANT PASSAGE')}
                       </div>
                       <p className="ratio-quote font-serif">
-                        {String(precedent.ratioLabel || '').startsWith('CASE SUMMARY WRITTEN') ? precedent.ratioSummary : `"${precedent.ratioSummary}"`}
+                        {/^(CASE SUMMARY WRITTEN|SUMMARY NOT SHOWN)/.test(String(precedent.ratioLabel || '')) ? precedent.ratioSummary : `"${precedent.ratioSummary}"`}
                       </p>
                     </div>
 

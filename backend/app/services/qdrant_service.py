@@ -667,6 +667,35 @@ def cut_to_sentence_boundary(text: str, max_chars: int = 320) -> str:
     return truncated
 
 
+
+CURATED_SUMMARY_LABEL = "CASE SUMMARY WRITTEN FOR THIS APP (NOT JUDGMENT TEXT; NOT VERIFIED)"
+WITHHELD_SUMMARY_LABEL = "SUMMARY NOT SHOWN (NOT CHECKED AGAINST THE JUDGMENT)"
+WITHHELD_SUMMARY_TEXT = ("The stored summary of this case has not been checked against the judgment, so it is not shown. "
+                         "Only the citation details are shown.")
+# Case ids/citations whose stored summary has been checked against a source may be listed here.
+VERIFIED_CURATED_SUMMARY_KEYS: set = set()
+
+
+def is_curated_summary(case: Dict[str, Any]) -> bool:
+    """True when the case's displayed prose is an app-written stored holding, not judgment text."""
+    if (case.get("citation") or case.get("id")) in VERIFIED_CURATED_SUMMARY_KEYS:
+        return False
+    return case.get("ratioLabel") == CURATED_SUMMARY_LABEL or bool(case.get("landmark") and case.get("is_verified_ratio"))
+
+
+def withhold_curated_summaries(cases):
+    """Copies of `cases` with unverified app-written holding prose replaced. Citation metadata is kept."""
+    out = []
+    for c in cases or []:
+        if isinstance(c, dict) and is_curated_summary(c):
+            c = dict(c)
+            c["ratioSummary"] = WITHHELD_SUMMARY_TEXT
+            c["ratioLabel"] = WITHHELD_SUMMARY_LABEL
+            c["is_verified_ratio"] = False
+            c["summary_withheld"] = True
+        out.append(c)
+    return out
+
 def extract_relevant_passage(
     query: str, 
     text: str = "", 
