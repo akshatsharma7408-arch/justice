@@ -207,4 +207,9 @@ def test_safety_text_has_separate_lines_exact_sources_and_safe_evidence_wording(
 
 def test_violence_evidence_only_if_safe():
     assert L.unverified_answer_problem(BASE + " Keep any evidence of the abuse in a safe place.", "violence")
-    assert L.unverified_answer_problem(BASE + " If it is safe to do so, keep any evidence.", "violence") is None
+    assert L.unverified_answer_problem(BASE + " Call the emergency number if in danger. If it is safe to do so, keep any evidence.", "violence") is None
+
+
+def test_violence_requires_safety_first_step():
+    assert L.unverified_answer_problem(BASE + " Talk to a lawyer about your options.", "violence")
+    assert L.unverified_answer_problem(BASE + " If you are in immediate danger, call the emergency number. A lawyer can explain your options.", "violence") is None

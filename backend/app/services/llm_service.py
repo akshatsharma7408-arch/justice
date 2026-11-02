@@ -975,6 +975,8 @@ def unverified_answer_problem(text: str, topic: str = "general"):
         return "states an amount or a time period"
     if _UNV_GARBLE_RE.search(t):
         return "contains a garbled phrase"
+    if topic == "violence" and not re.search(r"emergency|helpline|112|immediate danger", t, re.IGNORECASE):
+        return "violence answer lacks a safety-first step (emergency number or helpline)"
     if topic == "violence" and re.search(r"evidence|photos?\b|medical reports?", t, re.IGNORECASE) and not re.search(r"if (?:it is|it's) safe|safe to do so|when (?:it is )?safe|only if safe", t, re.IGNORECASE):
         return "mentions collecting evidence without 'if it is safe'"
     if topic in _UNV_TOPIC_BAD:
