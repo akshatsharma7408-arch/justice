@@ -243,7 +243,7 @@ def load_constitution_provisions(curated: Dict[str, Dict[str, Any]]) -> List[Dic
     return provisions
 
 # Authoritative Curated Statutory Datasets
-SEED_VERSION = "2026-11-02.v15"  # v13: Constitution corpus: 31C note; added 330A and 124C (split from 124B), struck-down NJAC footnote note on 11 articles. v12: Protection of Women from Domestic Violence Act 2005 added (37 sections, India Code text). v11: Consumer Protection Act 2019 added (107 sections, as enacted). v10: BSA 2023 added (170 sections) + s.1, 63, 170 caveats
+SEED_VERSION = "2026-11-02.v16"  # v16: footnote notes added to 370 (C.O. 273), 368(4)(5) Minerva Mills, 371D(5) Sambamurthy; v13: Constitution corpus: 31C note; added 330A and 124C (split from 124B), struck-down NJAC footnote note on 11 articles. v12: Protection of Women from Domestic Violence Act 2005 added (37 sections, India Code text). v11: Consumer Protection Act 2019 added (107 sections, as enacted). v10: BSA 2023 added (170 sections) + s.1, 63, 170 caveats
 _PREV_SEED_VERSION = "2026-10-31.v11"  # v9: BNSS s.531 caveat cleared after exact gazette body+reading-order verification  # bump on any seed content/corpus correction; self-heal reseeds on mismatch
 
 BARE_ACTS_DATA = [

@@ -44,7 +44,7 @@ def test_njac_articles_never_get_ai_explanation():
     from fastapi.testclient import TestClient
     from app.main import app
     c = TestClient(app)
-    for a in ("124", "124A", "124B", "124C", "127", "128", "217", "222", "224", "224A", "231", "31C"):
+    for a in ("124", "124A", "124B", "124C", "127", "128", "217", "222", "224", "224A", "231", "31C", "370", "368", "371D"):
         d = c.post("/api/v1/search/answer", json={"query": f"article {a}"}, auth=("u", "x")).json()
         t = d["ai_answer"]
         assert t.startswith("Important: the official edition's footnotes say"), a
