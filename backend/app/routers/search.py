@@ -286,7 +286,7 @@ async def search_precedents_post(payload: SearchRequest):
 
     from app.services.citation_checker import citation_checker
     is_tier2 = "tier2" in synthesis.get("model_used", "").lower()
-    _nf = "not_found" in (synthesis.get("model_used") or "").lower()
+    _nf = ("not_found" in (synthesis.get("model_used") or "").lower()) or (synthesis.get("model_used") == "unverified_ai_answer")
     ai_ans = (synthesis.get("answer") or "") if _nf else citation_checker.check_and_badge_text(synthesis.get("answer") or "", is_tier2=is_tier2)
     _base_ans = ai_ans
     ratio = None if is_tier2 else citation_checker.check_and_badge_text(synthesis.get("ratio_decidendi") or _base_ans, is_tier2=False)
@@ -504,8 +504,9 @@ async def search_answer_post(payload: SearchAnswerRequest):
     model_used = synthesis.get("model_used", "")
     is_tier2 = "tier2" in model_used.lower()
     is_not_found = "not_found" in model_used.lower()
+    is_unv = model_used == "unverified_ai_answer"
 
-    _nf = "not_found" in (synthesis.get("model_used") or "").lower()
+    _nf = ("not_found" in (synthesis.get("model_used") or "").lower()) or (synthesis.get("model_used") == "unverified_ai_answer")
     ai_ans = (synthesis.get("answer") or "") if _nf else citation_checker.check_and_badge_text(synthesis.get("answer") or "", is_tier2=is_tier2)
     _base_ans = ai_ans
     if is_tier2 and not _timed_out:
@@ -515,7 +516,7 @@ async def search_answer_post(payload: SearchAnswerRequest):
                 ai_ans = "No AI explanation is available for this question. The provision text below is shown word for word."
             ai_ans = f"{ai_ans}\n\n{_card}"
     _withheld = False
-    if not is_not_found and old_code_note_needed(ai_ans, model_used):
+    if not is_not_found and not is_unv and old_code_note_needed(ai_ans, model_used):
         _withheld = True
         ai_ans = ("A case-based AI summary was withheld here: it depends on section numbers of the old Indian Penal Code, "
                   "Code of Criminal Procedure or Indian Evidence Act, and which code applies depends on the facts and stage of the "
@@ -529,7 +530,7 @@ async def search_answer_post(payload: SearchAnswerRequest):
         _c3 = build_statute_card(effective_query)
         if _c3:
             ai_ans = f"{ai_ans}\n\nThe AI answer could not be checked, so no AI explanation is shown. Related text from the statute database:\n\n{_c3}"
-    ratio = None if (is_tier2 or is_not_found) else citation_checker.check_and_badge_text(synthesis.get("ratio_decidendi") or _base_ans, is_tier2=False)
+    ratio = None if (is_tier2 or is_not_found or is_unv) else citation_checker.check_and_badge_text(synthesis.get("ratio_decidendi") or _base_ans, is_tier2=False)
     if _withheld:
         ratio = None
     citations = citation_checker.badge_citations_list(synthesis.get("citations", [])) if not is_tier2 else []
@@ -539,6 +540,12 @@ async def search_answer_post(payload: SearchAnswerRequest):
     if is_not_found:
         tier = "not_found"
         tier_label = ""
+        source_cases = []
+        no_strong = True
+        hide_badge = True
+    elif is_unv:
+        tier = "unverified_ai"
+        tier_label = synthesis.get("tier_label") or "AI-generated answer. Not checked against legal sources. May be wrong or outdated."
         source_cases = []
         no_strong = True
         hide_badge = True

@@ -914,6 +914,78 @@ def _tier2_numeric_claim(text: str):
 
 
 
+UNVERIFIED_AI_LABEL = "AI-generated answer. Not checked against legal sources. May be wrong or outdated."
+_UNV_CASE_RE = re.compile(r"\b(?:AIR|SCC|SCR|INSC|SCALE)\b|\bv\.|\bvs\.?\s|\bversus\b|\(\d{4}\)\s*\d+", re.IGNORECASE)
+_UNV_NUM_RE = re.compile(r"\b(?:sections?|sec\.|articles?|art\.|clauses?|rules?|orders?)\s*\d", re.IGNORECASE)
+_UNV_CLOSING = "This is general information, not legal advice. Check a primary source or a lawyer before relying on it."
+
+
+_UNV_AMOUNT_RE = re.compile(r"(?:\u20b9|\bRs\.?|\bINR\b|\blakhs?\b|\bcrores?\b)|\b\d+\s*(?:-|\u2013|to)?\s*\d*\s*(?:days?|weeks?|months?|years?)\b", re.IGNORECASE)
+_UNV_FORUM_RE = re.compile(r"\b(?:family courts?|consumer (?:dispute|forum|commission|court)s?|(?:state|district|national) (?:consumer|commission)|labour (?:commissioner|courts?)|industrial (?:disputes )?tribunals?|tenancy tribunals?|rent (?:controller|control authorit\w+)|district courts?|magistrates?|civil courts?)\b", re.IGNORECASE)
+
+
+_UNV_ACT_RE = re.compile(r"\b((?:[A-Z][A-Za-z'&-]*\s+){0,7}(?:Act|Code|Sanhita|Adhiniyam))\b(?:,?\s*\(?\d{4}\)?)?")
+_UNV_KNOWN_ACTS = {
+    "indian contract act", "consumer protection act", "payment of wages act", "minimum wages act", "code on wages", "industrial disputes act",
+    "industrial relations code", "payment of gratuity act", "employees provident funds and miscellaneous provisions act", "employees state insurance act",
+    "protection of women from domestic violence act", "domestic violence act", "dowry prohibition act", "hindu marriage act", "hindu succession act",
+    "special marriage act", "indian succession act", "transfer of property act", "registration act", "indian stamp act", "limitation act",
+    "code of civil procedure", "code of criminal procedure", "indian penal code", "indian evidence act", "bharatiya nyaya sanhita",
+    "bharatiya nagarik suraksha sanhita", "bharatiya sakshya adhiniyam", "information technology act", "right to information act",
+    "negotiable instruments act", "motor vehicles act", "real estate regulation and development act", "rera act", "arbitration and conciliation act",
+    "companies act", "indian partnership act", "sale of goods act", "specific relief act", "indian easements act", "guardians and wards act",
+    "protection of children from sexual offences act", "pocso act", "juvenile justice act", "scheduled castes and the scheduled tribes prevention of atrocities act",
+    "sexual harassment of women at workplace act", "maternity benefit act", "factories act", "shops and establishments act", "constitution act",
+    "legal services authorities act", "senior citizens act", "maintenance and welfare of parents and senior citizens act", "rent control act",
+    "negotiable instruments", "income tax act", "goods and services tax act", "central goods and services tax act", "narcotic drugs and psychotropic substances act",
+    "ndps act", "prevention of corruption act", "arms act", "environment protection act", "contract act", "consumer protection act 2019",
+}
+_UNV_ACT_OK_PREFIX = ("state ", "the state ", "state-specific ")
+
+
+def _unverified_unknown_act(text: str):
+    for m in _UNV_ACT_RE.finditer(text):
+        name = re.sub(r"^(?:The|A|An|Under|Governed|By|And|Or|Of|In|On|To|For)\s+", "", m.group(1).strip()).strip()
+        low = name.lower()
+        if low in ("act", "code", "the act", "this act", "the code"):
+            continue
+        if low.startswith(_UNV_ACT_OK_PREFIX) or "rent control" in low or "state" in low.split()[:2]:
+            continue
+        if not any(low == k or low.endswith(" " + k) or low.endswith(k) for k in _UNV_KNOWN_ACTS):
+            return name
+    return None
+
+
+def unverified_answer_problem(text: str):
+    """Whole-answer check for the unverified AI route. Returns a reason string, or None when acceptable.
+    Nothing is stripped: an answer that fails is rejected whole, never edited into fragments."""
+    t = (text or "").strip()
+    if len(t) < 350:
+        return "too short to be a useful answer"
+    low = t.lower()
+    if low.startswith(("i can't", "i cannot", "i'm sorry", "i am sorry", "sorry")):
+        return "model refused"
+    if _UNV_CASE_RE.search(t):
+        return "names a case or law-report citation"
+    if _UNV_NUM_RE.search(t):
+        return "cites a section/article/rule number"
+    if _UNV_AMOUNT_RE.search(t):
+        return "states an amount or a time period"
+    _bad = _unverified_unknown_act(t)
+    if _bad:
+        return f"names an Act not on the checked list: {_bad}"
+    return None
+
+
+def adverse_context_for(query: str) -> str:
+    """Known official adverse context that must reach the model when the question touches it."""
+    q = (query or "").lower()
+    notes = []
+    if any(w in q for w in ("njac", "national judicial appointments", "judicial appointment", "appointment of judges", "collegium")):
+        notes.append("The 99th Amendment (National Judicial Appointments Commission) was struck down by the Supreme Court on 16 October 2015, so it is not operative law; judges are still appointed through the collegium system.")
+    return " ".join(notes)
+
+
 class LLMService:
     def __init__(self):
         self.api_key = os.environ.get("GROQ_API_KEY") or settings.LLM_API_KEY
@@ -1568,6 +1640,44 @@ class LLMService:
             )
 
         return UNRELIABLE_TIER2_MSG
+
+    async def generate_unverified_ai_answer(self, query: str, force_fallback: bool = False) -> Optional[str]:
+        """Separate, clearly labelled route used only when no checked answer exists. The model gives a useful
+        general explanation without case names or section/article numbers; the whole answer is validated and
+        rejected (None) rather than edited. Never used for uploaded documents. None means: show the refusal."""
+        if force_fallback or not self.client or model_rate_limited():
+            return None
+        adverse = adverse_context_for(query)
+        system = (
+            "You are a legal information assistant for people in India. Answer the exact question asked, for India, in plain English, in 6 to 10 short sentences or bullets. If the question is not clear, say what you assumed. "
+            "You have NOT checked any statute or case for this question, so be honest about that and write as general information.\n"
+            "Do: name the area of law and, where you are confident, the Act by its common name; describe in general terms how this kind of situation usually works in India; "
+            "list sensible practical next steps (keep documents, send a written request or notice, approach the kind of forum that usually handles it, speak to a lawyer); "
+            "say clearly what depends on the facts, the State, and the exact law, and that the law may have been amended.\n"
+            "Do not: name any case or law-report citation; give any section, article, rule or order number; state any time period, deadline, fee or amount of money; state with certainty which court, tribunal or authority has jurisdiction (you may say which kind of body 'may' handle it and that the person should check which one applies to them in their State); "
+            "promise an outcome; tell the person definitively what they must do; or invent an authority. Name an Act only if you are certain it exists and applies; otherwise say 'the relevant Act'. Use words like 'generally', 'usually', 'often', 'check whether'. "
+            "For criminal matters: the Bharatiya Nyaya Sanhita (offences) replaced the Indian Penal Code, the Bharatiya Nagarik Suraksha Sanhita (criminal procedure, including arrest) replaced the Code of Criminal Procedure, and the Bharatiya Sakshya Adhiniyam (evidence) replaced the Indian Evidence Act, for offences after 1 July 2024; older matters may still follow the old laws. Do not mix these up. "
+            "If the question is urgent or high-stakes (arrest, violence, eviction, court dates), say to contact a lawyer or legal aid promptly. "
+            "If the question involves violence or abuse, put safety first: do not suggest confronting the abuser or sending them a notice; say to contact the emergency services, a trusted person, a legal aid service or a protection officer-type authority in general terms, and a lawyer."
+        )
+        if adverse:
+            system += "\nKnown official context you must respect: " + adverse
+        prompt = f"USER QUESTION: {query}\n\nEnd with exactly: {_UNV_CLOSING}"
+        for attempt in (1, 2):
+            try:
+                cfg = types.GenerateContentConfig(system_instruction=system, temperature=0.2 if attempt == 1 else 0.1, max_output_tokens=800)
+                r = self.client.models.generate_content(model=self.model, contents=prompt if attempt == 1 else prompt + "\nIMPORTANT: no case names; no section, article or rule numbers; no amounts or time periods; and name an Act only if you are certain it exists, otherwise say 'the relevant Act'.", config=cfg)
+            except Exception as e:
+                logger.warning("Unverified AI route attempt %s failed: %s", attempt, type(e).__name__)
+                return None
+            txt = (getattr(r, "text", "") or "").strip()
+            why = unverified_answer_problem(txt)
+            if why is None:
+                if _UNV_CLOSING not in txt:
+                    txt = txt.rstrip() + "\n\n" + _UNV_CLOSING
+                return txt
+            logger.info("Unverified AI route attempt %s rejected: %s", attempt, why)
+        return None
 
     async def synthesize_search_answer(
         self, 
@@ -2341,6 +2451,11 @@ class LLMService:
                     "hide_badge": True
                 }
             else:
+                _unv = await self.generate_unverified_ai_answer(query, force_fallback=force_fallback)
+                if _unv:
+                    return {"answer": _unv, "ratio_decidendi": None, "citations": [], "results": [],
+                            "model_used": "unverified_ai_answer", "tier": "unverified_ai",
+                            "tier_label": UNVERIFIED_AI_LABEL, "hide_badge": True}
                 tier2_ans = await self.generate_tier2_explanation(query, force_fallback=force_fallback)
                 is_unrel = (tier2_ans == UNRELIABLE_TIER2_MSG)
                 return {
@@ -2380,6 +2495,11 @@ class LLMService:
         if not entities["has_specific_entity"] and retrieved_cases:
             retrieved_cases = await self._filter_topically_relevant_cases(query, retrieved_cases)
             if not retrieved_cases:
+                _unv = await self.generate_unverified_ai_answer(query, force_fallback=force_fallback)
+                if _unv:
+                    return {"answer": _unv, "ratio_decidendi": None, "citations": [], "results": [],
+                            "model_used": "unverified_ai_answer", "tier": "unverified_ai",
+                            "tier_label": UNVERIFIED_AI_LABEL, "hide_badge": True}
                 tier2_ans = await self.generate_tier2_explanation(query, force_fallback=force_fallback)
                 return {
                     "answer": tier2_ans, "ratio_decidendi": None, "citations": [], "results": [],

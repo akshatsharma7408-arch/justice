@@ -426,7 +426,7 @@ export default function SearchResults({
                   {/* Card Top Strip: Kicker + Tier Badge */}
                   <div className="answer-card-top-strip">
                     <span className="answer-kicker mono">
-                      {answerData.tier === 'unreliable' ? 'LEGAL NOTICE' : answerData.tier === 'not_found' ? 'NOT FOUND IN THIS DATABASE' : answerData.tier === 'statute_text' ? 'STATUTE TEXT' : (() => { const tl = answerData.tier_label || ''; if (tl.includes('important note')) return 'STATUTE TEXT WITH AN IMPORTANT NOTE'; const ex = tl.includes('case excerpt'); const ai = tl.includes('AI explanation'); return ex && ai ? 'STATUTE TEXT, AI EXPLANATION AND CASE EXCERPT' : ex ? 'STATUTE TEXT AND CASE EXCERPT' : ai ? 'STATUTE TEXT AND AI EXPLANATION' : tl === 'Authoritative statutory provision' ? 'STATUTE TEXT' : 'AI SUMMARY'; })()}
+                      {answerData.tier === 'unreliable' ? 'LEGAL NOTICE' : answerData.tier === 'not_found' ? 'NOT FOUND IN THIS DATABASE' : answerData.tier === 'unverified_ai' ? 'AI-GENERATED ANSWER - NOT CHECKED AGAINST LEGAL SOURCES' : answerData.tier === 'statute_text' ? 'STATUTE TEXT' : (() => { const tl = answerData.tier_label || ''; if (tl.includes('important note')) return 'STATUTE TEXT WITH AN IMPORTANT NOTE'; const ex = tl.includes('case excerpt'); const ai = tl.includes('AI explanation'); return ex && ai ? 'STATUTE TEXT, AI EXPLANATION AND CASE EXCERPT' : ex ? 'STATUTE TEXT AND CASE EXCERPT' : ai ? 'STATUTE TEXT AND AI EXPLANATION' : tl === 'Authoritative statutory provision' ? 'STATUTE TEXT' : 'AI SUMMARY'; })()}
                     </span>
                     <div className="answer-badge-wrap">
                       {answerData.hide_badge || answerData.tier === 'unreliable' || answerData.tier === 'not_found' ? null : (
@@ -627,7 +627,7 @@ export default function SearchResults({
             <p className="empty-desc">
               {Boolean(query && query.match(/\b(?:air\s*\d{4}|\(\d{4}\)|\d{4}\s*\d+\s*scc|\b\d{4}\s*insc\b|\bscr\b|\bscale\b|\b\d{4}\b.*\b(?:sc|scc|scr|del|bom)\b)/i))
                 ? "This specific citation is not present in our indexed archive of Supreme Court of India and Delhi High Court judgments."
-                : (answerData && (answerData.ai_answer || answerData.answer) && answerData.tier_label ? "The statute result above remains available. No judgment met the strict verification threshold for this query; this does not say that no case exists." : "No matching judgments met the strict verification threshold. Try rephrasing your query, searching by case name or citation, or using broader legal terms.")}
+                : (answerData && (answerData.ai_answer || answerData.answer) && answerData.tier_label && answerData.tier !== 'unverified_ai' ? "The statute result above remains available. No judgment met the strict verification threshold for this query; this does not say that no case exists." : "No matching judgments met the strict verification threshold. Try rephrasing your query, searching by case name or citation, or using broader legal terms.")}
             </p>
           </div>
         ) : (
