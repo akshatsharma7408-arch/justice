@@ -113,6 +113,9 @@ def model_rate_limited() -> bool:
     return _time.time() < _RL_UNTIL
 
 
+ADVERSE_FOOTNOTE_MARKER = "Note from the official edition's footnotes:"
+
+
 def explanation_unavailable_note() -> str:
     if model_rate_limited():
         return ("AI explanation temporarily unavailable: the AI service has reached its usage limit. "
@@ -1874,11 +1877,18 @@ class LLMService:
                         "effective_date": None
                     }
                 # In force: verbatim statutory text leads; curated explanation follows.
+                _adverse = ADVERSE_FOOTNOTE_MARKER in (body or "")
                 ans_str = f"Article {art_num} of the Constitution of India governs '{heading}'. {body}"
+                if _adverse:
+                    ans_str = (f"Important: the official edition's footnotes say the 99th Amendment (National Judicial Appointments Commission) wording in this article "
+                               f"was struck down by the Supreme Court (judgment of 16-10-2015, AIR 2016 SC 117). Read the note at the end of the text. ") + ans_str
                 if expl:
                     ans_str += f" {expl}"
                 _ai_shown = False
-                if not expl:
+                if _adverse:
+                    ans_str += ("\n\nNo AI explanation is shown for this article: a plain-English summary could present the struck-down wording "
+                                "as operative law. Only the edition text and its footnote note are shown.\n\n")
+                elif not expl:
                     _ai = await self.explain_provision_ai(f"Article {art_num} of the Constitution of India ({heading})", body, force_fallback=force_fallback)
                     if _ai:
                         ans_str += f"\n\nPlain-English explanation (AI-written from the text above; not a verified statement of law): {_one_paragraph(_ai)}\n\n"

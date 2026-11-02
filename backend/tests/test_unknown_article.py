@@ -38,3 +38,16 @@ def test_corpus_has_330a_124c_and_njac_note():
     for k in ("124", "124A", "124B", "124C", "127", "128", "217", "222", "224", "224A", "231"):
         assert "struck down by the Supreme Court" in d[k]["body"] and "AIR 2016 SC 117" in d[k]["body"]
     assert "339AA" not in d
+
+
+def test_njac_articles_never_get_ai_explanation():
+    from fastapi.testclient import TestClient
+    from app.main import app
+    c = TestClient(app)
+    for a in ("124", "124A", "124B", "124C", "127", "128", "217", "222", "224", "224A", "231"):
+        d = c.post("/api/v1/search/answer", json={"query": f"article {a}"}, auth=("u", "x")).json()
+        t = d["ai_answer"]
+        assert t.startswith("Important: the official edition's footnotes say"), a
+        assert "Plain-English explanation" not in t, a
+        assert "No AI explanation is shown for this article" in t, a
+        assert "AI explanation" not in (d.get("tier_label") or ""), (a, d.get("tier_label"))
