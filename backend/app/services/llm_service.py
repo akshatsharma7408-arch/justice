@@ -122,7 +122,7 @@ def explanation_unavailable_note() -> str:
     if model_rate_limited():
         return ("AI explanation temporarily unavailable: the AI service has reached its usage limit. "
                 "Only the statutory text is shown. Try again later.")
-    return "AI explanation unavailable for this provision: it did not pass the faithfulness check, so only the statutory text is shown."
+    return "No AI explanation is shown for this provision: none was generated, or the one generated did not pass the app's automatic faithfulness check. Only the statutory text is shown."
 
 
 

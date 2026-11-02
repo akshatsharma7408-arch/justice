@@ -356,6 +356,32 @@ def detect_everyday_rights_topic(query: str) -> Tuple[Optional[str], Optional[Di
     return None, None
 
 
+def _ss_in(ss: str, text: str) -> bool:
+    """Substring match that respects a trailing number boundary (article 14 != article 141)."""
+    ss = ss.lower()
+    i = text.find(ss)
+    while i != -1:
+        end = i + len(ss)
+        if end >= len(text) or not text[end].isalnum() or not ss[-1].isalnum():
+            return True
+        i = text.find(ss, i + 1)
+    return False
+
+
+def _ref_in(kind: str, num: str, text: str) -> bool:
+    """True if `text` cites provision `num` with an exact number boundary.
+
+    'article 14' must not match 'article 141' or 'article 14A'; 'article 14(1)'
+    and lists such as 'articles 14, 19 and 21' still match."""
+    num = re.escape(num.lower())
+    if kind == "article":
+        lead = r"(?:articles?|art\.?)"
+    else:
+        lead = r"(?:sections?|sec\.?|s\.)"
+    pat = rf"(?<![0-9a-z]){lead}\s*(?:[0-9][0-9a-z]*(?:\([0-9a-z]+\))*\s*(?:,|and|&|or|to)\s*)*{num}(?![0-9a-z])"
+    return re.search(pat, text.lower()) is not None
+
+
 def compute_keyword_score(
     query: str,
     case: Dict[str, Any],
@@ -385,14 +411,14 @@ def compute_keyword_score(
     if statute_info:
         num = statute_info["number"].lower()
         for st in c_statutes:
-            if statute_info["type"] == "article" and f"article {num}" in st:
+            if statute_info["type"] == "article" and _ref_in("article", num, st):
                 score += 20.0
                 break
-            elif statute_info["type"] == "section" and (f"section {num}" in st or f"sec. {num}" in st or f"sec {num}" in st):
+            elif statute_info["type"] == "section" and _ref_in("section", num, st):
                 score += 20.0
                 break
         for ss in statute_info["search_strings"]:
-            if ss in f"{c_title} {c_text}":
+            if _ss_in(ss, f"{c_title} {c_text}"):
                 score += 10.0
                 break
 
@@ -409,17 +435,17 @@ def get_statute_boost(case: Dict[str, Any], statute_info: Optional[Dict[str, Any
     c_statutes = [s.lower() for s in case.get("statutes", [])]
     for st in c_statutes:
         if statute_info["type"] == "article":
-            if f"article {num}" in st or f"art. {num}" in st or f"art {num}" in st:
+            if _ref_in("article", num, st):
                 boost += 0.35
                 break
         elif statute_info["type"] == "section":
-            if f"section {num}" in st or f"sec. {num}" in st or f"sec {num}" in st:
+            if _ref_in("section", num, st):
                 boost += 0.35
                 break
 
     c_text = f"{case.get('title', '')} {case.get('ratioSummary', '')} {case.get('text', '')}".lower()
     for s_str in statute_info["search_strings"]:
-        if s_str in c_text:
+        if _ss_in(s_str, c_text):
             boost += 0.15
             break
 
@@ -428,10 +454,10 @@ def get_statute_boost(case: Dict[str, Any], statute_info: Optional[Dict[str, Any
         if lk in c_title:
             meta_stats = [ms.lower() for ms in meta.get("statutes", [])]
             for ms in meta_stats:
-                if statute_info["type"] == "article" and f"article {num}" in ms:
+                if statute_info["type"] == "article" and _ref_in("article", num, ms):
                     boost += 0.30
                     break
-                elif statute_info["type"] == "section" and (f"section {num}" in ms or f"sec. {num}" in ms):
+                elif statute_info["type"] == "section" and _ref_in("section", num, ms):
                     boost += 0.30
                     break
 
