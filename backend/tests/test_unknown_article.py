@@ -116,3 +116,18 @@ def test_106th_insertion_date_notes_and_exact_334a_wording():
         assert "Plain-English explanation" not in t and "AI RESTATEMENT" not in t, a
         if a in ("330A", "332A"):
             assert q in t and "Important: this article does not say by itself when it takes effect" in t, a
+
+
+def test_239aa_served_from_edition_text_not_handwritten_summary():
+    import os
+    os.environ["QDRANT_URL"] = "http://localhost:1"
+    from fastapi.testclient import TestClient
+    from app.main import app
+    t = TestClient(app).post("/api/v1/search/answer", json={"query": "article 239AA"}, auth=("u", "x")).json()
+    a = t["ai_answer"]
+    assert t["tier_label"] == "Edition text with a footnote note (see the text)"
+    assert "(ba) Seats shall be reserved for women in the Legislative Assembly of the National Capital Territory of Delhi" in a
+    assert "(bc) As nearly as may be, one-third of the total number of seats to be filled by direct election" in a
+    assert "clauses (ba), (bb) and (bc) were inserted by the Constitution (One Hundred and Sixth Amendment) Act, 2023, s. 2 (w.e.f. 16-4-2026)" in a
+    assert "No AI explanation is shown for this article" in a
+    assert "GNCTD" not in a and "8 SCC 501" not in a and "constitutional morality" not in a

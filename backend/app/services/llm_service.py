@@ -1986,47 +1986,6 @@ class LLMService:
                     "effective_date": eff_date
                 }
 
-            elif art_num == "239AA":
-                heading = prov.get("heading", "Special provisions with respect to Delhi") if prov else "Special provisions with respect to Delhi"
-                eff_date = prov.get("effective_date", "1992-02-01") if prov else "1992-02-01"
-                src_url = prov.get("source_url", "https://legislative.gov.in/constitution-of-india/") if prov else "https://legislative.gov.in/constitution-of-india/"
-                ans_str = (
-                    "Article 239AA of the Constitution of India provides 'Special provisions with respect to Delhi', inserted by the Constitution "
-                    f"(Sixty-ninth Amendment) Act, 1991 (w.e.f. {eff_date}). It establishes that the Union Territory of Delhi shall be called the "
-                    "National Capital Territory of Delhi, with a Legislative Assembly empowered to make laws on matters in the State List and Concurrent List "
-                    "(excluding Police, Public Order, and Land). It creates a Council of Ministers headed by a Chief Minister to aid and advise the Lieutenant Governor. "
-                    "In Government of NCT of Delhi v. Union of India (2018) 8 SCC 501 (5-Judge Constitution Bench), the Supreme Court ruled that the Lieutenant Governor "
-                    "is bound by the aid and advice of the Council of Ministers in all areas except the three excluded subjects, and must exercise power in a manner "
-                    "consonant with constitutional morality and collaborative federalism. "
-                    "[Note from the official edition's footnotes (insertion date): footnote 2 says clauses (ba), (bb) and (bc) were inserted by the Constitution "
-                    "(One Hundred and Sixth Amendment) Act, 2023, s. 2 (w.e.f. 16-4-2026). That is the edition's date for the insertion. This answer does not say when any seat is reserved; "
-                    "article 334A has its own words on when its provisions come into effect. This short summary does not cover later amendments or later judgments; read the edition text of the article. "
-                    "The Gazette notification was not read as a PDF.] "
-                    "No AI explanation is shown for this article beyond the short summary above."
-                )
-                ratio_str = (
-                    "Article 239AA establishes representative government for NCT of Delhi; under GNCTD v. UOI (2018), the Lieutenant Governor is bound by "
-                    "the aid and advice of the Council of Ministers except in matters of police, public order, and land."
-                )
-                cits = [
-                    f"Constitution of India, Article 239AA ({heading}, 69th Amendment, w.e.f. {eff_date})",
-                    "Government of NCT of Delhi v. Union of India ((2018) 8 SCC 501)"
-                ]
-                badged_ans = citation_checker.check_and_badge_text(ans_str, is_tier2=False)
-                badged_ratio = citation_checker.check_and_badge_text(ratio_str, is_tier2=False)
-                badged_cits = citation_checker.badge_citations_list(cits)
-                return {
-                    "answer": badged_ans,
-                    "ratio_decidendi": badged_ratio,
-                    "citations": badged_cits,
-                    "results": matching_cases,
-                    "model_used": "statutory_provision_authoritative",
-                    "tier": "tier1",
-                    "tier_label": "Authoritative statutory provision" if not matching_cases else "AI summary based on the cases below",
-                    "no_strong_case_match": len(matching_cases) == 0,
-                    "source_url": src_url,
-                    "effective_date": eff_date
-                }
 
             elif art_num == "239AB":
                 heading = prov.get("heading", "Provision in case of failure of constitutional machinery") if prov else "Provision in case of failure of constitutional machinery"
@@ -2148,7 +2107,7 @@ class LLMService:
                     ans_str += ("\n\nNo AI explanation is shown for this article: a plain-English summary could make it sound as if the reservation already applies. "
                                 "Only the edition text and the note on when it takes effect are shown.\n\n")
                 elif _scoped:
-                    ans_str += ("\n\nNo AI explanation is shown for this article: a plain-English summary could leave out or misstate what the footnote refers to, which has not been checked here. "
+                    ans_str += ("\n\nNo AI explanation is shown for this article: a plain-English summary could leave out or misstate conditions or references in the text and its footnote, and what applies today has not been checked here. "
                                 "Only the edition text and its footnote note are shown.\n\n")
                 elif _adverse:
                     ans_str += ("\n\nNo AI explanation is shown for this article: a plain-English summary could present struck-down or inoperative wording "
