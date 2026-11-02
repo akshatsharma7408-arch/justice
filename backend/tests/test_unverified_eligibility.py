@@ -10,6 +10,7 @@ GOOD = ("A person's property cannot be taken away unless a law allows it. " * 3 
 
 
 def _client(monkeypatch, unv, expl=None):
+    monkeypatch.setenv('UNVERIFIED_RESTATEMENT_ENABLED', '1')
     async def _expl(self, *a, **k):
         return expl
     async def _unv(self, label, body, force_fallback=False):

@@ -468,6 +468,15 @@ export default function SearchResults({
                           </div>
                         );
                       }
+                      if (answerData.tier === 'unreliable' && /https?:\/\//.test(trimmedP)) {
+                        return (
+                          <p key={pIdx} className="answer-prose-paragraph" style={{ whiteSpace: 'pre-line', wordBreak: 'break-word' }}>
+                            {trimmedP.split(/(https?:\/\/[^\s]+)/g).map((seg, k) => /^https?:\/\//.test(seg)
+                              ? <a key={k} href={seg} target="_blank" rel="noopener noreferrer" style={{ color: '#7fc4a5', textDecoration: 'underline' }}>{seg}</a>
+                              : <span key={k}>{seg}</span>)}
+                          </p>
+                        );
+                      }
                       if (answerData.tier === 'unverified_ai') {
                         return <p key={pIdx} className="answer-prose-paragraph" style={{ whiteSpace: 'pre-line' }}>{trimmedP}</p>;
                       }

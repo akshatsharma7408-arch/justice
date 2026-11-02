@@ -975,6 +975,8 @@ def unverified_answer_problem(text: str, topic: str = "general"):
         return "states an amount or a time period"
     if _UNV_GARBLE_RE.search(t):
         return "contains a garbled phrase"
+    if topic == "violence" and re.search(r"evidence|photos?\b|medical reports?", t, re.IGNORECASE) and not re.search(r"if (?:it is|it's) safe|safe to do so|when (?:it is )?safe|only if safe", t, re.IGNORECASE):
+        return "mentions collecting evidence without 'if it is safe'"
     if topic in _UNV_TOPIC_BAD:
         _rx, _why = _UNV_TOPIC_BAD[topic]
         if _rx.search(t):
@@ -985,11 +987,17 @@ def unverified_answer_problem(text: str, topic: str = "general"):
     return None
 
 
-VIOLENCE_SAFETY_MSG = ("If you are in immediate danger, call 112, India's single national emergency number. "
-                       "The Women Helpline 181 is a toll-free, 24-hour service for women facing violence or in distress. "
-                       "NALSA's free legal aid helpline is 15100. "
-                       "(Sources: 112.gov.in, wcd.gov.in/women/help and nalsa.gov.in; numbers can change, so check the official sites.) "
-                       "If you can, tell a trusted person where you are and keep any evidence safe.")
+VIOLENCE_SAFETY_MSG = (
+    "If you are in immediate danger, call 112 (India's single national emergency number) or go to a safe place.\n"
+    "Women Helpline 181: the Ministry of Women and Child Development describes it as a toll-free number for women in distress or facing violence. In an emergency its operators refer the caller to 112. Availability can differ by location, so if one number does not connect, try the other.\n"
+    "NALSA free legal aid helpline: 15100 (toll free).\n"
+    "If it is safe to do so, tell someone you trust and keep any evidence safe. Your safety comes before collecting evidence.\n"
+    "Official pages:\n"
+    "https://www.112.gov.in/\n"
+    "https://wcd.gov.in/women/help\n"
+    "https://nalsa.gov.in/promoting-inclusive-legal-system/\n"
+    "Phone numbers can change, so check these pages."
+)
 
 
 def unverified_unavailable_message(query: str) -> str:
@@ -1019,7 +1027,7 @@ def _unv_topic(query: str) -> str:
 
 
 _UNV_TOPIC_RULES = {
-    "violence": "Do not say who can order, grant or decide anything. Write nothing like 'Act' or 'court' or 'magistrate' or 'commission'. Do not name any Act, court, tribunal or authority at all. Give safety information only: contact the emergency number or the police, a trusted person, a legal aid service or a women's helpline, and a lawyer who can say which legal remedies and which court apply. Do not say a specific kind of court handles it.",
+    "violence": "If you mention keeping evidence, say 'only if it is safe to do so' and that safety comes first. Do not say who can order, grant or decide anything. Write nothing like 'Act' or 'court' or 'magistrate' or 'commission'. Do not name any Act, court, tribunal or authority at all. Give safety information only: contact the emergency number or the police, a trusted person, a legal aid service or a women's helpline, and a lawyer who can say which legal remedies and which court apply. Do not say a specific kind of court handles it.",
     "labour": "Write the words 'the relevant law' instead of any Act or Code name. Indian labour laws have been revised and consolidated in recent years, so say that which law applies depends on the current law, the State, the kind of employer and the worker's status, and that a lawyer or the labour department can confirm. Do not name a specific court or tribunal.",
     "arrest": "Do not name any commission, court or tribunal as the place to complain. Say generally that an arrested person has rights to be told the reason, to inform someone and to a lawyer, and to be produced before a magistrate without unreasonable delay, and that a lawyer should be contacted at once. Do not say there is a right to bail (that depends on the offence) and do not describe when police may or may not arrest without a warrant, because that depends on the offence and the current law.",
     "consumer": "Do not describe how or where to file (no online portals, forms, fees, envelopes, or which level handles it). Use the plain term 'consumer dispute body' or 'consumer commission' rather than any older or specific name; say a lawyer or a consumer helpline can say which one applies. Describe the product plainly (for example 'a defective mobile phone').",
@@ -1723,13 +1731,15 @@ class LLMService:
         """Used only when the verified explainer returned nothing although the model was available. ONE attempt,
         the statute text is passed as data, and only deterministic checks run (no case/citation, no foreign
         numbers, numbers and time periods as in the text). Shown under a separate 'not independently verified' label."""
+        if os.environ.get("UNVERIFIED_RESTATEMENT_ENABLED", "0") != "1":
+            return None  # feature flag OFF by default: known semantic failure on 'authority of law' until remediated
         if force_fallback or not self.client or not source_text or len(source_text.strip()) < 20 or model_rate_limited():
             return None
         if not _unv_budget_ok():
             return None
         system = ("You restate ONE provision of Indian law in plain English for a non-lawyer, using ONLY the text given. Add no facts, exceptions, "
                   "amendments, penalties, time limits, remedies, procedures or practical advice that are not in the text. Do not name any case or citation. "
-                  "Keep may/shall/must exactly as the text has them, and copy every number and time period exactly. 2 to 4 short sentences. Make the whole restatement read as one clear, self-contained explanation: state the rule fully in the first sentence, including its condition, so no sentence on its own sounds like an absolute rule that the text does not make.")
+                  "Keep may/shall/must exactly as the text has them, and copy every number and time period exactly. Where the text names a legal basis such as 'authority of law', 'procedure established by law' or 'in accordance with law', copy that exact phrase: never turn a legal basis into an actor (for example never write 'an authority that has legal power'). 2 to 4 short sentences. Make the whole restatement read as one clear, self-contained explanation: state the rule fully in the first sentence, including its condition, so no sentence on its own sounds like an absolute rule that the text does not make.")
         prompt = f"PROVISION: {label}\n\nTEXT:\n{source_text[:6000]}\n\nRestate this provision in plain English."
         try:
             cfg = types.GenerateContentConfig(system_instruction=system, temperature=0.1, max_output_tokens=400)
@@ -1748,6 +1758,12 @@ class LLMService:
             if m.group(2).lower() not in ref:
                 return None
         if not explanation_numbers_ok(source_text, out):
+            return None
+        _lo = out.lower()
+        for _ph in ("authority of law", "procedure established by law", "in accordance with law", "due process of law"):
+            if _ph in source_text.lower() and _ph not in _lo:
+                return None  # the legal-basis condition must be kept verbatim
+        if re.search(r"authority (?:that|which) has (?:legal )?power|lawful authority|legal authority", out, re.IGNORECASE) and "authority" not in source_text.lower().replace("authority of law", ""):
             return None
         return out
 

@@ -120,10 +120,11 @@ def test_known_bad_v3_outputs_are_now_rejected():
 
 
 def test_restatement_rejects_foreign_numbers_and_cases(monkeypatch):
+    monkeypatch.setenv('UNVERIFIED_RESTATEMENT_ENABLED', '1')
     class _S(L.LLMService):
         client = None; model = "x"
     svc = _S.__new__(_S)
-    outs = iter(["Property cannot be taken except by a law. See Article 21 for more detail on this idea here.", "Property cannot be taken except by authority of a law, as decided in Foo v. Bar for this idea here.", "A person's property cannot be taken away unless a law allows it, in the words of the text."])
+    outs = iter(["Property cannot be taken except by a law. See Article 21 for more detail on this idea here.", "Property cannot be taken except by authority of a law, as decided in Foo v. Bar for this idea here.", "A person's property cannot be taken away except by authority of law, in the words of the text."])
     _S.client = SimpleNamespace(models=SimpleNamespace(generate_content=lambda **k: SimpleNamespace(text=next(outs))))
     src = "No person shall be deprived of his property save by authority of law."
     assert asyncio.run(svc.restate_provision_unverified("Article 300A (Property)", src)) is None
@@ -156,7 +157,8 @@ def test_violence_unavailable_still_gives_source_checked_safety_text():
     assert L.unverified_unavailable_message("landlord deposit") == L.UNVERIFIED_UNAVAILABLE_MSG
 
 
-def test_provider_error_surface_fails_closed_without_cascade():
+def test_provider_error_surface_fails_closed_without_cascade(monkeypatch):
+    monkeypatch.setenv('UNVERIFIED_RESTATEMENT_ENABLED', '1')
     calls = []
     class _S(L.LLMService):
         client = None; model = "x"
@@ -167,3 +169,42 @@ def test_provider_error_surface_fails_closed_without_cascade():
     assert asyncio.run(svc.generate_unverified_ai_answer("q")) is None
     assert asyncio.run(svc.restate_provision_unverified("Article 1", "Some provision text that is long enough.")) is None
     assert len(calls) == 2
+
+
+def _restate_with(monkeypatch, text, enabled=True):
+    if enabled:
+        monkeypatch.setenv('UNVERIFIED_RESTATEMENT_ENABLED', '1')
+    else:
+        monkeypatch.delenv('UNVERIFIED_RESTATEMENT_ENABLED', raising=False)
+    class _S(L.LLMService):
+        client = None; model = "x"
+    svc = _S.__new__(_S)
+    _S.client = SimpleNamespace(models=SimpleNamespace(generate_content=lambda **k: SimpleNamespace(text=text)))
+    src = "No person shall be deprived of his property save by authority of law."
+    return asyncio.run(svc.restate_provision_unverified("Article 300A (Property)", src))
+
+
+def test_restatement_known_bad_authority_of_law_output_rejected(monkeypatch):
+    bad = ("A person cannot be taken away from his property unless it is done by an authority that has legal power. "
+           "This means that only a lawful authority can take someone's property.")
+    assert _restate_with(monkeypatch, bad) is None
+    good = "No person can be deprived of his property except by authority of law, meaning a law must allow it."
+    assert _restate_with(monkeypatch, good) == good
+
+
+def test_restatement_flag_off_by_default(monkeypatch):
+    good = "No person can be deprived of his property except by authority of law, meaning a law must allow it."
+    assert _restate_with(monkeypatch, good, enabled=False) is None
+
+
+def test_safety_text_has_separate_lines_exact_sources_and_safe_evidence_wording():
+    m = L.VIOLENCE_SAFETY_MSG
+    for u in ("https://www.112.gov.in/", "https://wcd.gov.in/women/help", "https://nalsa.gov.in/promoting-inclusive-legal-system/"):
+        assert ("\n" + u + "\n") in m or m.endswith(u + "\nPhone numbers can change, so check these pages.")
+    assert "If it is safe to do so" in m and "comes before collecting evidence" in m
+    assert "24" not in m
+
+
+def test_violence_evidence_only_if_safe():
+    assert L.unverified_answer_problem(BASE + " Keep any evidence of the abuse in a safe place.", "violence")
+    assert L.unverified_answer_problem(BASE + " If it is safe to do so, keep any evidence.", "violence") is None
