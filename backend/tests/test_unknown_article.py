@@ -131,3 +131,4 @@ def test_239aa_served_from_edition_text_not_handwritten_summary():
     assert "clauses (ba), (bb) and (bc) were inserted by the Constitution (One Hundred and Sixth Amendment) Act, 2023, s. 2 (w.e.f. 16-4-2026)" in a
     assert "No AI explanation is shown for this article" in a
     assert "GNCTD" not in a and "8 SCC 501" not in a and "constitutional morality" not in a
+    assert "Key parameters" not in a and "unique constitutional status" not in a  # curated explanation not appended when explanation is withheld

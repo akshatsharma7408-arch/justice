@@ -2099,7 +2099,7 @@ class LLMService:
                     ans_str = ("Note: the official edition's footnotes attach a note to this article. Read the note at the end of the text. ") + ans_str
                 if _timing:
                     ans_str = ("Important: this article does not say by itself when it takes effect; see the note at the end of the text and article 334A. ") + ans_str
-                if expl:
+                if expl and not (_adverse or _timing or _scoped):
                     ans_str += f" {expl}"
                 _ai_shown = False
                 _unv_shown = False
