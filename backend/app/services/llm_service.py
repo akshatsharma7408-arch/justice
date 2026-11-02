@@ -1951,114 +1951,7 @@ class LLMService:
                 if match_case_to_query_entities({"case_names": [], "citations": [], "sections": [], "articles": [art_num.lower()]}, c)
             ]
 
-            if art_num == "56":
-                heading = prov.get("heading", "Term of office of President") if prov else "Term of office of President"
-                eff_date = prov.get("effective_date", "1950-01-26") if prov else "1950-01-26"
-                src_url = prov.get("source_url", "https://legislative.gov.in/constitution-of-india/") if prov else "https://legislative.gov.in/constitution-of-india/"
-                ans_str = (
-                    "Article 56 of the Constitution of India defines the 'Term of office of President'. "
-                    "Under Article 56(1), the President shall hold office for a term of five years from the date on which they enter upon office. "
-                    "The President may resign office by writing under their hand addressed to the Vice-President (which resignation must forthwith "
-                    "be communicated by the Vice-President to the Speaker of the House of the People under Article 56(2)). "
-                    "The President may also be removed from office for violation of the Constitution by impeachment in the manner provided in Article 61. "
-                    "Notwithstanding the expiration of the term, the President continues to hold office until a successor enters upon office. "
-                    "Article 56 relates strictly to presidential tenure and executive governance. "
-                    "No sufficiently relevant case summary was verified for this result."
-                )
-                ratio_str = (
-                    "Article 56 provides that the President holds office for a term of five years from the date of entering upon office, "
-                    "subject to resignation addressed to the Vice-President, impeachment under Article 61, or holding until a successor enters office."
-                )
-                cits = [f"Constitution of India, Article 56 ({heading}, w.e.f. {eff_date})"]
-                badged_ans = citation_checker.check_and_badge_text(ans_str, is_tier2=False)
-                badged_ratio = citation_checker.check_and_badge_text(ratio_str, is_tier2=False)
-                badged_cits = citation_checker.badge_citations_list(cits)
-                return {
-                    "answer": badged_ans,
-                    "ratio_decidendi": badged_ratio,
-                    "citations": badged_cits,
-                    "results": [],
-                    "model_used": "statutory_provision_authoritative",
-                    "tier": "tier1",
-                    "tier_label": "Authoritative statutory provision",
-                    "no_strong_case_match": True,
-                    "source_url": src_url,
-                    "effective_date": eff_date
-                }
-
-
-            elif art_num == "239AB":
-                heading = prov.get("heading", "Provision in case of failure of constitutional machinery") if prov else "Provision in case of failure of constitutional machinery"
-                eff_date = prov.get("effective_date", "1992-02-01") if prov else "1992-02-01"
-                src_url = prov.get("source_url", "https://legislative.gov.in/constitution-of-india/") if prov else "https://legislative.gov.in/constitution-of-india/"
-                ans_str = (
-                    "Article 239AB of the Constitution of India governs 'Provision in case of failure of constitutional machinery' in the National Capital Territory "
-                    f"of Delhi, inserted by the Constitution (Sixty-ninth Amendment) Act, 1991 (w.e.f. {eff_date}). "
-                    "Under Article 239AB, if the President, on receipt of a report from the Lieutenant Governor or otherwise, is satisfied that a situation has arisen "
-                    "in which the administration of the National Capital Territory cannot be carried on in accordance with Article 239AA or that for the proper "
-                    "administration of the National Capital Territory it is necessary or expedient so to do, the President may by order suspend the operation of "
-                    "any provision of Article 239AA or of all or any of the provisions of any law made in pursuance of that article. "
-                    "No sufficiently relevant case summary was verified for this result."
-                )
-                ratio_str = (
-                    "Article 239AB empowers the President to suspend the operation of Article 239AA or provisions thereof upon failure of constitutional machinery "
-                    "in the National Capital Territory of Delhi."
-                )
-                cits = [f"Constitution of India, Article 239AB ({heading}, 69th Amendment, w.e.f. {eff_date})"]
-                badged_ans = citation_checker.check_and_badge_text(ans_str, is_tier2=False)
-                badged_ratio = citation_checker.check_and_badge_text(ratio_str, is_tier2=False)
-                badged_cits = citation_checker.badge_citations_list(cits)
-                return {
-                    "answer": badged_ans,
-                    "ratio_decidendi": badged_ratio,
-                    "citations": badged_cits,
-                    "results": [],
-                    "model_used": "statutory_provision_authoritative",
-                    "tier": "tier1",
-                    "tier_label": "Authoritative statutory provision",
-                    "no_strong_case_match": True,
-                    "source_url": src_url,
-                    "effective_date": eff_date
-                }
-
-            elif art_num == "14":
-                heading = prov.get("heading", "Equality before law") if prov else "Equality before law"
-                eff_date = prov.get("effective_date", "1950-01-26") if prov else "1950-01-26"
-                src_url = prov.get("source_url", "https://legislative.gov.in/constitution-of-india/") if prov else "https://legislative.gov.in/constitution-of-india/"
-                ans_str = (
-                    "Article 14 of the Constitution of India provides: 'The State shall not deny to any person equality before the law or the equal protection "
-                    "of the laws within the territory of India.' "
-                    "As authoritatively held by the Supreme Court in E.P. Royappa v. State of Tamil Nadu (1974) 4 SCC 3 and Maneka Gandhi v. Union of India "
-                    "(1978) 1 SCC 248 (7-judge Constitution Bench), Article 14 strikes at arbitrariness in state action. Equality and arbitrariness are sworn enemies; "
-                    "an act that is arbitrary necessarily violates equality under Article 14. Any state procedure or classification must be reasonable, objective, "
-                    "just, fair, and free from fanciful or oppressive exercise of power."
-                )
-                ratio_str = (
-                    "Article 14 guarantees equality before the law and equal protection of laws; under Royappa and Maneka Gandhi, it embodies a comprehensive "
-                    "guarantee against arbitrariness in state action."
-                )
-                cits = [
-                    f"Constitution of India, Article 14 ({heading})",
-                    "Maneka Gandhi v. Union of India ((1978) 1 SCC 248)",
-                    "E.P. Royappa v. State of Tamil Nadu ((1974) 4 SCC 3)"
-                ]
-                badged_ans = citation_checker.check_and_badge_text(ans_str, is_tier2=False)
-                badged_ratio = citation_checker.check_and_badge_text(ratio_str, is_tier2=False)
-                badged_cits = citation_checker.badge_citations_list(cits)
-                return {
-                    "answer": badged_ans,
-                    "ratio_decidendi": badged_ratio,
-                    "citations": badged_cits,
-                    "results": matching_cases or [c for c in retrieved_cases if 'maneka' in (c.get('title') or '').lower()][:1],
-                    "model_used": "statutory_provision_authoritative",
-                    "tier": "tier1",
-                    "tier_label": "AI summary based on the cases below",
-                    "no_strong_case_match": False,
-                    "source_url": src_url,
-                    "effective_date": eff_date
-                }
-
-            elif prov:
+            if prov:
                 heading = prov.get("heading", f"Article {art_num}")
                 body = prov.get("body", "")
                 prov_status = (prov.get("provision_status") or "in_force").lower()
@@ -2100,7 +1993,7 @@ class LLMService:
                 if _timing:
                     ans_str = ("Important: this article does not say by itself when it takes effect; see the note at the end of the text and article 334A. ") + ans_str
                 if expl and not (_adverse or _timing or _scoped):
-                    ans_str += f" {expl}"
+                    ans_str += f" [Note written for this app, not part of the official text and not checked against current law: {expl}]"
                 _ai_shown = False
                 _unv_shown = False
                 if _timing:
