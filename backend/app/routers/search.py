@@ -286,7 +286,8 @@ async def search_precedents_post(payload: SearchRequest):
 
     from app.services.citation_checker import citation_checker
     is_tier2 = "tier2" in synthesis.get("model_used", "").lower()
-    ai_ans = citation_checker.check_and_badge_text(synthesis.get("answer") or "", is_tier2=is_tier2)
+    _nf = "not_found" in (synthesis.get("model_used") or "").lower()
+    ai_ans = (synthesis.get("answer") or "") if _nf else citation_checker.check_and_badge_text(synthesis.get("answer") or "", is_tier2=is_tier2)
     _base_ans = ai_ans
     ratio = None if is_tier2 else citation_checker.check_and_badge_text(synthesis.get("ratio_decidendi") or _base_ans, is_tier2=False)
     citations = citation_checker.badge_citations_list(synthesis.get("citations", [])) if not is_tier2 else []
@@ -504,7 +505,8 @@ async def search_answer_post(payload: SearchAnswerRequest):
     is_tier2 = "tier2" in model_used.lower()
     is_not_found = "not_found" in model_used.lower()
 
-    ai_ans = citation_checker.check_and_badge_text(synthesis.get("answer") or "", is_tier2=is_tier2)
+    _nf = "not_found" in (synthesis.get("model_used") or "").lower()
+    ai_ans = (synthesis.get("answer") or "") if _nf else citation_checker.check_and_badge_text(synthesis.get("answer") or "", is_tier2=is_tier2)
     _base_ans = ai_ans
     if is_tier2 and not _timed_out:
         _card = build_statute_card(effective_query)

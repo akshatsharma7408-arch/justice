@@ -15,3 +15,15 @@ def test_existing_article_returns_none():
 def test_far_number_has_no_neighbours():
     m = unknown_article_message("9999")
     assert m and "one character away" not in m
+
+
+def test_router_keeps_unknown_article_message_whole(monkeypatch):
+    import os
+    os.environ["QDRANT_URL"] = "http://localhost:1"
+    from fastapi.testclient import TestClient
+    from app.main import app
+    c = TestClient(app)
+    for q in ("article 9999", "whats article 339AA"):
+        d = c.post("/api/v1/search/answer", json={"query": q}, auth=("u", "x")).json()
+        assert d["ai_answer"].startswith(f"Article {q.split()[-1]} was not found in the Constitution text held in this database")
+        assert d["tier"] == "not_found"
