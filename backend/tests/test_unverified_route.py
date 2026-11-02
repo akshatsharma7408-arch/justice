@@ -213,3 +213,10 @@ def test_violence_evidence_only_if_safe():
 def test_violence_requires_safety_first_step():
     assert L.unverified_answer_problem(BASE + " Talk to a lawyer about your options.", "violence")
     assert L.unverified_answer_problem(BASE + " If you are in immediate danger, call the emergency number. A lawyer can explain your options.", "violence") is None
+
+
+def test_labour_known_bad_live_phrases_rejected():
+    f = L.unverified_answer_problem
+    assert f(BASE + " If the unpaid wages are substantial or you are facing financial hardship, you might consider filing a complaint with the state labour department or a labour court.", "labour")
+    assert f(BASE + " In many cases, the employer may be required to pay interest on the delayed wages.", "labour")
+    assert f(BASE + " You may also approach a labour or employment tribunal that handles wage disputes; the specific body depends on the state.", "labour") is None
