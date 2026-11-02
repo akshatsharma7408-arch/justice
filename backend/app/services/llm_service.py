@@ -2105,13 +2105,13 @@ class LLMService:
                 _unv_shown = False
                 if _timing:
                     ans_str += ("\n\nNo AI explanation is shown for this article: a plain-English summary could make it sound as if the reservation already applies. "
-                                "Only the edition text and the note on when it takes effect are shown.\n\n")
+                                "The edition text and the note on when it takes effect are shown. Any separately labelled judgment excerpt below is not a verified holding or a finding about what applies today.\n\n")
                 elif _scoped:
                     ans_str += ("\n\nNo AI explanation is shown for this article: a plain-English summary could leave out or misstate conditions or references in the text and its footnote, and what applies today has not been checked here. "
-                                "Only the edition text and its footnote note are shown.\n\n")
+                                "The edition text and its footnote note are shown. Any separately labelled judgment excerpt below is not a verified holding or a finding about what applies today.\n\n")
                 elif _adverse:
                     ans_str += ("\n\nNo AI explanation is shown for this article: a plain-English summary could present struck-down or inoperative wording "
-                                "as operative law. Only the edition text and its footnote note are shown.\n\n")
+                                "as operative law. The edition text and its footnote note are shown. Any separately labelled judgment excerpt below is not a verified holding or a finding about what applies today.\n\n")
                 elif not expl:
                     _ai = await self.explain_provision_ai(f"Article {art_num} of the Constitution of India ({heading})", body, force_fallback=force_fallback)
                     if _ai:

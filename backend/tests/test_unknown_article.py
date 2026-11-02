@@ -132,3 +132,15 @@ def test_239aa_served_from_edition_text_not_handwritten_summary():
     assert "No AI explanation is shown for this article" in a
     assert "GNCTD" not in a and "8 SCC 501" not in a and "constitutional morality" not in a
     assert "Key parameters" not in a and "unique constitutional status" not in a  # curated explanation not appended when explanation is withheld
+
+
+def test_withholding_line_is_scoped_to_explanation_not_excerpts():
+    import os
+    os.environ["QDRANT_URL"] = "http://localhost:1"
+    from fastapi.testclient import TestClient
+    from app.main import app
+    c = TestClient(app)
+    for a in ("124", "371A", "330A", "334A", "239AA"):
+        t = c.post("/api/v1/search/answer", json={"query": f"article {a}"}, auth=("u", "x")).json()["ai_answer"]
+        assert "Any separately labelled judgment excerpt below is not a verified holding or a finding about what applies today." in t, a
+        assert "Only the edition text" not in t, a
