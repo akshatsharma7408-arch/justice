@@ -66,6 +66,8 @@ VERIFIED_ARTICLES = {
 
 PREPOSITIONS = {"in", "see", "under", "per", "re", "as"}
 
+_EDITION_NOTE_RE = re.compile(r"\[Note from the official edition's footnotes:.*?\]", re.DOTALL)
+
 # Pre-compiled regex patterns
 PARTY_WORD = r"(?:[A-Za-z0-9&'\.\-]+|\((?![\[\s]*[12]\d{3}\b)[^\)]+\)|\[(?![\[\s]*[12]\d{3}\b)[^\]]+\])"
 PARTY_A = rf"[A-Z][A-Za-z0-9&'\.\-]*(?:[ \t]+{PARTY_WORD}){{0,12}}"
@@ -256,6 +258,28 @@ class CitationChecker:
 
     @classmethod
     def check_and_badge_text(
+        cls,
+        text: str,
+        doc_context: str = "",
+        is_tier2: bool = False,
+        allowed_cases: Optional[List[Dict[str, Any]]] = None
+    ) -> str:
+        """Sentence filter that never drops a labelled official-edition footnote note.
+        Those notes quote the case that struck a provision down; losing them would hide adverse context."""
+        notes = _EDITION_NOTE_RE.findall(text or "")
+        if not notes:
+            return cls._check_and_badge_text_impl(text, doc_context, is_tier2, allowed_cases)
+        masked = text
+        for i, n in enumerate(notes):
+            masked = masked.replace(n, f"@@EDNOTE{i}@@", 1)
+        out = cls._check_and_badge_text_impl(masked, doc_context, is_tier2, allowed_cases)
+        for i, n in enumerate(notes):
+            tok = f"@@EDNOTE{i}@@"
+            out = out.replace(tok, n) if tok in out else out.rstrip() + " " + n
+        return out
+
+    @classmethod
+    def _check_and_badge_text_impl(
         cls,
         text: str,
         doc_context: str = "",

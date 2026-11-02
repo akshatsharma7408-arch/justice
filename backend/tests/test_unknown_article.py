@@ -48,6 +48,8 @@ def test_njac_articles_never_get_ai_explanation():
         d = c.post("/api/v1/search/answer", json={"query": f"article {a}"}, auth=("u", "x")).json()
         t = d["ai_answer"]
         assert t.startswith("Important: the official edition's footnotes say"), a
+        assert "Note from the official edition's footnotes:" in t, a  # must survive the citation sentence filter
+        assert "unconstitutional and void" in t or a != "371D", a
         assert "Plain-English explanation" not in t, a
         assert "No AI explanation is shown for this article" in t, a
         assert "AI explanation" not in (d.get("tier_label") or ""), (a, d.get("tier_label"))
