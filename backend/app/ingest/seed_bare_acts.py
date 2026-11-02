@@ -246,7 +246,7 @@ def load_constitution_provisions(curated: Dict[str, Dict[str, Any]]) -> List[Dic
     return provisions
 
 # Authoritative Curated Statutory Datasets
-SEED_VERSION = "2026-11-02.v21"  # v16: footnote notes added to 370 (C.O. 273), 368(4)(5) Minerva Mills, 371D(5) Sambamurthy; v13: Constitution corpus: 31C note; added 330A and 124C (split from 124B), struck-down NJAC footnote note on 11 articles. v12: Protection of Women from Domestic Violence Act 2005 added (37 sections, India Code text). v11: Consumer Protection Act 2019 added (107 sections, as enacted). v10: BSA 2023 added (170 sections) + s.1, 63, 170 caveats
+SEED_VERSION = "2026-11-03.v22"  # v16: footnote notes added to 370 (C.O. 273), 368(4)(5) Minerva Mills, 371D(5) Sambamurthy; v13: Constitution corpus: 31C note; added 330A and 124C (split from 124B), struck-down NJAC footnote note on 11 articles. v12: Protection of Women from Domestic Violence Act 2005 added (37 sections, India Code text). v11: Consumer Protection Act 2019 added (107 sections, as enacted). v10: BSA 2023 added (170 sections) + s.1, 63, 170 caveats
 _PREV_SEED_VERSION = "2026-10-31.v11"  # v9: BNSS s.531 caveat cleared after exact gazette body+reading-order verification  # bump on any seed content/corpus correction; self-heal reseeds on mismatch
 
 BARE_ACTS_DATA = [
@@ -379,8 +379,7 @@ STATUTORY_PROVISIONS_DATA = [
             "Clauses (2) to (6) prescribe exhaustive grounds for reasonable restrictions imposed by law."
         ),
         "explanation": (
-            "Guarantees the six fundamental democratic freedoms to citizens of India, subject strictly to narrow, reasonable restrictions "
-            "under clauses (2) through (6) on specified grounds such as sovereignty, security of the State, public order, and morality."
+            "Clause (1) lists the freedoms in (a) to (e) and (g); clauses (2) to (6) set out the grounds on which the State may restrict them, for example the sovereignty and integrity of India, the security of the State, public order, decency or morality."
         ),
         "source_url": "https://legislative.gov.in/constitution-of-india/",
         "effective_date": "26 January 1950"
@@ -394,9 +393,7 @@ STATUTORY_PROVISIONS_DATA = [
             "No person shall be deprived of his life or personal liberty except according to procedure established by law."
         ),
         "explanation": (
-            "Core fundamental right protecting life and personal liberty. In Maneka Gandhi v. Union of India (1978), the Supreme Court "
-            "held that the procedure established by law must be just, fair, and reasonable, rejecting narrow literalism. In K.S. Puttaswamy (2017), "
-            "a 9-judge Constitution Bench held that the right to privacy is an intrinsic fundamental right guaranteed under Article 21."
+            "In Maneka Gandhi v. Union of India (decided 25 January 1978, a seven-judge bench) the reporter's headnote records that the procedure contemplated by Article 21 must answer the test of reasonableness in order to be in conformity with Article 14, and \"must be right and just and fair and not arbitrary, fanciful or oppressive\" (source: indiankanoon.org/doc/1766147/; this is the headnote, and the judgment's own wording has not been separately checked). In K.S. Puttaswamy v. Union of India (nine judges, 24 August 2017) the Court's conclusions include: \"Privacy is a constitutionally protected right which emerges primarily from the guarantee of life and personal liberty in Article 21 of the Constitution\" (para 320, as quoted by the Supreme Court in its judgment of 27 October 2021, api.sci.gov.in)."
         ),
         "source_url": "https://legislative.gov.in/constitution-of-india/",
         "effective_date": "26 January 1950"
@@ -411,8 +408,7 @@ STATUTORY_PROVISIONS_DATA = [
             "in such manner as the State may, by law, determine."
         ),
         "explanation": (
-            "Fundamental right guaranteeing free and compulsory elementary education to all children aged 6 to 14 years. "
-            "Operationalized by the Right of Children to Free and Compulsory Education Act, 2009."
+            "The text above makes education for children aged six to fourteen a duty of the State, in such manner as the State may by law determine."
         ),
         "source_url": "https://legislative.gov.in/constitution-of-india/",
         "effective_date": "1 April 2010 (inserted by the Constitution (Eighty-sixth Amendment) Act, 2002)"
@@ -428,8 +424,7 @@ STATUTORY_PROVISIONS_DATA = [
             "mandamus, prohibition, quo warranto and certiorari, whichever may be appropriate, for the enforcement of any of the rights conferred by this Part."
         ),
         "explanation": (
-            "Known as the 'heart and soul of the Constitution' (Dr. B.R. Ambedkar), Article 32 itself is a fundamental right guaranteeing "
-            "direct recourse to the Supreme Court for judicial enforcement of Part III rights through constitutional prerogative writs."
+            "Speaking in the Constituent Assembly on 9 December 1948, Dr. B.R. Ambedkar said: \"If I was asked to name any particular article in this Constitution as the most important--an article without which this Constitution would be a nullity--I could not refer to any other article except this one. It is the very soul of the Constitution and the very heart of it.\" (source: Supreme Court of India, api.sci.gov.in/AMB/Speech.php; the debate volume itself was not read)."
         ),
         "source_url": "https://legislative.gov.in/constitution-of-india/",
         "effective_date": "26 January 1950"
@@ -467,8 +462,7 @@ STATUTORY_PROVISIONS_DATA = [
             "The law declared by the Supreme Court shall be binding on all courts within the territory of India."
         ),
         "explanation": (
-            "Constitutional foundation of stare decisis and precedent hierarchy in India. Under Central Board of Dawoodi Bohra Community (2005), "
-            "the law declared by a larger bench of the Supreme Court is strictly binding on all coordinate and smaller benches of the Court."
+            "The Supreme Court has summarised its decision in Central Board of Dawoodi Bohra Community v. State of Maharashtra, (2005) 2 SCC 673, as follows: the law laid down in a decision of a Bench of larger strength is binding on any subsequent Bench of lesser or coequal strength (source: the summary quoted by a Constitution Bench in Trimurthi Fragrances v. GNCTD, 19 September 2022, via scconline.com; the Dawoodi Bohra judgment itself was not read)."
         ),
         "source_url": "https://legislative.gov.in/constitution-of-india/",
         "effective_date": "26 January 1950"
@@ -485,7 +479,7 @@ STATUTORY_PROVISIONS_DATA = [
             "or any of them, for the enforcement of any of the rights conferred by Part III and for any other purpose."
         ),
         "explanation": (
-            "Empowers High Courts with extensive judicial review jurisdiction to enforce fundamental rights and ordinary statutory/legal rights ('for any other purpose')."
+            "The text above gives High Courts power to issue directions, orders or writs for the enforcement of Part III rights and for any other purpose."
         ),
         "source_url": "https://legislative.gov.in/constitution-of-india/",
         "effective_date": "26 January 1950"
@@ -540,8 +534,7 @@ STATUTORY_PROVISIONS_DATA = [
             "(b) declare that the powers of the Legislature of the State shall be exercisable by or under the authority of Parliament..."
         ),
         "explanation": (
-            "Governs the proclamation of President's Rule in States. In S.R. Bommai v. Union of India (1994) 3 SCC 1 (9-Judge Constitution Bench), "
-            "the Supreme Court authoritatively held that presidential proclamations under Article 356 are subject to judicial review, and federalism and secularism are basic features of the Constitution that cannot be abrogated."
+            "In S.R. Bommai v. Union of India (decided 11 March 1994) the official headnote (Digital SCR, digiscr.sci.gov.in) records that a proclamation under Article 356 is open to judicial review on the material on which the President's satisfaction is based, and that secularism is part of the basic structure of the Constitution. This is the reporter's headnote, not the Court's words, and the judgment itself was not read."
         ),
         "source_url": "https://legislative.gov.in/constitution-of-india/",
         "effective_date": "26 January 1950"
@@ -556,9 +549,7 @@ STATUTORY_PROVISIONS_DATA = [
             "variation or repeal any provision of this Constitution in accordance with the procedure laid down in this article."
         ),
         "explanation": (
-            "Governs the constitutional amendment procedure. In Kesavananda Bharati v. State of Kerala (1973) 4 SCC 225 (13-Judge Constitution Bench), "
-            "the Supreme Court established the Basic Structure Doctrine, holding that while Parliament has constituent power under Article 368 to amend the Constitution, "
-            "that power does not extend to damaging, emasculating, or altering its basic structure or essential framework."
+            "The Supreme Court's official Kesavananda Bharati page (judgments.ecourts.gov.in/KBJ) says the 13-judge judgment of 24 April 1973 upheld the basic structure doctrine and placed limits on Parliament's power to amend the Constitution. The judgment itself was not read."
         ),
         "source_url": "https://legislative.gov.in/constitution-of-india/",
         "effective_date": "26 January 1950"

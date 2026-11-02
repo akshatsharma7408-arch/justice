@@ -61,3 +61,16 @@ def test_multiarticle_case_still_matches_article_14():
     statutes = ["Article 21", "Article 14", "Article 19", "Passports Act 1967"]
     assert any(_ref_in("article", "14", s) for s in statutes)
     assert not any(_ref_in("article", "14", s) for s in ["Article 141, Constitution of India", "Article 145(3), Constitution of India"])
+
+
+def test_curated_notes_are_source_scoped():
+    t21, t32, t141 = _ans("21"), _ans("32"), _ans("141")
+    assert "[Note written for this app" in t21 and "headnote" in t21 and "rejecting narrow literalism" not in t21
+    assert "emerges primarily from the guarantee of life and personal liberty" in t21
+    assert "the very soul of the Constitution and the very heart of it" in t32
+    assert "heart and soul" not in t32
+    assert "binding on any subsequent Bench of lesser or coequal strength" in t141
+    assert "Constitutional foundation of stare decisis" not in t141
+    for a in ("356", "368"):
+        t = _ans(a)
+        assert "authoritatively held" not in t and "damaging, emasculating" not in t
