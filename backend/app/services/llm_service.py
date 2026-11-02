@@ -1997,7 +1997,12 @@ class LLMService:
                     "(excluding Police, Public Order, and Land). It creates a Council of Ministers headed by a Chief Minister to aid and advise the Lieutenant Governor. "
                     "In Government of NCT of Delhi v. Union of India (2018) 8 SCC 501 (5-Judge Constitution Bench), the Supreme Court ruled that the Lieutenant Governor "
                     "is bound by the aid and advice of the Council of Ministers in all areas except the three excluded subjects, and must exercise power in a manner "
-                    "consonant with constitutional morality and collaborative federalism."
+                    "consonant with constitutional morality and collaborative federalism. "
+                    "[Note from the official edition's footnotes (insertion date): footnote 2 says clauses (ba), (bb) and (bc) were inserted by the Constitution "
+                    "(One Hundred and Sixth Amendment) Act, 2023, s. 2 (w.e.f. 16-4-2026). That is the edition's date for the insertion. This answer does not say when any seat is reserved; "
+                    "article 334A has its own words on when its provisions come into effect. This short summary does not cover later amendments or later judgments; read the edition text of the article. "
+                    "The Gazette notification was not read as a PDF.] "
+                    "No AI explanation is shown for this article beyond the short summary above."
                 )
                 ratio_str = (
                     "Article 239AA establishes representative government for NCT of Delhi; under GNCTD v. UOI (2018), the Lieutenant Governor is bound by "
@@ -2126,13 +2131,13 @@ class LLMService:
                 # In force: verbatim statutory text leads; curated explanation follows.
                 _adverse = ADVERSE_FOOTNOTE_MARKER in (body or "")
                 _timing = (not _adverse) and TIMING_NOTE_MARKER in (body or "")
-                _scoped = (not _adverse) and (not _timing) and SCOPED_FOOTNOTE_MARKER in (body or "")
+                _scoped = (not _adverse) and (not _timing) and ("Note from the official edition's footnotes (" in (body or ""))
                 ans_str = f"Article {art_num} of the Constitution of India governs '{heading}'. {body}"
                 if _adverse:
                     ans_str = ("Important: the official edition's footnotes say part of this article's wording was struck down, declared invalid or made inoperative (by a court decision or a later order). "
                                "Read the note at the end of the text. ") + ans_str
                 if _scoped:
-                    ans_str = ("Note: the official edition's footnotes attach a reference to another instrument to this article. Read the note at the end of the text. ") + ans_str
+                    ans_str = ("Note: the official edition's footnotes attach a note to this article. Read the note at the end of the text. ") + ans_str
                 if _timing:
                     ans_str = ("Important: this article does not say by itself when it takes effect; see the note at the end of the text and article 334A. ") + ans_str
                 if expl:

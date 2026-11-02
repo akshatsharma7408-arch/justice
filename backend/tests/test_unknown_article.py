@@ -97,3 +97,22 @@ def test_124_keeps_njac_note_and_adds_thirty_three_pointer():
     assert "Now thirty-three vide the Supreme Court (Number of Judges) Amendment Act, 2019 (37 of 2019)" in t
     assert "That Act has not been checked here" in t
     assert "No AI explanation is shown for this article" in t
+
+
+def test_106th_insertion_date_notes_and_exact_334a_wording():
+    import os
+    os.environ["QDRANT_URL"] = "http://localhost:1"
+    from fastapi.testclient import TestClient
+    from app.main import app
+    c = TestClient(app)
+    q = "shall come into effect after an exercise of delimitation is undertaken for this purpose after the relevant figures for the first census taken after commencement of the Constitution (One Hundred and Sixth Amendment) Act, 2023 have been published and shall cease to have effect on the expiration of a period of fifteen years from such commencement"
+    for a, sec in (("330A", "s. 3"), ("332A", "s. 4"), ("334A", "s. 5"), ("239AA", "s. 2")):
+        t = c.post("/api/v1/search/answer", json={"query": f"article {a}"}, auth=("u", "x")).json()["ai_answer"]
+        assert "Note from the official edition's footnotes (insertion date):" in t, a
+        assert sec + " (w.e.f. 16-4-2026)" in t, a
+        assert "does not say when any seat is reserved" in t, a
+        assert "The Gazette notification was not read as a PDF" in t, a
+        assert "No AI explanation is shown for this article" in t, a
+        assert "Plain-English explanation" not in t and "AI RESTATEMENT" not in t, a
+        if a in ("330A", "332A"):
+            assert q in t and "Important: this article does not say by itself when it takes effect" in t, a
