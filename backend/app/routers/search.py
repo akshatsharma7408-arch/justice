@@ -512,7 +512,7 @@ async def search_answer_post(payload: SearchAnswerRequest):
     if is_tier2 and not _timed_out:
         _card = build_statute_card(effective_query)
         if _card:
-            if ai_ans == UNRELIABLE_TIER2_MSG or "unavailable" in model_used.lower():
+            if ai_ans == UNRELIABLE_TIER2_MSG:
                 ai_ans = "No AI explanation is available for this question. The provision text below is shown word for word."
             ai_ans = f"{ai_ans}\n\n{_card}"
     _withheld = False

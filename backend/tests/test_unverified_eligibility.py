@@ -31,8 +31,8 @@ def test_statute_text_without_explanation_gets_separately_labelled_ai_block(monk
     c, u = _client(monkeypatch, GOOD)
     d = _post(c, "article 300A")
     a = d["ai_answer"]
-    if "AI-GENERATED RESTATEMENT" not in a:
-        import pytest; pytest.skip("provision has curated explanation or not in corpus: " + str(d.get("model_used")))
+    if "AI RESTATEMENT" not in a:
+        raise AssertionError("expected the AI restatement block: " + str(d.get("model_used")))
     assert "NOT independently verified" in d["tier_label"]
     assert d["tier"] != "unverified_ai"
 
@@ -40,13 +40,13 @@ def test_statute_text_without_explanation_gets_separately_labelled_ai_block(monk
 def test_statute_text_without_explanation_when_ai_unavailable_keeps_text_only(monkeypatch):
     c, u = _client(monkeypatch, None)
     d = _post(c, "section 103 bharatiya nyaya sanhita")
-    assert "AI-GENERATED RESTATEMENT" not in d["ai_answer"]
+    assert "AI RESTATEMENT" not in d["ai_answer"]
 
 
 def test_adverse_article_never_gets_ai_block(monkeypatch):
     c, u = _client(monkeypatch, GOOD)
     d = _post(c, "article 124B")
-    assert "AI-GENERATED RESTATEMENT" not in d["ai_answer"]
+    assert "AI RESTATEMENT" not in d["ai_answer"]
     assert "Important" in d["ai_answer"]
 
 
@@ -54,4 +54,4 @@ def test_no_retrieval_unavailable_outcome_is_plain(monkeypatch):
     c, u = _client(monkeypatch, None)
     d = _post(c, "my neighbour plays loud music at night what can i do")
     assert d["tier"] in ("unreliable", "not_found", "unverified_ai") or "No AI" in d["ai_answer"] or "No AI-generated" in d["ai_answer"]
-    assert "AI-GENERATED RESTATEMENT" not in d["ai_answer"]
+    assert "AI RESTATEMENT" not in d["ai_answer"]

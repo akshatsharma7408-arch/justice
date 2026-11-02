@@ -985,6 +985,19 @@ def unverified_answer_problem(text: str, topic: str = "general"):
     return None
 
 
+VIOLENCE_SAFETY_MSG = ("If you are in immediate danger, call 112, India's single national emergency number. "
+                       "The Women Helpline 181 is a toll-free, 24-hour service for women facing violence or in distress. "
+                       "NALSA's free legal aid helpline is 15100. "
+                       "(Sources: 112.gov.in, wcd.gov.in/women/help and nalsa.gov.in; numbers can change, so check the official sites.) "
+                       "If you can, tell a trusted person where you are and keep any evidence safe.")
+
+
+def unverified_unavailable_message(query: str) -> str:
+    if _unv_topic(query) == "violence":
+        return VIOLENCE_SAFETY_MSG + "\n\nThe AI-generated legal explanation is not available for this question right now, and nothing here has been checked against legal sources. A lawyer or a legal aid service can explain your legal options."
+    return UNVERIFIED_UNAVAILABLE_MSG
+
+
 UNVERIFIED_UNAVAILABLE_MSG = ("No AI-generated answer is available for this question right now: the AI service is busy or its answer did not pass our safety checks. "
                               "Nothing here has been checked against legal sources. Please try again later, rephrase, or ask a lawyer or a legal aid service.")
 _UNV_GARBLE_RE = re.compile(r"\bdirective phone\b", re.IGNORECASE)
@@ -1716,7 +1729,7 @@ class LLMService:
             return None
         system = ("You restate ONE provision of Indian law in plain English for a non-lawyer, using ONLY the text given. Add no facts, exceptions, "
                   "amendments, penalties, time limits, remedies, procedures or practical advice that are not in the text. Do not name any case or citation. "
-                  "Keep may/shall/must exactly as the text has them, and copy every number and time period exactly. 2 to 4 short sentences.")
+                  "Keep may/shall/must exactly as the text has them, and copy every number and time period exactly. 2 to 4 short sentences. Make the whole restatement read as one clear, self-contained explanation: state the rule fully in the first sentence, including its condition, so no sentence on its own sounds like an absolute rule that the text does not make.")
         prompt = f"PROVISION: {label}\n\nTEXT:\n{source_text[:6000]}\n\nRestate this provision in plain English."
         try:
             cfg = types.GenerateContentConfig(system_instruction=system, temperature=0.1, max_output_tokens=400)
@@ -2118,7 +2131,7 @@ class LLMService:
                     else:
                         _u = await self.restate_provision_unverified(f"Article {art_num} of the Constitution of India ({heading})", body, force_fallback=force_fallback)
                         if _u:
-                            ans_str += "\n\nAI-GENERATED RESTATEMENT OF THE TEXT ABOVE - not independently verified (it did not pass our automatic faithfulness check), so read it against the text:\n" + _u + "\n\n"
+                            ans_str += "\n\nAI RESTATEMENT, not independently verified. Compare it with the official text above:\n" + _u + "\n\n"
                             _unv_shown = True
                         elif (not force_fallback) and self.client:
                             ans_str += "\n\n" + explanation_unavailable_note() + "\n\n"
@@ -2454,7 +2467,7 @@ class LLMService:
                     else:
                         _u = await self.restate_provision_unverified(f"Section {sec_num} of the {title_disp} ({heading})", body, force_fallback=force_fallback)
                         if _u:
-                            ans_str += "\n\nAI-GENERATED RESTATEMENT OF THE TEXT ABOVE - not independently verified (it did not pass our automatic faithfulness check), so read it against the text:\n" + _u + "\n\n"
+                            ans_str += "\n\nAI RESTATEMENT, not independently verified. Compare it with the official text above:\n" + _u + "\n\n"
                             _unv_shown = True
                         elif (not force_fallback) and self.client:
                             ans_str += "\n\n" + explanation_unavailable_note() + "\n\n"
@@ -2574,7 +2587,7 @@ class LLMService:
                     return {"answer": _unv, "ratio_decidendi": None, "citations": [], "results": [],
                             "model_used": "unverified_ai_answer", "tier": "unverified_ai",
                             "tier_label": UNVERIFIED_AI_LABEL, "hide_badge": True}
-                return {"answer": UNVERIFIED_UNAVAILABLE_MSG, "ratio_decidendi": None, "citations": [], "results": [],
+                return {"answer": unverified_unavailable_message(query), "ratio_decidendi": None, "citations": [], "results": [],
                         "model_used": "tier2_unverified_unavailable", "hide_badge": True}
 
         # -------------------------------------------------------------
@@ -2610,7 +2623,7 @@ class LLMService:
                     return {"answer": _unv, "ratio_decidendi": None, "citations": [], "results": [],
                             "model_used": "unverified_ai_answer", "tier": "unverified_ai",
                             "tier_label": UNVERIFIED_AI_LABEL, "hide_badge": True}
-                return {"answer": UNVERIFIED_UNAVAILABLE_MSG, "ratio_decidendi": None, "citations": [], "results": [],
+                return {"answer": unverified_unavailable_message(query), "ratio_decidendi": None, "citations": [], "results": [],
                         "model_used": "tier2_unverified_unavailable", "hide_badge": True}
 
         # Build clean precedent context for synthesis

@@ -459,7 +459,7 @@ export default function SearchResults({
                     {answerData.ai_answer.split('\n\n').map((paragraph, pIdx) => {
                       const trimmedP = paragraph.trim();
                       if (!trimmedP) return null;
-                      if (trimmedP.startsWith('AI-GENERATED RESTATEMENT')) {
+                      if (trimmedP.startsWith('AI RESTATEMENT')) {
                         const _head = trimmedP.split('\n')[0];
                         return (
                           <div key={pIdx} className="answer-law-note" role="note" style={{ margin: '14px 0', padding: '12px 16px', borderLeft: '3px solid #b8860b', background: 'rgba(184,134,11,0.10)', borderRadius: 6 }}>

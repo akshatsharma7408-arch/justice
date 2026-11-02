@@ -148,3 +148,22 @@ def test_violence_rejects_police_duty_certainty_and_defective_rewrite():
 
 def test_consumer_rejects_level_by_value_claim():
     assert L.unverified_answer_problem(BASE + " approach the district, state or national consumer commission, depending on the value of the claim.", "consumer")
+
+
+def test_violence_unavailable_still_gives_source_checked_safety_text():
+    m = L.unverified_unavailable_message("my husband beats me")
+    assert "112" in m and "181" in m and "15100" in m and "not available" in m
+    assert L.unverified_unavailable_message("landlord deposit") == L.UNVERIFIED_UNAVAILABLE_MSG
+
+
+def test_provider_error_surface_fails_closed_without_cascade():
+    calls = []
+    class _S(L.LLMService):
+        client = None; model = "x"
+    svc = _S.__new__(_S)
+    def gen(**k):
+        calls.append(1); raise RuntimeError("429 RESOURCE_EXHAUSTED")
+    _S.client = SimpleNamespace(models=SimpleNamespace(generate_content=gen))
+    assert asyncio.run(svc.generate_unverified_ai_answer("q")) is None
+    assert asyncio.run(svc.restate_provision_unverified("Article 1", "Some provision text that is long enough.")) is None
+    assert len(calls) == 2
