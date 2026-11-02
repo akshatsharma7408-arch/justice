@@ -123,7 +123,7 @@ class TestSearchQuality(unittest.TestCase):
         verified_text = "Section 27 renders post-employment non-compete covenants void ab initio."
         passage, label, is_ratio = extract_relevant_passage("non-compete", "", True, verified_text)
         self.assertEqual(passage, verified_text)
-        self.assertEqual(label, "RATIO DECIDENDI / LEGAL PRINCIPLE")
+        self.assertEqual(label, "CASE SUMMARY WRITTEN FOR THIS APP (NOT JUDGMENT TEXT; NOT VERIFIED)")
         self.assertTrue(is_ratio)
 
 

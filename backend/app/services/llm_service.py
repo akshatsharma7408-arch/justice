@@ -121,8 +121,8 @@ SCOPED_FOOTNOTE_MARKER = "Note from the official edition's footnotes (reference 
 def explanation_unavailable_note() -> str:
     if model_rate_limited():
         return ("AI explanation temporarily unavailable: the AI service has reached its usage limit. "
-                "Only the statutory text is shown. Try again later.")
-    return "No AI explanation is shown for this provision: none was generated, or the one generated did not pass the app's automatic faithfulness check. Only the statutory text is shown."
+                "The statute text is shown above. Try again later.")
+    return "No AI explanation is shown for this provision: none was generated, or the one generated did not pass the app's automatic faithfulness check. The statute text is shown above; any separately labelled case material below is not an explanation of it."
 
 
 
@@ -304,6 +304,8 @@ def case_passage_text(c: Dict[str, Any]) -> Optional[str]:
     s = clean_case_summary(c)
     if not s or s[:1].islower():
         return None
+    if c.get("landmark") or str(c.get("ratioLabel") or "").startswith("CASE SUMMARY WRITTEN"):
+        return f"Case summary written for this app (not text from the judgment, and not verified) - {c.get('title')} ({c.get('citation')}): {s}"
     return f"Passage from {c.get('title')} ({c.get('citation')}) - an excerpt from the judgment, not a verified holding or a finding that it applies to this question: {s} [Extracted from scanned text; it may contain character-recognition errors. Check the original judgment.]"
 
 
@@ -352,7 +354,7 @@ def clean_case_summary(case: Dict[str, Any]) -> str:
     cleaned = re.sub(r'^\d{1,4}\s+(?:[A-H]\s+)?(?=[a-z])', '', cleaned).strip()  # page no. + margin letter, e.g. "718 A as fetter"
     
     # Extract the most meaningful 1-2 sentences, avoiding raw chunk dumps and bench rosters
-    sentences = [s.strip() for s in re.split(r'(?<=[.!?])\s+', cleaned) if len(s.strip()) > 20 and not re.search(r'^\s*\[?[A-Z\s\.,]+\]?\s*$', s)]
+    sentences = [s.strip() for s in re.split(r'(?<!\b[A-Z]\.)(?<!\bMr\.)(?<!\bDr\.)(?<!\bNo\.)(?<!\bvs\.)(?<!\bv\.)(?<=[.!?])\s+', cleaned) if len(s.strip()) > 20 and not re.search(r'^\s*\[?[A-Z\s\.,]+\]?\s*$', s)]
     
     if sentences:
         short_summary = " ".join(sentences[:2])
@@ -1992,8 +1994,10 @@ class LLMService:
                     ans_str = ("Note: the official edition's footnotes attach a note to this article. Read the note at the end of the text. ") + ans_str
                 if _timing:
                     ans_str = ("Important: this article does not say by itself when it takes effect; see the note at the end of the text and article 334A. ") + ans_str
+                _app_note = False
                 if expl and not (_adverse or _timing or _scoped):
-                    ans_str += f" [Note written for this app, not part of the official text and not checked against current law: {expl}]"
+                    ans_str += f"\n\n[NOTE WRITTEN FOR THIS APP - not part of the official text and not checked against current law: {expl}]\n\n"
+                    _app_note = True
                 _ai_shown = False
                 _unv_shown = False
                 if _timing:
@@ -2025,12 +2029,14 @@ class LLMService:
                     c0 = matching_cases[0]
                     ans_str += case_passage_text(c0)
                     cits = [f"Constitution of India, Article {art_num} ({heading})", f"{c0.get('title')} ({c0.get('citation')})"]
-                    tier_label = "Statute text + AI restatement (NOT independently verified) + case excerpt (not a verified holding)" if _unv_shown else "Statutory text + AI explanation (AI part not verified) + case excerpt (not a verified holding)" if _ai_shown else "Statutory text + case excerpt (not a verified holding)"
+                    _c0_cur = case_passage_text(c0).startswith("Case summary written for this app")
+                    _ex_word = "case summary written for this app (not judgment text, not a verified holding)" if _c0_cur else "case excerpt (not a verified holding)"
+                    tier_label = f"Statute text + AI restatement (NOT independently verified) + {_ex_word}" if _unv_shown else f"Statutory text + AI explanation (AI part not verified) + {_ex_word}" if _ai_shown else f"Statutory text + note written for this app + {_ex_word}" if _app_note else f"Statutory text + {_ex_word}"
                     no_strong = False
                 else:
                     ans_str += "No sufficiently relevant case summary was verified for this result."
                     cits = [f"Constitution of India, Article {art_num} ({heading}, w.e.f. {eff_date})"]
-                    tier_label = "Statute text + AI restatement (NOT independently verified)" if _unv_shown else "Statutory text + AI explanation (AI part not verified)" if _ai_shown else "Authoritative statutory provision"
+                    tier_label = "Statute text + AI restatement (NOT independently verified)" if _unv_shown else "Statutory text + AI explanation (AI part not verified)" if _ai_shown else "Statutory text + note written for this app (not checked against current law)" if _app_note else "Authoritative statutory provision"
                     no_strong = True
 
                 if _adverse or _timing:

@@ -98,7 +98,7 @@ def test_landmark_no_judgment_chunk_shows_stored_holding():
     expected_holding = LANDMARK_METADATA["kesavananda"]["holding"]
     assert passage == expected_holding
     assert is_ratio is True
-    assert label == "RATIO DECIDENDI / LEGAL PRINCIPLE"
+    assert label == "CASE SUMMARY WRITTEN FOR THIS APP (NOT JUDGMENT TEXT; NOT VERIFIED)"
 
 
 def test_only_label_holding_if_operative_part():
@@ -111,7 +111,7 @@ def test_only_label_holding_if_operative_part():
         is_verified_ratio=True
     )
     assert op_is_ratio is True
-    assert op_label == "RATIO DECIDENDI / LEGAL PRINCIPLE"
+    assert op_label == "PASSAGE FROM THE JUDGMENT (NOT A VERIFIED HOLDING)"
 
     non_op_passage, non_op_label, non_op_is_ratio = extract_relevant_passage(
         query="petitioner notices",

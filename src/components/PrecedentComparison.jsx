@@ -233,7 +233,7 @@ function SearchableCasePicker({
           </div>
 
           <div className="summary-ratio-box">
-            <span className="ratio-label mono">CORE RATIO DECIDENDI / LEGAL PRINCIPLE:</span>
+            <span className="ratio-label mono">CASE SUMMARY WRITTEN FOR THIS APP (NOT JUDGMENT TEXT; NOT VERIFIED):</span>
             <p className="ratio-text font-serif">
               "{selectedCase.ratioSummary || 'Ratio summary not recorded in available archive'}"
             </p>

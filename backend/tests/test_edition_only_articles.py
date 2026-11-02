@@ -15,14 +15,14 @@ def test_56_edition_text_only():
     assert "five years from the date on which he enters upon his office" in t
     assert "Speaker of the House of the People" in t
     assert "Key constitutional parameters" not in t
-    assert "Solely" not in t and "[Note written for this app" not in t
+    assert "Solely" not in t and "NOTE WRITTEN FOR THIS APP" not in t
 
 
 def test_239ab_edition_text_only():
     t = _ans("239AB")
     assert "for such period and subject to such conditions as may be specified in such law" in t
     assert "article 239 and article 239AA" in t
-    assert "emergency mechanisms" not in t and "[Note written for this app" not in t
+    assert "emergency mechanisms" not in t and "NOTE WRITTEN FOR THIS APP" not in t
 
 
 def test_14_no_handwritten_summary():
@@ -46,7 +46,7 @@ def test_article_token_boundaries():
 def test_14_no_unchecked_note_and_no_article_141_case():
     d = c.post("/api/v1/search/answer", json={"query": "article 14"}, auth=("u", "x")).json()
     t = d["ai_answer"]
-    assert "Dalmia" not in t and "[Note written for this app" not in t
+    assert "Dalmia" not in t and "NOTE WRITTEN FOR THIS APP" not in t
     assert "Dawoodi" not in t
     r = c.post("/api/v1/search", json={"query": "article 14"}, auth=("u", "x")).json()
     assert all("Dawoodi" not in (x.get("title") or "") for x in r.get("results", []))
@@ -65,7 +65,7 @@ def test_multiarticle_case_still_matches_article_14():
 
 def test_curated_notes_are_source_scoped():
     t21, t32, t141 = _ans("21"), _ans("32"), _ans("141")
-    assert "[Note written for this app" in t21 and "headnote" in t21 and "rejecting narrow literalism" not in t21
+    assert "[NOTE WRITTEN FOR THIS APP" in t21 and "headnote" in t21 and "rejecting narrow literalism" not in t21
     assert "emerges primarily from the guarantee of life and personal liberty" in t21
     assert "the very soul of the Constitution and the very heart of it" in t32
     assert "heart and soul" not in t32
@@ -74,3 +74,23 @@ def test_curated_notes_are_source_scoped():
     for a in ("356", "368"):
         t = _ans(a)
         assert "authoritatively held" not in t and "damaging, emasculating" not in t
+
+
+def test_labels_match_content_for_notes_and_curated_summaries():
+    d = c.post("/api/v1/search/answer", json={"query": "article 32"}, auth=("u", "x")).json()
+    assert d["tier_label"].startswith("Statutory text + note written for this app")
+    assert d["tier_label"] != "Authoritative statutory provision"
+    assert "\n\n[NOTE WRITTEN FOR THIS APP" in d["ai_answer"]
+    d56 = c.post("/api/v1/search/answer", json={"query": "article 56"}, auth=("u", "x")).json()
+    assert "The statute text is shown above; any separately labelled case material below" in d56["ai_answer"] or "Plain-English explanation" in d56["ai_answer"] or d56["tier_label"] == "Authoritative statutory provision"
+    from app.services.llm_service import case_passage_text
+    cur = {"title": "X v. Y", "citation": "(2000) 1 SCC 1", "ratioSummary": "The Court explained the rule in plain words here.", "landmark": True}
+    assert case_passage_text(cur).startswith("Case summary written for this app (not text from the judgment")
+    raw = {"title": "X v. Y", "citation": "(2000) 1 SCC 1", "ratioSummary": "The Court explained the rule in plain words here."}
+    assert "an excerpt from the judgment" in case_passage_text(raw)
+
+
+def test_initials_do_not_truncate_case_summary():
+    from app.services.llm_service import clean_case_summary
+    s = clean_case_summary({"title": "K v. U", "ratioSummary": "The right to privacy is a fundamental right intrinsic to Article 21. The nine-judge bench expressly overruled M.P. Sharma (1954) to the extent they denied that status."})
+    assert "M.P. Sharma" in s

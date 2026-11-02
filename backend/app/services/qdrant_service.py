@@ -755,7 +755,7 @@ def extract_relevant_passage(
     # When query is empty (detail/comparison view) or asks for holding/ratio, return default_holding directly
     if default_holding and (not query or any(w in query.lower() for w in ["ratio", "holding", "principle", "doctrine", "decided", "rule", "basic structure"])):
         cleaned_holding = cut_to_sentence_boundary(clean_judgment_text(default_holding), max_chars=320)
-        return (cleaned_holding, "RATIO DECIDENDI / LEGAL PRINCIPLE", True)
+        return (cleaned_holding, "CASE SUMMARY WRITTEN FOR THIS APP (NOT JUDGMENT TEXT; NOT VERIFIED)", True)
 
     # 3. Try each candidate chunk in scored order
     for c_text in candidate_texts:
@@ -779,7 +779,7 @@ def extract_relevant_passage(
         ])
         if is_verified_ratio and has_operative_marker:
             is_op = True
-            label = "RATIO DECIDENDI / LEGAL PRINCIPLE"
+            label = "PASSAGE FROM THE JUDGMENT (NOT A VERIFIED HOLDING)"
         elif not query:
             is_op = False
             label = "SOURCE EXCERPT / OPENING TEXT (UNVERIFIED)"
@@ -791,7 +791,7 @@ def extract_relevant_passage(
     # 4. When a landmark has no valid judgment chunk text, show its stored one-line holding instead
     if default_holding:
         cleaned_holding = cut_to_sentence_boundary(clean_judgment_text(default_holding), max_chars=320)
-        return (cleaned_holding, "RATIO DECIDENDI / LEGAL PRINCIPLE", True)
+        return (cleaned_holding, "CASE SUMMARY WRITTEN FOR THIS APP (NOT JUDGMENT TEXT; NOT VERIFIED)", True)
 
     return ("No excerpt available for this judgment.", "SOURCE EXCERPT (UNVERIFIED)", False)
 
@@ -1315,7 +1315,7 @@ class QdrantService:
                             "decisionYear": meta.get("year") or ch.get("year"),
                             "statutes": meta.get("statutes") or ch.get("statutes", []),
                             "ratioSummary": meta.get("holding") or ch.get("ratioSummary", ""),
-                            "ratioLabel": "RATIO DECIDENDI / LEGAL PRINCIPLE",
+                            "ratioLabel": "CASE SUMMARY WRITTEN FOR THIS APP (NOT JUDGMENT TEXT; NOT VERIFIED)",
                             "is_verified_ratio": True,
                             "aliases": ch.get("aliases", []),
                             "landmark": True,
@@ -1562,7 +1562,7 @@ class QdrantService:
                             "benchSize": case_def.get("benchSize", 5),
                             "statutes": [],
                             "ratioSummary": f"{case_def['common_name']}: Authoritative Supreme Court decision.",
-                            "ratioLabel": "RATIO DECIDENDI / LEGAL PRINCIPLE",
+                            "ratioLabel": "CASE SUMMARY WRITTEN FOR THIS APP (NOT JUDGMENT TEXT; NOT VERIFIED)",
                             "is_verified_ratio": True,
                         }
                     case_obj["aliases"] = aliases
@@ -2046,7 +2046,7 @@ class QdrantService:
                 c_copy["raw_vector_score"] = float(cos_sim)
                 c_copy["id"] = cid
                 c_copy["is_verified_ratio"] = True
-                c_copy["ratioLabel"] = "RATIO DECIDENDI / LEGAL PRINCIPLE"
+                c_copy["ratioLabel"] = "CASE SUMMARY WRITTEN FOR THIS APP (NOT JUDGMENT TEXT; NOT VERIFIED)"
                 candidates.append(c_copy)
                 if cid:
                     seen_ids.add(cid)
@@ -2186,7 +2186,7 @@ class QdrantService:
             item["id"] = cid
             item["raw_vector_score"] = float(cos_sim)
             item["is_verified_ratio"] = True
-            item["ratioLabel"] = "RATIO DECIDENDI / LEGAL PRINCIPLE"
+            item["ratioLabel"] = "CASE SUMMARY WRITTEN FOR THIS APP (NOT JUDGMENT TEXT; NOT VERIFIED)"
             candidates.append(item)
             if cid:
                 seen_ids.add(cid)

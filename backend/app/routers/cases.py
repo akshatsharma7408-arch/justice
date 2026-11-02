@@ -41,7 +41,7 @@ class CaseListItem(BaseModel):
     benchType: Optional[str] = None
     statutes: List[str] = Field(default_factory=list)
     ratioSummary: Optional[str] = ""
-    ratioLabel: Optional[str] = "RATIO DECIDENDI / LEGAL PRINCIPLE"
+    ratioLabel: Optional[str] = "CASE SUMMARY WRITTEN FOR THIS APP (NOT JUDGMENT TEXT; NOT VERIFIED)"
     is_verified_ratio: Optional[bool] = True
 
 
@@ -62,7 +62,7 @@ class CaseDetailResponse(BaseModel):
     leadJudge: Optional[str] = None
     statutes: List[str] = Field(default_factory=list)
     ratioSummary: Optional[str] = ""
-    ratioLabel: Optional[str] = "RATIO DECIDENDI / LEGAL PRINCIPLE"
+    ratioLabel: Optional[str] = "CASE SUMMARY WRITTEN FOR THIS APP (NOT JUDGMENT TEXT; NOT VERIFIED)"
     is_verified_ratio: Optional[bool] = True
     holding: Optional[str] = None
     overruledCases: List[str] = Field(default_factory=list)
@@ -343,7 +343,7 @@ def _search_full_case_collection(query: str, limit: int = 20) -> List[Dict[str, 
                     "text": payload.get("text") or payload.get("chunk_text") or "",
                     "ratioSummary": payload.get("holding") or payload.get("summary") or "",
                     "is_verified_ratio": bool(payload.get("holding")),
-                    "ratioLabel": "RATIO DECIDENDI / LEGAL PRINCIPLE" if payload.get("holding") else "SOURCE EXCERPT / OPENING TEXT (UNVERIFIED)"
+                    "ratioLabel": "CASE SUMMARY WRITTEN FOR THIS APP (NOT JUDGMENT TEXT; NOT VERIFIED)" if payload.get("holding") else "SOURCE EXCERPT / OPENING TEXT (UNVERIFIED)"
                 }
 
                 seen_ids.add(cid.lower())
@@ -385,7 +385,7 @@ def _search_full_case_collection(query: str, limit: int = 20) -> List[Dict[str, 
                         "text": payload.get("text") or payload.get("chunk_text") or "",
                         "ratioSummary": payload.get("holding") or "",
                         "is_verified_ratio": bool(payload.get("holding")),
-                        "ratioLabel": "RATIO DECIDENDI / LEGAL PRINCIPLE" if payload.get("holding") else "SOURCE EXCERPT / OPENING TEXT (UNVERIFIED)"
+                        "ratioLabel": "CASE SUMMARY WRITTEN FOR THIS APP (NOT JUDGMENT TEXT; NOT VERIFIED)" if payload.get("holding") else "SOURCE EXCERPT / OPENING TEXT (UNVERIFIED)"
                     }
                     seen_ids.add(cid.lower())
                     scored_cases.append((v_score, cid, case_record))
@@ -433,7 +433,7 @@ def _normalize_case_record(raw: Dict[str, Any], case_id: str) -> Dict[str, Any]:
         is_verified_ratio = False
         ratio_label = "SOURCE EXCERPT / OPENING TEXT (UNVERIFIED)"
     else:
-        ratio_label = raw.get("ratioLabel") or ("RATIO DECIDENDI / LEGAL PRINCIPLE" if is_verified_ratio else "SOURCE EXCERPT / OPENING TEXT (UNVERIFIED)")
+        ratio_label = raw.get("ratioLabel") or ("CASE SUMMARY WRITTEN FOR THIS APP (NOT JUDGMENT TEXT; NOT VERIFIED)" if is_verified_ratio else "SOURCE EXCERPT / OPENING TEXT (UNVERIFIED)")
 
     return {
         "id": cid,

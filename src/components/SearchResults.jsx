@@ -426,7 +426,7 @@ export default function SearchResults({
                   {/* Card Top Strip: Kicker + Tier Badge */}
                   <div className="answer-card-top-strip">
                     <span className="answer-kicker mono">
-                      {answerData.tier === 'unreliable' ? 'LEGAL NOTICE' : answerData.tier === 'not_found' ? 'NOT FOUND IN THIS DATABASE' : answerData.tier === 'unverified_ai' ? 'AI-GENERATED ANSWER - NOT CHECKED AGAINST LEGAL SOURCES' : answerData.tier === 'statute_text' ? 'STATUTE TEXT' : (() => { const tl = answerData.tier_label || ''; if (tl.includes('NOT independently verified')) return 'STATUTE TEXT + AI RESTATEMENT (NOT INDEPENDENTLY VERIFIED)'; if (tl.includes('important note')) return 'STATUTE TEXT WITH AN IMPORTANT NOTE'; if (tl.includes('footnote note')) return 'STATUTE TEXT WITH A FOOTNOTE NOTE'; if (tl.includes('written for this app')) return 'STATUTE TEXT AND A SHORT SUMMARY (NOT CHECKED AGAINST THE JUDGMENTS)'; const ex = tl.includes('case excerpt'); const ai = tl.includes('AI explanation'); return ex && ai ? 'STATUTE TEXT, AI EXPLANATION AND CASE EXCERPT' : ex ? 'STATUTE TEXT AND CASE EXCERPT' : ai ? 'STATUTE TEXT AND AI EXPLANATION' : tl === 'Authoritative statutory provision' ? 'STATUTE TEXT' : 'AI SUMMARY'; })()}
+                      {answerData.tier === 'unreliable' ? 'LEGAL NOTICE' : answerData.tier === 'not_found' ? 'NOT FOUND IN THIS DATABASE' : answerData.tier === 'unverified_ai' ? 'AI-GENERATED ANSWER - NOT CHECKED AGAINST LEGAL SOURCES' : answerData.tier === 'statute_text' ? 'STATUTE TEXT' : (() => { const tl = answerData.tier_label || ''; if (tl.includes('NOT independently verified')) return 'STATUTE TEXT + AI RESTATEMENT (NOT INDEPENDENTLY VERIFIED)'; if (tl.includes('important note')) return 'STATUTE TEXT WITH AN IMPORTANT NOTE'; if (tl.includes('footnote note')) return 'STATUTE TEXT WITH A FOOTNOTE NOTE'; const csum = tl.includes('case summary written for this app'); const ex = tl.includes('case excerpt') || csum; const exw = csum ? 'CASE SUMMARY WRITTEN FOR THIS APP' : 'CASE EXCERPT'; const ai = tl.includes('AI explanation'); const nt = tl.includes('note written for this app'); return nt && ex ? 'STATUTE TEXT, A NOTE WRITTEN FOR THIS APP AND ' + exw : nt ? 'STATUTE TEXT AND A NOTE WRITTEN FOR THIS APP' : ex && ai ? 'STATUTE TEXT, AI EXPLANATION AND ' + exw : ex ? 'STATUTE TEXT AND ' + exw : ai ? 'STATUTE TEXT AND AI EXPLANATION' : tl === 'Authoritative statutory provision' ? 'STATUTE TEXT' : 'AI SUMMARY'; })()}
                     </span>
                     <div className="answer-badge-wrap">
                       {answerData.hide_badge || answerData.tier === 'unreliable' || answerData.tier === 'not_found' ? null : (
@@ -459,6 +459,16 @@ export default function SearchResults({
                     {answerData.ai_answer.split('\n\n').map((paragraph, pIdx) => {
                       const trimmedP = paragraph.trim();
                       if (!trimmedP) return null;
+                      if (trimmedP.startsWith('[NOTE WRITTEN FOR THIS APP')) {
+                        const _body = trimmedP.replace(/^\[/, '').replace(/\]$/, '');
+                        const _cut = _body.indexOf(':');
+                        return (
+                          <div key={pIdx} className="answer-law-note" role="note" style={{ margin: '14px 0', padding: '12px 16px', borderLeft: '3px solid #b8860b', background: 'rgba(184,134,11,0.10)', borderRadius: 6 }}>
+                            <div className="mono" style={{ fontSize: 11, letterSpacing: '0.08em', color: '#b8860b', marginBottom: 6 }}>NOTE WRITTEN FOR THIS APP - NOT PART OF THE OFFICIAL TEXT, NOT CHECKED AGAINST CURRENT LAW</div>
+                            <p className="answer-prose-paragraph" style={{ margin: 0 }}>{_body.slice(_cut + 1).trim()}</p>
+                          </div>
+                        );
+                      }
                       if (trimmedP.startsWith('AI RESTATEMENT')) {
                         const _head = trimmedP.split('\n')[0];
                         return (
@@ -503,7 +513,7 @@ export default function SearchResults({
                         );
                       }
                       const aiPrefix = 'Plain-English explanation (AI-written from the text above; not a verified statement of law):';
-                      if (trimmedP.startsWith(aiPrefix) || trimmedP.startsWith('AI explanation unavailable')) {
+                      if (trimmedP.startsWith(aiPrefix) || trimmedP.startsWith('AI explanation unavailable') || trimmedP.startsWith('No AI explanation is shown for this provision')) {
                         const isExpl = trimmedP.startsWith(aiPrefix);
                         return (
                           <div key={pIdx} className="answer-ai-explainer" style={{ margin: '14px 0', padding: '12px 16px', borderLeft: '3px solid #c97d3c', background: 'rgba(201,125,60,0.08)', borderRadius: 6 }}>
@@ -739,10 +749,10 @@ export default function SearchResults({
                     {/* Ratio Decidendi / Relevant Passage Box */}
                     <div className="card-ratio-box">
                       <div className="ratio-kicker mono">
-                        {precedent.ratioLabel || (precedent.is_verified_ratio ? 'RATIO DECIDENDI / LEGAL PRINCIPLE' : 'RELEVANT PASSAGE')}
+                        {precedent.ratioLabel || (precedent.is_verified_ratio ? 'CASE SUMMARY WRITTEN FOR THIS APP (NOT JUDGMENT TEXT; NOT VERIFIED)' : 'RELEVANT PASSAGE')}
                       </div>
                       <p className="ratio-quote font-serif">
-                        "{precedent.ratioSummary}"
+                        {String(precedent.ratioLabel || '').startsWith('CASE SUMMARY WRITTEN') ? precedent.ratioSummary : `"${precedent.ratioSummary}"`}
                       </p>
                     </div>
 

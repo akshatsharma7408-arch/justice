@@ -403,7 +403,7 @@ export default function UniversalSearch({ onSelectCaseForCitator, onOpenCaseChat
 
               {/* Ratio Decidendi */}
               <div className="card-ratio-box">
-                <div className="ratio-header-label">RATIO DECIDENDI / LEGAL PRINCIPLE</div>
+                <div className="ratio-header-label">CASE SUMMARY WRITTEN FOR THIS APP (NOT JUDGMENT TEXT; NOT VERIFIED)</div>
                 <p className="ratio-text font-judicial">"{precedent.ratioSummary}"</p>
               </div>
 
