@@ -91,7 +91,7 @@ def test_article_239ab_non_empty_and_grounded():
     ai_answer = data.get("ai_answer", "")
     assert len(ai_answer.strip()) > 80, f"Article 239AB returned empty or weak answer: '{ai_answer}'"
     assert "constitutional machinery" in ai_answer.lower()
-    assert "delhi" in ai_answer.lower()
+    assert "national capital territory" in ai_answer.lower()  # edition text; the handwritten Delhi paraphrase was retired
     assert data.get("tier") == "tier1"
 
 
