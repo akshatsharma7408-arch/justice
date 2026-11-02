@@ -286,3 +286,11 @@ if __name__ == "__main__":
     if failed > 0:
         exit(1)
 
+
+
+def test_edition_note_block_survives_sentence_filter_intact():
+    from app.services.citation_checker import citation_checker
+    note = ("[Note from the official edition's footnotes: the changes were struck down by the Supreme Court in "
+            "Supreme Court Advocates-on-Record Association v. Union of India, AIR 2016 SC 117. The text above is shown as printed in the edition.]")
+    out = citation_checker.check_and_badge_text("Article text here. " + note)
+    assert note in out
