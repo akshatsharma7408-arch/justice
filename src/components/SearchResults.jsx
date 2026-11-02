@@ -484,7 +484,10 @@ export default function SearchResults({
                             <div className="mono" style={{ fontSize: 11, letterSpacing: '0.08em', color: '#c97d3c', marginBottom: 6 }}>
                               {isExpl ? 'AI EXPLANATION - NOT VERIFIED, WRITTEN FROM THE STATUTORY TEXT ABOVE' : 'AI EXPLANATION'}
                             </div>
-                            <p className="answer-prose-paragraph" style={{ margin: 0, whiteSpace: 'pre-line', lineHeight: 1.6 }}>{isExpl ? trimmedP.slice(aiPrefix.length).trim() : trimmedP}</p>
+                            {(isExpl ? trimmedP.slice(aiPrefix.length).trim() : trimmedP).split('\n').filter(l => l.trim()).map((ln, li) => {
+                              const isNote = ln.trim().startsWith('(Wording prepared');
+                              return <p key={li} className="answer-prose-paragraph" style={isNote ? { margin: '10px 0 0', fontSize: 12, opacity: 0.8, lineHeight: 1.5 } : { margin: li ? '8px 0 0' : 0, lineHeight: 1.6 }}>{ln}</p>;
+                            })}
                           </div>
                         );
                       }
@@ -619,12 +622,12 @@ export default function SearchResults({
             <h3 className="empty-title font-serif">
               {Boolean(query && query.match(/\b(?:air\s*\d{4}|\(\d{4}\)|\d{4}\s*\d+\s*scc|\b\d{4}\s*insc\b|\bscr\b|\bscale\b|\b\d{4}\b.*\b(?:sc|scc|scr|del|bom)\b)/i))
                 ? "No case with this citation in our database"
-                : "No strong match found, try rephrasing"}
+                : (answerData && answerData.answer_text_present !== false && (answerData.ai_answer || answerData.answer) ? "No matching judgments found for this query" : "No strong match found, try rephrasing")}
             </h3>
             <p className="empty-desc">
               {Boolean(query && query.match(/\b(?:air\s*\d{4}|\(\d{4}\)|\d{4}\s*\d+\s*scc|\b\d{4}\s*insc\b|\bscr\b|\bscale\b|\b\d{4}\b.*\b(?:sc|scc|scr|del|bom)\b)/i))
                 ? "This specific citation is not present in our indexed archive of Supreme Court of India and Delhi High Court judgments."
-                : "No matching judgments met the strict verification threshold. Try rephrasing your query, searching by case name or citation, or using broader legal terms."}
+                : (answerData && (answerData.ai_answer || answerData.answer) ? "The statute text above is shown on its own. No judgment met the strict verification threshold for this query; this does not say that no case exists." : "No matching judgments met the strict verification threshold. Try rephrasing your query, searching by case name or citation, or using broader legal terms.")}
             </p>
           </div>
         ) : (

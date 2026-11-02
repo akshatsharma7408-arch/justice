@@ -33,3 +33,13 @@ def test_dva_glosses_match_corpus_and_keep_numbers():
         assert segs[e["clause_index"] - 1] == e["source"]
         nums = lambda t: sorted(re.findall(r"\b\d+\b", re.sub(r"\(\w{1,4}\)", "", t)))
         assert set(nums(e["gloss"])) <= set(nums(e["source"]))
+
+
+def test_badge_check_keeps_clause_line_breaks_and_words():
+    from app.services.citation_checker import citation_checker
+    out = vetted_clause_explanation(_s12())
+    badged = citation_checker.check_and_badge_text(out, is_tier2=False)
+    assert badged.count("\n") == out.count("\n")
+    for m in ("(1):", "(2):", "(3):", "(4):", "(5):"):
+        assert "\n" + m in "\n" + badged
+    assert "must follow the prescribed form" in badged

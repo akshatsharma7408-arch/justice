@@ -303,6 +303,12 @@ class CitationChecker:
                 cls.check_and_badge_text(part, is_tier2=False, allowed_cases=allowed_cases)
                 for part in text.split("\n\n") if part.strip()
             )
+        if "\n" in text.strip():
+            # Keep line breaks (numbered clause lines): verify line by line.
+            return "\n".join(
+                cls.check_and_badge_text(part, is_tier2=False, allowed_cases=allowed_cases)
+                for part in text.strip().split("\n") if part.strip()
+            )
         sentences = split_legal_sentences(text.strip())
         verified_sentences = []
 
