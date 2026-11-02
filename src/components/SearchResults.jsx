@@ -426,7 +426,7 @@ export default function SearchResults({
                   {/* Card Top Strip: Kicker + Tier Badge */}
                   <div className="answer-card-top-strip">
                     <span className="answer-kicker mono">
-                      {answerData.tier === 'unreliable' ? 'LEGAL NOTICE' : answerData.tier === 'not_found' ? 'NOT FOUND IN THIS DATABASE' : answerData.tier === 'unverified_ai' ? 'AI-GENERATED ANSWER - NOT CHECKED AGAINST LEGAL SOURCES' : answerData.tier === 'statute_text' ? 'STATUTE TEXT' : (() => { const tl = answerData.tier_label || ''; if (tl.includes('NOT checked against legal sources')) return 'STATUTE TEXT + AI-GENERATED EXPLANATION (NOT CHECKED)'; if (tl.includes('important note')) return 'STATUTE TEXT WITH AN IMPORTANT NOTE'; const ex = tl.includes('case excerpt'); const ai = tl.includes('AI explanation'); return ex && ai ? 'STATUTE TEXT, AI EXPLANATION AND CASE EXCERPT' : ex ? 'STATUTE TEXT AND CASE EXCERPT' : ai ? 'STATUTE TEXT AND AI EXPLANATION' : tl === 'Authoritative statutory provision' ? 'STATUTE TEXT' : 'AI SUMMARY'; })()}
+                      {answerData.tier === 'unreliable' ? 'LEGAL NOTICE' : answerData.tier === 'not_found' ? 'NOT FOUND IN THIS DATABASE' : answerData.tier === 'unverified_ai' ? 'AI-GENERATED ANSWER - NOT CHECKED AGAINST LEGAL SOURCES' : answerData.tier === 'statute_text' ? 'STATUTE TEXT' : (() => { const tl = answerData.tier_label || ''; if (tl.includes('NOT independently verified')) return 'STATUTE TEXT + AI RESTATEMENT (NOT INDEPENDENTLY VERIFIED)'; if (tl.includes('important note')) return 'STATUTE TEXT WITH AN IMPORTANT NOTE'; const ex = tl.includes('case excerpt'); const ai = tl.includes('AI explanation'); return ex && ai ? 'STATUTE TEXT, AI EXPLANATION AND CASE EXCERPT' : ex ? 'STATUTE TEXT AND CASE EXCERPT' : ai ? 'STATUTE TEXT AND AI EXPLANATION' : tl === 'Authoritative statutory provision' ? 'STATUTE TEXT' : 'AI SUMMARY'; })()}
                     </span>
                     <div className="answer-badge-wrap">
                       {answerData.hide_badge || answerData.tier === 'unreliable' || answerData.tier === 'not_found' ? null : (
@@ -459,7 +459,7 @@ export default function SearchResults({
                     {answerData.ai_answer.split('\n\n').map((paragraph, pIdx) => {
                       const trimmedP = paragraph.trim();
                       if (!trimmedP) return null;
-                      if (trimmedP.startsWith('AI-GENERATED GENERAL EXPLANATION')) {
+                      if (trimmedP.startsWith('AI-GENERATED RESTATEMENT')) {
                         const _head = trimmedP.split('\n')[0];
                         return (
                           <div key={pIdx} className="answer-law-note" role="note" style={{ margin: '14px 0', padding: '12px 16px', borderLeft: '3px solid #b8860b', background: 'rgba(184,134,11,0.10)', borderRadius: 6 }}>

@@ -110,3 +110,41 @@ def test_context_note_for_statute_text_passes_but_does_not_quote():
     svc, seen = _svc([BASE])
     out = asyncio.run(svc.generate_unverified_ai_answer("cheque bounce", context_note="Section 138 of the NI Act"))
     assert out and "Do not quote" in seen["system"]
+
+
+def test_known_bad_v3_outputs_are_now_rejected():
+    import json, pathlib
+    fx = json.load(open(pathlib.Path(__file__).parent / "fixtures" / "unverified_known_bad.json"))
+    for topic, txt in fx.items():
+        assert L.unverified_answer_problem(txt, topic) is not None, topic
+
+
+def test_restatement_rejects_foreign_numbers_and_cases(monkeypatch):
+    class _S(L.LLMService):
+        client = None; model = "x"
+    svc = _S.__new__(_S)
+    outs = iter(["Property cannot be taken except by a law. See Article 21 for more detail on this idea here.", "Property cannot be taken except by authority of a law, as decided in Foo v. Bar for this idea here.", "A person's property cannot be taken away unless a law allows it, in the words of the text."])
+    _S.client = SimpleNamespace(models=SimpleNamespace(generate_content=lambda **k: SimpleNamespace(text=next(outs))))
+    src = "No person shall be deprived of his property save by authority of law."
+    assert asyncio.run(svc.restate_provision_unverified("Article 300A (Property)", src)) is None
+    assert asyncio.run(svc.restate_provision_unverified("Article 300A (Property)", src)) is None
+    assert asyncio.run(svc.restate_provision_unverified("Article 300A (Property)", src))
+    assert asyncio.run(svc.restate_provision_unverified("Article 300A (Property)", src, force_fallback=True)) is None
+
+
+def test_violence_rejects_police_duty_certainty_and_defective_rewrite():
+    assert L.unverified_answer_problem(BASE + " The police are generally required to register the complaint and start an investigation.", "violence")
+    svc, seen = _svc([BASE])
+    seen2 = {}
+    class _S2(L.LLMService):
+        client = None; model = "x"
+    s2 = _S2.__new__(_S2)
+    def gen(model=None, contents="", config=None):
+        seen2["c"] = contents; return SimpleNamespace(text=BASE)
+    _S2.client = SimpleNamespace(models=SimpleNamespace(generate_content=gen))
+    asyncio.run(s2.generate_unverified_ai_answer("complaint for a defective phone"))
+    assert "faulty phone" in seen2["c"] and "defective" not in seen2["c"]
+
+
+def test_consumer_rejects_level_by_value_claim():
+    assert L.unverified_answer_problem(BASE + " approach the district, state or national consumer commission, depending on the value of the claim.", "consumer")

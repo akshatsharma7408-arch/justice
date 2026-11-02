@@ -1006,18 +1006,18 @@ def _unv_topic(query: str) -> str:
 
 
 _UNV_TOPIC_RULES = {
-    "violence": "Write nothing like 'Act' or 'court' or 'magistrate' or 'commission'. Do not name any Act, court, tribunal or authority at all. Give safety information only: contact the emergency number or the police, a trusted person, a legal aid service or a women's helpline, and a lawyer who can say which legal remedies and which court apply. Do not say a specific kind of court handles it.",
+    "violence": "Do not say who can order, grant or decide anything. Write nothing like 'Act' or 'court' or 'magistrate' or 'commission'. Do not name any Act, court, tribunal or authority at all. Give safety information only: contact the emergency number or the police, a trusted person, a legal aid service or a women's helpline, and a lawyer who can say which legal remedies and which court apply. Do not say a specific kind of court handles it.",
     "labour": "Write the words 'the relevant law' instead of any Act or Code name. Indian labour laws have been revised and consolidated in recent years, so say that which law applies depends on the current law, the State, the kind of employer and the worker's status, and that a lawyer or the labour department can confirm. Do not name a specific court or tribunal.",
     "arrest": "Do not name any commission, court or tribunal as the place to complain. Say generally that an arrested person has rights to be told the reason, to inform someone and to a lawyer, and to be produced before a magistrate without unreasonable delay, and that a lawyer should be contacted at once. Do not say there is a right to bail (that depends on the offence) and do not describe when police may or may not arrest without a warrant, because that depends on the offence and the current law.",
-    "consumer": "Use the plain term 'consumer dispute body' or 'consumer commission' rather than any older or specific name; say a lawyer or a consumer helpline can say which one applies. Describe the product plainly (for example 'a defective mobile phone').",
+    "consumer": "Do not describe how or where to file (no online portals, forms, fees, envelopes, or which level handles it). Use the plain term 'consumer dispute body' or 'consumer commission' rather than any older or specific name; say a lawyer or a consumer helpline can say which one applies. Describe the product plainly (for example 'a defective mobile phone').",
     "tenancy": "Do not send this to a consumer body or any named forum. Say that tenancy disputes are generally handled by civil or rent-related authorities that differ by State, and that a lawyer or local legal aid can say which applies.",
     "general": "",
 }
 _UNV_TOPIC_BAD = {
-    "violence": (re.compile(r"(?i:\bcourts?\b|\bmagistrates?\b|\btribunals?\b|\bcommissions?\b)|\bActs?\b|\bCode\b|\bSanhita\b"), "names a court or Act for a violence question"),
+    "violence": (re.compile(r"(?i:(?:required|obliged|bound|duty|mandated) to (?:register|investigate|act|file|take)|\bmust (?:register|investigate)|\bauthorit\w+|\bcan (?:then )?(?:order|grant|direct)\b|\bwill (?:order|grant)\b|\bcourts?\b|\bmagistrates?\b|\btribunals?\b|\bcommissions?\b)|\bActs?\b|\bCode\b|\bSanhita\b"), "names a court or Act for a violence question"),
     "labour": (re.compile(r"\bActs?\b|\bCodes?\b|(?i:\bunder the [A-Z][a-z]+ (?:wages|disputes|relations))"), "names an Act or Code for a labour question"),
-    "arrest": (re.compile(r"(?i:human rights commission|\bcommission\b|\btribunals?\b|right to (?:apply for )?bail|entitled to bail)"), "names a commission or tribunal, or overstates bail, for an arrest question"),
-    "consumer": (re.compile(r"(?i:redressal forum|consumer forum|\bforum\b)"), "uses an outdated consumer forum name"),
+    "arrest": (re.compile(r"(?i:non-?\s?cognizable|\bcognizable|warrant (?:is|are|will be) (?:usually |generally |normally |often )?(?:required|needed|necessary)|(?:usually|generally) (?:requires?|needs?) a warrant|magistrate (?:has )?(?:already )?(?:given|authori[sz]\w*|permission)|permission (?:from|of) a magistrate|human rights commission|\bcommission\b|\btribunals?\b|right to (?:apply for )?bail|entitled to bail)"), "names a commission or tribunal, or overstates bail, for an arrest question"),
+    "consumer": (re.compile(r"(?i:envelope|portal|e-?daakhil|physical application|file (?:the |a )?(?:complaint |it )?online|submit a physical|required forms?|\bfees?\b|level of the consumer|district,? state,? (?:or|and) national|depending on the value|redressal forum|consumer forum|\bforum\b)"), "uses an outdated consumer forum name"),
     "tenancy": (re.compile(r"(?i:consumer|redressal|\bforum\b)"), "sends a tenancy question to a consumer body"),
 }
 
@@ -1706,6 +1706,38 @@ class LLMService:
 
         return UNRELIABLE_TIER2_MSG
 
+    async def restate_provision_unverified(self, label: str, source_text: str, force_fallback: bool = False) -> Optional[str]:
+        """Used only when the verified explainer returned nothing although the model was available. ONE attempt,
+        the statute text is passed as data, and only deterministic checks run (no case/citation, no foreign
+        numbers, numbers and time periods as in the text). Shown under a separate 'not independently verified' label."""
+        if force_fallback or not self.client or not source_text or len(source_text.strip()) < 20 or model_rate_limited():
+            return None
+        if not _unv_budget_ok():
+            return None
+        system = ("You restate ONE provision of Indian law in plain English for a non-lawyer, using ONLY the text given. Add no facts, exceptions, "
+                  "amendments, penalties, time limits, remedies, procedures or practical advice that are not in the text. Do not name any case or citation. "
+                  "Keep may/shall/must exactly as the text has them, and copy every number and time period exactly. 2 to 4 short sentences.")
+        prompt = f"PROVISION: {label}\n\nTEXT:\n{source_text[:6000]}\n\nRestate this provision in plain English."
+        try:
+            cfg = types.GenerateContentConfig(system_instruction=system, temperature=0.1, max_output_tokens=400)
+            resp = await asyncio.wait_for(asyncio.to_thread(self.client.models.generate_content, model=self.model, contents=prompt, config=cfg), timeout=9)
+        except Exception as e:
+            logger.warning("Unverified restatement failed: %s", type(e).__name__)
+            _note_rate_limit(e)
+            return None
+        out = (getattr(resp, "text", None) or "").strip()
+        if len(out) < 40:
+            return None
+        if re.search(r"\bv\.?s?\.?\s+[A-Z]|\b(?:SCC|AIR|SCR)\b|supreme court (?:held|ruled)|\bheld that\b", out):
+            return None
+        ref = (label + " " + source_text).lower()
+        for m in re.finditer(r"\b(article|section|clause)\s+(\d+[A-Za-z]*)", out, re.IGNORECASE):
+            if m.group(2).lower() not in ref:
+                return None
+        if not explanation_numbers_ok(source_text, out):
+            return None
+        return out
+
     async def generate_unverified_ai_answer(self, query: str, force_fallback: bool = False, context_note: str = "") -> Optional[str]:
         """Separate, clearly labelled route used only when no checked answer exists. ONE bounded attempt
         (process-local budget, 9 s wall clock). The whole answer is validated and rejected (None), never edited.
@@ -1734,7 +1766,8 @@ class LLMService:
             system += "\nKnown official context you must respect: " + adverse
         if context_note:
             system += "\nThe user is also being shown official statute text for: " + context_note + ". Do not quote or restate that text; give general background only."
-        prompt = f"USER QUESTION: {query}\n\nEnd with exactly: {_UNV_CLOSING}"
+        _q_plain = re.sub(r"(?i)\bdefective", "faulty", query)
+        prompt = f"USER QUESTION: {_q_plain}\n\nEnd with exactly: {_UNV_CLOSING}"
         cfg = types.GenerateContentConfig(system_instruction=system, temperature=0.2, max_output_tokens=800)
         try:
             r = await asyncio.wait_for(asyncio.to_thread(lambda: self.client.models.generate_content(model=self.model, contents=prompt, config=cfg)), timeout=9)
@@ -2083,9 +2116,9 @@ class LLMService:
                         ans_str += f"\n\nPlain-English explanation (AI-written from the text above; not a verified statement of law): {_one_paragraph(_ai)}\n\n"
                         _ai_shown = True
                     else:
-                        _u = await self.generate_unverified_ai_answer(f"Explain in general terms, for a layperson, the subject: {heading}", force_fallback=force_fallback, context_note=f"Article {art_num} of the Constitution of India ({heading})")
+                        _u = await self.restate_provision_unverified(f"Article {art_num} of the Constitution of India ({heading})", body, force_fallback=force_fallback)
                         if _u:
-                            ans_str += "\n\nAI-GENERATED GENERAL EXPLANATION - not checked against legal sources, not drawn from the text above, and may be wrong or outdated:\n" + _u + "\n\n"
+                            ans_str += "\n\nAI-GENERATED RESTATEMENT OF THE TEXT ABOVE - not independently verified (it did not pass our automatic faithfulness check), so read it against the text:\n" + _u + "\n\n"
                             _unv_shown = True
                         elif (not force_fallback) and self.client:
                             ans_str += "\n\n" + explanation_unavailable_note() + "\n\n"
@@ -2097,12 +2130,12 @@ class LLMService:
                     c0 = matching_cases[0]
                     ans_str += case_passage_text(c0)
                     cits = [f"Constitution of India, Article {art_num} ({heading})", f"{c0.get('title')} ({c0.get('citation')})"]
-                    tier_label = "Statute text + AI-generated general explanation (NOT checked against legal sources) + case excerpt (not a verified holding)" if _unv_shown else "Statutory text + AI explanation (AI part not verified) + case excerpt (not a verified holding)" if _ai_shown else "Statutory text + case excerpt (not a verified holding)"
+                    tier_label = "Statute text + AI restatement (NOT independently verified) + case excerpt (not a verified holding)" if _unv_shown else "Statutory text + AI explanation (AI part not verified) + case excerpt (not a verified holding)" if _ai_shown else "Statutory text + case excerpt (not a verified holding)"
                     no_strong = False
                 else:
                     ans_str += "No sufficiently relevant case summary was verified for this result."
                     cits = [f"Constitution of India, Article {art_num} ({heading}, w.e.f. {eff_date})"]
-                    tier_label = "Statute text + AI-generated general explanation (NOT checked against legal sources)" if _unv_shown else "Statutory text + AI explanation (AI part not verified)" if _ai_shown else "Authoritative statutory provision"
+                    tier_label = "Statute text + AI restatement (NOT independently verified)" if _unv_shown else "Statutory text + AI explanation (AI part not verified)" if _ai_shown else "Authoritative statutory provision"
                     no_strong = True
 
                 if _adverse or _timing:
@@ -2419,9 +2452,9 @@ class LLMService:
                         ans_str += f"\n\nPlain-English explanation (AI-written from the text above; not a verified statement of law): {_one_paragraph(_ai)}\n\n"
                         _ai_shown = True
                     else:
-                        _u = await self.generate_unverified_ai_answer(f"Explain in general terms, for a layperson, the subject: {heading}", force_fallback=force_fallback, context_note=f"Section {sec_num} of the {title_disp} ({heading})")
+                        _u = await self.restate_provision_unverified(f"Section {sec_num} of the {title_disp} ({heading})", body, force_fallback=force_fallback)
                         if _u:
-                            ans_str += "\n\nAI-GENERATED GENERAL EXPLANATION - not checked against legal sources, not drawn from the text above, and may be wrong or outdated:\n" + _u + "\n\n"
+                            ans_str += "\n\nAI-GENERATED RESTATEMENT OF THE TEXT ABOVE - not independently verified (it did not pass our automatic faithfulness check), so read it against the text:\n" + _u + "\n\n"
                             _unv_shown = True
                         elif (not force_fallback) and self.client:
                             ans_str += "\n\n" + explanation_unavailable_note() + "\n\n"
@@ -2434,7 +2467,7 @@ class LLMService:
                         ans_str += (" Note: the statutory text quoted above carries an unresolved verification caveat "
                                     "and is not authoritative; the case summary is independent of it.")
                     cits = [f"{act_title}, Section {sec_num} ({heading})", f"{c0.get('title')} ({c0.get('citation')})"]
-                    tier_label = "Statute text + AI-generated general explanation (NOT checked against legal sources) + case excerpt (not a verified holding)" if _unv_shown else "Statutory text + AI explanation (AI part not verified) + case excerpt (not a verified holding)" if _ai_shown else "Statutory text + case excerpt (not a verified holding)"
+                    tier_label = "Statute text + AI restatement (NOT independently verified) + case excerpt (not a verified holding)" if _unv_shown else "Statutory text + AI explanation (AI part not verified) + case excerpt (not a verified holding)" if _ai_shown else "Statutory text + case excerpt (not a verified holding)"
                     no_strong = False
                 else:
                     ans_str += "No sufficiently relevant case summary was verified for this result."
@@ -2459,7 +2492,7 @@ class LLMService:
                     if _ai_shown:
                         tier_label = "Statutory text + AI explanation (AI part not verified)"
                     if _unv_shown:
-                        tier_label = "Statute text + AI-generated general explanation (NOT checked against legal sources)"
+                        tier_label = "Statute text + AI restatement (NOT independently verified)"
                     if _edition_is_as_enacted(act_edition, prov.get("act_id")):
                         _enacted = "As-enacted gazette text (25.12.2023)." if "2023" in (prov.get("act_id") or "") else "As-enacted gazette text."
                         statute_notice = (_enacted + " Later amendments are not incorporated and "
