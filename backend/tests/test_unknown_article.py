@@ -7,7 +7,7 @@ def test_339aa_not_found_lists_one_char_neighbours_without_substituting():
     m = unknown_article_message("339AA")
     assert m and "Article 339AA was not found" in m and "Nothing has been substituted" in m
     assert "Article 239AA" in m and "Delhi" in m
-    assert "May 2022" in m
+    assert "1 May 2026" in m
 
 def test_existing_article_returns_none():
     assert unknown_article_message("339") is None and unknown_article_message("239AA") is None
@@ -27,3 +27,14 @@ def test_router_keeps_unknown_article_message_whole(monkeypatch):
         d = c.post("/api/v1/search/answer", json={"query": q}, auth=("u", "x")).json()
         assert d["ai_answer"].startswith(f"Article {q.split()[-1]} was not found in the Constitution text held in this database")
         assert d["tier"] == "not_found"
+
+
+def test_corpus_has_330a_124c_and_njac_note():
+    import json, os
+    d = json.load(open(os.path.join(os.path.dirname(__file__), "..", "app", "ingest", "constitution_corpus.json")))
+    assert d["330A"]["body"].startswith("(1) Seats shall be reserved for women in the House of the People.")
+    assert "124C" in d and d["124C"]["body"].startswith("Parliament may, by law, regulate")
+    assert "124C." not in d["124B"]["body"]
+    for k in ("124", "124A", "124B", "124C", "127", "128", "217", "222", "224", "224A", "231"):
+        assert "struck down by the Supreme Court" in d[k]["body"] and "AIR 2016 SC 117" in d[k]["body"]
+    assert "339AA" not in d

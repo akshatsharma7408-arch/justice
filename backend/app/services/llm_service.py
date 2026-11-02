@@ -277,8 +277,8 @@ def unknown_article_message(art_num: str) -> Optional[str]:
                 _p = {}
             near.append((n, _p.get("heading") or heads[n]))
     near = near[:4]
-    msg = (f"Article {art_num} was not found in the Constitution text held in this database (Legislative Department edition as on May 2022, "
-           f"plus any later entries it lists). That can mean a typing slip, an article added or changed by a later amendment, or an article this database does not cover. "
+    msg = (f"Article {art_num} was not found in the Constitution text held in this database (Legislative Department edition as on 1 May 2026, "
+           f"incorporating amendments up to the 106th Amendment Act, 2023; later amendments are not covered). That can mean a typing slip, an article added or changed by a later amendment, or an article this database does not cover. "
            f"Nothing has been substituted for it.")
     if near:
         msg += " Article numbers in the database that are one character away: " + "; ".join(f"Article {n}" + (f" ({h.strip().rstrip('.')})" if h.strip() else "") for n, h in near) + ". Search for one of them by number if it is what you meant."
