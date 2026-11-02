@@ -512,7 +512,7 @@ async def search_answer_post(payload: SearchAnswerRequest):
     if is_tier2 and not _timed_out:
         _card = build_statute_card(effective_query)
         if _card:
-            if ai_ans == UNRELIABLE_TIER2_MSG:
+            if ai_ans == UNRELIABLE_TIER2_MSG or "unavailable" in model_used.lower():
                 ai_ans = "No AI explanation is available for this question. The provision text below is shown word for word."
             ai_ans = f"{ai_ans}\n\n{_card}"
     _withheld = False
@@ -550,7 +550,7 @@ async def search_answer_post(payload: SearchAnswerRequest):
         no_strong = True
         hide_badge = True
     elif is_tier2:
-        if synthesis.get("hide_badge") or ai_ans == UNRELIABLE_TIER2_MSG or "unreliable" in model_used.lower():
+        if synthesis.get("hide_badge") or ai_ans == UNRELIABLE_TIER2_MSG or "unreliable" in model_used.lower() or "unavailable" in model_used.lower():
             tier = "unreliable"
             tier_label = ""
             hide_badge = True

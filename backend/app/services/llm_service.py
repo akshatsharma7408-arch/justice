@@ -958,7 +958,7 @@ def _unverified_unknown_act(text: str):
     return None
 
 
-def unverified_answer_problem(text: str):
+def unverified_answer_problem(text: str, topic: str = "general"):
     """Whole-answer check for the unverified AI route. Returns a reason string, or None when acceptable.
     Nothing is stripped: an answer that fails is rejected whole, never edited into fragments."""
     t = (text or "").strip()
@@ -973,10 +973,73 @@ def unverified_answer_problem(text: str):
         return "cites a section/article/rule number"
     if _UNV_AMOUNT_RE.search(t):
         return "states an amount or a time period"
+    if _UNV_GARBLE_RE.search(t):
+        return "contains a garbled phrase"
+    if topic in _UNV_TOPIC_BAD:
+        _rx, _why = _UNV_TOPIC_BAD[topic]
+        if _rx.search(t):
+            return _why
     _bad = _unverified_unknown_act(t)
     if _bad:
         return f"names an Act not on the checked list: {_bad}"
     return None
+
+
+UNVERIFIED_UNAVAILABLE_MSG = ("No AI-generated answer is available for this question right now: the AI service is busy or its answer did not pass our safety checks. "
+                              "Nothing here has been checked against legal sources. Please try again later, rephrase, or ask a lawyer or a legal aid service.")
+_UNV_GARBLE_RE = re.compile(r"\bdirective phone\b", re.IGNORECASE)
+
+
+def _unv_topic(query: str) -> str:
+    q = (query or "").lower()
+    if re.search(r"\b(beat|beats|beating|hits|hit me|abuse|abusive|domestic violence|harass\w*|dowry|cruelty|violent)\b", q):
+        return "violence"
+    if re.search(r"\b(salary|wages?|employer|fired|terminat\w*|resign\w*|gratuity|provident|notice period|overtime|bonus|layoff|laid off)\b", q):
+        return "labour"
+    if re.search(r"\b(landlord|tenant|tenancy|rent|rental|security deposit|evict\w*|lease)\b", q):
+        return "tenancy"
+    if re.search(r"\b(arrest\w*|detain\w*|police|fir|custody|bail)\b", q):
+        return "arrest"
+    if re.search(r"\b(consumer|refund|defective|warranty|e-?commerce|product|phone|laptop|appliance)\b", q):
+        return "consumer"
+    return "general"
+
+
+_UNV_TOPIC_RULES = {
+    "violence": "Write nothing like 'Act' or 'court' or 'magistrate' or 'commission'. Do not name any Act, court, tribunal or authority at all. Give safety information only: contact the emergency number or the police, a trusted person, a legal aid service or a women's helpline, and a lawyer who can say which legal remedies and which court apply. Do not say a specific kind of court handles it.",
+    "labour": "Write the words 'the relevant law' instead of any Act or Code name. Indian labour laws have been revised and consolidated in recent years, so say that which law applies depends on the current law, the State, the kind of employer and the worker's status, and that a lawyer or the labour department can confirm. Do not name a specific court or tribunal.",
+    "arrest": "Do not name any commission, court or tribunal as the place to complain. Say generally that an arrested person has rights to be told the reason, to inform someone and to a lawyer, and to be produced before a magistrate without unreasonable delay, and that a lawyer should be contacted at once. Do not say there is a right to bail (that depends on the offence) and do not describe when police may or may not arrest without a warrant, because that depends on the offence and the current law.",
+    "consumer": "Use the plain term 'consumer dispute body' or 'consumer commission' rather than any older or specific name; say a lawyer or a consumer helpline can say which one applies. Describe the product plainly (for example 'a defective mobile phone').",
+    "tenancy": "Do not send this to a consumer body or any named forum. Say that tenancy disputes are generally handled by civil or rent-related authorities that differ by State, and that a lawyer or local legal aid can say which applies.",
+    "general": "",
+}
+_UNV_TOPIC_BAD = {
+    "violence": (re.compile(r"(?i:\bcourts?\b|\bmagistrates?\b|\btribunals?\b|\bcommissions?\b)|\bActs?\b|\bCode\b|\bSanhita\b"), "names a court or Act for a violence question"),
+    "labour": (re.compile(r"\bActs?\b|\bCodes?\b|(?i:\bunder the [A-Z][a-z]+ (?:wages|disputes|relations))"), "names an Act or Code for a labour question"),
+    "arrest": (re.compile(r"(?i:human rights commission|\bcommission\b|\btribunals?\b|right to (?:apply for )?bail|entitled to bail)"), "names a commission or tribunal, or overstates bail, for an arrest question"),
+    "consumer": (re.compile(r"(?i:redressal forum|consumer forum|\bforum\b)"), "uses an outdated consumer forum name"),
+    "tenancy": (re.compile(r"(?i:consumer|redressal|\bforum\b)"), "sends a tenancy question to a consumer body"),
+}
+
+# Budget / abuse controls. PROCESS-LOCAL: they reset on restart and are not global usage accounting.
+import threading as _threading
+_UNV_LOCK = _threading.Lock()
+_UNV_STATE = {"total": 0, "window": []}
+
+
+def _unv_budget_ok(now=None) -> bool:
+    now = now if now is not None else _time.time()
+    cap = int(os.environ.get("UNVERIFIED_AI_PROCESS_CAP", "150"))
+    per_min = int(os.environ.get("UNVERIFIED_AI_PER_MIN", "6"))
+    with _UNV_LOCK:
+        w = [t for t in _UNV_STATE["window"] if now - t < 60]
+        if _UNV_STATE["total"] >= cap or len(w) >= per_min:
+            _UNV_STATE["window"] = w
+            return False
+        w.append(now)
+        _UNV_STATE["window"] = w
+        _UNV_STATE["total"] += 1
+        return True
 
 
 def adverse_context_for(query: str) -> str:
@@ -1643,43 +1706,49 @@ class LLMService:
 
         return UNRELIABLE_TIER2_MSG
 
-    async def generate_unverified_ai_answer(self, query: str, force_fallback: bool = False) -> Optional[str]:
-        """Separate, clearly labelled route used only when no checked answer exists. The model gives a useful
-        general explanation without case names or section/article numbers; the whole answer is validated and
-        rejected (None) rather than edited. Never used for uploaded documents. None means: show the refusal."""
+    async def generate_unverified_ai_answer(self, query: str, force_fallback: bool = False, context_note: str = "") -> Optional[str]:
+        """Separate, clearly labelled route used only when no checked answer exists. ONE bounded attempt
+        (process-local budget, 9 s wall clock). The whole answer is validated and rejected (None), never edited.
+        Never used for uploaded documents. None means: show the plain unavailable message."""
         if force_fallback or not self.client or model_rate_limited():
             return None
+        if not _unv_budget_ok():
+            logger.info("Unverified AI route: process budget or rate limit reached")
+            return None
+        topic = _unv_topic(query)
         adverse = adverse_context_for(query)
         system = (
             "You are a legal information assistant for people in India. Answer the exact question asked, for India, in plain English, in 6 to 10 short sentences or bullets. If the question is not clear, say what you assumed. "
             "You have NOT checked any statute or case for this question, so be honest about that and write as general information.\n"
-            "Do: name the area of law and, where you are confident, the Act by its common name; describe in general terms how this kind of situation usually works in India; "
-            "list sensible practical next steps (keep documents, send a written request or notice, approach the kind of forum that usually handles it, speak to a lawyer); "
+            "Do: describe in general terms how this kind of situation usually works in India; list sensible practical next steps (keep documents, send a written request, speak to a lawyer or legal aid); "
             "say clearly what depends on the facts, the State, and the exact law, and that the law may have been amended.\n"
-            "Do not: name any case or law-report citation; give any section, article, rule or order number; state any time period, deadline, fee or amount of money; state with certainty which court, tribunal or authority has jurisdiction (you may say which kind of body 'may' handle it and that the person should check which one applies to them in their State); "
-            "promise an outcome; tell the person definitively what they must do; or invent an authority. Name an Act only if you are certain it exists and applies; otherwise say 'the relevant Act'. Use words like 'generally', 'usually', 'often', 'check whether'. "
-            "For criminal matters: the Bharatiya Nyaya Sanhita (offences) replaced the Indian Penal Code, the Bharatiya Nagarik Suraksha Sanhita (criminal procedure, including arrest) replaced the Code of Criminal Procedure, and the Bharatiya Sakshya Adhiniyam (evidence) replaced the Indian Evidence Act, for offences after 1 July 2024; older matters may still follow the old laws. Do not mix these up. "
+            "Do not: name any case or law-report citation; give any section, article, rule or order number; state any time period, deadline, fee or amount of money; state which court, tribunal or authority has jurisdiction (you may say a kind of body 'may' handle it and that the person must check which one applies); "
+            "promise an outcome; tell the person definitively what they must do; or invent an authority. Name an Act only if you are certain it exists and still applies; otherwise say 'the relevant law'. Use words like 'generally', 'usually', 'often', 'check whether'. Write clean, natural English. "
+            "For criminal matters: the Bharatiya Nyaya Sanhita (offences) replaced the Indian Penal Code, the Bharatiya Nagarik Suraksha Sanhita (criminal procedure) replaced the Code of Criminal Procedure, and the Bharatiya Sakshya Adhiniyam (evidence) replaced the Indian Evidence Act, for offences after 1 July 2024; older matters may still follow the old laws. "
             "If the question is urgent or high-stakes (arrest, violence, eviction, court dates), say to contact a lawyer or legal aid promptly. "
-            "If the question involves violence or abuse, put safety first: do not suggest confronting the abuser or sending them a notice; say to contact the emergency services, a trusted person, a legal aid service or a protection officer-type authority in general terms, and a lawyer."
+            "If the question involves violence or abuse, put safety first: do not suggest confronting the abuser or sending them a notice."
         )
+        if _UNV_TOPIC_RULES.get(topic):
+            system += "\nTopic rule: " + _UNV_TOPIC_RULES[topic]
         if adverse:
             system += "\nKnown official context you must respect: " + adverse
+        if context_note:
+            system += "\nThe user is also being shown official statute text for: " + context_note + ". Do not quote or restate that text; give general background only."
         prompt = f"USER QUESTION: {query}\n\nEnd with exactly: {_UNV_CLOSING}"
-        for attempt in (1, 2):
-            try:
-                cfg = types.GenerateContentConfig(system_instruction=system, temperature=0.2 if attempt == 1 else 0.1, max_output_tokens=800)
-                r = self.client.models.generate_content(model=self.model, contents=prompt if attempt == 1 else prompt + "\nIMPORTANT: no case names; no section, article or rule numbers; no amounts or time periods; and name an Act only if you are certain it exists, otherwise say 'the relevant Act'.", config=cfg)
-            except Exception as e:
-                logger.warning("Unverified AI route attempt %s failed: %s", attempt, type(e).__name__)
-                return None
-            txt = (getattr(r, "text", "") or "").strip()
-            why = unverified_answer_problem(txt)
-            if why is None:
-                if _UNV_CLOSING not in txt:
-                    txt = txt.rstrip() + "\n\n" + _UNV_CLOSING
-                return txt
-            logger.info("Unverified AI route attempt %s rejected: %s", attempt, why)
-        return None
+        cfg = types.GenerateContentConfig(system_instruction=system, temperature=0.2, max_output_tokens=800)
+        try:
+            r = await asyncio.wait_for(asyncio.to_thread(lambda: self.client.models.generate_content(model=self.model, contents=prompt, config=cfg)), timeout=9)
+        except Exception as e:
+            logger.warning("Unverified AI route failed: %s", type(e).__name__)
+            return None
+        txt = (getattr(r, "text", "") or "").strip()
+        why = unverified_answer_problem(txt, topic)
+        if why is not None:
+            logger.info("Unverified AI route rejected: %s", why)
+            return None
+        if _UNV_CLOSING not in txt:
+            txt = txt.rstrip() + "\n\n" + _UNV_CLOSING
+        return txt
 
     async def synthesize_search_answer(
         self, 
@@ -2001,6 +2070,7 @@ class LLMService:
                 if expl:
                     ans_str += f" {expl}"
                 _ai_shown = False
+                _unv_shown = False
                 if _timing:
                     ans_str += ("\n\nNo AI explanation is shown for this article: a plain-English summary could make it sound as if the reservation already applies. "
                                 "Only the edition text and the note on when it takes effect are shown.\n\n")
@@ -2012,8 +2082,13 @@ class LLMService:
                     if _ai:
                         ans_str += f"\n\nPlain-English explanation (AI-written from the text above; not a verified statement of law): {_one_paragraph(_ai)}\n\n"
                         _ai_shown = True
-                    elif (not force_fallback) and self.client:
-                        ans_str += "\n\n" + explanation_unavailable_note() + "\n\n"
+                    else:
+                        _u = await self.generate_unverified_ai_answer(f"Explain in general terms, for a layperson, the subject: {heading}", force_fallback=force_fallback, context_note=f"Article {art_num} of the Constitution of India ({heading})")
+                        if _u:
+                            ans_str += "\n\nAI-GENERATED GENERAL EXPLANATION - not checked against legal sources, not drawn from the text above, and may be wrong or outdated:\n" + _u + "\n\n"
+                            _unv_shown = True
+                        elif (not force_fallback) and self.client:
+                            ans_str += "\n\n" + explanation_unavailable_note() + "\n\n"
                 ans_str += " "
                 _n_before = len(matching_cases)
                 matching_cases = [_c for _c in matching_cases if summary_is_usable(clean_case_summary(_c)) and not summary_is_about_other_article(clean_case_summary(_c), art_num) and case_passage_text(_c)]
@@ -2022,12 +2097,12 @@ class LLMService:
                     c0 = matching_cases[0]
                     ans_str += case_passage_text(c0)
                     cits = [f"Constitution of India, Article {art_num} ({heading})", f"{c0.get('title')} ({c0.get('citation')})"]
-                    tier_label = "Statutory text + AI explanation (AI part not verified) + case excerpt (not a verified holding)" if _ai_shown else "Statutory text + case excerpt (not a verified holding)"
+                    tier_label = "Statute text + AI-generated general explanation (NOT checked against legal sources) + case excerpt (not a verified holding)" if _unv_shown else "Statutory text + AI explanation (AI part not verified) + case excerpt (not a verified holding)" if _ai_shown else "Statutory text + case excerpt (not a verified holding)"
                     no_strong = False
                 else:
                     ans_str += "No sufficiently relevant case summary was verified for this result."
                     cits = [f"Constitution of India, Article {art_num} ({heading}, w.e.f. {eff_date})"]
-                    tier_label = "Statutory text + AI explanation (AI part not verified)" if _ai_shown else "Authoritative statutory provision"
+                    tier_label = "Statute text + AI-generated general explanation (NOT checked against legal sources)" if _unv_shown else "Statutory text + AI explanation (AI part not verified)" if _ai_shown else "Authoritative statutory provision"
                     no_strong = True
 
                 if _adverse or _timing:
@@ -2337,13 +2412,19 @@ class LLMService:
                 if act_edition and "constitution" not in (prov.get("act_id") or ""):
                     ans_str += f" Statute context: {act_edition}."
                 _ai_shown = False
+                _unv_shown = False
                 if not expl and not has_unresolved_caveat and not (act_edition and "Repealed" in act_edition):
                     _ai = await self.explain_provision_ai(f"Section {sec_num} of the {title_disp} ({heading})", body, force_fallback=force_fallback)
                     if _ai:
                         ans_str += f"\n\nPlain-English explanation (AI-written from the text above; not a verified statement of law): {_one_paragraph(_ai)}\n\n"
                         _ai_shown = True
-                    elif (not force_fallback) and self.client:
-                        ans_str += "\n\n" + explanation_unavailable_note() + "\n\n"
+                    else:
+                        _u = await self.generate_unverified_ai_answer(f"Explain in general terms, for a layperson, the subject: {heading}", force_fallback=force_fallback, context_note=f"Section {sec_num} of the {title_disp} ({heading})")
+                        if _u:
+                            ans_str += "\n\nAI-GENERATED GENERAL EXPLANATION - not checked against legal sources, not drawn from the text above, and may be wrong or outdated:\n" + _u + "\n\n"
+                            _unv_shown = True
+                        elif (not force_fallback) and self.client:
+                            ans_str += "\n\n" + explanation_unavailable_note() + "\n\n"
                 ans_str += " "
                 matching_cases = [_c for _c in matching_cases if summary_is_usable(clean_case_summary(_c)) and case_passage_text(_c)]
                 if matching_cases:
@@ -2353,7 +2434,7 @@ class LLMService:
                         ans_str += (" Note: the statutory text quoted above carries an unresolved verification caveat "
                                     "and is not authoritative; the case summary is independent of it.")
                     cits = [f"{act_title}, Section {sec_num} ({heading})", f"{c0.get('title')} ({c0.get('citation')})"]
-                    tier_label = "Statutory text + AI explanation (AI part not verified) + case excerpt (not a verified holding)" if _ai_shown else "Statutory text + case excerpt (not a verified holding)"
+                    tier_label = "Statute text + AI-generated general explanation (NOT checked against legal sources) + case excerpt (not a verified holding)" if _unv_shown else "Statutory text + AI explanation (AI part not verified) + case excerpt (not a verified holding)" if _ai_shown else "Statutory text + case excerpt (not a verified holding)"
                     no_strong = False
                 else:
                     ans_str += "No sufficiently relevant case summary was verified for this result."
@@ -2377,6 +2458,8 @@ class LLMService:
                     no_strong = True
                     if _ai_shown:
                         tier_label = "Statutory text + AI explanation (AI part not verified)"
+                    if _unv_shown:
+                        tier_label = "Statute text + AI-generated general explanation (NOT checked against legal sources)"
                     if _edition_is_as_enacted(act_edition, prov.get("act_id")):
                         _enacted = "As-enacted gazette text (25.12.2023)." if "2023" in (prov.get("act_id") or "") else "As-enacted gazette text."
                         statute_notice = (_enacted + " Later amendments are not incorporated and "
@@ -2458,16 +2541,8 @@ class LLMService:
                     return {"answer": _unv, "ratio_decidendi": None, "citations": [], "results": [],
                             "model_used": "unverified_ai_answer", "tier": "unverified_ai",
                             "tier_label": UNVERIFIED_AI_LABEL, "hide_badge": True}
-                tier2_ans = await self.generate_tier2_explanation(query, force_fallback=force_fallback)
-                is_unrel = (tier2_ans == UNRELIABLE_TIER2_MSG)
-                return {
-                    "answer": tier2_ans,
-                    "ratio_decidendi": None,
-                    "citations": [],
-                    "results": [],
-                    "model_used": "tier2_general_explanation",
-                    "hide_badge": is_unrel
-                }
+                return {"answer": UNVERIFIED_UNAVAILABLE_MSG, "ratio_decidendi": None, "citations": [], "results": [],
+                        "model_used": "tier2_unverified_unavailable", "hide_badge": True}
 
         # -------------------------------------------------------------
         # Section 1 Topical Relevance Gates
@@ -2502,12 +2577,8 @@ class LLMService:
                     return {"answer": _unv, "ratio_decidendi": None, "citations": [], "results": [],
                             "model_used": "unverified_ai_answer", "tier": "unverified_ai",
                             "tier_label": UNVERIFIED_AI_LABEL, "hide_badge": True}
-                tier2_ans = await self.generate_tier2_explanation(query, force_fallback=force_fallback)
-                return {
-                    "answer": tier2_ans, "ratio_decidendi": None, "citations": [], "results": [],
-                    "model_used": "tier2_general_explanation",
-                    "hide_badge": (tier2_ans == UNRELIABLE_TIER2_MSG),
-                }
+                return {"answer": UNVERIFIED_UNAVAILABLE_MSG, "ratio_decidendi": None, "citations": [], "results": [],
+                        "model_used": "tier2_unverified_unavailable", "hide_badge": True}
 
         # Build clean precedent context for synthesis
         cases_context = []

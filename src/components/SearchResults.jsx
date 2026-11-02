@@ -426,7 +426,7 @@ export default function SearchResults({
                   {/* Card Top Strip: Kicker + Tier Badge */}
                   <div className="answer-card-top-strip">
                     <span className="answer-kicker mono">
-                      {answerData.tier === 'unreliable' ? 'LEGAL NOTICE' : answerData.tier === 'not_found' ? 'NOT FOUND IN THIS DATABASE' : answerData.tier === 'unverified_ai' ? 'AI-GENERATED ANSWER - NOT CHECKED AGAINST LEGAL SOURCES' : answerData.tier === 'statute_text' ? 'STATUTE TEXT' : (() => { const tl = answerData.tier_label || ''; if (tl.includes('important note')) return 'STATUTE TEXT WITH AN IMPORTANT NOTE'; const ex = tl.includes('case excerpt'); const ai = tl.includes('AI explanation'); return ex && ai ? 'STATUTE TEXT, AI EXPLANATION AND CASE EXCERPT' : ex ? 'STATUTE TEXT AND CASE EXCERPT' : ai ? 'STATUTE TEXT AND AI EXPLANATION' : tl === 'Authoritative statutory provision' ? 'STATUTE TEXT' : 'AI SUMMARY'; })()}
+                      {answerData.tier === 'unreliable' ? 'LEGAL NOTICE' : answerData.tier === 'not_found' ? 'NOT FOUND IN THIS DATABASE' : answerData.tier === 'unverified_ai' ? 'AI-GENERATED ANSWER - NOT CHECKED AGAINST LEGAL SOURCES' : answerData.tier === 'statute_text' ? 'STATUTE TEXT' : (() => { const tl = answerData.tier_label || ''; if (tl.includes('NOT checked against legal sources')) return 'STATUTE TEXT + AI-GENERATED EXPLANATION (NOT CHECKED)'; if (tl.includes('important note')) return 'STATUTE TEXT WITH AN IMPORTANT NOTE'; const ex = tl.includes('case excerpt'); const ai = tl.includes('AI explanation'); return ex && ai ? 'STATUTE TEXT, AI EXPLANATION AND CASE EXCERPT' : ex ? 'STATUTE TEXT AND CASE EXCERPT' : ai ? 'STATUTE TEXT AND AI EXPLANATION' : tl === 'Authoritative statutory provision' ? 'STATUTE TEXT' : 'AI SUMMARY'; })()}
                     </span>
                     <div className="answer-badge-wrap">
                       {answerData.hide_badge || answerData.tier === 'unreliable' || answerData.tier === 'not_found' ? null : (
@@ -443,6 +443,11 @@ export default function SearchResults({
                     {query}
                   </h2>
 
+                  {answerData.tier === 'unverified_ai' && (
+                    <p className="answer-statute-notice" role="note" style={{ borderLeft: '3px solid #b8860b', background: 'rgba(184,134,11,0.10)', padding: '10px 14px', borderRadius: 6 }}>
+                      <strong>{answerData.tier_label || 'AI-generated answer. Not checked against legal sources. May be wrong or outdated.'}</strong>
+                    </p>
+                  )}
                   {answerData.statute_notice && (
                     <p className="answer-statute-notice" role="note">
                       <strong>Note: </strong>{answerData.statute_notice}
@@ -454,6 +459,18 @@ export default function SearchResults({
                     {answerData.ai_answer.split('\n\n').map((paragraph, pIdx) => {
                       const trimmedP = paragraph.trim();
                       if (!trimmedP) return null;
+                      if (trimmedP.startsWith('AI-GENERATED GENERAL EXPLANATION')) {
+                        const _head = trimmedP.split('\n')[0];
+                        return (
+                          <div key={pIdx} className="answer-law-note" role="note" style={{ margin: '14px 0', padding: '12px 16px', borderLeft: '3px solid #b8860b', background: 'rgba(184,134,11,0.10)', borderRadius: 6 }}>
+                            <div className="mono" style={{ fontSize: 11, letterSpacing: '0.08em', color: '#b8860b', marginBottom: 6 }}>{_head.replace(/:$/, '')}</div>
+                            <p className="answer-prose-paragraph" style={{ margin: 0, whiteSpace: 'pre-line' }}>{trimmedP.slice(_head.length).trim()}</p>
+                          </div>
+                        );
+                      }
+                      if (answerData.tier === 'unverified_ai') {
+                        return <p key={pIdx} className="answer-prose-paragraph" style={{ whiteSpace: 'pre-line' }}>{trimmedP}</p>;
+                      }
                       if (trimmedP.startsWith('NOTE ON WHICH LAW APPLIES')) {
                         return (
                           <div key={pIdx} className="answer-law-note" role="note" style={{ margin: '14px 0', padding: '12px 16px', borderLeft: '3px solid #b8860b', background: 'rgba(184,134,11,0.10)', borderRadius: 6 }}>
