@@ -1880,8 +1880,8 @@ class LLMService:
                 _adverse = ADVERSE_FOOTNOTE_MARKER in (body or "")
                 ans_str = f"Article {art_num} of the Constitution of India governs '{heading}'. {body}"
                 if _adverse:
-                    ans_str = (f"Important: the official edition's footnotes say the 99th Amendment (National Judicial Appointments Commission) wording in this article "
-                               f"was struck down by the Supreme Court (judgment of 16-10-2015, AIR 2016 SC 117). Read the note at the end of the text. ") + ans_str
+                    ans_str = ("Important: the official edition's footnotes say part of this article's wording was struck down or declared invalid by the Supreme Court. "
+                               "Read the note at the end of the text. ") + ans_str
                 if expl:
                     ans_str += f" {expl}"
                 _ai_shown = False
