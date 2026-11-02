@@ -113,6 +113,7 @@ def model_rate_limited() -> bool:
     return _time.time() < _RL_UNTIL
 
 
+TIMING_NOTE_MARKER = "Note on when this takes effect:"
 ADVERSE_FOOTNOTE_MARKER = "Note from the official edition's footnotes:"
 
 
@@ -1878,14 +1879,20 @@ class LLMService:
                     }
                 # In force: verbatim statutory text leads; curated explanation follows.
                 _adverse = ADVERSE_FOOTNOTE_MARKER in (body or "")
+                _timing = (not _adverse) and TIMING_NOTE_MARKER in (body or "")
                 ans_str = f"Article {art_num} of the Constitution of India governs '{heading}'. {body}"
                 if _adverse:
                     ans_str = ("Important: the official edition's footnotes say part of this article's wording was struck down or declared invalid by the Supreme Court. "
                                "Read the note at the end of the text. ") + ans_str
+                if _timing:
+                    ans_str = ("Important: this article does not say by itself when it takes effect; see the note at the end of the text and article 334A. ") + ans_str
                 if expl:
                     ans_str += f" {expl}"
                 _ai_shown = False
-                if _adverse:
+                if _timing:
+                    ans_str += ("\n\nNo AI explanation is shown for this article: a plain-English summary could make it sound as if the reservation already applies. "
+                                "Only the edition text and the note on when it takes effect are shown.\n\n")
+                elif _adverse:
                     ans_str += ("\n\nNo AI explanation is shown for this article: a plain-English summary could present the struck-down wording "
                                 "as operative law. Only the edition text and its footnote note are shown.\n\n")
                 elif not expl:
@@ -1911,6 +1918,8 @@ class LLMService:
                     tier_label = "Statutory text + AI explanation (AI part not verified)" if _ai_shown else "Authoritative statutory provision"
                     no_strong = True
 
+                if _adverse or _timing:
+                    tier_label = "Edition text with an important note (see the text)"
                 badged_ans = citation_checker.check_and_badge_text(ans_str, is_tier2=False)
                 badged_ratio = citation_checker.check_and_badge_text(expl, is_tier2=False)
                 badged_cits = citation_checker.badge_citations_list(cits)

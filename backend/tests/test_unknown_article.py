@@ -51,3 +51,13 @@ def test_njac_articles_never_get_ai_explanation():
         assert "Plain-English explanation" not in t, a
         assert "No AI explanation is shown for this article" in t, a
         assert "AI explanation" not in (d.get("tier_label") or ""), (a, d.get("tier_label"))
+
+
+def test_330a_332a_never_get_ai_explanation_and_point_to_334a():
+    from fastapi.testclient import TestClient
+    from app.main import app
+    c = TestClient(app)
+    for a in ("330A", "332A"):
+        d = c.post("/api/v1/search/answer", json={"query": f"article {a}"}, auth=("u", "x")).json()
+        t = d["ai_answer"]
+        assert "334A" in t and "Plain-English explanation" not in t and "No AI explanation is shown" in t, a
