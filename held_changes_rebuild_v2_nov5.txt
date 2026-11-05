@@ -1,0 +1,397 @@
+diff --git a/backend/app/ingest/constitution_corpus.json b/backend/app/ingest/constitution_corpus.json
+index 5dd2d2b..759bd89 100644
+--- a/backend/app/ingest/constitution_corpus.json
++++ b/backend/app/ingest/constitution_corpus.json
+@@ -116,7 +116,7 @@
+  },
+  "22": {
+   "title": "Protection against arrest and detention in certain cases",
+-  "body": "(1) No person who is arrested shall be detained in custody without being informed, as soon as may be, of the grounds for such arrest nor shall he be denied the right to consult, and to be defended by, a legal practitioner of his choice. (2) Every person who is arrested and detained in custody shall be produced before the nearest magistrate within a period of twenty-four hours of such arrest excluding the time necessary for the journey from the place of arrest to the court of the magistrate and no such person shall be detained in custody beyond the said period without the authority of a magistrate. (3) Nothing in clauses (1) and (2) shall apply— (a) to any person who for the time being is an enemy alien; or (b) to any person who is arrested or detained under any law providing for preventive detention. *(4) No law providing for preventive detention shall authorise the detention of a person for a longer period than three months unless— (a) an Advisory Board consisting of persons who are, or have been, or are qualified to be appointed as, Judges of a High Court has reported before the expiration of the said period of three months that there is in its opinion sufficient cause for such detention: * Cl. (4) shall stand substituted by the Constitution (Forty-fourth Amendment) Act, 1978, s. 3 (date yet to be notified) as— \"(4) No law providing for preventive detention shall authorise the detention of a person for a longer period than two months unless an Advisory Board constituted in accordance with the recommendations of the Chief Justice of the appropriate High Court has reported before the expiration of the said period of two months that there is in its opinion sufficient cause for such detention: Provided that an Advisory Board shall consist of a Chairman and not less than two other members, and the Chairman shall be a serving Judge of the appropriate High Court and the other members shall be serving or retired Judges of any High Court: Provided further that nothing in this clause shall authorise the detention of any person beyond the maximum period prescribed by any law made by Parliament under sub-clause (a) of clause (7). Explanation.—In this clause, \"appropriate High Court\" means,— (i) in the case of the detention of a person in pursuance of an order of detention made by the Government of India or an officer or authority subordinate to that Government, the High Court for the Union territory of Dehli; (ii) in the case of the detention of a person in pursuance of an order of detention made by the Government of any State (other than a Union territory), the High Court for that State; and (iii) in the case of the detention of a person in pursuance of an order of detention made by the administrator of a Union territory or an officer or authority subordinate to such administrator, such High Court as may be specified by or under any law made by Parliament in this behalf.\". Provided that nothing in this sub-clause shall authorise the detention of any person beyond the maximum period prescribed by any law made by Parliament under sub-clause (b) of clause (7); or (b) such person is detained in accordance with the provisions of any law made by Parliament under sub-clauses (a) and (b) of clause (7). (5) When any person is detained in pursuance of an order made under any law providing for preventive detention, the authority making the order shall, as soon as may be, communicate to such person the grounds on which the order has been made and shall afford him the earliest opportunity of making a representation against the order. (6) Nothing in clause (5) shall require the authority making any such order as is referred to in that clause to disclose facts which such authority considers to be against the public interest to disclose. (7) Parliament may by law prescribe— *(a) the circumstances under which, and the class or classes of cases in which, a person may be detained for a period longer than three months under any law providing for preventive detention without obtaining the opinion of an Advisory Board in accordance with the provisions of sub-clause (a) of clause (4); *(b) the maximum period for which any person may in any class or classes of cases be detained under any law providing for preventive detention; and *(c) the procedure to be followed by an Advisory Board in an inquiry under *sub-clause (a) of clause (4). * Sub-clause (a) shall stand omitted by the Constitution (Forty-fourth Amendment) Act, 1978, s. 3(b)(i) (date to be notified). notified). notified).",
++  "body": "(1) No person who is arrested shall be detained in custody without being informed, as soon as may be, of the grounds for such arrest nor shall he be denied the right to consult, and to be defended by, a legal practitioner of his choice. (2) Every person who is arrested and detained in custody shall be produced before the nearest magistrate within a period of twenty-four hours of such arrest excluding the time necessary for the journey from the place of arrest to the court of the magistrate and no such person shall be detained in custody beyond the said period without the authority of a magistrate. (3) Nothing in clauses (1) and (2) shall apply— (a) to any person who for the time being is an enemy alien; or (b) to any person who is arrested or detained under any law providing for preventive detention. *(4) No law providing for preventive detention shall authorise the detention of a person for a longer period than three months unless— (a) an Advisory Board consisting of persons who are, or have been, or are qualified to be appointed as, Judges of a High Court has reported before the expiration of the said period of three months that there is in its opinion sufficient cause for such detention: Provided that nothing in this sub-clause shall authorise the detention of any person beyond the maximum period prescribed by any law made by Parliament under sub-clause (b) of clause (7); or (b) such person is detained in accordance with the provisions of any law made by Parliament under sub-clauses (a) and (b) of clause (7). (5) When any person is detained in pursuance of an order made under any law providing for preventive detention, the authority making the order shall, as soon as may be, communicate to such person the grounds on which the order has been made and shall afford him the earliest opportunity of making a representation against the order. (6) Nothing in clause (5) shall require the authority making any such order as is referred to in that clause to disclose facts which such authority considers to be against the public interest to disclose. (7) Parliament may by law prescribe— *(a) the circumstances under which, and the class or classes of cases in which, a person may be detained for a period longer than three months under any law providing for preventive detention without obtaining the opinion of an Advisory Board in accordance with the provisions of sub-clause (a) of clause (4); *(b) the maximum period for which any person may in any class or classes of cases be detained under any law providing for preventive detention; and *(c) the procedure to be followed by an Advisory Board in an inquiry under *sub-clause (a) of clause (4).\n\n[Note from the official edition's footnotes (footnote to the starred words in clause 4: a proposed substitution with no commencement date, copied from the edition and not part of the article text above): Cl. (4) shall stand substituted by the Constitution (Forty-fourth Amendment) Act, 1978, s. 3 (date yet to be notified) as— \"(4) No law providing for preventive detention shall authorise the detention of a person for a longer period than two months unless an Advisory Board constituted in accordance with the recommendations of the Chief Justice of the appropriate High Court has reported before the expiration of the said period of two months that there is in its opinion sufficient cause for such detention: Provided that an Advisory Board shall consist of a Chairman and not less than two other members, and the Chairman shall be a serving Judge of the appropriate High Court and the other members shall be serving or retired Judges of any High Court: Provided further that nothing in this clause shall authorise the detention of any person beyond the maximum period prescribed by any law made by Parliament under sub-clause (a) of clause (7). Explanation.—In this clause, \"appropriate High Court\" means,— (i) in the case of the detention of a person in pursuance of an order of detention made by the Government of India or an officer or authority subordinate to that Government, the High Court for the Union territory of Dehli; (ii) in the case of the detention of a person in pursuance of an order of detention made by the Government of any State (other than a Union territory), the High Court for that State; and (iii) in the case of the detention of a person in pursuance of an order of detention made by the administrator of a Union territory or an officer or authority subordinate to such administrator, such High Court as may be specified by or under any law made by Parliament in this behalf.\".]\n\n[Note from the official edition's footnotes (footnotes to the starred words in clause 7: changes with no commencement date, copied from the edition and not part of the article text above): Sub-clause (a) shall stand omitted by the Constitution (Forty-fourth Amendment) Act, 1978, s. 3(b)(i) (date to be notified). Sub-clause (b) shall stand re-lettered as sub-clause (a) by s. 3(b)(ii), ibid. (date to be notified). Sub-clause (c) shall stand re-lettered as sub-clause (b) by s. 3(b)(iii), ibid. (date to be notified). Sub-clause (a) of clause (4) shall stand substituted as \"clause (4)\" by s. 3(b)(iii), ibid. (date to be notified).]\n\n[NOTE WRITTEN FOR THIS APP - not part of the official text and not checked against current law: The article text above is the article as printed in the edition, in the edition's clause order. The two boxes above it are the edition's own footnotes, copied from the edition, one for the starred words in clause 4 and one for the starred words in clause 7. They describe 1978 changes that the edition marks as having no commencement date (\"date yet to be notified\" or \"date to be notified\"). This app has not checked whether or when any of them took effect, so it does not say which wording of clause 4 or clause 7 applies today. Check the official edition and the Gazette.]",
+   "status": "in_force"
+  },
+  "23": {
+@@ -441,7 +441,7 @@
+  },
+  "77": {
+   "title": "Conduct of business of the Government of India",
+-  "body": "(1) All executive action of the Government of India shall be expressed to be taken in the name of the President. (2) Orders and other instruments made and executed in the name of the President shall be authenticated in such manner as may be specified in rules1 to be made by the President, and the validity of an order or instrument which is so authenticated shall not be called in question on the ground that it is not an order or instrument made or executed by the President. (3) The President shall make rules for the more convenient transaction of the business of the Government of India, and for the allocation among Ministers of the said business. 2(4) * * * * 1. See notifin No. S.O. 2297, dated the 3rd November, 1958, Gazette of India, Extraordinary, Pt. II, Sec. 3 (ii), p. 1315, as amended from time to time.",
++  "body": "(1) All executive action of the Government of India shall be expressed to be taken in the name of the President. (2) Orders and other instruments made and executed in the name of the President shall be authenticated in such manner as may be specified in rules1 to be made by the President, and the validity of an order or instrument which is so authenticated shall not be called in question on the ground that it is not an order or instrument made or executed by the President. (3) The President shall make rules for the more convenient transaction of the business of the Government of India, and for the allocation among Ministers of the said business. 2(4) * * * *\n\n[Note from the official edition's footnotes (footnote 1, attached to the word rules in clause 2: a pointer to another instrument, copied from the edition and not part of the article text above): See notifin No. S.O. 2297, dated the 3rd November, 1958, Gazette of India, Extraordinary, Pt. II, Sec. 3 (ii), p. 1315, as amended from time to time.]\n\n[Note from the official edition's footnotes (footnote 2, attached to clause 4, which the edition prints as asterisks: copied from the edition and not part of the article text above): Cl. (4) was ins. by the Constitution (Forty-second Amendment) Act, 1976, s.14 (w.e.f. 3-1-1977) and omitted by the Constitution (Forty-fourth Amendment) Act, 1978, s. 12 (w.e.f. 20-6-1979).]",
+   "status": "in_force"
+  },
+  "78": {
+@@ -556,7 +556,7 @@
+  },
+  "100": {
+   "title": "Voting in Houses, power of Houses to act notwithstanding vacancies and quorum",
+-  "body": "(1) Save as otherwise provided in this Constitution, all questions at any sitting of either House or joint sitting of the Houses shall be determined by a majority of votes of the members present and voting, other than the Speaker or person acting as Chairman or Speaker. The Chairman or Speaker, or person acting as such, shall not vote in the first instance, but shall have and exercise a casting vote in the case of an equality of votes. (2) Either House of Parliament shall have power to act notwithstanding any vacancy in the membership thereof, and any proceedings in Parliament shall be valid notwithstanding that it is discovered subsequently that some person who was not entitled so to do sat or voted or otherwise took part in the proceedings. [(3) Until Parliament by law otherwise provides, the quorum to constitute a meeting of either House of Parliament shall be one-tenth of the total number of members of the House. (4) If at any time during a meeting of a House there is no quorum, it shall be the duty of the Chairman or Speaker, or person acting as such, either to adjourn the House or to suspend the meeting until there is a quorum.]",
++  "body": "(1) Save as otherwise provided in this Constitution, all questions at any sitting of either House or joint sitting of the Houses shall be determined by a majority of votes of the members present and voting, other than the Speaker or person acting as Chairman or Speaker. The Chairman or Speaker, or person acting as such, shall not vote in the first instance, but shall have and exercise a casting vote in the case of an equality of votes. (2) Either House of Parliament shall have power to act notwithstanding any vacancy in the membership thereof, and any proceedings in Parliament shall be valid notwithstanding that it is discovered subsequently that some person who was not entitled so to do sat or voted or otherwise took part in the proceedings. [(3) Until Parliament by law otherwise provides, the quorum to constitute a meeting of either House of Parliament shall be one-tenth of the total number of members of the House. (4) If at any time during a meeting of a House there is no quorum, it shall be the duty of the Chairman or Speaker, or person acting as such, either to adjourn the House or to suspend the meeting until there is a quorum.]\n\n[Note from the official edition's footnotes (footnote 1 to the bracketed clauses 3 and 4 at the end of the article, copied from the edition and not part of the article text above): Cls. (3) and (4) omitted by the Constitution (Forty-second Amendment) Act, 1976, s. 18 (date not notified). This amendment was omitted by the Constitution (Forty-fourth Amendment) Act, 1978, s. 45 (w.e.f. 20-6-1979).]\n\n[NOTE WRITTEN FOR THIS APP - not part of the official text and not checked against current law: The footnote in the box above is the edition's own, copied from the edition. The article text above is as printed in the edition. This app has not checked whether or when the change that the footnote describes took effect, so it does not say what applies today. Check the official edition and the Gazette.]",
+   "status": "in_force"
+  },
+  "101": {
+@@ -566,7 +566,7 @@
+  },
+  "102": {
+   "title": "Disqualifications for membership",
+-  "body": "(1) A person shall be disqualified for being chosen as, and for being, a member of either House of Parliament— [(a) if he holds any office of profit under the Government of India or the Government of any State, other than an office declared by Parliament by law not to disqualify its holder;] (b) if he is of unsound mind and stands so declared by a competent court; (c) if he is an undischarged insolvent; (d) if he is not a citizen of India, or has voluntarily acquired the citizenship of a foreign State, or is under any acknowledgment of allegiance or adherence to a foreign State; (e) if he is so disqualified by or under any law made by Parliament. [Explanation.—For the purposes of this clause] a person shall not be deemed to hold an office of profit under the Government of India or the Government of any State by reason only that he is a Minister either for the Union or for such State. [(2) A person shall be disqualified for being a member of either House of Parliament if he is so disqualified under the Tenth Schedule.]",
++  "body": "(1) A person shall be disqualified for being chosen as, and for being, a member of either House of Parliament— [(a) if he holds any office of profit under the Government of India or the Government of any State, other than an office declared by Parliament by law not to disqualify its holder;] (b) if he is of unsound mind and stands so declared by a competent court; (c) if he is an undischarged insolvent; (d) if he is not a citizen of India, or has voluntarily acquired the citizenship of a foreign State, or is under any acknowledgment of allegiance or adherence to a foreign State; (e) if he is so disqualified by or under any law made by Parliament. [Explanation.—For the purposes of this clause] a person shall not be deemed to hold an office of profit under the Government of India or the Government of any State by reason only that he is a Minister either for the Union or for such State. [(2) A person shall be disqualified for being a member of either House of Parliament if he is so disqualified under the Tenth Schedule.]\n\n[Note from the official edition's footnotes (footnote 1 to the bracketed sub-clause (a) of clause 1, copied from the edition and not part of the article text above): Subs. by the Constitution (Forty-second Amendment) Act, 1976, s. 19 to read as \"(a) if he holds any such office of profit under the Government of India or the Government of any State as is declared by Parliament by law to disqualify its holder\" (date not notified). This amendment was omitted by the Constitution (Forty-fourth Amendment) Act, 1978, s. 45 (w.e.f. 20-6-1979).]\n\n[NOTE WRITTEN FOR THIS APP - not part of the official text and not checked against current law: The footnote in the box above is the edition's own, copied from the edition. The article text above is as printed in the edition. This app has not checked whether or when the change that the footnote describes took effect, so it does not say what applies today. Check the official edition and the Gazette.]",
+   "status": "in_force"
+  },
+  "103": {
+@@ -581,7 +581,7 @@
+  },
+  "105": {
+   "title": "Powers, privileges, etc., of the Houses of Parliament and of the members and committees thereof",
+-  "body": "(1) Subject to the provisions of this Constitution and to the rules and standing orders regulating the procedure of Parliament, there shall be freedom of speech in Parliament. (2) No member of Parliament shall be liable to any proceedings in any court in respect of anything said or any vote given by him in Parliament or any committee thereof, and no person shall be so liable in respect of the publication by or under the authority of either House of Parliament of any report, paper, votes or proceedings. [(3) In other respects, the powers, privileges and immunities of each House of Parliament, and of the members and the committees of each House, shall be such as may from time to time be defined by Parliament by law, and, until so defined, [shall be those of that House and of its members and committees immediately before the coming into force of section 15 of the Constitution (Forty-fourth Amendment) Act, 1978.]]. (4) The provisions of clauses (1), (2) and (3) shall apply in relation to persons who by virtue of this Constitution have the right to speak in, and otherwise to take part in the proceedings of, a House of Parliament or any committee thereof as they apply in relation to members of Parliament.",
++  "body": "(1) Subject to the provisions of this Constitution and to the rules and standing orders regulating the procedure of Parliament, there shall be freedom of speech in Parliament. (2) No member of Parliament shall be liable to any proceedings in any court in respect of anything said or any vote given by him in Parliament or any committee thereof, and no person shall be so liable in respect of the publication by or under the authority of either House of Parliament of any report, paper, votes or proceedings. [(3) In other respects, the powers, privileges and immunities of each House of Parliament, and of the members and the committees of each House, shall be such as may from time to time be defined by Parliament by law, and, until so defined, [shall be those of that House and of its members and committees immediately before the coming into force of section 15 of the Constitution (Forty-fourth Amendment) Act, 1978.]]. (4) The provisions of clauses (1), (2) and (3) shall apply in relation to persons who by virtue of this Constitution have the right to speak in, and otherwise to take part in the proceedings of, a House of Parliament or any committee thereof as they apply in relation to members of Parliament.\n\n[Note from the official edition's footnotes (footnote 1 to the bracketed clause 3, copied from the edition and not part of the article text above): Subs. by the Constitution (Forty-second Amendment) Act, 1976, s. 21 (date to be notified). This amendment was omitted by the Constitution (Forty-fourth Amendment) Act, 1978, s. 45 (w.e.f. 20-6-1979).]\n\n[NOTE WRITTEN FOR THIS APP - not part of the official text and not checked against current law: The footnote in the box above is the edition's own, copied from the edition. The article text above is as printed in the edition. This app has not checked whether or when the change that the footnote describes took effect, so it does not say what applies today. Check the official edition and the Gazette.]",
+   "status": "in_force"
+  },
+  "106": {
+@@ -646,12 +646,12 @@
+  },
+  "118": {
+   "title": "Rules of procedure",
+-  "body": "(1) Each House of Parliament may make rules for regulating, subject to the provisions of this Constitution, its procedure* and the conduct of its business. (2) Until rules are made under clause (1), the rules of procedure and standing orders in force immediately before the commencement of this Constitution with respect to the Legislature of the Dominion of India shall have effect in relation to Parliament subject to such modifications and adaptations as may be made therein by the Chairman of the Council of States or the Speaker of the House of the People, as the case may be. (3) The President, after consultation with the Chairman of the Council of States and the Speaker of the House of the People, may make rules as to the procedure with respect to joint sittings of, and communications between, the two Houses. (4) At a joint sitting of the two Houses the Speaker of the House of the People, or in his absence such person as may be determined by rules of procedure made under clause (3), shall preside.",
++  "body": "(1) Each House of Parliament may make rules for regulating, subject to the provisions of this Constitution, its procedure* and the conduct of its business. (2) Until rules are made under clause (1), the rules of procedure and standing orders in force immediately before the commencement of this Constitution with respect to the Legislature of the Dominion of India shall have effect in relation to Parliament subject to such modifications and adaptations as may be made therein by the Chairman of the Council of States or the Speaker of the House of the People, as the case may be. (3) The President, after consultation with the Chairman of the Council of States and the Speaker of the House of the People, may make rules as to the procedure with respect to joint sittings of, and communications between, the two Houses. (4) At a joint sitting of the two Houses the Speaker of the House of the People, or in his absence such person as may be determined by rules of procedure made under clause (3), shall preside.\n\n[Note from the official edition's footnotes (footnote to the starred word procedure in clause 1, an insertion with no commencement date, copied from the edition and not part of the article text above): The brackets and words \"(including the quorum to constitute a meeting of the House\" ins. by the Constitution (Forty-second Amendment) Act, 1976, s. 22 (date not notified). This amendment was omitted by the Constitution (Forty-fourth Amendment) Act, 1978, s. 45 (w.e.f. 20-6-1979).]\n\n[NOTE WRITTEN FOR THIS APP - not part of the official text and not checked against current law: The star in clause 1 refers to the edition's footnote in the box above. The article text above does not contain the bracketed words that the footnote mentions. The footnote says the 1976 insertion was omitted by the 1978 amendment. This app has not checked anything beyond the edition, so it does not say what applies today.]",
+   "status": "in_force"
+  },
+  "119": {
+   "title": "Regulation by law of procedure in Parliament in relation to financial business",
+-  "body": "Parliament may, for the purpose of the timely completion of financial business, regulate by law the procedure of, and the conduct of business in, each House of Parliament in relation to any financial matter or to any Bill for the appropriation of moneys out of the Consolidated Fund of India, and, if and so far as any provision of any law so made is inconsistent with any rule made by a House of Parliament under clause (1) of article 118 or with any rule or standing order having effect in relation to Parliament under clause (2) of that article, such provision shall prevail. * The brackets and words \"(including the quorum to constitute a meeting of the House\" ins. by the Constitution (Forty-second Amendment) Act, 1976, s. 22 (date not notified).",
++  "body": "Parliament may, for the purpose of the timely completion of financial business, regulate by law the procedure of, and the conduct of business in, each House of Parliament in relation to any financial matter or to any Bill for the appropriation of moneys out of the Consolidated Fund of India, and, if and so far as any provision of any law so made is inconsistent with any rule made by a House of Parliament under clause (1) of article 118 or with any rule or standing order having effect in relation to Parliament under clause (2) of that article, such provision shall prevail.",
+   "status": "in_force"
+  },
+  "120": {
+@@ -1031,7 +1031,7 @@
+  },
+  "189": {
+   "title": "Voting in Houses, power of Houses to act notwithstanding vacancies and quorum",
+-  "body": "(1) Save as otherwise provided in this Constitution, all questions at any sitting of a House of the Legislature of a State shall be determined by a majority of votes of the members present and voting, other than the Speaker or Chairman, or person acting as such. The Speaker or Chairman, or person acting as such, shall not vote in the first instance, but shall have and exercise a casting vote in the case of an equality of votes. (2) A House of the Legislature of a State shall have power to act notwithstanding any vacancy in the membership thereof, and any proceedings in the Legislature of a State shall be valid notwithstanding that it is discovered subsequently that some person who was not entitled so to do sat or voted or otherwise took part in the proceedings. [(3) Until the Legislature of the State by law otherwise provides, the quorum to constitute a meeting of a House of the Legislature of a State shall be ten members or one-tenth of the total number of members of the House, whichever is greater. (4) If at any time during a meeting of the Legislative Assembly or the Legislative Council of a State there is no quorum, it shall be the duty of the Speaker or Chairman, or person acting as such, either to adjourn the House or to suspend the meeting until there is a quorum.]",
++  "body": "(1) Save as otherwise provided in this Constitution, all questions at any sitting of a House of the Legislature of a State shall be determined by a majority of votes of the members present and voting, other than the Speaker or Chairman, or person acting as such. The Speaker or Chairman, or person acting as such, shall not vote in the first instance, but shall have and exercise a casting vote in the case of an equality of votes. (2) A House of the Legislature of a State shall have power to act notwithstanding any vacancy in the membership thereof, and any proceedings in the Legislature of a State shall be valid notwithstanding that it is discovered subsequently that some person who was not entitled so to do sat or voted or otherwise took part in the proceedings. [(3) Until the Legislature of the State by law otherwise provides, the quorum to constitute a meeting of a House of the Legislature of a State shall be ten members or one-tenth of the total number of members of the House, whichever is greater. (4) If at any time during a meeting of the Legislative Assembly or the Legislative Council of a State there is no quorum, it shall be the duty of the Speaker or Chairman, or person acting as such, either to adjourn the House or to suspend the meeting until there is a quorum.]\n\n[Note from the official edition's footnotes (footnote 1 to the bracketed clauses 3 and 4 at the end of the article, copied from the edition and not part of the article text above): Omitted by the Constitution (Forty-second Amendment) Act, 1976, s. 31 (date not notified). This amendment was omitted by the Constitution (Forty-fourth Amendment) Act, 1978, s. 45 (w.e.f. 20-6-1979).]\n\n[NOTE WRITTEN FOR THIS APP - not part of the official text and not checked against current law: The footnote in the box above is the edition's own, copied from the edition. The article text above is as printed in the edition. This app has not checked whether or when the change that the footnote describes took effect, so it does not say what applies today. Check the official edition and the Gazette.]",
+   "status": "in_force"
+  },
+  "190": {
+@@ -1041,7 +1041,7 @@
+  },
+  "191": {
+   "title": "Disqualifications for membership",
+-  "body": "(1) A person shall be disqualified for being chosen as, and for being, a member of the Legislative Assembly or Legislative Council of a State— [(a) if he holds any office of profit under the Government of India or the Government of any State specified in the First Schedule, other than an office declared by the Legislature of the State by law not to disqualify its holder;] (b) if he is of unsound mind and stands so declared by a competent court; (c) if he is an undischarged insolvent; (d) if he is not a citizen of India, or has voluntarily acquired the citizenship of a foreign State, or is under any acknowledgment of allegiance or adherence to a foreign State; (e) if he is so disqualified by or under any law made by Parliament. [Explanation.—For the purposes of this clause], a person shall not be deemed to hold an office of profit under the Government of India or the Government of any State specified in the First Schedule by reason only that he is a Minister either for the Union or for such State. [(2) A person shall be disqualified for being a member of the Legislative Assembly or Legislative Council of a State if he is so disqualified under the Tenth Schedule.]",
++  "body": "(1) A person shall be disqualified for being chosen as, and for being, a member of the Legislative Assembly or Legislative Council of a State— [(a) if he holds any office of profit under the Government of India or the Government of any State specified in the First Schedule, other than an office declared by the Legislature of the State by law not to disqualify its holder;] (b) if he is of unsound mind and stands so declared by a competent court; (c) if he is an undischarged insolvent; (d) if he is not a citizen of India, or has voluntarily acquired the citizenship of a foreign State, or is under any acknowledgment of allegiance or adherence to a foreign State; (e) if he is so disqualified by or under any law made by Parliament. [Explanation.—For the purposes of this clause], a person shall not be deemed to hold an office of profit under the Government of India or the Government of any State specified in the First Schedule by reason only that he is a Minister either for the Union or for such State. [(2) A person shall be disqualified for being a member of the Legislative Assembly or Legislative Council of a State if he is so disqualified under the Tenth Schedule.]\n\n[Note from the official edition's footnotes (footnote 1 to the bracketed sub-clause (a) of clause 1, copied from the edition and not part of the article text above): Subs. by the Constitution (Forty-second Amendment) Act, 1976, s. 32 to read as \"(a) if he holds any such office of profit under the Government of India or the Government of any State specified in the First Schedule as is declared by Parliament by law to disqualify its holder\" (date not notified). This amendment was omitted by the Constitution (Forty-fourth Amendment) Act, 1978, s. 45 (w.e.f. 20-6-1979).]\n\n[NOTE WRITTEN FOR THIS APP - not part of the official text and not checked against current law: The footnote in the box above is the edition's own, copied from the edition. The article text above is as printed in the edition. This app has not checked whether or when the change that the footnote describes took effect, so it does not say what applies today. Check the official edition and the Gazette.]",
+   "status": "in_force"
+  },
+  "192": {
+@@ -1056,7 +1056,7 @@
+  },
+  "194": {
+   "title": "Powers, privileges, etc., of the Houses of Legislatures and of the members and committees thereof",
+-  "body": "(1) Subject to the provisions of this Constitution and to the rules and standing orders regulating the procedure of the Legislature, there shall be freedom of speech in the Legislature of every State. (2) No member of the Legislature of a State shall be liable to any proceedings in any court in respect of anything said or any vote given by him in the Legislature or any committee thereof, and no person shall be so liable in respect of the publication by or under the authority of a House of such a Legislature of any report, paper, votes or proceedings. [(3) In other respects, the powers, privileges and immunities of a House of the Legislature of a State, and of the members and the committees of a House of such Legislature, shall be such as may from time to time be defined by the Legislature by law, and, until so defined, [shall be those of that House and of its members and committees immediately before the coming into force of section 26 of the Constitution (Forty-fourth Amendment) Act, 1978]. (4) The provisions of clauses (1), (2) and (3) shall apply in relation to persons who by virtue of this Constitution have the right to speak in, and otherwise to take part in the proceedings of, a House of the Legislature of a State or any committee thereof as they apply in relation to members of that Legislature.",
++  "body": "(1) Subject to the provisions of this Constitution and to the rules and standing orders regulating the procedure of the Legislature, there shall be freedom of speech in the Legislature of every State. (2) No member of the Legislature of a State shall be liable to any proceedings in any court in respect of anything said or any vote given by him in the Legislature or any committee thereof, and no person shall be so liable in respect of the publication by or under the authority of a House of such a Legislature of any report, paper, votes or proceedings. [(3) In other respects, the powers, privileges and immunities of a House of the Legislature of a State, and of the members and the committees of a House of such Legislature, shall be such as may from time to time be defined by the Legislature by law, and, until so defined, [shall be those of that House and of its members and committees immediately before the coming into force of section 26 of the Constitution (Forty-fourth Amendment) Act, 1978]. (4) The provisions of clauses (1), (2) and (3) shall apply in relation to persons who by virtue of this Constitution have the right to speak in, and otherwise to take part in the proceedings of, a House of the Legislature of a State or any committee thereof as they apply in relation to members of that Legislature.\n\n[Note from the official edition's footnotes (footnote 1 to the bracketed clause 3, a proposed substitution, copied from the edition and not part of the article text above): Subs. by the Constitution (Forty-second Amendment) Act, 1976, s. 34 to read as follows : \"(3) In other respects, the powers, privileges and immunities of a House of the Legislature of a State, and of the members and the committees of a House of such Legislature, shall be those of that House, and of its members and Committees, at the commencement of section 34 of the Constitution (Forty-second Amendment) Act, 1976, and as may be evolved by such House of the House of the People, and of its members and committees where such House is the Legislative Assembly and in accordance with those of the Council of States, and of its members and committees where such House is the Legislative Council.\" (date not notified). This amendment was omitted by the Constitution (Forty-fourth Amendment) Act, 1978, s. 45 (w.e.f. 19-6-1979).\"]\n\n[NOTE WRITTEN FOR THIS APP - not part of the official text and not checked against current law: The footnote in the box above is the edition's own, copied from the edition. The article text above is as printed in the edition. This app has not checked whether or when the change that the footnote describes took effect, so it does not say what applies today. Check the official edition and the Gazette.]",
+   "status": "in_force"
+  },
+  "195": {
+@@ -1126,7 +1126,7 @@
+  },
+  "208": {
+   "title": "Rules of procedure",
+-  "body": "(1) A House of the Legislature of a State may make rules for regulating, subject to the provisions of this Constitution, its procedure* and the conduct of its business. (2) Until rules are made under clause (1), the rules of procedure and standing orders in force immediately before the commencement of this Constitution with respect to the Legislature for the corresponding Province shall have effect in relation to the Legislature of the State subject to such modifications and adaptations as may be made therein by the Speaker of the Legislative Assembly, or the Chairman of the Legislative Council, as the case may be. (3) In a State having a Legislative Council the Governor, after consultation with the Speaker of the Legislative Assembly and the Chairman of * The brackets and words \"(including the quorum to constitute a meeting of the House)\" ins. by the Constitution (Forty-second Amendment) Act, 1976, s. 35 (date not notified). This amendment was omitted by the Constitution (Forty-fourth Amendment) Act, 1978, the Legislative Council, may make rules as to the procedure with respect to communications between the two Houses.",
++  "body": "(1) A House of the Legislature of a State may make rules for regulating, subject to the provisions of this Constitution, its procedure* and the conduct of its business. (2) Until rules are made under clause (1), the rules of procedure and standing orders in force immediately before the commencement of this Constitution with respect to the Legislature for the corresponding Province shall have effect in relation to the Legislature of the State subject to such modifications and adaptations as may be made therein by the Speaker of the Legislative Assembly, or the Chairman of the Legislative Council, as the case may be. (3) In a State having a Legislative Council the Governor, after consultation with the Speaker of the Legislative Assembly and the Chairman of the Legislative Council, may make rules as to the procedure with respect to communications between the two Houses.\n\n[Note from the official edition's footnotes (footnote to the starred word procedure in clause 1, an insertion with no commencement date, copied from the edition and not part of the article text above): The brackets and words \"(including the quorum to constitute a meeting of the House)\" ins. by the Constitution (Forty-second Amendment) Act, 1976, s. 35 (date not notified). This amendment was omitted by the Constitution (Forty-fourth Amendment) Act, 1978, s. 45 (w.e.f. 20-6-1979).]\n\n[NOTE WRITTEN FOR THIS APP - not part of the official text and not checked against current law: The star in clause 1 refers to the edition's footnote in the box above. The article text above does not contain the bracketed words that the footnote mentions. The footnote says the 1976 insertion was omitted by the 1978 amendment. This app has not checked anything beyond the edition, so it does not say what applies today.]",
+   "status": "in_force"
+  },
+  "209": {
+diff --git a/backend/app/ingest/seed_bare_acts.py b/backend/app/ingest/seed_bare_acts.py
+index f2d75a6..ddae9ec 100644
+--- a/backend/app/ingest/seed_bare_acts.py
++++ b/backend/app/ingest/seed_bare_acts.py
+@@ -246,8 +246,8 @@ def load_constitution_provisions(curated: Dict[str, Dict[str, Any]]) -> List[Dic
+     return provisions
+ 
+ # Authoritative Curated Statutory Datasets
+-SEED_VERSION = "2026-11-03.v22"  # v16: footnote notes added to 370 (C.O. 273), 368(4)(5) Minerva Mills, 371D(5) Sambamurthy; v13: Constitution corpus: 31C note; added 330A and 124C (split from 124B), struck-down NJAC footnote note on 11 articles. v12: Protection of Women from Domestic Violence Act 2005 added (37 sections, India Code text). v11: Consumer Protection Act 2019 added (107 sections, as enacted). v10: BSA 2023 added (170 sections) + s.1, 63, 170 caveats
+-_PREV_SEED_VERSION = "2026-10-31.v11"  # v9: BNSS s.531 caveat cleared after exact gazette body+reading-order verification  # bump on any seed content/corpus correction; self-heal reseeds on mismatch
++SEED_VERSION = "2026-11-03.v27"  # v16: footnote notes added to 370 (C.O. 273), 368(4)(5) Minerva Mills, 371D(5) Sambamurthy; v13: Constitution corpus: 31C note; added 330A and 124C (split from 124B), struck-down NJAC footnote note on 11 articles. v12: Protection of Women from Domestic Violence Act 2005 added (37 sections, India Code text). v11: Consumer Protection Act 2019 added (107 sections, as enacted). v10: BSA 2023 added (170 sections) + s.1, 63, 170 caveats
++_PREV_SEED_VERSION = "2026-11-03.v22"  # v9: BNSS s.531 caveat cleared after exact gazette body+reading-order verification  # bump on any seed content/corpus correction; self-heal reseeds on mismatch
+ 
+ BARE_ACTS_DATA = [
+     {
+diff --git a/backend/app/services/citation_checker.py b/backend/app/services/citation_checker.py
+index 1a8753f..7c0b85a 100644
+--- a/backend/app/services/citation_checker.py
++++ b/backend/app/services/citation_checker.py
+@@ -66,7 +66,7 @@ VERIFIED_ARTICLES = {
+ 
+ PREPOSITIONS = {"in", "see", "under", "per", "re", "as"}
+ 
+-_EDITION_NOTE_RE = re.compile(r"\[Note from the official edition's footnotes(?: \([^)]*\))?:.*?\]|\[NOTE WRITTEN FOR THIS APP.*?\](?=\n\n|$)", re.DOTALL)
++_EDITION_NOTE_RE = re.compile(r"\[Note from the official edition's footnotes(?: \((?:[^()]|\([^()]*\))*\))?:.*?\]|\[NOTE WRITTEN FOR THIS APP.*?\](?=\n\n|$)", re.DOTALL)
+ 
+ # Pre-compiled regex patterns
+ PARTY_WORD = r"(?:[A-Za-z0-9&'\.\-]+|\((?![\[\s]*[12]\d{3}\b)[^\)]+\)|\[(?![\[\s]*[12]\d{3}\b)[^\]]+\])"
+diff --git a/backend/app/services/llm_service.py b/backend/app/services/llm_service.py
+index ab9cdb5..fd52cd5 100644
+--- a/backend/app/services/llm_service.py
++++ b/backend/app/services/llm_service.py
+@@ -115,6 +115,8 @@ def model_rate_limited() -> bool:
+ 
+ TIMING_NOTE_MARKER = "Note on when this takes effect:"
+ ADVERSE_FOOTNOTE_MARKER = "Note from the official edition's footnotes:"
++STATUTE_AS_STORED_LABEL = "Statute text as stored in this database - not checked against current law"
++
+ SCOPED_FOOTNOTE_MARKER = "Note from the official edition's footnotes (reference to another instrument):"
+ 
+ 
+@@ -1938,7 +1940,7 @@ class LLMService:
+                 "results": [],
+                 "model_used": "statutory_provision_authoritative",
+                 "tier": "tier1",
+-                "tier_label": "Authoritative statutory provision",
++                "tier_label": STATUTE_AS_STORED_LABEL,
+                 "no_strong_case_match": False,
+                 "source_url": source_url,
+                 "effective_date": effective_dt
+@@ -1990,6 +1992,9 @@ class LLMService:
+                 _adverse = ADVERSE_FOOTNOTE_MARKER in (body or "")
+                 _timing = (not _adverse) and TIMING_NOTE_MARKER in (body or "")
+                 _scoped = (not _adverse) and (not _timing) and ("Note from the official edition's footnotes (" in (body or ""))
++                # Keep each edition footnote note as its own paragraph so the app can show it apart from the article text.
++                body = re.sub(r"(?<!\n\n) (\[Note from the official edition's footnotes)", r"\n\n\1", body or "")
++                body = re.sub(r"(?<!\n\n) (\[NOTE WRITTEN FOR THIS APP)", r"\n\n\1", body)
+                 ans_str = f"Article {art_num} of the Constitution of India governs '{heading}'. {body}"
+                 if _adverse:
+                     ans_str = ("Important: the official edition's footnotes say part of this article's wording was struck down, declared invalid or made inoperative (by a court decision or a later order). "
+@@ -2040,7 +2045,7 @@ class LLMService:
+                 else:
+                     ans_str += "No sufficiently relevant case summary was verified for this result."
+                     cits = [f"Constitution of India, Article {art_num} ({heading}, w.e.f. {eff_date})"]
+-                    tier_label = "Statute text + AI restatement (NOT independently verified)" if _unv_shown else "Statutory text + AI explanation (AI part not verified)" if _ai_shown else "Statutory text + note written for this app (not checked against current law)" if _app_note else "Authoritative statutory provision"
++                    tier_label = "Statute text + AI restatement (NOT independently verified)" if _unv_shown else "Statutory text + AI explanation (AI part not verified)" if _ai_shown else "Statutory text + note written for this app (not checked against current law)" if _app_note else STATUTE_AS_STORED_LABEL
+                     no_strong = True
+ 
+                 if _adverse or _timing:
+@@ -2128,7 +2133,7 @@ class LLMService:
+                     "results": [],
+                     "model_used": "statutory_transition_savings",
+                     "tier": "tier1",
+-                    "tier_label": "Authoritative statutory provision",
++                    "tier_label": STATUTE_AS_STORED_LABEL,
+                     "no_strong_case_match": True,
+                     "source_url": provs[0].get("source_url", ""),
+                     "effective_date": provs[0].get("effective_date", ""),
+@@ -2270,7 +2275,7 @@ class LLMService:
+                             "results": retrieved_cases[:5],
+                             "model_used": "statutory_ambiguity_clarification",
+                             "tier": "tier1",
+-                            "tier_label": "Authoritative statutory provision",
++                            "tier_label": STATUTE_AS_STORED_LABEL,
+                             "no_strong_case_match": True
+                         }
+                     else:
+@@ -2394,7 +2399,7 @@ class LLMService:
+                         tier_label = ("Statutory text as enacted - amendments not checked" if "as enacted" in (act_edition or "").lower()
+                                       else "Statutory text (India Code copy) - later amendments not checked")
+                     else:
+-                        tier_label = "Authoritative statutory provision"
++                        tier_label = STATUTE_AS_STORED_LABEL
+                     no_strong = True
+                     if _ai_shown:
+                         tier_label = "Statutory text + AI explanation (AI part not verified)"
+diff --git a/backend/tests/test_edition_only_articles.py b/backend/tests/test_edition_only_articles.py
+index fc45ec7..f8712c5 100644
+--- a/backend/tests/test_edition_only_articles.py
++++ b/backend/tests/test_edition_only_articles.py
+@@ -82,7 +82,7 @@ def test_labels_match_content_for_notes_and_curated_summaries():
+     assert d["tier_label"] != "Authoritative statutory provision"
+     assert "\n\n[NOTE WRITTEN FOR THIS APP" in d["ai_answer"]
+     d56 = c.post("/api/v1/search/answer", json={"query": "article 56"}, auth=("u", "x")).json()
+-    assert "The statute text is shown above; any separately labelled case material below" in d56["ai_answer"] or "Plain-English explanation" in d56["ai_answer"] or d56["tier_label"] == "Authoritative statutory provision"
++    assert "The statute text is shown above; any separately labelled case material below" in d56["ai_answer"] or "Plain-English explanation" in d56["ai_answer"] or d56["tier_label"].startswith("Statute text as stored in this database")
+     from app.services.llm_service import case_passage_text
+     cur = {"title": "X v. Y", "citation": "(2000) 1 SCC 1", "ratioSummary": "The Court explained the rule in plain words here.", "landmark": True}
+     cp = case_passage_text(cur)
+@@ -142,3 +142,130 @@ def test_case_chat_endpoint_refuses_without_judgment_text():
+     assert "not available in this database" in res.answer
+     meta = casechat._CASE_METADATA_INDEX[cid]
+     assert meta["ratioSummary"][:50] not in res.answer
++
++
++def _corpus():
++    import json, pathlib
++    from app.services import llm_service as L
++    return json.loads((pathlib.Path(L.__file__).resolve().parents[1] / "ingest" / "constitution_corpus.json").read_text(encoding="utf-8"))
++
++
++def test_article_22_text_footnotes_and_app_note_are_separate_paragraphs():
++    from app.services import llm_service as L
++    b = _corpus()["22"]["body"]
++    paras = b.split("\n\n")
++    assert len(paras) == 4
++    text, f1, f2, app = paras
++    # article text: original clause (4) runs on into its provisos, with no substitute text spliced in
++    assert 'Cl. (4) shall stand substituted' not in text and "two months" not in text
++    assert "such detention: Provided that nothing in this sub-clause" in text
++    assert "(c) the procedure to be followed by an Advisory Board" in text
++    # footnote 1 holds the proposed substitution verbatim; footnote 2 the clause 7 changes
++    assert f1.startswith("[Note from the official edition's footnotes (") and "two months" in f1 and "date yet to be notified" in f1
++    assert f2.startswith("[Note from the official edition's footnotes (") and "re-lettered as sub-clause (a)" in f2
++    assert app.startswith("[NOTE WRITTEN FOR THIS APP") and "does not say which wording" in app
++    assert L.ADVERSE_FOOTNOTE_MARKER not in b and "notified). notified)" not in b
++
++
++def test_footnote_residue_moved_out_of_articles_118_119_208_77():
++    c = _corpus()
++    b119 = c["119"]["body"]
++    assert "Forty-second" not in b119 and b119.endswith("such provision shall prevail.")
++    for k in ("118", "208"):
++        paras = c[k]["body"].split("\n\n")
++        assert len(paras) == 3 and "procedure*" in paras[0], k
++        assert "Forty-second" not in paras[0], k
++        assert paras[1].startswith("[Note from the official edition's footnotes (") and "Forty-second Amendment" in paras[1]
++        assert paras[2].startswith("[NOTE WRITTEN FOR THIS APP")
++    assert "the Chairman of the Legislative Council, may make rules as to the procedure" in c["208"]["body"].split("\n\n")[0]
++    p77 = c["77"]["body"].split("\n\n")
++    assert len(p77) == 3 and "S.O. 2297" not in p77[0] and "S.O. 2297" in p77[1] and "omitted by the Constitution (Forty-fourth" in p77[2]
++
++
++def test_answer_keeps_footnote_notes_as_separate_paragraphs():
++    from fastapi.testclient import TestClient
++    from app.main import app
++    c = TestClient(app)
++    for q in ("article 22", "article 208", "article 77"):
++        r = c.get("/api/v1/search/answer", params={"q": q})
++        assert r.status_code == 200, q
++        ans = r.json()["ai_answer"]
++        paras = [p for p in ans.split("\n\n") if p.startswith("[Note from the official edition's footnotes")]
++        assert paras, q
++        for p in paras:
++            assert p.endswith("]"), q
++
++
++def test_page_bottom_footnotes_attached_to_100_102_105_189_191_194_not_101():
++    import re
++    c = _corpus()
++    from app.services.citation_checker import _EDITION_NOTE_RE as rx
++    for k in ("100", "102", "105", "189", "191", "194"):
++        paras = c[k]["body"].split("\n\n")
++        assert len(paras) == 3, k
++        assert "Forty-second" not in paras[0], k
++        assert rx.fullmatch(paras[1]) and "Forty-fourth Amendment) Act, 1978, s. 45" in paras[1], k
++        assert paras[2].startswith("[NOTE WRITTEN FOR THIS APP") and "does not say what applies today" in paras[2], k
++    # the 101 footnote on the same PDF page belongs to article 100 clauses 3 and 4, so 101 carries no note
++    assert "Note from the official edition" not in c["101"]["body"]
++    assert 'w.e.f. 19-6-1979)."' in c["194"]["body"]  # printed as such in the edition; kept verbatim
++
++
++def test_every_edition_note_in_corpus_parses_whole_and_ends_at_its_own_bracket():
++    import re
++    from app.services.citation_checker import _EDITION_NOTE_RE
++    c = _corpus()
++    n = 0
++    for k, v in c.items():
++        body = v["body"]
++        for m in re.finditer(r"\[Note from the official edition's footnotes", body):
++            n += 1
++            tail = body[m.start():]
++            end = tail.index("]") + 1
++            parsed = _EDITION_NOTE_RE.match(tail)
++            assert parsed and parsed.group(0) == tail[:end], (k, "header/body boundary not parsed or note truncated")
++            # the note must end at a real note end: end of body, a new paragraph, or a space then another block
++            assert end == len(tail) or tail[end:end + 1] in (" ", "\n"), (k, "text glued to a note end")
++    assert n >= 20, n
++    # nested parentheses in the header (for example "sub-clause (a)") are accepted
++    s = "[Note from the official edition's footnotes (to sub-clause (a) of clause 1, copied): body text.]"
++    assert _EDITION_NOTE_RE.match(s).group(0) == s
++
++
++def test_new_footnote_boxes_are_verbatim_in_the_edition_text():
++    """Each edition-footnote box copied for these articles must occur, character for character
++    (ignoring spacing and punctuation), in the edition's text. Skipped if the edition text file is absent."""
++    import os, re
++    path = "/tmp/coi26_layout.txt"
++    if not os.path.exists(path):
++        import pytest
++        pytest.skip("edition layout text not available in this environment")
++    E = re.sub(r"[^a-z0-9]", "", open(path, encoding="utf-8").read().lower())
++    c = _corpus()
++    rx = re.compile(r"\[Note from the official edition's footnotes (?:\((?:[^()]|\([^()]*\))*\))?:\s*(.*?)\]", re.S)
++    for k in ("22", "77", "100", "102", "105", "118", "189", "191", "194", "208"):
++        found = rx.findall(c[k]["body"])
++        assert found, k
++        for t in found:
++            assert re.sub(r"[^a-z0-9]", "", t.lower()) in E, (k, t[:80])
++
++
++def test_statute_results_never_get_an_authoritative_badge_and_scope_is_in_the_label():
++    from fastapi.testclient import TestClient
++    from app.main import app
++    c = TestClient(app)
++    for q in ("article 119", "article 21", "section 420 ipc"):
++        d = c.get("/api/v1/search/answer", params={"q": q}).json()
++        tl = (d.get("tier_label") or "").lower()
++        assert "authoritative" not in tl, (q, tl)
++    d = c.get("/api/v1/search/answer", params={"q": "article 119"}).json()
++    assert d["tier_label"].startswith("Statute text as stored in this database")
++    assert "not checked against current law" in d["tier_label"]
++
++
++def test_frontend_no_explanation_block_is_neutral_not_orange():
++    import pathlib
++    s = (pathlib.Path(__file__).resolve().parents[2] / "src/components/SearchResults.jsx").read_text(encoding="utf-8")
++    assert "NO AI EXPLANATION SHOWN" in s
++    assert "_noExpl ? '#8a9a93'" in s
++    assert "'STATUTE TEXT AS STORED (NOT CHECKED AGAINST CURRENT LAW)'" in s
+diff --git a/src/components/SearchResults.jsx b/src/components/SearchResults.jsx
+index 3d1a18d..1fd6ca6 100644
+--- a/src/components/SearchResults.jsx
++++ b/src/components/SearchResults.jsx
+@@ -426,7 +426,7 @@ export default function SearchResults({
+                   {/* Card Top Strip: Kicker + Tier Badge */}
+                   <div className="answer-card-top-strip">
+                     <span className="answer-kicker mono">
+-                      {answerData.tier === 'unreliable' ? 'LEGAL NOTICE' : answerData.tier === 'not_found' ? 'NOT FOUND IN THIS DATABASE' : answerData.tier === 'unverified_ai' ? 'AI-GENERATED ANSWER - NOT CHECKED AGAINST LEGAL SOURCES' : answerData.tier === 'statute_text' ? 'STATUTE TEXT' : (() => { const tl = answerData.tier_label || ''; if (tl.includes('NOT independently verified')) return 'STATUTE TEXT + AI RESTATEMENT (NOT INDEPENDENTLY VERIFIED)'; if (tl.includes('important note')) return 'STATUTE TEXT WITH AN IMPORTANT NOTE'; if (tl.includes('footnote note')) return 'STATUTE TEXT WITH A FOOTNOTE NOTE'; const csum = tl.includes('case listed'); const ex = tl.includes('case excerpt') || csum; const exw = csum ? 'A CASE LISTED (SUMMARY WITHHELD)' : 'CASE EXCERPT'; const ai = tl.includes('AI explanation'); const nt = tl.includes('note written for this app'); return nt && ex ? 'STATUTE TEXT, A NOTE WRITTEN FOR THIS APP AND ' + exw : nt ? 'STATUTE TEXT AND A NOTE WRITTEN FOR THIS APP' : ex && ai ? 'STATUTE TEXT, AI EXPLANATION AND ' + exw : ex ? 'STATUTE TEXT AND ' + exw : ai ? 'STATUTE TEXT AND AI EXPLANATION' : tl === 'Authoritative statutory provision' ? 'STATUTE TEXT' : 'AI SUMMARY'; })()}
++                      {answerData.tier === 'unreliable' ? 'LEGAL NOTICE' : answerData.tier === 'not_found' ? 'NOT FOUND IN THIS DATABASE' : answerData.tier === 'unverified_ai' ? 'AI-GENERATED ANSWER - NOT CHECKED AGAINST LEGAL SOURCES' : answerData.tier === 'statute_text' ? 'STATUTE TEXT' : (() => { const tl = answerData.tier_label || ''; if (tl.includes('NOT independently verified')) return 'STATUTE TEXT + AI RESTATEMENT (NOT INDEPENDENTLY VERIFIED)'; if (tl.includes('important note')) return 'STATUTE TEXT WITH AN IMPORTANT NOTE'; if (tl.includes('footnote note')) return 'STATUTE TEXT WITH A FOOTNOTE NOTE'; const csum = tl.includes('case listed'); const ex = tl.includes('case excerpt') || csum; const exw = csum ? 'A CASE LISTED (SUMMARY WITHHELD)' : 'CASE EXCERPT'; const ai = tl.includes('AI explanation'); const nt = tl.includes('note written for this app'); return nt && ex ? 'STATUTE TEXT, A NOTE WRITTEN FOR THIS APP AND ' + exw : nt ? 'STATUTE TEXT AND A NOTE WRITTEN FOR THIS APP' : ex && ai ? 'STATUTE TEXT, AI EXPLANATION AND ' + exw : ex ? 'STATUTE TEXT AND ' + exw : ai ? 'STATUTE TEXT AND AI EXPLANATION' : tl.startsWith('Statute text as stored in this database') ? 'STATUTE TEXT AS STORED (NOT CHECKED AGAINST CURRENT LAW)' : 'AI SUMMARY'; })()}
+                     </span>
+                     <div className="answer-badge-wrap">
+                       {answerData.hide_badge || answerData.tier === 'unreliable' || answerData.tier === 'not_found' ? null : (
+@@ -469,6 +469,18 @@ export default function SearchResults({
+                           </div>
+                         );
+                       }
++                      if (trimmedP.startsWith("[Note from the official edition's footnotes")) {
++                        const _m = trimmedP.match(/^\[Note from the official edition's footnotes(?: \(((?:[^()]|\([^()]*\))*)\))?:\s*([\s\S]*)\]$/);
++                        if (_m) {
++                          return (
++                            <div key={pIdx} className="answer-law-note" role="note" style={{ margin: '14px 0', padding: '12px 16px', borderLeft: '3px solid #4f9d8a', background: 'rgba(79,157,138,0.10)', borderRadius: 6 }}>
++                              <div className="mono" style={{ fontSize: 11, letterSpacing: '0.08em', color: '#7fc4a5', marginBottom: 6 }}>FOOTNOTE PRINTED IN THE OFFICIAL EDITION - NOT PART OF THE ARTICLE TEXT</div>
++                              {_m[1] && <p className="answer-prose-paragraph" style={{ margin: '0 0 6px 0', fontSize: 12, opacity: 0.85 }}>{_m[1]}</p>}
++                              <p className="answer-prose-paragraph" style={{ margin: 0 }}>{_m[2].trim()}</p>
++                            </div>
++                          );
++                        }
++                      }
+                       if (trimmedP.startsWith('AI RESTATEMENT')) {
+                         const _head = trimmedP.split('\n')[0];
+                         return (
+@@ -515,10 +527,12 @@ export default function SearchResults({
+                       const aiPrefix = 'Plain-English explanation (AI-written from the text above; not a verified statement of law):';
+                       if (trimmedP.startsWith(aiPrefix) || trimmedP.startsWith('AI explanation unavailable') || trimmedP.startsWith('No AI explanation is shown for this provision')) {
+                         const isExpl = trimmedP.startsWith(aiPrefix);
++                        const _noExpl = trimmedP.startsWith('No AI explanation is shown');
++                        const _accent = _noExpl ? '#8a9a93' : '#c97d3c';
+                         return (
+-                          <div key={pIdx} className="answer-ai-explainer" style={{ margin: '14px 0', padding: '12px 16px', borderLeft: '3px solid #c97d3c', background: 'rgba(201,125,60,0.08)', borderRadius: 6 }}>
+-                            <div className="mono" style={{ fontSize: 11, letterSpacing: '0.08em', color: '#c97d3c', marginBottom: 6 }}>
+-                              {isExpl ? 'AI EXPLANATION - NOT VERIFIED, WRITTEN FROM THE STATUTORY TEXT ABOVE' : 'AI EXPLANATION'}
++                          <div key={pIdx} className="answer-ai-explainer" style={{ margin: '14px 0', padding: '12px 16px', borderLeft: `3px solid ${_accent}`, background: _noExpl ? 'rgba(138,154,147,0.08)' : 'rgba(201,125,60,0.08)', borderRadius: 6 }}>
++                            <div className="mono" style={{ fontSize: 11, letterSpacing: '0.08em', color: _accent, marginBottom: 6 }}>
++                              {isExpl ? 'AI EXPLANATION - NOT VERIFIED, WRITTEN FROM THE STATUTORY TEXT ABOVE' : (_noExpl ? 'NO AI EXPLANATION SHOWN' : 'AI EXPLANATION')}
+                             </div>
+                             {(isExpl ? trimmedP.slice(aiPrefix.length).trim() : trimmedP).split('\n').filter(l => l.trim()).map((ln, li) => {
+                               const isNote = ln.trim().startsWith('(Wording prepared');
+@@ -573,7 +587,7 @@ export default function SearchResults({
+ 
+                     <span className="answer-disclaimer-text mono">
+                       {answerData.tier === 'tier1' && (answerData.no_strong_case_match || !(answerData.source_cases && answerData.source_cases.length))
+-                        ? 'Statutory text from the verified database; any AI explanation is not verified \u2022 Not formal legal advice'
++                        ? 'Statute text as stored in this database (source shown on the card), not checked against current law; any AI explanation is not verified \u2022 Not formal legal advice'
+                         : answerData.tier === 'tier1'
+                         ? 'Statute text and case citations below; case content is not checked against the judgments, and any AI explanation is not verified \u2022 Not formal legal advice'
+                         : answerData.tier === 'statute_text'
