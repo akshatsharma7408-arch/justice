@@ -1,0 +1,26 @@
+diff --git a/backend/tests/test_edition_only_articles.py b/backend/tests/test_edition_only_articles.py
+index 8b76a99..2a46dc9 100644
+--- a/backend/tests/test_edition_only_articles.py
++++ b/backend/tests/test_edition_only_articles.py
+@@ -413,3 +413,21 @@ def test_article_and_section_match_uses_token_boundary_not_prefix():
+     assert m(ents(sections=["124"]), case) is True
+     assert m({"case_names": [], "citations": [], "sections": [], "articles": ["14"]}, {"title": "Z", "statutes": ["Article 14(1), Constitution of India"]}) is True
+     assert m({"case_names": [], "citations": [], "sections": [], "articles": ["21"]}, {"title": "Z", "statutes": ["Article 21A, Constitution of India"]}) is False
++
++
++def test_token_boundary_matrix_keeps_variant_true_matches():
++    from app.services.llm_service import match_case_to_query_entities as m
++    E = lambda **k: dict({"case_names": [], "citations": [], "sections": [], "articles": []}, **k)
++    keep = [  # (statute string, query kind, number) that must still match
++        ("Article 14, Constitution of India", "articles", "14"), ("Article 14(1), Constitution of India", "articles", "14"),
++        ("Article 19(1)(a)", "articles", "19"), ("Article 21A", "articles", "21A"), ("Article 14-A", "articles", "14"),
++        ("Article 14/15", "articles", "14"), ("Article 14 of the Constitution", "articles", "14"),
++        ("Section 124A IPC", "sections", "124A"), ("Section 124, IPC", "sections", "124"), ("Section 304B IPC", "sections", "304B"),
++        ("Sec. 124 IPC", "sections", "124"), ("s. 124 IPC", "sections", "124"),
++    ]
++    for st, kind, n in keep:
++        assert m(E(**{kind: [n.lower()]}), {"title": "Z v. Q", "statutes": [st]}) is True, (st, n)
++    drop = [("Article 14, Constitution of India", "articles", "1"), ("Article 19(1)(a)", "articles", "1"), ("Article 21A", "articles", "21"),
++            ("Article 14/15", "articles", "1"), ("Section 124A IPC", "sections", "124"), ("Section 124A IPC", "sections", "12"), ("Section 304B IPC", "sections", "304")]
++    for st, kind, n in drop:
++        assert m(E(**{kind: [n.lower()]}), {"title": "Z v. Q", "statutes": [st]}) is False, (st, n)
