@@ -1,0 +1,108 @@
+diff --git a/backend/app/ingest/constitution_corpus.json b/backend/app/ingest/constitution_corpus.json
+index 9ba4378..73780cc 100644
+--- a/backend/app/ingest/constitution_corpus.json
++++ b/backend/app/ingest/constitution_corpus.json
+@@ -1,7 +1,7 @@
+ {
+  "1": {
+   "title": "Name and territory of the Union",
+-  "body": "(1) India, that is Bharat, shall be a Union of States. [(2) The States and the territories thereof shall be as specified in the First Schedule.] (3) The territory of India shall comprise— (a) the territories of the States; [(b) the Union territories specified in the First Schedule; and] (c) such other territories as may be acquired.",
++  "body": "(1) India, that is Bharat, shall be a Union of States. [(2) The States and the territories thereof shall be as specified in the First Schedule.] (3) The territory of India shall comprise— (a) the territories of the States; [(b) the Union territories specified in the First Schedule; and] (c) such other territories as may be acquired.\n\n[Note from the official edition's footnotes (footnote 1 to the bracketed clause 2, copied from the edition and not part of the article text above): Subs. by the Constitution (Seventh Amendment) Act, 1956, s. 2, for cl. (2) (w.e.f. 1-11-1956).]\n\n[Note from the official edition's footnotes (footnote 2 to the bracketed sub-clause (b) of clause 3, copied from the edition and not part of the article text above): Subs. by s. 2 ibid. for sub-clause (b) (w.e.f. 1-11-1956).]\n\n[NOTE WRITTEN FOR THIS APP - not part of the official text and not checked against current law: The footnotes in the boxes above are the edition's own, copied from the edition. They are the footnotes printed for the bracketed words of this article. The article text above is as printed in the edition. This app has not checked whether or when the changes that the footnotes describe took effect, so it does not say what applies today. Check the official edition and the Gazette.]",
+   "status": "in_force"
+  },
+  "2": {
+@@ -16,7 +16,7 @@
+  },
+  "3": {
+   "title": "Formation of new States and alteration of areas, boundaries or names of existing States",
+-  "body": "Parliament may by law— (a) form a new State by separation of territory from any State or by uniting two or more States or parts of States or by uniting any territory to a part of any State; (b) increase the area of any State; (c) diminish the area of any State; (d) alter the boundaries of any State; (e) alter the name of any State: [Provided that no Bill for the purpose shall be introduced in either House of Parliament except on the recommendation of the President and unless, where the proposal contained in the Bill affects the area, boundaries or name of any of the States, the Bill has been referred by the President to the Legislature of that State for expressing its views thereon within such period as may be specified in the reference or within such further period as the President may allow and the period so specified or allowed has expired.] [Explanation I.—In this article, in clauses (a) to (e), “State” includes a Union territory, but in the proviso, “State” does not include a Union territory. Explanation II.—The power conferred on Parliament by clause (a) includes the power to form a new State or Union territory by uniting a part of any State or Union territory to any other State or Union territory.]",
++  "body": "Parliament may by law— (a) form a new State by separation of territory from any State or by uniting two or more States or parts of States or by uniting any territory to a part of any State; (b) increase the area of any State; (c) diminish the area of any State; (d) alter the boundaries of any State; (e) alter the name of any State: [Provided that no Bill for the purpose shall be introduced in either House of Parliament except on the recommendation of the President and unless, where the proposal contained in the Bill affects the area, boundaries or name of any of the States, the Bill has been referred by the President to the Legislature of that State for expressing its views thereon within such period as may be specified in the reference or within such further period as the President may allow and the period so specified or allowed has expired.] [Explanation I.—In this article, in clauses (a) to (e), “State” includes a Union territory, but in the proviso, “State” does not include a Union territory. Explanation II.—The power conferred on Parliament by clause (a) includes the power to form a new State or Union territory by uniting a part of any State or Union territory to any other State or Union territory.]\n\n[Note from the official edition's footnotes (footnote 1 to the bracketed proviso, copied from the edition and not part of the article text above): Subs. by the Constitution (Fifth Amendment) Act, 1955, s. 2, for the proviso (w.e.f. 24-12-1955).]\n\n[Note from the official edition's footnotes (footnote 2 to the words omitted in the proviso after “any of the States” (printed in the edition as 2***), copied from the edition and not part of the article text above): The words and letters \"specified in Part A or Part B of the First Schedule\" omitted by the Constitution (Seventh Amendment) Act, 1956, s. 29 and Sch. (w.e.f. 1-11-1956).]\n\n[Note from the official edition's footnotes (footnote 3 to the bracketed Explanations I and II, copied from the edition and not part of the article text above): Ins. by the Constitution (Eighteenth Amendment) Act, 1966, s. 2 (w.e.f. 27-8-1966).]\n\n[NOTE WRITTEN FOR THIS APP - not part of the official text and not checked against current law: The footnotes in the boxes above are the edition's own, copied from the edition. They are the footnotes printed for the bracketed words of this article. The article text above is as printed in the edition. This app has not checked whether or when the changes that the footnotes describe took effect, so it does not say what applies today. Check the official edition and the Gazette.]",
+   "status": "in_force"
+  },
+  "4": {
+diff --git a/backend/app/ingest/seed_bare_acts.py b/backend/app/ingest/seed_bare_acts.py
+index 02780d0..a4c9cb7 100644
+--- a/backend/app/ingest/seed_bare_acts.py
++++ b/backend/app/ingest/seed_bare_acts.py
+@@ -246,8 +246,8 @@ def load_constitution_provisions(curated: Dict[str, Dict[str, Any]]) -> List[Dic
+     return provisions
+ 
+ # Authoritative Curated Statutory Datasets
+-SEED_VERSION = "2026-11-06.v32"  # v16: footnote notes added to 370 (C.O. 273), 368(4)(5) Minerva Mills, 371D(5) Sambamurthy; v13: Constitution corpus: 31C note; added 330A and 124C (split from 124B), struck-down NJAC footnote note on 11 articles. v12: Protection of Women from Domestic Violence Act 2005 added (37 sections, India Code text). v11: Consumer Protection Act 2019 added (107 sections, as enacted). v10: BSA 2023 added (170 sections) + s.1, 63, 170 caveats
+-_PREV_SEED_VERSION = "2026-11-06.v31"  # v9: BNSS s.531 caveat cleared after exact gazette body+reading-order verification  # bump on any seed content/corpus correction; self-heal reseeds on mismatch
++SEED_VERSION = "2026-11-06.v33"  # v16: footnote notes added to 370 (C.O. 273), 368(4)(5) Minerva Mills, 371D(5) Sambamurthy; v13: Constitution corpus: 31C note; added 330A and 124C (split from 124B), struck-down NJAC footnote note on 11 articles. v12: Protection of Women from Domestic Violence Act 2005 added (37 sections, India Code text). v11: Consumer Protection Act 2019 added (107 sections, as enacted). v10: BSA 2023 added (170 sections) + s.1, 63, 170 caveats
++_PREV_SEED_VERSION = "2026-11-06.v32"  # v9: BNSS s.531 caveat cleared after exact gazette body+reading-order verification  # bump on any seed content/corpus correction; self-heal reseeds on mismatch
+ 
+ BARE_ACTS_DATA = [
+     {
+diff --git a/backend/app/services/llm_service.py b/backend/app/services/llm_service.py
+index 81df266..03e4dc9 100644
+--- a/backend/app/services/llm_service.py
++++ b/backend/app/services/llm_service.py
+@@ -561,7 +561,7 @@ def match_case_to_query_entities(entities: Dict[str, Any], case: Dict[str, Any])
+         for sec in entities["sections"]:
+             if (
+                 re.search(rf'\b(?:sections?|secs?\.?|s\.)\s*{re.escape(sec)}\b', case_full)
+-                or f"section {sec}" in case_statutes
++                or re.search(rf"\bsection {re.escape(sec)}(?![0-9a-z])", case_statutes)
+                 or f" {sec}," in case_statutes
+                 or f" {sec} " in case_statutes
+             ):
+@@ -576,7 +576,7 @@ def match_case_to_query_entities(entities: Dict[str, Any], case: Dict[str, Any])
+         for art in entities["articles"]:
+             if (
+                 re.search(rf'\b(?:articles?|arts?\.?)\s*{re.escape(art)}\b', case_full)
+-                or f"article {art}" in case_statutes
++                or re.search(rf"\barticle {re.escape(art)}(?![0-9a-z])", case_statutes)
+                 or f" {art}," in case_statutes
+                 or f" {art} " in case_statutes
+             ):
+diff --git a/backend/tests/test_edition_only_articles.py b/backend/tests/test_edition_only_articles.py
+index 8f44bb3..8b76a99 100644
+--- a/backend/tests/test_edition_only_articles.py
++++ b/backend/tests/test_edition_only_articles.py
+@@ -354,7 +354,7 @@ def test_bracketed_articles_without_footnote_boxes_say_footnotes_are_not_shown()
+     from fastapi.testclient import TestClient
+     from app.main import app
+     c = TestClient(app)
+-    ans = c.get("/api/v1/search/answer", params={"q": "article 3"}).json()["ai_answer"]
++    ans = c.get("/api/v1/search/answer", params={"q": "article 276"}).json()["ai_answer"]
+     assert "Note from the official edition's footnotes" not in ans
+     assert "This card does not show those footnotes" in ans
+     assert "[NOTE WRITTEN FOR THIS APP - not part of the official text and not checked against current law: Square brackets" in ans
+@@ -381,3 +381,35 @@ def test_footnote_boxes_13_15_16_19_30_are_verbatim_in_edition_and_complete_for_
+         assert len(apps) == 1 and b.rstrip().endswith(apps[0]), k
+     # the sub-heading footnote printed on the same page as 30(1A) is not an article 30 footnote
+     assert "Right to Property" not in c["30"]["body"]
++
++
++def test_footnote_boxes_1_and_3_are_verbatim_in_edition():
++    import os, re
++    c = _corpus()
++    counts = {"1": 2, "3": 3}
++    flat = None
++    if os.path.exists("/tmp/coi26_layout.txt"):
++        flat = re.sub(r"\s+", "", open("/tmp/coi26_layout.txt", encoding="utf-8").read())
++    for k, n in counts.items():
++        b = c[k]["body"]
++        boxes = re.findall(r"\[Note from the official edition's footnotes \((?:[^()]|\([^()]*\))*\): (.*?)\]\n\n", b + "\n\n", re.S)
++        assert len(boxes) == n, (k, len(boxes))
++        if flat:
++            for t in boxes:
++                assert re.sub(r"\s+", "", t) in flat, (k, t)
++        apps = re.findall(r"\[NOTE WRITTEN FOR THIS APP[^\]]*\]", b)
++        assert len(apps) == 1 and b.rstrip().endswith(apps[0]), k
++
++
++def test_article_and_section_match_uses_token_boundary_not_prefix():
++    from app.services.llm_service import match_case_to_query_entities as m
++    case = {"title": "X v. Y", "statutes": ["Article 141, Constitution of India", "Article 145(3), Constitution of India", "Section 124, IPC"]}
++    ents = lambda **k: dict({"case_names": [], "citations": [], "sections": [], "articles": []}, **k)
++    assert m(ents(articles=["1"]), case) is False
++    assert m(ents(articles=["14"]), case) is False
++    assert m(ents(articles=["145"]), case) is True
++    assert m(ents(articles=["141"]), case) is True
++    assert m(ents(sections=["12"]), case) is False
++    assert m(ents(sections=["124"]), case) is True
++    assert m({"case_names": [], "citations": [], "sections": [], "articles": ["14"]}, {"title": "Z", "statutes": ["Article 14(1), Constitution of India"]}) is True
++    assert m({"case_names": [], "citations": [], "sections": [], "articles": ["21"]}, {"title": "Z", "statutes": ["Article 21A, Constitution of India"]}) is False
