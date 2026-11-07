@@ -114,7 +114,15 @@ def model_rate_limited() -> bool:
 
 
 TIMING_NOTE_MARKER = "Note on when this takes effect:"
+BRACKETED_FOOTNOTES_NOT_SHOWN_NOTE = (
+    "[NOTE WRITTEN FOR THIS APP - not part of the official text and not checked against current law: "
+    "Square brackets in the text above mark words that the official edition footnotes as inserted, substituted or omitted by an amendment. "
+    "This card does not show those footnotes, so it does not say which amendment changed which words or when the change took effect. "
+    "Check the official edition and the Gazette.]"
+)
 ADVERSE_FOOTNOTE_MARKER = "Note from the official edition's footnotes:"
+STATUTE_AS_STORED_LABEL = "Statute text as stored in this database - not checked against current law"
+
 SCOPED_FOOTNOTE_MARKER = "Note from the official edition's footnotes (reference to another instrument):"
 
 
@@ -553,7 +561,7 @@ def match_case_to_query_entities(entities: Dict[str, Any], case: Dict[str, Any])
         for sec in entities["sections"]:
             if (
                 re.search(rf'\b(?:sections?|secs?\.?|s\.)\s*{re.escape(sec)}\b', case_full)
-                or f"section {sec}" in case_statutes
+                or re.search(rf"\bsection {re.escape(sec)}(?![0-9a-z])", case_statutes)
                 or f" {sec}," in case_statutes
                 or f" {sec} " in case_statutes
             ):
@@ -568,7 +576,7 @@ def match_case_to_query_entities(entities: Dict[str, Any], case: Dict[str, Any])
         for art in entities["articles"]:
             if (
                 re.search(rf'\b(?:articles?|arts?\.?)\s*{re.escape(art)}\b', case_full)
-                or f"article {art}" in case_statutes
+                or re.search(rf"\barticle {re.escape(art)}(?![0-9a-z])", case_statutes)
                 or f" {art}," in case_statutes
                 or f" {art} " in case_statutes
             ):
@@ -1938,7 +1946,7 @@ class LLMService:
                 "results": [],
                 "model_used": "statutory_provision_authoritative",
                 "tier": "tier1",
-                "tier_label": "Authoritative statutory provision",
+                "tier_label": STATUTE_AS_STORED_LABEL,
                 "no_strong_case_match": False,
                 "source_url": source_url,
                 "effective_date": effective_dt
@@ -1988,8 +1996,11 @@ class LLMService:
                     }
                 # In force: verbatim statutory text leads; curated explanation follows.
                 _adverse = ADVERSE_FOOTNOTE_MARKER in (body or "")
-                _timing = (not _adverse) and TIMING_NOTE_MARKER in (body or "")
+                _timing = (not _adverse) and (TIMING_NOTE_MARKER in (body or "") or (str(art_num) in ("330A", "332A") and "334A(1) says, in its own words" in (body or "")))
                 _scoped = (not _adverse) and (not _timing) and ("Note from the official edition's footnotes (" in (body or ""))
+                # Keep each edition footnote note as its own paragraph so the app can show it apart from the article text.
+                body = re.sub(r"(?<!\n\n) (\[Note from the official edition's footnotes)", r"\n\n\1", body or "")
+                body = re.sub(r"(?<!\n\n) (\[NOTE WRITTEN FOR THIS APP)", r"\n\n\1", body)
                 ans_str = f"Article {art_num} of the Constitution of India governs '{heading}'. {body}"
                 if _adverse:
                     ans_str = ("Important: the official edition's footnotes say part of this article's wording was struck down, declared invalid or made inoperative (by a court decision or a later order). "
@@ -1999,6 +2010,9 @@ class LLMService:
                 if _timing:
                     ans_str = ("Important: this article does not say by itself when it takes effect; see the note at the end of the text and article 334A. ") + ans_str
                 _app_note = False
+                if "[" in (body or "") and not (_adverse or _timing or _scoped):
+                    ans_str += "\n\n" + BRACKETED_FOOTNOTES_NOT_SHOWN_NOTE + "\n\n"
+                    _app_note = True
                 if expl and not (_adverse or _timing or _scoped):
                     ans_str += f"\n\n[NOTE WRITTEN FOR THIS APP - not part of the official text and not checked against current law: {expl}]\n\n"
                     _app_note = True
@@ -2040,7 +2054,7 @@ class LLMService:
                 else:
                     ans_str += "No sufficiently relevant case summary was verified for this result."
                     cits = [f"Constitution of India, Article {art_num} ({heading}, w.e.f. {eff_date})"]
-                    tier_label = "Statute text + AI restatement (NOT independently verified)" if _unv_shown else "Statutory text + AI explanation (AI part not verified)" if _ai_shown else "Statutory text + note written for this app (not checked against current law)" if _app_note else "Authoritative statutory provision"
+                    tier_label = "Statute text + AI restatement (NOT independently verified)" if _unv_shown else "Statutory text + AI explanation (AI part not verified)" if _ai_shown else "Statutory text + note written for this app (not checked against current law)" if _app_note else STATUTE_AS_STORED_LABEL
                     no_strong = True
 
                 if _adverse or _timing:
@@ -2128,7 +2142,7 @@ class LLMService:
                     "results": [],
                     "model_used": "statutory_transition_savings",
                     "tier": "tier1",
-                    "tier_label": "Authoritative statutory provision",
+                    "tier_label": STATUTE_AS_STORED_LABEL,
                     "no_strong_case_match": True,
                     "source_url": provs[0].get("source_url", ""),
                     "effective_date": provs[0].get("effective_date", ""),
@@ -2270,7 +2284,7 @@ class LLMService:
                             "results": retrieved_cases[:5],
                             "model_used": "statutory_ambiguity_clarification",
                             "tier": "tier1",
-                            "tier_label": "Authoritative statutory provision",
+                            "tier_label": STATUTE_AS_STORED_LABEL,
                             "no_strong_case_match": True
                         }
                     else:
@@ -2394,7 +2408,7 @@ class LLMService:
                         tier_label = ("Statutory text as enacted - amendments not checked" if "as enacted" in (act_edition or "").lower()
                                       else "Statutory text (India Code copy) - later amendments not checked")
                     else:
-                        tier_label = "Authoritative statutory provision"
+                        tier_label = STATUTE_AS_STORED_LABEL
                     no_strong = True
                     if _ai_shown:
                         tier_label = "Statutory text + AI explanation (AI part not verified)"

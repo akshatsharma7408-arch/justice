@@ -426,7 +426,7 @@ export default function SearchResults({
                   {/* Card Top Strip: Kicker + Tier Badge */}
                   <div className="answer-card-top-strip">
                     <span className="answer-kicker mono">
-                      {answerData.tier === 'unreliable' ? 'LEGAL NOTICE' : answerData.tier === 'not_found' ? 'NOT FOUND IN THIS DATABASE' : answerData.tier === 'unverified_ai' ? 'AI-GENERATED ANSWER - NOT CHECKED AGAINST LEGAL SOURCES' : answerData.tier === 'statute_text' ? 'STATUTE TEXT' : (() => { const tl = answerData.tier_label || ''; if (tl.includes('NOT independently verified')) return 'STATUTE TEXT + AI RESTATEMENT (NOT INDEPENDENTLY VERIFIED)'; if (tl.includes('important note')) return 'STATUTE TEXT WITH AN IMPORTANT NOTE'; if (tl.includes('footnote note')) return 'STATUTE TEXT WITH A FOOTNOTE NOTE'; const csum = tl.includes('case listed'); const ex = tl.includes('case excerpt') || csum; const exw = csum ? 'A CASE LISTED (SUMMARY WITHHELD)' : 'CASE EXCERPT'; const ai = tl.includes('AI explanation'); const nt = tl.includes('note written for this app'); return nt && ex ? 'STATUTE TEXT, A NOTE WRITTEN FOR THIS APP AND ' + exw : nt ? 'STATUTE TEXT AND A NOTE WRITTEN FOR THIS APP' : ex && ai ? 'STATUTE TEXT, AI EXPLANATION AND ' + exw : ex ? 'STATUTE TEXT AND ' + exw : ai ? 'STATUTE TEXT AND AI EXPLANATION' : tl === 'Authoritative statutory provision' ? 'STATUTE TEXT' : 'AI SUMMARY'; })()}
+                      {answerData.tier === 'unreliable' ? 'LEGAL NOTICE' : answerData.tier === 'not_found' ? 'NOT FOUND IN THIS DATABASE' : answerData.tier === 'unverified_ai' ? 'AI-GENERATED ANSWER - NOT CHECKED AGAINST LEGAL SOURCES' : answerData.tier === 'statute_text' ? 'STATUTE TEXT' : (() => { const tl = answerData.tier_label || ''; if (tl.includes('NOT independently verified')) return 'STATUTE TEXT + AI RESTATEMENT (NOT INDEPENDENTLY VERIFIED)'; if (tl.includes('important note')) return 'STATUTE TEXT WITH AN IMPORTANT NOTE'; if (tl.includes('footnote note')) return 'STATUTE TEXT WITH A FOOTNOTE NOTE'; const csum = tl.includes('case listed'); const ex = tl.includes('case excerpt') || csum; const exw = csum ? 'A CASE LISTED (SUMMARY WITHHELD)' : 'CASE EXCERPT'; const ai = tl.includes('AI explanation'); const nt = tl.includes('note written for this app'); return nt && ex ? 'STATUTE TEXT, A NOTE WRITTEN FOR THIS APP AND ' + exw : nt ? 'STATUTE TEXT AND A NOTE WRITTEN FOR THIS APP' : ex && ai ? 'STATUTE TEXT, AI EXPLANATION AND ' + exw : ex ? 'STATUTE TEXT AND ' + exw : ai ? 'STATUTE TEXT AND AI EXPLANATION' : tl.startsWith('Statute text as stored in this database') ? 'STATUTE TEXT AS STORED (NOT CHECKED AGAINST CURRENT LAW)' : 'AI SUMMARY'; })()}
                     </span>
                     <div className="answer-badge-wrap">
                       {answerData.hide_badge || answerData.tier === 'unreliable' || answerData.tier === 'not_found' ? null : (
@@ -468,6 +468,18 @@ export default function SearchResults({
                             <p className="answer-prose-paragraph" style={{ margin: 0 }}>{_body.slice(_cut + 1).trim()}</p>
                           </div>
                         );
+                      }
+                      if (trimmedP.startsWith("[Note from the official edition's footnotes")) {
+                        const _m = trimmedP.match(/^\[Note from the official edition's footnotes(?: \(((?:[^()]|\([^()]*\))*)\))?:\s*([\s\S]*)\]$/);
+                        if (_m) {
+                          return (
+                            <div key={pIdx} className="answer-law-note" role="note" style={{ margin: '14px 0', padding: '12px 16px', borderLeft: '3px solid #4f9d8a', background: 'rgba(79,157,138,0.10)', borderRadius: 6 }}>
+                              <div className="mono" style={{ fontSize: 11, letterSpacing: '0.08em', color: '#7fc4a5', marginBottom: 6 }}>FOOTNOTE PRINTED IN THE OFFICIAL EDITION - NOT PART OF THE ARTICLE TEXT</div>
+                              {_m[1] && <p className="answer-prose-paragraph" style={{ margin: '0 0 6px 0', fontSize: 12, opacity: 0.85 }}>{_m[1]}</p>}
+                              <p className="answer-prose-paragraph" style={{ margin: 0 }}>{_m[2].trim()}</p>
+                            </div>
+                          );
+                        }
                       }
                       if (trimmedP.startsWith('AI RESTATEMENT')) {
                         const _head = trimmedP.split('\n')[0];
@@ -515,10 +527,12 @@ export default function SearchResults({
                       const aiPrefix = 'Plain-English explanation (AI-written from the text above; not a verified statement of law):';
                       if (trimmedP.startsWith(aiPrefix) || trimmedP.startsWith('AI explanation unavailable') || trimmedP.startsWith('No AI explanation is shown for this provision')) {
                         const isExpl = trimmedP.startsWith(aiPrefix);
+                        const _noExpl = trimmedP.startsWith('No AI explanation is shown');
+                        const _accent = _noExpl ? '#8a9a93' : '#c97d3c';
                         return (
-                          <div key={pIdx} className="answer-ai-explainer" style={{ margin: '14px 0', padding: '12px 16px', borderLeft: '3px solid #c97d3c', background: 'rgba(201,125,60,0.08)', borderRadius: 6 }}>
-                            <div className="mono" style={{ fontSize: 11, letterSpacing: '0.08em', color: '#c97d3c', marginBottom: 6 }}>
-                              {isExpl ? 'AI EXPLANATION - NOT VERIFIED, WRITTEN FROM THE STATUTORY TEXT ABOVE' : 'AI EXPLANATION'}
+                          <div key={pIdx} className="answer-ai-explainer" style={{ margin: '14px 0', padding: '12px 16px', borderLeft: `3px solid ${_accent}`, background: _noExpl ? 'rgba(138,154,147,0.08)' : 'rgba(201,125,60,0.08)', borderRadius: 6 }}>
+                            <div className="mono" style={{ fontSize: 11, letterSpacing: '0.08em', color: _accent, marginBottom: 6 }}>
+                              {isExpl ? 'AI EXPLANATION - NOT VERIFIED, WRITTEN FROM THE STATUTORY TEXT ABOVE' : (_noExpl ? 'NO AI EXPLANATION SHOWN' : 'AI EXPLANATION')}
                             </div>
                             {(isExpl ? trimmedP.slice(aiPrefix.length).trim() : trimmedP).split('\n').filter(l => l.trim()).map((ln, li) => {
                               const isNote = ln.trim().startsWith('(Wording prepared');
@@ -573,7 +587,7 @@ export default function SearchResults({
 
                     <span className="answer-disclaimer-text mono">
                       {answerData.tier === 'tier1' && (answerData.no_strong_case_match || !(answerData.source_cases && answerData.source_cases.length))
-                        ? 'Statutory text from the verified database; any AI explanation is not verified \u2022 Not formal legal advice'
+                        ? 'Statute text as stored in this database (source shown on the card), not checked against current law; any AI explanation is not verified \u2022 Not formal legal advice'
                         : answerData.tier === 'tier1'
                         ? 'Statute text and case citations below; case content is not checked against the judgments, and any AI explanation is not verified \u2022 Not formal legal advice'
                         : answerData.tier === 'statute_text'

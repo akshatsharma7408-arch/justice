@@ -106,12 +106,13 @@ def test_106th_insertion_date_notes_and_exact_334a_wording():
     from app.main import app
     c = TestClient(app)
     q = "shall come into effect after an exercise of delimitation is undertaken for this purpose after the relevant figures for the first census taken after commencement of the Constitution (One Hundred and Sixth Amendment) Act, 2023 have been published and shall cease to have effect on the expiration of a period of fifteen years from such commencement"
-    for a, sec in (("330A", "s. 3"), ("332A", "s. 4"), ("334A", "s. 5"), ("239AA", "s. 2")):
+    for a, sec in (("330A", r"s\.\s?3"), ("332A", r"s\.\s?4"), ("334A", r"s\.\s?5"), ("239AA", r"s\.\s?2")):
         t = c.post("/api/v1/search/answer", json={"query": f"article {a}"}, auth=("u", "x")).json()["ai_answer"]
-        assert "Note from the official edition's footnotes (insertion date):" in t, a
-        assert sec + " (w.e.f. 16-4-2026)" in t, a
-        assert "does not say when any seat is reserved" in t, a
-        assert "The Gazette notification was not read as a PDF" in t, a
+        import re as _re
+        assert "[Note from the official edition's footnotes (footnote" in t and "copied from the edition and not part of the article text above)" in t, a
+        assert "Ins. by the Constitution (One Hundred and Sixth Amendment) Act, 2023," in t, a
+        assert _re.search(sec + r" \(w\.e\.f\. 16-4-2026\)", t), a
+        assert "not a statement of when any seat is reserved" in t, a
         assert "No AI explanation is shown for this article" in t, a
         assert "Plain-English explanation" not in t and "AI RESTATEMENT" not in t, a
         if a in ("330A", "332A"):
@@ -128,7 +129,8 @@ def test_239aa_served_from_edition_text_not_handwritten_summary():
     assert t["tier_label"] == "Edition text with a footnote note (see the text)"
     assert "(ba) Seats shall be reserved for women in the Legislative Assembly of the National Capital Territory of Delhi" in a
     assert "(bc) As nearly as may be, one-third of the total number of seats to be filled by direct election" in a
-    assert "clauses (ba), (bb) and (bc) were inserted by the Constitution (One Hundred and Sixth Amendment) Act, 2023, s. 2 (w.e.f. 16-4-2026)" in a
+    assert "Ins. by the Constitution (One Hundred and Sixth Amendment) Act, 2023,s. 2 (w.e.f. 16-4-2026)" in a  # verbatim edition footnote text
+    assert "footnote 2 to the bracketed clauses (ba), (bb) and (bc) of clause (2)" in a
     assert "No AI explanation is shown for this article" in a
     assert "GNCTD" not in a and "8 SCC 501" not in a and "constitutional morality" not in a
     assert "Key parameters" not in a and "unique constitutional status" not in a  # curated explanation not appended when explanation is withheld
