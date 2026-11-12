@@ -8,7 +8,7 @@ Endpoints:
 Strict Grounding Rules:
   - Scoped strictly to the requested case only.
   - Answers strictly using the case's text chunks; never invents facts, sections or case names.
-  - Returns "This case does not say that." if the answer is absent from the case.
+  - Returns UNABLE_LINE when the answer cannot be established from stored text.
   - Summaries adhere to the fixed 4-section structure.
   - Text explanations adhere to the fixed 3-section structure.
   - Simple language, explains jargon in brackets.
@@ -384,7 +384,7 @@ def get_case_chunks(case_id: str) -> List[Dict[str, Any]]:
                 "case_id": cid,
                 "case_name": title,
                 "citation": citation,
-                "text": f"IN THE {court.upper()}.\n{title}.\nCitation: {citation}.\nBench / Coram: {judges}.\nSubject Matter & Keywords: {keywords}."
+                "text": f"APP CASE RECORD:\n{title}.\nCitation: {citation}.\nCourt per app record: {court}.\nBench / Coram per app record: {judges}.\nKeywords: {keywords}."
             },
             {
                 "chunk_id": f"{cid}_para_1",
@@ -392,25 +392,18 @@ def get_case_chunks(case_id: str) -> List[Dict[str, Any]]:
                 "case_id": cid,
                 "case_name": title,
                 "citation": citation,
-                "text": f"STATUTORY PROVISIONS EVALUATED:\nThis matter was decided under: {statutes}.\nThe court considered the legal framework and constitutional principles applicable to the dispute."
-            },
-            {
+                "text": f"APP RECORD - LAWS LISTED:\nThe app's record lists these laws for this case: {statutes}.\nThis list is app metadata and has not been verified against the judgment text."
+            }
+        ]
+        if ratio:
+            paras.append({
                 "chunk_id": f"{cid}_para_2",
                 "chunk_index": 2,
                 "case_id": cid,
                 "case_name": title,
                 "citation": citation,
-                "text": f"JUDICIAL HOLDING & RATIO DECIDENDI:\n{ratio}"
-            },
-            {
-                "chunk_id": f"{cid}_para_3",
-                "chunk_index": 3,
-                "case_id": cid,
-                "case_name": title,
-                "citation": citation,
-                "text": f"LEGAL DOCTRINE & APPLICATION:\nUnder Article 141 of the Constitution of India, the law declared by the Supreme Court is binding on all courts within the territory of India."
-            }
-        ]
+                "text": f"APP RECORD - STORED SUMMARY (app-written, not judgment text, not verified):\n{ratio}"
+            })
         return paras
 
     return []
@@ -424,6 +417,47 @@ STOPWORDS = {
     "is", "are", "was", "were", "this", "that", "it", "what", "who", "which",
     "why", "how", "did", "does", "case", "court", "say", "tell", "me", "about"
 }
+
+# Decision-marker matching for excerpt selection. Whole words/phrases only: a
+# substring scan (e.g. "ratio") matches unrelated words such as "registration".
+DECISION_MARKER_REGEXES = [
+    re.compile(p, re.IGNORECASE) for p in [
+        r"\bwe\s+hold\b",
+        r"\bwe\s+have\s+held\b",
+        r"\bheld\s*:",
+        r"\bheld\s+as\s+follows\b",
+        r"\bwe\s+are\s+of\s+the\s+(?:considered\s+)?(?:opinion|view)\b",
+        r"\bappeals?\s+(?:is|are|was|were)?\s*(?:allowed|dismissed|disposed\s+of)\b",
+        r"\bpetitions?\s+(?:is|are|was|were)?\s*(?:allowed|dismissed|disposed\s+of)\b",
+        r"\bwe\s+(?:allow|dismiss)\s+the\b",
+        r"\bdisposed\s+of\b",
+        r"\bthe\s+appeal\s+succeeds\b",
+        r"\bconviction\s+(?:is|was)\s+(?:upheld|set\s+aside)\b",
+    ]
+]
+
+UNVERIFIED_EXCERPT_LABEL = "unverified excerpt from the judgment text, not checked against the full judgment"
+AUTO_DISCLAIMER = "Auto-generated from stored excerpts; not verified. Not legal advice."
+
+
+def find_decision_excerpt(chunks: List[Dict[str, Any]], max_chars: int = 350) -> Tuple[Optional[str], Optional[int]]:
+    """Returns (excerpt, chunk_index) of the first passage containing a whole-word
+    decision marker, else (None, None). The app never decides which passage is the
+    actual holding; it only quotes a passage and labels it as unverified."""
+    for ch in chunks:
+        text = ch.get("text", "") or ""
+        for rx in DECISION_MARKER_REGEXES:
+            m = rx.search(text)
+            if m:
+                start = max(0, m.start() - 120)
+                nl = text.rfind(". ", start, m.start())
+                if nl != -1:
+                    start = nl + 2
+                excerpt = re.sub(r"\s+", " ", text[start:m.end() + 220]).strip()
+                if len(excerpt) > max_chars:
+                    excerpt = excerpt[:max_chars].rsplit(" ", 1)[0].strip() + "..."
+                return excerpt, ch.get("chunk_index", 0)
+    return None, None
 
 def retrieve_top_case_chunks(chunks: List[Dict[str, Any]], query: str, top_k: int = 4) -> List[Dict[str, Any]]:
     """Retrieves the most relevant chunks within the single case using keyword overlap & positional importance."""
@@ -461,7 +495,7 @@ def check_presence_in_case(chunks: List[Dict[str, Any]], query: str) -> bool:
     """
     Checks if query words genuinely appear in the case chunks.
     If the user asks about an out-of-domain entity or an alien crime/concept not in the case,
-    returns False so we answer 'This case does not say that.'
+    returns False so the caller answers UNABLE_LINE (no judgment-silence claim).
     """
     q_lower = query.lower()
     alien_topics = [
@@ -514,61 +548,56 @@ Use simple everyday words. Explain any legal jargon in brackets [like this]. Ans
 
 
 def generate_deterministic_summary(case_meta: Dict[str, Any], chunks: List[Dict[str, Any]]) -> str:
-    """Produces the exact structured summary deterministically from verified metadata & chunks."""
+    """Produces the fixed-structure summary from metadata and clearly labelled excerpts.
+
+    Safety rules:
+    - Never asserts what the court held; it quotes a labelled unverified excerpt or
+      says the app cannot state the decision.
+    - Never claims binding precedent, Article 141 effect, or authoritative status.
+    """
     title = case_meta.get("title", "The case")
     citation = case_meta.get("citation", "")
     court = case_meta.get("court", "Supreme Court of India")
+    year = case_meta.get("year")
     statutes_list = case_meta.get("statutes", [])
-    statutes = ", ".join(statutes_list) if statutes_list else "the statutory and constitutional framework"
-    ratio = case_meta.get("ratioSummary", "")
 
-    # Clean ratio text
-    ratio_clean = re.sub(r'\s+', ' ', ratio).strip()
-    if not ratio_clean and chunks:
-        for ch in chunks:
-            t = ch.get("text", "")
-            if any(w in t.lower() for w in ["held", "ratio", "we hold", "order", "decision"]):
-                clean_t = re.sub(r'^\s*\d+\s*\[\d+\].*?\n', '', t).strip()
-                ratio_clean = clean_t[:300]
-                break
-        if not ratio_clean:
-            clean_t = re.sub(r'^\s*\d+\s*\[\d+\].*?\n', '', chunks[-1].get("text", "")).strip()
-            ratio_clean = clean_t[:300]
-
-    # Background from chunk 0 or 1
-    bg_snippet = ""
+    what_about = f"App record: {title}" + (f" ({citation})" if citation else "") + f", {court}" + (f", {year}" if year else "") + "."
+    if statutes_list:
+        what_about += (
+            f"\nThe app's record lists these laws for this case: {', '.join(statutes_list)}. "
+            "This list is app metadata and is not checked here against the judgment."
+        )
     if chunks:
-        c0 = chunks[0].get("text", "")
-        c0_clean = re.sub(r'^\s*\d+\s*\[\d+\].*?\n', '', c0).strip()
-        sentences = [s.strip() for s in re.split(r'(?<=[.!?])\s+', c0_clean) if len(s.strip()) > 20]
+        c0_clean = re.sub(r"\s+", " ", chunks[0].get("text", "")).strip()
+        sentences = [s.strip() for s in re.split(r"(?<=[.!?])\s+", c0_clean) if len(s.strip()) > 20]
         if sentences:
-            bg_snippet = " ".join(sentences[:2])
-            if len(bg_snippet) > 240:
-                bg_snippet = bg_snippet[:240] + "..."
+            bg = " ".join(sentences[:2])
+            if len(bg) > 240:
+                bg = bg[:240].rsplit(" ", 1)[0].strip() + "..."
+            what_about += f"\nOpening of the stored judgment text ({UNVERIFIED_EXCERPT_LABEL}):\n\"{bg}\""
 
-    what_about = f"This case, {title}" + (f" ({citation})" if citation else "") + f", was adjudicated by the {court} under {statutes}."
-    if bg_snippet:
-        what_about += f"\nThe dispute arose regarding: {bg_snippet}"
+    excerpt, _ex_idx = find_decision_excerpt(chunks)
+    if excerpt:
+        what_decided = (
+            "The app cannot state the decision itself. The stored judgment text includes this passage "
+            f"({UNVERIFIED_EXCERPT_LABEL}):\n\"{excerpt}\""
+        )
     else:
-        what_about += f"\nThe court examined the underlying dispute and rights of the parties under Indian law."
-
-    what_decided = f"The court held: {ratio_clean}" if ratio_clean else "The court adjudicated the appeal based on statutory provisions and evidentiary findings."
-    if not what_decided.endswith("."):
-        what_decided += "."
+        what_decided = (
+            "The app cannot reliably state what the court decided from the stored text. "
+            "Read the full judgment via the citation to know the actual decision."
+        )
 
     why_matters = (
-        f"This decision clarifies the scope and legal enforcement of {statutes}. "
-        f"It serves as binding precedent under Article 141 of the Constitution for all subordinate courts and tribunals in India."
+        "The app does not assess this case's importance or precedent status. "
+        "Whether a decision binds other courts depends on the full judgment and later cases; "
+        "use the Smart Citator and the full text instead of relying on this panel."
     )
 
-    key_points = [
-        "Binding precedent declared by the Supreme Court under Article 141.",
-        f"Authoritative adjudication under {statutes}."
-    ]
-    if ratio_clean:
-        first_clause = ratio_clean.split(".")[0].strip()
-        if first_clause:
-            key_points.insert(0, first_clause)
+    key_points = [f"Court: {court}" + (f", decided in {year}." if year else ".")]
+    if statutes_list:
+        key_points.append(f"Laws listed in the app record: {', '.join(statutes_list)}.")
+    key_points.append("Auto-generated from stored excerpts; not verified against the full judgment.")
     key_points_str = "\n".join(f"- {kp}" for kp in key_points)
 
     return (
@@ -633,6 +662,26 @@ async def generate_case_summary(case_meta: Dict[str, Any], chunks: List[Dict[str
 # ---------------------------------------------------------------------------
 # Factual Question Answering on Single Case
 # ---------------------------------------------------------------------------
+UNABLE_LINE = (
+    "The app cannot establish an answer to that from the stored text available for this case. "
+    "Read the full judgment via the citation to check."
+)
+
+_GENERIC_INTENT_PATTERNS = (
+    ["who were the parties", "parties", "petitioner", "respondent", "appellant"],
+    ["what did the court decide", "decide", "decision", "holding", "order"],
+    ["why does it matter", "matter for ordinary", "ordinary people", "impact"],
+    ["which laws", "sections were used", "what sections", "statutes"],
+)
+
+
+def _recognized_generic_intent(q_lower: str) -> bool:
+    """Recognized generic case intents (summary/decide/importance/parties/laws quick
+    questions) get grounded deterministic handling without requiring their literal
+    question words to appear in the judgment chunks."""
+    return any(any(k in q_lower for k in group) for group in _GENERIC_INTENT_PATTERNS)
+
+
 def generate_deterministic_case_answer(case_meta: Dict[str, Any], chunks: List[Dict[str, Any]], question: str) -> Tuple[str, Optional[str], Optional[str]]:
     """Answers common questions deterministically when offline or in fallback mode."""
     q_lower = question.lower()
@@ -640,8 +689,8 @@ def generate_deterministic_case_answer(case_meta: Dict[str, Any], chunks: List[D
     citation = case_meta.get("citation", "")
     court = case_meta.get("court", "Supreme Court of India")
 
-    if not check_presence_in_case(chunks, question):
-        return ("This case does not say that.", None, None)
+    if not _recognized_generic_intent(q_lower) and not check_presence_in_case(chunks, question):
+        return (UNABLE_LINE, None, None)
 
     # 1. Who were the parties?
     if any(k in q_lower for k in ["who were the parties", "parties", "petitioner", "respondent", "appellant"]):
@@ -656,27 +705,25 @@ def generate_deterministic_case_answer(case_meta: Dict[str, Any], chunks: List[D
 
     # 2. What did the court decide?
     if any(k in q_lower for k in ["what did the court decide", "decide", "decision", "holding", "order"]):
-        ratio = case_meta.get("ratioSummary", "")
-        target_idx = 0
-        if not ratio and chunks:
-            for idx, ch in enumerate(chunks):
-                t = ch.get("text", "")
-                if any(w in t.lower() for w in ["held", "ratio", "we hold", "order"]):
-                    ratio = t[:280]
-                    target_idx = idx
-                    break
-            if not ratio:
-                target_idx = min(2, len(chunks)-1)
-                ratio = chunks[target_idx].get("text", "")[:280]
-        ans = f"The court held: {ratio}"
-        return (ans, f"Paragraph {target_idx + 1}", f"chunk-{target_idx}")
+        excerpt, ex_idx = find_decision_excerpt(chunks)
+        if excerpt:
+            ans = (
+                "The app cannot state the decision itself. The stored judgment text includes this passage "
+                f"({UNVERIFIED_EXCERPT_LABEL}): \"{excerpt}\""
+            )
+            return (ans, f"Paragraph {ex_idx + 1}", f"chunk-{ex_idx}")
+        return (
+            "This case's stored text does not contain a passage the app can identify as the decision. "
+            "Read the full judgment via the citation for the actual holding.",
+            None, None
+        )
 
     # 3. Why does it matter for ordinary people?
     if any(k in q_lower for k in ["why does it matter", "matter for ordinary", "ordinary people", "impact"]):
-        statutes = ", ".join(case_meta.get("statutes", [])) or "the applicable legal framework"
+        statutes = ", ".join(case_meta.get("statutes", [])) or "the laws listed in the app record"
         ans = (
-            f"For ordinary citizens and litigants, this case establishes authoritative binding precedent regarding {statutes}. "
-            f"It ensures that rights and statutory obligations are interpreted consistently across courts in India."
+            f"The app does not assess this case's precedent status or practical impact. Its record lists: {statutes}. "
+            "For what the decision means in practice, read the full judgment or consult a lawyer."
         )
         target_idx = min(3, len(chunks)-1) if chunks else 0
         return (ans, f"Paragraph {target_idx + 1}", f"chunk-{target_idx}")
@@ -686,8 +733,8 @@ def generate_deterministic_case_answer(case_meta: Dict[str, Any], chunks: List[D
         statutes = case_meta.get("statutes", [])
         stat_str = ", ".join(statutes) if statutes else "Applicable provisions of Indian law"
         ans = (
-            f"The laws and provisions evaluated in this judgment are: {stat_str}. "
-            f"The court based its decision on these statutory and constitutional principles."
+            f"The app's record lists these laws for this case: {stat_str}. "
+            "This list is app metadata; verify it against the full judgment."
         )
         target_idx = 1 if len(chunks) > 1 else 0
         return (ans, f"Paragraph {target_idx + 1}", f"chunk-{target_idx}")
@@ -709,7 +756,7 @@ def generate_deterministic_case_answer(case_meta: Dict[str, Any], chunks: List[D
             )
             return (ans, f"Paragraph {idx + 1}", f"chunk-{idx}")
 
-    return ("This case does not say that.", None, None)
+    return (UNABLE_LINE, None, None)
 
 
 async def answer_case_question(
@@ -720,9 +767,10 @@ async def answer_case_question(
     force_fallback: bool = False
 ) -> Tuple[str, Optional[str], Optional[str]]:
     """Answers a factual question using Groq LLM with strict grounding or deterministic fallback."""
-    # First check if the question is an out-of-domain / alien topic
-    if not check_presence_in_case(chunks, question):
-        return ("This case does not say that.", None, None)
+    # First check if the question is an out-of-domain / alien topic (recognized
+    # generic intents reach grounded deterministic handling regardless)
+    if not _recognized_generic_intent(question.lower()) and not check_presence_in_case(chunks, question):
+        return (UNABLE_LINE, None, None)
 
     if force_fallback or not llm_service.is_active or not llm_service.client:
         return generate_deterministic_case_answer(case_meta, chunks, question)
@@ -916,12 +964,11 @@ def generate_deterministic_explanation(
         case_ref = f"in {case_name}" if case_name else "in this judgment"
 
         in_simple_words = (
-            f"This judicial excerpt {case_ref} articulates the legal test governing \"{selected_text[:120]}\".\n"
-            f"The Supreme Court held that statutory powers and legal restrictions must be exercised strictly within constitutional boundaries.\n"
-            f"Arbitrary actions unsupported by established legal procedure cannot be sustained against citizens."
+            f"This is a passage {case_ref}. In plain terms, the selected text says: \"{selected_text[:160]}\"\n"
+            "The app has not verified what the judgment decides from this snippet alone; the explanation above only restates the selected words."
         )
         why_it_matters = (
-            f"Under Article 141 of the Constitution, this judicial holding is binding precedent on all courts across India, preventing arbitrary enforcement and safeguarding individual rights."
+            "The app does not assess the precedent status of this passage. Whether any part of a judgment binds other courts depends on the full judgment and later cases; check the full text."
         )
     elif glossary_match:
         # User selected a specific legal term
@@ -1087,11 +1134,13 @@ async def post_case_chat(payload: CaseChatRequest, request: Request):
         summary_ans = await generate_case_summary(case_meta, chunks, force_fallback=payload.force_fallback)
         _SUMMARY_CACHE[cache_key] = summary_ans
 
+        _det = not (llm_service.is_active and not payload.force_fallback)
         return CaseChatResponse(
             case_id=cid,
             answer=summary_ans,
             based_on="Full Judgment Chunks",
             paragraph_id="chunk-0",
+            disclaimer=AUTO_DISCLAIMER if _det else "AI answer, not legal advice",
             cached=False,
             model_used=llm_service.model if (llm_service.is_active and not payload.force_fallback) else "deterministic_summary"
         )
@@ -1120,11 +1169,13 @@ async def post_case_chat(payload: CaseChatRequest, request: Request):
         force_fallback=payload.force_fallback
     )
 
+    _det = not (llm_service.is_active and not payload.force_fallback)
     return CaseChatResponse(
         case_id=cid,
         answer=ans,
         based_on=based_on,
         paragraph_id=para_id,
+        disclaimer=AUTO_DISCLAIMER if _det else "AI answer, not legal advice",
         cached=False,
         model_used=llm_service.model if (llm_service.is_active and not payload.force_fallback) else "deterministic_case_chat"
     )
@@ -1228,3 +1279,4 @@ async def get_case_text(case_id: str):
         total_paragraphs=len(paragraphs),
         paragraphs=paragraphs
     )
+

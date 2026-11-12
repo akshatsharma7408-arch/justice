@@ -17,6 +17,7 @@ if str(backend_dir) not in sys.path:
 
 from fastapi.testclient import TestClient
 from app.main import app, SITE_PASSWORD
+from app.routers import casechat
 
 headers = {}
 if SITE_PASSWORD:
@@ -56,7 +57,7 @@ def test_case_chat_valid_factual_question(client=client):
     assert data["disclaimer"] == "AI answer, not legal advice"
 
 def test_case_chat_question_not_covered_by_case(client=client):
-    """Question asking about an entity not in the case returns 'This case does not say that.'"""
+    """Question asking about an entity not in the case returns the honest UNABLE_LINE."""
     res = client.post("/api/case-chat", json={
         "case_id": "sc-2006-percept",
         "question": "What did the court say about bitcoin mining?"
@@ -239,7 +240,7 @@ def test_case_chat_made_up_id_clean_404(client=client):
 
 
 def test_case_chat_question_not_in_case(client=client):
-    """Asking about a topic not in the case returns 'This case does not say that.'"""
+    """Asking about a topic not in the case returns the honest UNABLE_LINE."""
     res = client.post("/api/v1/case-chat", json={
         "case_id": "S_1973_1_1_1002",
         "question": "What does this case say about bitcoin mining rewards and cryptocurrency blockchain?",
@@ -247,7 +248,7 @@ def test_case_chat_question_not_in_case(client=client):
     })
     assert res.status_code == 200
     data = res.json()
-    assert data["answer"] == "This case does not say that."
+    assert data["answer"] == casechat.UNABLE_LINE
 
 
 if __name__ == "__main__":
@@ -288,4 +289,5 @@ if __name__ == "__main__":
     print(f"\nAll tests completed: {passed}/{len(tests)} passed.")
     if passed < len(tests):
         sys.exit(1)
+
 
