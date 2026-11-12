@@ -609,10 +609,12 @@ def generate_deterministic_summary(case_meta: Dict[str, Any], chunks: List[Dict[
     )
 
 
-async def generate_case_summary(case_meta: Dict[str, Any], chunks: List[Dict[str, Any]], force_fallback: bool = False) -> str:
-    """Generates the fixed 3-section summary using LLM chunk combination or deterministic fallback."""
+async def generate_case_summary(case_meta: Dict[str, Any], chunks: List[Dict[str, Any]], force_fallback: bool = False) -> Tuple[str, bool]:
+    """Generates the fixed 3-section summary using LLM chunk combination or deterministic fallback.
+    Returns (summary_text, used_model): used_model is True ONLY when the returned text is
+    actual model output that passed format and holding-claim verification."""
     if force_fallback or not llm_service.is_active or not llm_service.client:
-        return generate_deterministic_summary(case_meta, chunks)
+        return generate_deterministic_summary(case_meta, chunks), False
 
     # Long case chunk retrieval & combine step
     # Combine chunks 0, 1 (background) + ratio chunks
@@ -655,14 +657,14 @@ async def generate_case_summary(case_meta: Dict[str, Any], chunks: List[Dict[str
             para_map = [(c.get("chunk_index", 0) + 1, c.get("text", "")) for c in selected_chunks]
             ok, _ = verify_holding_claims(text, para_map)
             if ok:
-                return text
+                return text, True
             logger.warning("LLM summary holding claims failed quote verification; using deterministic summary fallback.")
-            return generate_deterministic_summary(case_meta, chunks)
+            return generate_deterministic_summary(case_meta, chunks), False
         logger.warning("LLM summary output did not match required headings; using deterministic summary fallback.")
-        return generate_deterministic_summary(case_meta, chunks)
+        return generate_deterministic_summary(case_meta, chunks), False
     except Exception as e:
         logger.error("Error calling LLM for case summary: %s; falling back to deterministic summary.", e)
-        return generate_deterministic_summary(case_meta, chunks)
+        return generate_deterministic_summary(case_meta, chunks), False
 
 
 # ---------------------------------------------------------------------------
@@ -854,15 +856,18 @@ async def answer_case_question(
     question: str,
     messages: Optional[List[ChatMessage]] = None,
     force_fallback: bool = False
-) -> Tuple[str, Optional[str], Optional[str]]:
-    """Answers a factual question using Groq LLM with strict grounding or deterministic fallback."""
+) -> Tuple[str, Optional[str], Optional[str], bool]:
+    """Answers a factual question using Groq LLM with strict grounding or deterministic fallback.
+    Returns (answer, based_on, paragraph_id, used_model): used_model is True ONLY when the
+    returned answer is actual model output whose holding claims passed quote verification."""
     # First check if the question is an out-of-domain / alien topic (recognized
     # generic intents reach grounded deterministic handling regardless)
     if not _recognized_generic_intent(question.lower()) and not check_presence_in_case(chunks, question):
-        return (UNABLE_LINE, None, None)
+        return (UNABLE_LINE, None, None, False)
 
     if force_fallback or not llm_service.is_active or not llm_service.client:
-        return generate_deterministic_case_answer(case_meta, chunks, question)
+        ans, based_on, para_id = generate_deterministic_case_answer(case_meta, chunks, question)
+        return (ans, based_on, para_id, False)
 
     top_chunks = retrieve_top_case_chunks(chunks, question, top_k=4)
     chunks_context = "\n\n---\n\n".join([
@@ -908,7 +913,8 @@ async def answer_case_question(
         )
         raw_ans = res.text.strip() if res and res.text else ""
         if not raw_ans:
-            return generate_deterministic_case_answer(case_meta, chunks, question)
+            ans, based_on, para_id = generate_deterministic_case_answer(case_meta, chunks, question)
+            return (ans, based_on, para_id, False)
 
         # Extract Based on line if present
         based_on = None
@@ -929,7 +935,7 @@ async def answer_case_question(
                 para_id = f"chunk-{idx}"
 
         if "this case does not say that" in raw_ans.lower():
-            return ("This case does not say that.", None, None)
+            return ("This case does not say that.", None, None, False)
 
         # Deterministic source-grounding check: every holding-claim sentence must
         # carry a verbatim quote from the retrieved paragraphs. Unsupported claims
@@ -938,7 +944,8 @@ async def answer_case_question(
         ok, supporting = verify_holding_claims(raw_ans, para_map)
         if not ok:
             logger.warning("LLM case answer made holding claims without verifiable quotes; using deterministic answer.")
-            return generate_deterministic_case_answer(case_meta, chunks, question)
+            ans, based_on, para_id = generate_deterministic_case_answer(case_meta, chunks, question)
+            return (ans, based_on, para_id, False)
         if supporting:
             # Point the badge at the paragraph(s) that actually contain the
             # verified quote(s), correcting any citation sloppiness.
@@ -948,10 +955,11 @@ async def answer_case_question(
                 based_on = "Paragraphs " + ", ".join(str(n) for n in supporting)
             para_id = f"chunk-{supporting[0] - 1}"
 
-        return (raw_ans, based_on, para_id)
+        return (raw_ans, based_on, para_id, True)
     except Exception as e:
         logger.error("Error in LLM case question answering: %s; falling back to deterministic answer.", e)
-        return generate_deterministic_case_answer(case_meta, chunks, question)
+        ans, based_on, para_id = generate_deterministic_case_answer(case_meta, chunks, question)
+        return (ans, based_on, para_id, False)
 
 
 # ---------------------------------------------------------------------------
@@ -1238,18 +1246,17 @@ async def post_case_chat(payload: CaseChatRequest, request: Request):
                 model_used="summary_cache"
             )
 
-        summary_ans = await generate_case_summary(case_meta, chunks, force_fallback=payload.force_fallback)
+        summary_ans, summary_used_model = await generate_case_summary(case_meta, chunks, force_fallback=payload.force_fallback)
         _SUMMARY_CACHE[cache_key] = summary_ans
 
-        _det = not (llm_service.is_active and not payload.force_fallback)
         return CaseChatResponse(
             case_id=cid,
             answer=summary_ans,
             based_on="Full Judgment Chunks",
             paragraph_id="chunk-0",
-            disclaimer=AUTO_DISCLAIMER if _det else "AI answer, not legal advice",
+            disclaimer="AI answer, not legal advice" if summary_used_model else AUTO_DISCLAIMER,
             cached=False,
-            model_used=llm_service.model if (llm_service.is_active and not payload.force_fallback) else "deterministic_summary"
+            model_used=llm_service.model if summary_used_model else "deterministic_summary"
         )
 
     # 4. Handle explain selection query inside case context
@@ -1268,7 +1275,7 @@ async def post_case_chat(payload: CaseChatRequest, request: Request):
         )
 
     # 5. General factual question
-    ans, based_on, para_id = await answer_case_question(
+    ans, based_on, para_id, used_model = await answer_case_question(
         case_meta=case_meta,
         chunks=chunks,
         question=q,
@@ -1276,15 +1283,14 @@ async def post_case_chat(payload: CaseChatRequest, request: Request):
         force_fallback=payload.force_fallback
     )
 
-    _det = not (llm_service.is_active and not payload.force_fallback)
     return CaseChatResponse(
         case_id=cid,
         answer=ans,
         based_on=based_on,
         paragraph_id=para_id,
-        disclaimer=AUTO_DISCLAIMER if _det else "AI answer, not legal advice",
+        disclaimer="AI answer, not legal advice" if used_model else AUTO_DISCLAIMER,
         cached=False,
-        model_used=llm_service.model if (llm_service.is_active and not payload.force_fallback) else "deterministic_case_chat"
+        model_used=llm_service.model if used_model else "deterministic_case_chat"
     )
 
 

@@ -300,11 +300,12 @@ def test_llm_answer_with_unsupported_holding_falls_back(monkeypatch):
     raw = ("The Court held that the agreement was a restraint of trade and therefore void under Section 27. "
            "The injunction was wrong.\n\nBased on: Paragraphs 2, 3")
     monkeypatch.setattr(casechat, "llm_service", _FakeLLMService(raw))
-    ans, based_on, para_id = asyncio.run(
+    ans, based_on, para_id, used_model = asyncio.run(
         casechat.answer_case_question(FIXTURE_META, FIXTURE_CHUNKS, "What did the court decide?")
     )
     assert "The Court held that" not in ans
     assert "unverified excerpt" in ans or "cannot state the decision" in ans
+    assert used_model is False
 
 
 def test_llm_answer_with_verified_quote_passes_and_corrects_badge(monkeypatch):
@@ -314,12 +315,13 @@ def test_llm_answer_with_verified_quote_passes_and_corrects_badge(monkeypatch):
            '"we hold that the clause is void to the extent of the restriction". '
            'This means only the restricting part falls away.\n\nBased on: Paragraph 1')
     monkeypatch.setattr(casechat, "llm_service", _FakeLLMService(raw))
-    ans, based_on, para_id = asyncio.run(
+    ans, based_on, para_id, used_model = asyncio.run(
         casechat.answer_case_question(FIXTURE_META, FIXTURE_CHUNKS, "What did the court decide?")
     )
     assert "we hold that the clause is void to the extent of the restriction" in ans
     assert based_on == "Paragraph 3"
     assert para_id == "chunk-2"
+    assert used_model is True
 
 
 def test_llm_summary_with_unsupported_holding_falls_back(monkeypatch):
@@ -332,9 +334,10 @@ def test_llm_summary_with_unsupported_holding_falls_back(monkeypatch):
         "Key points:\n- Point one.\n- Point two.\n- Point three."
     )
     monkeypatch.setattr(casechat, "llm_service", _FakeLLMService(fake_summary))
-    out = asyncio.run(casechat.generate_case_summary(FIXTURE_META, FIXTURE_CHUNKS))
+    out, used_model = asyncio.run(casechat.generate_case_summary(FIXTURE_META, FIXTURE_CHUNKS))
     assert "set aside all proceedings" not in out
     assert "not verified" in out or "unverified excerpt" in out or "cannot state" in out
+    assert used_model is False
 
 
 # ---------------------------------------------------------------------------
@@ -413,3 +416,15 @@ def test_gemini_fallback_never_enabled_for_document_routes():
     assert offenders == ["search.py"], offenders
     from app.services import groq_client
     assert groq_client.gemini_fallback_available() is False
+
+
+def test_endpoint_fallback_model_used_provenance(fixture_case):
+    """model_used must name the path that actually produced the answer: the
+    deterministic path must never be labelled with the model's name."""
+    resp = client.post("/api/v1/case-chat", json={
+        "case_id": "fixture-endpoint-case",
+        "question": "What did the court decide?",
+        "force_fallback": True,
+    })
+    assert resp.status_code == 200
+    assert resp.json()["model_used"] == "deterministic_case_chat"
