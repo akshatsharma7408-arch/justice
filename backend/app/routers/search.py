@@ -79,12 +79,10 @@ def _withhold_curated_summaries(results):
     labels carried on search results (e.g. baked into stored payloads): such labels are
     app seed records, not verified treatments. Idempotent."""
     results = _qdrant_withhold_curated_summaries(results)
+    from app.services.neo4j_service import qualify_seed_status
     for r in results or []:
-        if isinstance(r, dict):
-            label = r.get("statusLabel") or ""
-            if label and "UNVERIFIED" not in label.upper():
-                r["statusLabel"] = f"{label} (UNVERIFIED APP RECORD)"
-                r["statusVerified"] = False
+        if isinstance(r, dict) and (r.get("statusLabel") or ""):
+            qualify_seed_status(r)
     return results
 
 class SearchResponse(BaseModel):

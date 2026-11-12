@@ -387,11 +387,12 @@ def test_citator_fallback_seed_status_is_qualified():
     from app.services import neo4j_service as neo4j_mod
     rec = neo4j_mod.neo4j_service.get_citator_case("sc-2006-percept")
     assert rec is not None
-    assert "UNVERIFIED APP RECORD" in rec["statusLabel"]
+    assert rec["statusLabel"] == "Unverified app record"
     assert rec["statusDescription"].startswith("App seed record - not verified")
+    assert "Seed assertion (unverified): GOOD LAW" in rec["statusDescription"]
     assert rec.get("statusVerified") is False
     raw = neo4j_mod.ARTICLE_141_GRAPH_DATA["sc-2006-percept"]
-    assert "UNVERIFIED" not in raw["statusLabel"].upper()
+    assert raw["statusLabel"] == "GOOD LAW (ARTICLE 141 BINDING)"
 
 
 def test_search_results_carry_qualified_seed_status():
@@ -400,7 +401,8 @@ def test_search_results_carry_qualified_seed_status():
     from app.routers import search as search_router
     results = [{"id": "x", "title": "T", "statusLabel": "GOOD LAW (ARTICLE 141 BINDING)", "ratioSummary": ""}]
     out = search_router._withhold_curated_summaries(results)
-    assert "UNVERIFIED APP RECORD" in out[0]["statusLabel"]
+    assert out[0]["statusLabel"] == "Unverified app record"
+    assert "Seed assertion (unverified): GOOD LAW" in out[0].get("statusDescription", "")
     assert out[0].get("statusVerified") is False
 
 

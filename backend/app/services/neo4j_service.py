@@ -325,18 +325,25 @@ RETURN a.id AS source, b.id AS target, r.kind AS kind
 _NODE_LOOKUP_QUERY = "MATCH (c:Case) WHERE c.id IN $ids RETURN c"
 
 SEED_STATUS_NOTE = "App seed record - not verified against later cases."
+UNVERIFIED_SEED_LABEL = "Unverified app record"
 
 
 def qualify_seed_status(record: Dict[str, Any]) -> None:
-    """Clearly qualify seeded authority claims (status labels/descriptions) that the
-    app has NOT verified against later cases. The raw seed literals stay untouched;
-    the qualification is applied at serve time. Idempotent."""
+    """Neutralize seeded authority claims (GOOD LAW / ARTICLE 141 BINDING style labels)
+    that the app has NOT verified against later cases. The visible label is a neutral
+    "Unverified app record"; the historical seed assertion is kept only as clearly
+    qualified detail in the description. The raw seed literals stay untouched; the
+    qualification is applied at serve time. Idempotent."""
     label = record.get("statusLabel") or ""
-    if label and "UNVERIFIED" not in label.upper():
-        record["statusLabel"] = f"{label} (UNVERIFIED APP RECORD)"
     desc = record.get("statusDescription") or ""
-    if desc and not desc.startswith("App seed record"):
-        record["statusDescription"] = f"{SEED_STATUS_NOTE} {desc}"
+    if label and label != UNVERIFIED_SEED_LABEL:
+        if label not in desc:
+            desc = f"Seed assertion (unverified): {label}. {desc}".strip()
+        record["statusLabel"] = UNVERIFIED_SEED_LABEL
+    if desc and not desc.startswith(SEED_STATUS_NOTE):
+        desc = f"{SEED_STATUS_NOTE} {desc}"
+    if desc:
+        record["statusDescription"] = desc
     record["statusVerified"] = False
 
 
