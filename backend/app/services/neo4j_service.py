@@ -324,6 +324,21 @@ RETURN a.id AS source, b.id AS target, r.kind AS kind
 
 _NODE_LOOKUP_QUERY = "MATCH (c:Case) WHERE c.id IN $ids RETURN c"
 
+SEED_STATUS_NOTE = "App seed record - not verified against later cases."
+
+
+def qualify_seed_status(record: Dict[str, Any]) -> None:
+    """Clearly qualify seeded authority claims (status labels/descriptions) that the
+    app has NOT verified against later cases. The raw seed literals stay untouched;
+    the qualification is applied at serve time. Idempotent."""
+    label = record.get("statusLabel") or ""
+    if label and "UNVERIFIED" not in label.upper():
+        record["statusLabel"] = f"{label} (UNVERIFIED APP RECORD)"
+    desc = record.get("statusDescription") or ""
+    if desc and not desc.startswith("App seed record"):
+        record["statusDescription"] = f"{SEED_STATUS_NOTE} {desc}"
+    record["statusVerified"] = False
+
 
 class Neo4jService:
     def __init__(self):
@@ -361,6 +376,7 @@ class Neo4jService:
         if static:
             record = dict(static)
             record["dataSource"] = "in_memory_fallback"
+            qualify_seed_status(record)
             return record
         return None
 

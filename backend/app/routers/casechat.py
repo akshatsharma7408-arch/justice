@@ -544,7 +544,8 @@ Key points:
 - (Point 2: 1 concise sentence)
 - (Point 3: 1 concise sentence)
 
-Use simple everyday words. Explain any legal jargon in brackets [like this]. Answer ONLY from the provided text. Do not invent facts, section numbers, or other case names."""
+Use simple everyday words. Explain any legal jargon in brackets [like this]. Answer ONLY from the provided text. Do not invent facts, section numbers, or other case names.
+Whenever you state what the court held, decided, declared, upheld, overruled, set aside, allowed or dismissed, you MUST back the sentence with an exact word-for-word quotation from the provided text in double quotes. If you cannot quote the exact words, write instead that the stored text does not state this."""
 
 
 def generate_deterministic_summary(case_meta: Dict[str, Any], chunks: List[Dict[str, Any]]) -> str:
@@ -651,7 +652,12 @@ async def generate_case_summary(case_meta: Dict[str, Any], chunks: List[Dict[str
         )
         text = res.text.strip() if res and res.text else ""
         if "What it was about:" in text and "What the court decided:" in text:
-            return text
+            para_map = [(c.get("chunk_index", 0) + 1, c.get("text", "")) for c in selected_chunks]
+            ok, _ = verify_holding_claims(text, para_map)
+            if ok:
+                return text
+            logger.warning("LLM summary holding claims failed quote verification; using deterministic summary fallback.")
+            return generate_deterministic_summary(case_meta, chunks)
         logger.warning("LLM summary output did not match required headings; using deterministic summary fallback.")
         return generate_deterministic_summary(case_meta, chunks)
     except Exception as e:
@@ -759,6 +765,89 @@ def generate_deterministic_case_answer(case_meta: Dict[str, Any], chunks: List[D
     return (UNABLE_LINE, None, None)
 
 
+# ---------------------------------------------------------------------------
+# Holding-claim quote verification (model output -> deterministic check)
+# ---------------------------------------------------------------------------
+# A sentence that asserts what a court held/decided/declared (a "holding
+# claim") must carry an exact word-for-word quotation from the retrieved case
+# paragraphs. The check is deterministic: the quoted span must appear verbatim
+# (whitespace/case-normalised) in the retrieved text. Claims that cannot be
+# verified this way are unsupported; the caller then returns the honest
+# deterministic limited response instead of the unsupported claim.
+_HOLDING_CLAIM_RE = re.compile(
+    r"(held that|court held|declared|overruled|upheld|set aside|dismissed|"
+    r"allowed the appeal|found that|of the view|concluded that|came to the conclusion|"
+    r"binding|unconstitutional|"
+    r"(?:is|was|were|be|been|held|found)\s+void)",
+    re.IGNORECASE,
+)
+_QUOTE_RE = re.compile(r'["\u201c]([^"\u201c\u201d]{20,600})["\u201d]')
+_CLAIM_STOPWORDS = {
+    "the", "and", "for", "that", "this", "with", "from", "have", "has", "had",
+    "was", "were", "are", "been", "being", "which", "who", "whom", "whose",
+    "their", "there", "then", "than", "thus", "also", "such", "said", "says",
+    "court", "held", "noting", "noted", "because", "therefore", "hence",
+    "appeal", "appeals", "appellant", "appellants", "respondent", "respondents",
+}
+
+
+def _content_stems(text: str) -> set:
+    """Rough content-word stems (len>=4, light suffix stripping) for topical-overlap checks."""
+    stems = set()
+    for w in re.findall(r"[a-z]{4,}", text.lower()):
+        if w in _CLAIM_STOPWORDS:
+            continue
+        for suf in ("ations", "ation", "tion", "sion", "ness", "ment", "ally", "ies", "ing", "ied", "es", "ed", "ly", "s"):
+            if w.endswith(suf) and len(w) - len(suf) >= 4:
+                w = w[: -len(suf)]
+                break
+        stems.add(w)
+    return stems
+
+
+def _normalize_ws(s: str) -> str:
+    return re.sub(r"\s+", " ", s).strip().lower()
+
+
+def _split_sentences(text: str) -> List[str]:
+    return [s for s in re.split(r"(?<=[.!?])\s+", text.replace("\n", " ")) if s.strip()]
+
+
+def verify_holding_claims(answer: str, paragraphs: List[Tuple[int, str]]) -> Tuple[bool, List[int]]:
+    """Check holding-claim sentences in a model answer against retrieved paragraphs.
+
+    paragraphs: list of (paragraph_number, paragraph_text) as shown to the model.
+    Returns (ok, supporting_paragraph_numbers):
+    - ok=True with [] when the answer makes no holding claims (nothing to verify).
+    - ok=True with the paragraph numbers containing the verified quotes when every
+      holding-claim sentence carries a verbatim quotation from the retrieved text.
+    - ok=False when any holding-claim sentence lacks a verifiable quotation.
+    """
+    claims = [s for s in _split_sentences(answer) if _HOLDING_CLAIM_RE.search(s)]
+    if not claims:
+        return True, []
+    norm_paras = [(n, _normalize_ws(t)) for n, t in paragraphs]
+    supporting: List[int] = []
+    for sent in claims:
+        claim_stems = _content_stems(_QUOTE_RE.sub(" ", sent))
+        verified = False
+        for q in _QUOTE_RE.findall(sent):
+            nq = _normalize_ws(q)
+            if not (claim_stems & _content_stems(q)):
+                # A genuine but topically unrelated quote does not support the claim.
+                continue
+            for n, t in norm_paras:
+                if nq and nq in t:
+                    verified = True
+                    supporting.append(n)
+                    break
+            if verified:
+                break
+        if not verified:
+            return False, []
+    return True, sorted(set(supporting))
+
+
 async def answer_case_question(
     case_meta: Dict[str, Any],
     chunks: List[Dict[str, Any]],
@@ -789,7 +878,8 @@ async def answer_case_question(
         "1. Answer using ONLY the provided case text. Never invent facts, section numbers, or other case names.\n"
         "2. If the answer is not in the case text, or if the case does not mention it, you MUST say exactly: 'This case does not say that.'\n"
         "3. Use simple everyday words. Explain any legal jargon in brackets immediately [e.g., void ab initio [invalid from the very start], ratio decidendi [the legal rule of the decision]].\n"
-        "4. At the very end of your response, on a new line, write: 'Based on: Paragraph X' (or 'Based on: Paragraphs X, Y') pointing to the paragraph(s) that contained the answer."
+        "4. Whenever you state what the court held, decided, declared, upheld, overruled, set aside, allowed or dismissed, you MUST back the sentence with an exact word-for-word quotation from the provided paragraphs in double quotes. If you cannot quote the exact words, do not make the statement; say the stored text does not state this.\n"
+        "5. At the very end of your response, on a new line, write: 'Based on: Paragraph X' (or 'Based on: Paragraphs X, Y') pointing to the paragraph(s) that contained the answer."
     )
 
     history_str = ""
@@ -840,6 +930,23 @@ async def answer_case_question(
 
         if "this case does not say that" in raw_ans.lower():
             return ("This case does not say that.", None, None)
+
+        # Deterministic source-grounding check: every holding-claim sentence must
+        # carry a verbatim quote from the retrieved paragraphs. Unsupported claims
+        # are replaced by the honest deterministic limited response.
+        para_map = [(c.get("chunk_index", 0) + 1, c.get("text", "")) for c in top_chunks]
+        ok, supporting = verify_holding_claims(raw_ans, para_map)
+        if not ok:
+            logger.warning("LLM case answer made holding claims without verifiable quotes; using deterministic answer.")
+            return generate_deterministic_case_answer(case_meta, chunks, question)
+        if supporting:
+            # Point the badge at the paragraph(s) that actually contain the
+            # verified quote(s), correcting any citation sloppiness.
+            if len(supporting) == 1:
+                based_on = f"Paragraph {supporting[0]}"
+            else:
+                based_on = "Paragraphs " + ", ".join(str(n) for n in supporting)
+            para_id = f"chunk-{supporting[0] - 1}"
 
         return (raw_ans, based_on, para_id)
     except Exception as e:

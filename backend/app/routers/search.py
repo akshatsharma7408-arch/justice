@@ -71,7 +71,21 @@ class SearchRequest(BaseModel):
     limit: int = Field(8, ge=1, le=20, description="Maximum number of precedents to return (up to 20)")
     force_fallback: bool = Field(False, description="Whether to force deterministic legal fallback")
 
-from app.services.qdrant_service import withhold_curated_summaries as _withhold_curated_summaries
+from app.services.qdrant_service import withhold_curated_summaries as _qdrant_withhold_curated_summaries
+
+
+def _withhold_curated_summaries(results):
+    """Withhold unverified curated summaries AND qualify any seeded authority-status
+    labels carried on search results (e.g. baked into stored payloads): such labels are
+    app seed records, not verified treatments. Idempotent."""
+    results = _qdrant_withhold_curated_summaries(results)
+    for r in results or []:
+        if isinstance(r, dict):
+            label = r.get("statusLabel") or ""
+            if label and "UNVERIFIED" not in label.upper():
+                r["statusLabel"] = f"{label} (UNVERIFIED APP RECORD)"
+                r["statusVerified"] = False
+    return results
 
 class SearchResponse(BaseModel):
     model_config = {"protected_namespaces": ()}

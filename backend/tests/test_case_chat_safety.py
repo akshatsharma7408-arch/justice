@@ -6,6 +6,7 @@ arbitrary text chunk into a holding, a binding-precedent claim, or an Article 14
 claim. They quote clearly labelled unverified excerpts or decline instead.
 """
 
+import asyncio
 import sys
 import base64
 from pathlib import Path
@@ -231,3 +232,184 @@ def test_genuinely_unsupported_question_declines_honestly():
     assert "cannot establish an answer" in ans
     assert "does not say that" not in ans
 
+
+
+# ---------------------------------------------------------------------------
+# Holding-claim quote verification (model path -> deterministic check)
+# ---------------------------------------------------------------------------
+
+class _FakeModels:
+    def __init__(self, text):
+        self._text = text
+
+    def generate_content(self, contents=None, config=None):
+        class _Res:
+            pass
+        r = _Res()
+        r.text = self._text
+        return r
+
+
+class _FakeClient:
+    def __init__(self, text):
+        self.models = _FakeModels(text)
+
+
+class _FakeLLMService:
+    def __init__(self, text):
+        self.is_active = True
+        self.client = _FakeClient(text)
+
+
+PARA_MAP = [(c["chunk_index"] + 1, c["text"]) for c in FIXTURE_CHUNKS]
+
+
+def test_verify_holding_claims_no_claims_passes():
+    ok, supporting = casechat.verify_holding_claims(
+        "In this case, the appellant was Alpha Traders and the respondent was the State of Testland.",
+        PARA_MAP,
+    )
+    assert ok is True
+    assert supporting == []
+
+
+def test_verify_holding_claims_verbatim_quote_passes():
+    ans = ('The court held that the clause was void: '
+           '"we hold that the clause is void to the extent of the restriction".')
+    ok, supporting = casechat.verify_holding_claims(ans, PARA_MAP)
+    assert ok is True
+    assert supporting == [3]
+
+
+def test_verify_holding_claims_fabricated_quote_fails():
+    ans = ('The court held that the agreement was unenforceable: '
+           '"we hold that the entire agreement is void ab initio".')
+    ok, _ = casechat.verify_holding_claims(ans, PARA_MAP)
+    assert ok is False
+
+
+def test_verify_holding_claims_claim_without_quote_fails():
+    ans = "The Court held that the clause was a restraint of trade and therefore void under Section 27."
+    ok, _ = casechat.verify_holding_claims(ans, PARA_MAP)
+    assert ok is False
+
+
+def test_llm_answer_with_unsupported_holding_falls_back(monkeypatch):
+    """A model answer asserting a holding without a verifiable quote must be
+    replaced by the honest deterministic limited response, not shown."""
+    raw = ("The Court held that the agreement was a restraint of trade and therefore void under Section 27. "
+           "The injunction was wrong.\n\nBased on: Paragraphs 2, 3")
+    monkeypatch.setattr(casechat, "llm_service", _FakeLLMService(raw))
+    ans, based_on, para_id = asyncio.run(
+        casechat.answer_case_question(FIXTURE_META, FIXTURE_CHUNKS, "What did the court decide?")
+    )
+    assert "The Court held that" not in ans
+    assert "unverified excerpt" in ans or "cannot state the decision" in ans
+
+
+def test_llm_answer_with_verified_quote_passes_and_corrects_badge(monkeypatch):
+    """A model answer whose holding claim carries a verbatim quote passes; the
+    Based-on badge is corrected to the paragraph actually containing the quote."""
+    raw = ('The court held the clause void to a limited extent: '
+           '"we hold that the clause is void to the extent of the restriction". '
+           'This means only the restricting part falls away.\n\nBased on: Paragraph 1')
+    monkeypatch.setattr(casechat, "llm_service", _FakeLLMService(raw))
+    ans, based_on, para_id = asyncio.run(
+        casechat.answer_case_question(FIXTURE_META, FIXTURE_CHUNKS, "What did the court decide?")
+    )
+    assert "we hold that the clause is void to the extent of the restriction" in ans
+    assert based_on == "Paragraph 3"
+    assert para_id == "chunk-2"
+
+
+def test_llm_summary_with_unsupported_holding_falls_back(monkeypatch):
+    """A model summary whose decided-section asserts an unverifiable holding must
+    be replaced by the deterministic summary."""
+    fake_summary = (
+        "What it was about:\nA dispute about a dealership agreement.\n\n"
+        "What the court decided:\nThe Court held that the entire agreement was void and set aside all proceedings.\n\n"
+        "Why it matters:\nIt shows clauses can fail.\n\n"
+        "Key points:\n- Point one.\n- Point two.\n- Point three."
+    )
+    monkeypatch.setattr(casechat, "llm_service", _FakeLLMService(fake_summary))
+    out = asyncio.run(casechat.generate_case_summary(FIXTURE_META, FIXTURE_CHUNKS))
+    assert "set aside all proceedings" not in out
+    assert "not verified" in out or "unverified excerpt" in out or "cannot state" in out
+
+
+# ---------------------------------------------------------------------------
+# Safeguard bypass probes + seed-label qualification + Gemini upload boundary
+# ---------------------------------------------------------------------------
+
+def test_bypass_false_claim_with_unrelated_genuine_quote_fails():
+    """A false disposition claim accompanied by a genuine but topically
+    unrelated verbatim quote (same sentence) must NOT pass verification."""
+    ans = ('The court held that the appeal was dismissed for limitation, noting '
+           '"we hold that the clause is void to the extent of the restriction".')
+    ok, _ = casechat.verify_holding_claims(ans, PARA_MAP)
+    assert ok is False
+
+
+def test_bypass_evasive_disposition_phrasings_require_quotes():
+    """Disposition phrasings beyond 'held that' must also require verbatim quotes."""
+    for ans in (
+        "The court was of the view that the clause is void.",
+        "The court found that the contract was unenforceable.",
+        "The judges concluded that the agreement was void.",
+    ):
+        ok, _ = casechat.verify_holding_claims(ans, PARA_MAP)
+        assert ok is False, ans
+
+
+def test_bypass_split_claim_and_quote_fails():
+    """Claim in one sentence, genuine quote in another: the claim itself is
+    unsupported and must fail verification."""
+    ans = ('The court held that the appeal was dismissed for limitation. '
+           'Elsewhere the text says "we hold that the clause is void to the extent of the restriction".')
+    ok, _ = casechat.verify_holding_claims(ans, PARA_MAP)
+    assert ok is False
+
+
+def test_topically_matching_quote_still_passes():
+    ans = ('The court held the clause void to a limited extent: '
+           '"we hold that the clause is void to the extent of the restriction".')
+    ok, supporting = casechat.verify_holding_claims(ans, PARA_MAP)
+    assert ok is True
+    assert supporting == [3]
+
+
+def test_citator_fallback_seed_status_is_qualified():
+    """Seeded citator status (GOOD LAW / ARTICLE 141 style claims) must be served
+    clearly qualified as unverified app records; raw seed data stays untouched."""
+    from app.services import neo4j_service as neo4j_mod
+    rec = neo4j_mod.neo4j_service.get_citator_case("sc-2006-percept")
+    assert rec is not None
+    assert "UNVERIFIED APP RECORD" in rec["statusLabel"]
+    assert rec["statusDescription"].startswith("App seed record - not verified")
+    assert rec.get("statusVerified") is False
+    raw = neo4j_mod.ARTICLE_141_GRAPH_DATA["sc-2006-percept"]
+    assert "UNVERIFIED" not in raw["statusLabel"].upper()
+
+
+def test_search_results_carry_qualified_seed_status():
+    """Search results whose stored payload carries an unqualified seed authority
+    label must be served with the label clearly qualified."""
+    from app.routers import search as search_router
+    results = [{"id": "x", "title": "T", "statusLabel": "GOOD LAW (ARTICLE 141 BINDING)", "ratioSummary": ""}]
+    out = search_router._withhold_curated_summaries(results)
+    assert "UNVERIFIED APP RECORD" in out[0]["statusLabel"]
+    assert out[0].get("statusVerified") is False
+
+
+def test_gemini_fallback_never_enabled_for_document_routes():
+    """Uploaded documents must never reach Gemini: only the search-answer route
+    (typed question + public corpus) may enable the external fallback."""
+    import pathlib
+    routers_dir = pathlib.Path(casechat.__file__).resolve().parent
+    offenders = []
+    for f in routers_dir.glob("*.py"):
+        if "ALLOW_EXTERNAL_FALLBACK.set(True)" in f.read_text():
+            offenders.append(f.name)
+    assert offenders == ["search.py"], offenders
+    from app.services import groq_client
+    assert groq_client.gemini_fallback_available() is False
