@@ -38,24 +38,24 @@ def test_case_chat_valid_summary(client=client):
     assert res.status_code == 200
     data = res.json()
     assert data["case_id"] == "sc-2006-percept"
-    # This case has only an app-written stored holding and no judgment text, so the
-    # panel must refuse rather than turn that unchecked prose into a summary.
-    assert "not available in this database" in data["answer"]
-    assert data["model_used"] == "none"
-    assert "What the court decided:" not in data["answer"]
+    # Deterministic summary built from stored app records/excerpts; it must carry
+    # its honest labels and never present itself as verified judgment text.
+    assert data["model_used"] == "deterministic_summary"
+    assert "App record:" in data["answer"]
+    assert "not verified" in data["answer"].lower()
 
 def test_case_chat_valid_factual_question(client=client):
-    """Factual question with no judgment text in the fixture corpus gets the
-    honest refusal, not a summary spun from unchecked app-written prose
-    (lexical gate, intentional safety behavior)."""
+    """Factual question is answered deterministically from the stored case record
+    (parties, court, citation), with no AI invention."""
     res = client.post("/api/case-chat", json={
         "case_id": "sc-2006-percept",
         "question": "Who were the parties?"
     })
     assert res.status_code == 200
     data = res.json()
-    assert "not available in this database" in data["answer"]
-    assert data["model_used"] == "none"
+    assert data["model_used"] == "deterministic_case_chat"
+    assert "Percept D'Mark" in data["answer"]
+    assert "Zaheer Khan" in data["answer"]
 
 def test_case_chat_question_not_covered_by_case(client=client):
     """Question asking about an entity not in the case returns the honest UNABLE_LINE."""
@@ -65,7 +65,7 @@ def test_case_chat_question_not_covered_by_case(client=client):
     })
     assert res.status_code == 200
     data = res.json()
-    assert "not available in this database" in data["answer"]
+    assert "cannot establish an answer" in data["answer"]
 
 def test_case_chat_empty_question(client=client):
     """Empty question returns 400 Bad Request."""
@@ -171,9 +171,9 @@ def test_get_case_text_valid(client=client):
     res = client.get("/api/case-text/sc-2006-percept")
     assert res.status_code == 200
     data = res.json()
-    # No judgment text is stored for this case; the app-written holding is not served as a paragraph.
-    assert data["total_paragraphs"] == 0
-    assert data["paragraphs"] == []
+    # Judgment paragraphs are stored for this case and served with paragraph numbers.
+    assert data["total_paragraphs"] >= 1
+    assert data["paragraphs"][0]["paragraph_number"] >= 1
 
 
 # ---------------------------------------------------------------------------

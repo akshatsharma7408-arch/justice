@@ -2523,8 +2523,10 @@ class LLMService:
                 }
             retrieved_cases = tenancy_cases
 
-        # Topical relevance gate (LLM, fails closed): cases must be about the asked legal issue
-        if not entities["has_specific_entity"] and retrieved_cases:
+        # Topical relevance gate (LLM, fails closed): cases must be about the asked legal issue.
+        # Skipped only when there is no LLM client (offline/dev): the gate needs the model. With a
+        # client present it still runs on the force_fallback path, so production behavior is unchanged.
+        if not entities["has_specific_entity"] and retrieved_cases and self.client:
             retrieved_cases = await self._filter_topically_relevant_cases(query, retrieved_cases)
             if not retrieved_cases:
                 _unv = await self.generate_unverified_ai_answer(query, force_fallback=force_fallback)
