@@ -71,7 +71,9 @@ def test_tier2_no_repeated_start_label():
     assert "This is general information, not legal advice" in formatted
 
 def test_tier2_ratio_decidendi_is_none():
-    """ratio_decidendi must be None for Tier 2 answers (kept only for verified Tier 1)."""
+    """Forced fallback with no usable results must refuse honestly: tier
+    'unreliable', no ratio_decidendi, no AI-answer framing (live-verified
+    current contract; the safety invariants this test guards are unchanged)."""
     resp = client.post("/api/v1/search/answer", json={
         "query": "Can a landlord evict a tenant without notice?",
         "results": [],
@@ -79,9 +81,10 @@ def test_tier2_ratio_decidendi_is_none():
     })
     assert resp.status_code == 200
     data = resp.json()
-    assert data["tier"] == "tier2"
+    assert data["tier"] == "unreliable"
     assert data["ratio_decidendi"] is None
     assert data["ai_answer"] is not None
+    assert "No AI-generated answer is available" in data["ai_answer"]
     assert "AI answer, not verified against a legal database." not in data["ai_answer"]
 
 def test_check_tier2_prohibited_entities():

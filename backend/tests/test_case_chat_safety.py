@@ -599,3 +599,36 @@ def test_all_topic_fallback_branches_use_neutral_stored_record_wording(monkeypat
         assert "not verified" in ans, f"topic {q!r} missing not-verified note"
         assert out["tier"] == "deterministic_record"
         assert "no AI used" in out["tier_label"]
+
+
+def test_bench_metadata_is_never_invented():
+    """A single recorded judge name is the authoring judge, not a 1-judge bench.
+    Unknown benches must be labelled not recorded, never fabricated."""
+    from app.routers.cases import _normalize_case_record
+
+    single = _normalize_case_record({"id": "x1", "title": "A v. B", "bench": "H.K. Sema, J."}, "x1")
+    assert "1-Judge" not in (single.get("benchType") or "")
+    assert "not recorded" in single["benchType"]
+
+    no_bench = _normalize_case_record({"id": "x2", "title": "A v. B"}, "x2")
+    assert "not recorded" in no_bench["benchType"]
+
+    derived = _normalize_case_record({"id": "x3", "title": "A v. B", "bench": "H.K. Sema, J., Dr. A.R. Lakshmanan, J."}, "x3")
+    assert derived["benchSize"] == 2
+    assert "unverified" in derived["benchType"]
+
+    curated = _normalize_case_record({"id": "x4", "title": "A v. B", "benchSize": 5, "benchType": "Constitution Bench"}, "x4")
+    assert curated["benchType"] == "Constitution Bench"
+    assert "unverified" not in curated["benchType"]
+
+
+def test_smart_citator_dag_labels_qualified_at_display():
+    """SmartCitator DAG treatment labels must be qualified at their point of
+    display, and the demo graph must not carry the known-false Percept ratio."""
+    import pathlib
+    root = pathlib.Path(__file__).resolve().parents[2]
+    src = (root / "src" / "components" / "SmartCitator.jsx").read_text()
+    assert "completely void under Section 27" not in src
+    assert "Doctrine of restraint of trade applies strictly post-service" not in src
+    assert "unverified app record" in src
+    assert "{node.statusLabel.toUpperCase()}" not in src

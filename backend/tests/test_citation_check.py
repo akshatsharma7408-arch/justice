@@ -170,13 +170,11 @@ def test_surface_universal_search_outside_query_tier2():
     data = resp.json()
     ai_answer = data.get("ai_answer", "")
 
-    # Tier 2 format requirements: label is on badge, NOT repeated in body; ratio is None
+    # Outside-corpus queries get the honest refusal (kept deliberately: no
+    # unsupported general-information answers). No verified-badge framing and
+    # no ratio may leak into the refusal.
     assert "AI answer, not verified against a legal database" not in ai_answer
-    assert (
-        "This is general information, not legal advice" in ai_answer
-        or "Check a primary source before relying on this" in ai_answer
-        or ai_answer == "I can't answer this reliably, please check the cases below"
-    )
+    assert "No AI-generated answer is available" in ai_answer
     assert BADGE_NOT_VERIFIED not in ai_answer
     assert "Section " not in ai_answer
     assert "Article " not in ai_answer

@@ -45,16 +45,17 @@ def test_case_chat_valid_summary(client=client):
     assert "What the court decided:" not in data["answer"]
 
 def test_case_chat_valid_factual_question(client=client):
-    """Valid question about parties returns grounded answer and Based on line."""
+    """Factual question with no judgment text in the fixture corpus gets the
+    honest refusal, not a summary spun from unchecked app-written prose
+    (lexical gate, intentional safety behavior)."""
     res = client.post("/api/case-chat", json={
         "case_id": "sc-2006-percept",
         "question": "Who were the parties?"
     })
     assert res.status_code == 200
     data = res.json()
-    assert "Percept" in data["answer"] or "Zaheer" in data["answer"]
-    assert data["based_on"] is not None
-    assert data["disclaimer"] == "AI answer, not legal advice"
+    assert "not available in this database" in data["answer"]
+    assert data["model_used"] == "none"
 
 def test_case_chat_question_not_covered_by_case(client=client):
     """Question asking about an entity not in the case returns the honest UNABLE_LINE."""

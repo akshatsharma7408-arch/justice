@@ -24,7 +24,7 @@ const CITATION_GRAPH_NODES = [
     statusLabel: "Target Precedent",
     x: 400,
     y: 175,
-    ratio: "Post-employment non-compete covenants are completely void under Section 27. Doctrine of restraint of trade applies strictly post-service."
+    ratio: "Stored app record (not verified against the judgment): enforcement of a post-termination negative covenant refused - Section 14 Specific Relief Act (personal services); Section 27 addressed only on an assuming-without-admitting basis."
   },
   {
     id: 'node-affirmed',
@@ -580,7 +580,7 @@ export default function SmartCitator({ initialCaseId, onActiveCaseChange }) {
                           style={{ transition: 'stroke 150ms ease, fill 150ms ease, stroke-width 150ms ease' }}
                         />
                         <text textAnchor="middle" y="-18" fill={statusColor} fontSize="8" fontWeight="700" letterSpacing="0.05em" fontFamily="Inter, sans-serif">
-                          {node.statusLabel.toUpperCase()}
+                          {(node.status === 'TARGET' ? node.statusLabel : node.statusLabel + ' (unverified app record)').toUpperCase()}
                         </text>
                         <text textAnchor="middle" y="-2" fill="#FFFFFF" fontSize="10.5" fontWeight="600" fontFamily="Playfair Display, Georgia, serif">
                           {(node.shortName || node.name).length > 25 ? (node.shortName || node.name).slice(0, 24) + '…' : (node.shortName || node.name)}
@@ -611,7 +611,7 @@ export default function SmartCitator({ initialCaseId, onActiveCaseChange }) {
               <div className="node-detail-drawer animate-fade-in">
                 <div className="node-detail-header">
                   <div className="node-detail-title-cluster">
-                    <span className="node-detail-tag mono">{selectedGraphNode.statusLabel}</span>
+                    <span className="node-detail-tag mono">{selectedGraphNode.status === 'TARGET' ? selectedGraphNode.statusLabel : selectedGraphNode.statusLabel + ' (unverified app record)'}</span>
                     <h4 className="node-detail-name font-serif">{selectedGraphNode.name}</h4>
                     <span className="node-detail-citation mono">{selectedGraphNode.citation} &bull; {selectedGraphNode.court}</span>
                   </div>

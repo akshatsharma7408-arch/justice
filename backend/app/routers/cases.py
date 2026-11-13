@@ -405,16 +405,31 @@ def _normalize_case_record(raw: Dict[str, Any], case_id: str) -> Dict[str, Any]:
     court = raw.get("court") or "Supreme Court of India"
     year = raw.get("decisionYear") or raw.get("year")
 
-    # Bench details
+    # Bench details: only curated benchSize/benchType metadata is presented as-is.
+    # A raw "bench" name list is not reliable bench metadata - a single recorded
+    # name is usually the authoring judge, not a 1-judge bench - so derived sizes
+    # are only shown for 2+ names and always marked unverified; otherwise the
+    # bench is reported as not recorded rather than invented.
     bench_size = raw.get("benchSize")
     bench_type = raw.get("benchType")
     if not bench_size:
         bench_str = raw.get("bench") or ""
         if bench_str:
-            judges_list = [j.strip() for j in re.split(r'[,;&]|\band\b', bench_str) if j.strip()]
-            bench_size = len(judges_list) if len(judges_list) > 0 else None
+            suffix_re = re.compile(r"^(hon'?ble|mr|mrs|ms|dr|justice|j|jj|c\.?j\.?i\.?|c\.?j\.?|cj|j\.|jj\.|,)+[.\s,]*$", re.IGNORECASE)
+            judges_list = [
+                j.strip() for j in re.split(r'[,;&]|\band\b', bench_str)
+                if j.strip() and not suffix_re.match(j.strip())
+            ]
+            derived = len(judges_list) if len(judges_list) > 0 else None
+            if derived and derived >= 2:
+                bench_size = derived
+                if not bench_type:
+                    bench_type = ("Constitution Bench" if derived >= 5 else ("Division Bench" if derived == 2 else f"{derived}-Judge Bench"))
+                    bench_type = f"{bench_type} (derived from raw text; unverified)"
     if not bench_type and bench_size:
         bench_type = "Constitution Bench" if bench_size >= 5 else ("Division Bench" if bench_size == 2 else f"{bench_size}-Judge Bench")
+    if not bench_type:
+        bench_type = "Bench not recorded (unverified)"
 
     # Statutes
     statutes = list(raw.get("statutes", []))
