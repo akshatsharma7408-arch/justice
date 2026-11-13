@@ -566,3 +566,36 @@ def test_seed_sources_carry_no_false_percept_holding():
     block = qdrant_src.split('"percept": {', 1)[1].split("},", 1)[0]
     assert "void ab initio" not in block
     assert "assuming without admitting" in block
+
+
+def test_all_topic_fallback_branches_use_neutral_stored_record_wording(monkeypatch):
+    """Every topic-specific deterministic synthesis branch must present holdings
+    as unverified stored records, never as what the Supreme Court held."""
+    import re
+    topics = [
+        "right to privacy",
+        "basic structure doctrine",
+        "landlord tenant eviction rent",
+        "live-in relationship legal",
+        "arrest custody police",
+        "anticipatory bail",
+        "murder culpable homicide difference",
+        "liquidated damages earnest money",
+        "precedent hierarchy larger bench",
+    ]
+    authority_patterns = [
+        r"the Supreme Court (?:unanimously )?held",
+        r"the Court (?:affirmed|established|settled|mandated|recognized|held)",
+        r"the Supreme Court has firmly settled",
+        r"[Aa]s established by the Supreme Court",
+        r"authoritatively held",
+    ]
+    for q in topics:
+        svc = _make_search_svc(monkeypatch, "not_found")
+        out = asyncio.run(svc.synthesize_search_answer(q, [dict(SEARCH_FIXTURE_CASE)]))
+        ans = out["answer"]
+        for pat in authority_patterns:
+            assert not re.search(pat, ans), f"topic {q!r} asserts authority: {pat}"
+        assert "not verified" in ans, f"topic {q!r} missing not-verified note"
+        assert out["tier"] == "deterministic_record"
+        assert "no AI used" in out["tier_label"]

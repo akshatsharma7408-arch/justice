@@ -2667,27 +2667,27 @@ class LLMService:
             ]
         elif any(w in q_low for w in ["privacy", "article 21", "fundamental right"]):
             ans_str = (
-                f"In Justice K.S. Puttaswamy (Retd.) v. Union of India (2017, 9-judge Constitution Bench), the Supreme Court unanimously held that the right to privacy is a fundamental right guaranteed under Article 21 and Part III of the Constitution. "
-                f"The Court affirmed that privacy is intrinsic to life, personal liberty, and freedom of expression, establishing a strict three-fold test of legality, legitimate state aim, and proportionality for any state interference."
+                f"The app's stored record for Justice K.S. Puttaswamy (Retd.) v. Union of India (2017, 9-judge Constitution Bench) states that the right to privacy is a fundamental right guaranteed under Article 21 and Part III of the Constitution, intrinsic to life, personal liberty, and freedom of expression, and that state interference must satisfy a three-fold test of legality, legitimate state aim, and proportionality. "
+                f"This summary is not verified against the full judgments; read the cases below for the actual text."
             )
-            ratio_str = "Right to privacy is an intrinsic fundamental right under Article 21 (Puttaswamy 2017)."
+            ratio_str = "Stored record, unverified: right to privacy as a fundamental right under Article 21 (Puttaswamy 2017)."
             source_refs = ["K.S. Puttaswamy v. Union of India (right to privacy) ([2017] 10 S.C.R. 569)"]
         elif any(w in q_low for w in ["basic structure", "article 368"]):
             ans_str = (
-                f"In Kesavananda Bharati v. State of Kerala (1973, 13-judge Constitution Bench), the Supreme Court established the Basic Structure Doctrine. "
-                f"The Court held that while Parliament possesses plenary power to amend the Constitution under Article 368, that amending power is limited and cannot alter, damage, or emasculate the basic structure or essential framework of the Constitution."
+                f"The app's stored record for Kesavananda Bharati v. State of Kerala (1973, 13-judge Constitution Bench) states that while Parliament possesses plenary power to amend the Constitution under Article 368, that amending power is limited and cannot alter, damage, or emasculate the basic structure or essential framework of the Constitution (the Basic Structure Doctrine). "
+                f"This summary is not verified against the full judgments; read the cases below for the actual text."
             )
-            ratio_str = "Parliament's amending power under Article 368 is subject to the Basic Structure Doctrine (Kesavananda 1973)."
+            ratio_str = "Stored record, unverified: amending power under Article 368 limited by the Basic Structure Doctrine (Kesavananda 1973)."
             source_refs = ["Kesavananda Bharati v. State of Kerala ([1973] SUPP. 1 S.C.R. 1)"]
         elif any(w in q_low for w in ["evict", "landlord", "tenant", "tenancy", "rent", "babu manmohan", "material alteration"]):
             ans_str = (
-                f"Under Indian tenancy and rent control jurisprudence, a tenant cannot indefinitely occupy rented premises without paying rent, nor materially alter the premises without landlord consent. "
-                f"While a landlord cannot forcefully dispossess a tenant without due process of law, non-payment of rent constitutes a primary statutory ground for eviction under State Rent Control Acts. "
-                f"In Atma Ram Properties (P) Ltd. v. Federal Motors (P) Ltd. (2005, 2-judge Division Bench), the Supreme Court held that a tenant facing eviction proceedings is liable to pay mesne profits and cannot remain rent-free. "
-                f"In V. Dhanapal Chettiar v. Yesodai Ammal (1979, 7-judge Constitution Bench), the Court settled that contractual notice under Section 106 TPA is not a condition precedent to an eviction petition under State Rent Control Acts; the landlord must establish statutory grounds. "
-                f"Furthermore, in Babu Manmohan Das Shah v. Bishun Das (1967, 3-judge Bench), the Supreme Court held that under Section 3(1)(c) of the U.P. Rent Control Act, material alterations that either materially alter the accommodation or diminish its value are disjunctive grounds for eviction."
+                f"The app's stored records state that a tenant cannot indefinitely occupy rented premises without paying rent, nor materially alter the premises without landlord consent; that a landlord cannot forcefully dispossess a tenant without due process of law; and that non-payment of rent is a primary statutory ground for eviction under State Rent Control Acts. "
+                f"Stored record for Atma Ram Properties (P) Ltd. v. Federal Motors (P) Ltd. (2005, 2-judge Division Bench): a tenant facing eviction proceedings is liable to pay mesne profits and cannot remain rent-free. "
+                f"Stored record for V. Dhanapal Chettiar v. Yesodai Ammal (1979, 7-judge Constitution Bench): contractual notice under Section 106 TPA is not a condition precedent to an eviction petition under State Rent Control Acts; the landlord must establish statutory grounds. "
+                f"Stored record for Babu Manmohan Das Shah v. Bishun Das (1967, 3-judge Bench): under Section 3(1)(c) of the U.P. Rent Control Act, material alterations that either materially alter the accommodation or diminish its value are disjunctive grounds for eviction. "
+                f"These summaries are not verified against the full judgments; read the cases below for the actual text."
             )
-            ratio_str = "Tenant eviction requires due process and statutory grounds under Rent Control acts (Dhanapal Chettiar / Atma Ram Properties / Babu Manmohan Das Shah)."
+            ratio_str = "Stored records, unverified: eviction requires due process and statutory grounds (Dhanapal Chettiar / Atma Ram Properties / Babu Manmohan Das Shah)."
             source_refs = [
                 "Atma Ram Properties (P) Ltd. v. Federal Motors (P) Ltd. ((2005) 1 SCC 705)",
                 "V. Dhanapal Chettiar v. Yesodai Ammal ((1979) 4 SCC 214)",
@@ -2695,49 +2695,50 @@ class LLMService:
             ]
         elif any(w in q_low for w in ["live-in relationship", "live in relationship", "cohabitation", "live-in partners"]):
             ans_str = (
-                f"In S. Khushboo v. Kanniammal (2010, 3-judge Bench), the Supreme Court held that consensual live-in relationships between adults are legal and protected under Article 21 as an aspect of personal liberty. "
-                f"Furthermore, in D. Velusamy v. D. Patchaiammal (2010, 2-judge Division Bench), the Court recognized that relationships 'in the nature of marriage' confer statutory protection and maintenance rights under Section 2(f) of the Domestic Violence Act 2005."
+                f"The app's stored record for S. Khushboo v. Kanniammal (2010, 3-judge Bench) states that consensual live-in relationships between adults are legal and protected under Article 21 as an aspect of personal liberty. "
+                f"The stored record for D. Velusamy v. D. Patchaiammal (2010, 2-judge Division Bench) states that relationships 'in the nature of marriage' carry statutory protection and maintenance rights under Section 2(f) of the Domestic Violence Act 2005. "
+                f"These summaries are not verified against the full judgments; read the cases below for the actual text."
             )
-            ratio_str = "Consensual live-in relationships are legal under Article 21; DV Act protection applies to relationships in the nature of marriage."
+            ratio_str = "Stored records, unverified: live-in relationships under Article 21; DV Act protection for relationships in the nature of marriage."
             source_refs = [
                 "S. Khushboo v. Kanniammal & Anr. ((2010) 5 SCC 600)",
                 "D. Velusamy v. D. Patchaiammal ((2010) 10 SCC 469)"
             ]
         elif any(w in q_low for w in ["arrest", "section 41", "custody", "warrant"]):
             ans_str = (
-                f"Under Section 41 and 41A of the Code of Criminal Procedure, as interpreted in Arnesh Kumar v. State of Bihar (2014, 2-judge Division Bench) and D.K. Basu v. State of West Bengal (Decided 1996, reported (1997) 1 SCC 416, 2-judge Division Bench), police officers cannot arrest individuals mechanically without recording reasons and serving a mandatory notice of appearance. "
-                f"The Supreme Court mandated that failure to comply with the statutory arrest checklist makes the police officer liable for departmental action and contempt of court."
+                f"The app's stored records for Arnesh Kumar v. State of Bihar (2014, 2-judge Division Bench) and D.K. Basu v. State of West Bengal (decided 1996, reported (1997) 1 SCC 416, 2-judge Division Bench) state that under Sections 41 and 41A of the Code of Criminal Procedure police officers cannot arrest individuals mechanically without recording reasons and serving a mandatory notice of appearance, and that failure to comply with the statutory arrest checklist exposes the police officer to departmental action and contempt of court. "
+                f"These summaries are not verified against the full judgments; read the cases below for the actual text."
             )
-            ratio_str = "Mandatory arrest checklist and Section 41A notice safeguards against arbitrary arrest (Arnesh Kumar / D.K. Basu)."
+            ratio_str = "Stored records, unverified: arrest checklist and Section 41A notice safeguards (Arnesh Kumar / D.K. Basu)."
             source_refs = [
                 "Arnesh Kumar v. State of Bihar ([2014] 8 S.C.R. 128)",
                 "D.K. Basu v. State of West Bengal ([1996] SUPP. 10 S.C.R. 284)"
             ]
         elif any(w in q_low for w in ["bail", "anticipatory bail", "section 438"]):
             ans_str = (
-                f"The Supreme Court has firmly settled that personal liberty under Article 21 mandates that bail is the rule and jail is the exception. "
-                f"In matters of anticipatory bail under Section 438 CrPC, courts must balance individual liberty against the requirements of fair investigation, granting relief where custodial interrogation is not genuinely necessary."
+                f"The app's stored records state that personal liberty under Article 21 is treated as making bail the rule and jail the exception, and that in matters of anticipatory bail under Section 438 CrPC courts balance individual liberty against the requirements of fair investigation, granting relief where custodial interrogation is not genuinely necessary. "
+                f"This summary is not verified against the full judgments; read the cases below for the actual text."
             )
-            ratio_str = "Bail is the rule, jail is the exception under Article 21."
+            ratio_str = "Stored record, unverified: bail as the rule, jail as the exception under Article 21."
         elif any(w in q_low for w in ["murder", "culpable homicide", "section 300", "section 299"]):
             ans_str = (
-                f"Under the Indian Penal Code, culpable homicide is the genus and murder is the species (Sections 299 and 300 IPC). "
-                f"As established by the Supreme Court, an offence is murder if committed with the intention of causing death or bodily injury sufficient in the ordinary course of nature to cause death, unless it falls under one of the five statutory exceptions reducing it to culpable homicide not amounting to murder."
+                f"The app's stored records state that under Sections 299 and 300 of the Indian Penal Code culpable homicide is the genus and murder is the species: an offence is murder if committed with the intention of causing death or bodily injury sufficient in the ordinary course of nature to cause death, unless it falls under one of the five statutory exceptions reducing it to culpable homicide not amounting to murder. "
+                f"This summary is not verified against the full judgments; read the cases below for the actual text."
             )
-            ratio_str = "Culpable homicide is the genus, murder is the species under IPC Sections 299 and 300."
+            ratio_str = "Stored record, unverified: culpable homicide genus, murder species (IPC Sections 299-300)."
         elif any(w in q_low for w in ["section 74", "liquidated damages", "earnest money"]):
             ans_str = (
-                f"Under Section 74 of the Indian Contract Act 1872, as interpreted in Kailash Nath Associates v. Delhi Development Authority (2015, 2-judge Division Bench), liquidated damages represent reasonable compensation and require proof of actual legal injury or loss where such loss is capable of proof. "
-                f"Penalty clauses and forfeiture cannot be enforced in the absence of proven loss."
+                f"The app's stored record for Kailash Nath Associates v. Delhi Development Authority (2015, 2-judge Division Bench) states that under Section 74 of the Indian Contract Act 1872 liquidated damages represent reasonable compensation and require proof of actual legal injury or loss where such loss is capable of proof, and that penalty clauses and forfeiture cannot be enforced in the absence of proven loss. "
+                f"This summary is not verified against the full judgments; read the cases below for the actual text."
             )
-            ratio_str = "Liquidated damages require proof of loss under Section 74 (Kailash Nath 2015)."
+            ratio_str = "Stored record, unverified: liquidated damages require proof of loss under Section 74 (Kailash Nath 2015)."
             source_refs = ["Kailash Nath Associates v. Delhi Development Authority ((2015) 4 SCC 136)"]
         elif any(w in q_low for w in ["article 141", "precedent hierarchy", "larger bench", "coordinate bench"]):
             ans_str = (
-                f"Under Article 141 of the Constitution of India, as authoritatively held in Central Board of Dawoodi Bohra Community v. State of Maharashtra (2005, 5-judge Constitution Bench), the law declared by a larger bench of the Supreme Court is strictly binding on any subsequent bench of lesser or co-equal strength. "
-                f"A bench of lesser quorum cannot doubt, bypass, or overrule the correctness of the view taken by a larger bench, maintaining the discipline of judicial precedent."
+                f"The app's stored record for Central Board of Dawoodi Bohra Community v. State of Maharashtra (2005, 5-judge Constitution Bench) states that under Article 141 of the Constitution the law declared by a larger bench of the Supreme Court is binding on subsequent benches of lesser or co-equal strength, and that a bench of lesser quorum cannot doubt, bypass, or overrule the correctness of the view taken by a larger bench. "
+                f"This summary is not verified against the full judgments; read the cases below for the actual text."
             )
-            ratio_str = "A larger bench decision is binding on smaller and coordinate benches under Article 141 (Dawoodi Bohra 2005)."
+            ratio_str = "Stored record, unverified: larger-bench decisions bind smaller and coordinate benches under Article 141 (Dawoodi Bohra 2005)."
             source_refs = ["Central Board of Dawoodi Bohra Community v. State of Maharashtra ((2005) 2 SCC 673)"]
         else:
             # Grounded synthesis citing retrieved cases directly
