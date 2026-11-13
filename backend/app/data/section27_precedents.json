@@ -19,7 +19,7 @@
       "status": "GREEN",
       "statusLabel": "GOOD LAW (ARTICLE 141 BINDING)",
       "statutes": ["Section 27, Indian Contract Act 1872", "Article 19(1)(g), Constitution of India"],
-      "ratioSummary": "A restrictive covenant operating after termination of the contract (here a right of first refusal after the agreement expired) is void under Section 27 of the Indian Contract Act, 1872. Negative covenants can be enforced only during the subsistence of the contract; the English common-law test of reasonableness does not apply to post-termination restraints in India.",
+      "ratioSummary": "Enforcement decision: the Supreme Court refused to enforce a post-termination negative covenant (a right of first refusal after the agreement expired) by injunction because the services were of a personal nature (Section 14(1), Specific Relief Act 1963). The Court addressed Section 27 of the Indian Contract Act only on an 'assuming without admitting' basis and did not decide that point.",
       "judges": ["H.K. Sema, J.", "Dr. A.R. Lakshmanan, J."],
       "keywords": ["non-compete", "section 27", "post-termination", "right of first refusal", "void", "restraint of trade", "celebrity management"],
       "source": {"name": "Indian Kanoon (free)", "url": "https://indiankanoon.org/doc/571375/", "accessed": "2026-10-17"}

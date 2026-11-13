@@ -1070,7 +1070,7 @@ LANDMARK_METADATA: Dict[str, Dict[str, Any]] = {
         "leadJudge": "H.K. Sema, J.",
         "statutes": ["Section 27 Contract Act", "Article 19(1)(g)"],
         "year": 2006,
-        "holding": "A restrictive covenant operating post-termination of contract is void ab initio under Section 27 of the Indian Contract Act.",
+        "holding": "Enforcement case: the Court refused to enforce a post-termination negative covenant by injunction because the services were of a personal nature (Section 14(1), Specific Relief Act 1963); it addressed Section 27 only on an 'assuming without admitting' basis.",
     },
     "superintendence": {
         "benchSize": 3,

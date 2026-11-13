@@ -544,3 +544,25 @@ def test_generic_deterministic_synthesis_does_not_assert_holdings(monkeypatch):
     assert out["model_used"] == "deterministic_precedent_synthesis"
     assert out["tier"] == "deterministic_record"
     assert "no AI used" in out["tier_label"]
+
+
+def test_seed_sources_carry_no_false_percept_holding():
+    """Percept D'Mark seed records (comparison JSON + qdrant enrichment metadata)
+    must not assert the known-false flat Section 27 holding. Percept was an
+    enforcement decision (Section 14 Specific Relief Act); Section 27 was only
+    'assuming without admitting'."""
+    import json
+    import pathlib
+    root = pathlib.Path(__file__).resolve().parents[1]
+    data = json.loads((root / "app" / "data" / "section27_precedents.json").read_text())
+    percept = next(c for c in data["precedents"] if c["id"] == "sc-2006-percept")
+    summary = percept["ratioSummary"]
+    assert "void under Section 27" not in summary
+    assert "void ab initio" not in summary
+    assert "assuming without admitting" in summary
+    assert "Specific Relief Act" in summary
+
+    qdrant_src = (root / "app" / "services" / "qdrant_service.py").read_text()
+    block = qdrant_src.split('"percept": {', 1)[1].split("},", 1)[0]
+    assert "void ab initio" not in block
+    assert "assuming without admitting" in block
