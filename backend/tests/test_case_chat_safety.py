@@ -528,3 +528,19 @@ def test_comparison_and_chat_ui_have_no_unqualified_authority_defaults():
     assert "Authoritative precedent of the Supreme Court of India" not in comparison
     panel = (root / "src" / "components" / "CaseChatPanel.jsx").read_text()
     assert "AI answer, not legal advice &bull; Strictly grounded" not in panel
+
+
+def test_generic_deterministic_synthesis_does_not_assert_holdings(monkeypatch):
+    """The generic deterministic synthesis must present stored summaries as
+    unverified app records, never as what the Supreme Court held."""
+    svc = _make_search_svc(monkeypatch, "not_found")
+    case = dict(SEARCH_FIXTURE_CASE)
+    case["ratioSummary"] = "The appeal was disposed of in terms of the settlement recorded between the parties."
+    case["title"] = "Some Other Case v. State"
+    out = asyncio.run(svc.synthesize_search_answer("adverse possession requirements", [case]))
+    assert "the Supreme Court held that" not in out["answer"]
+    assert "the Court affirmed that" not in out["answer"]
+    assert "not verified against the judgment" in out["answer"]
+    assert out["model_used"] == "deterministic_precedent_synthesis"
+    assert out["tier"] == "deterministic_record"
+    assert "no AI used" in out["tier_label"]

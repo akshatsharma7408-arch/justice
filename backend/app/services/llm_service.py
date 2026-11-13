@@ -2750,11 +2750,13 @@ class LLMService:
                 }
             if c2 and not summary_is_usable(clean_case_summary(c2)):
                 c2 = None
-            c2_part = f" Furthermore, in {c2.get('title')} ({c2.get('decisionYear') or c2.get('year')}, {bench_c2}), the Court affirmed that {clean_case_summary(c2)}" if c2 else ""
+            c2_part = f" The stored record for {c2.get('title')} ({c2.get('decisionYear') or c2.get('year')}, {bench_c2}) summarizes it as: {clean_case_summary(c2)} (stored summary, not verified against the judgment)." if c2 else ""
             ans_str = (
-                f"Based on the verified precedents in our database, in {c1.get('title')} ({c1.get('decisionYear') or c1.get('year')}, {bench_c1}), the Supreme Court held that {c1_summary}.{c2_part}"
+                f"The closest precedent in the app's database is {c1.get('title')} ({c1.get('decisionYear') or c1.get('year')}, {bench_c1}). "
+                f"The app's stored record summarizes it as: {c1_summary} "
+                f"(stored summary, not verified against the judgment; the app cannot state what the Court held).{c2_part}"
             )
-            ratio_str = c1_summary
+            ratio_str = f"Unverified stored summary of {c1.get('title')}: {c1_summary}"
 
         # Check holding direction
         direction_check = check_holding_direction(query, ans_str, ratio_str, retrieved_cases)
@@ -2773,7 +2775,9 @@ class LLMService:
             "ratio_decidendi": badged_ratio,
             "citations": badged_cits,
             "results": retrieved_cases,
-            "model_used": "deterministic_precedent_synthesis"
+            "model_used": "deterministic_precedent_synthesis",
+            "tier": "deterministic_record",
+            "tier_label": "Stored-record summary - not verified, no AI used",
         }
 
     async def synthesize_legal_summary(self, clause_text: str, contract_title: str) -> str:
