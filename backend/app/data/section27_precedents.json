@@ -361,6 +361,38 @@
       "judges": ["Chandramauli Kr. Prasad, J.", "Pinaki Chandra Ghose, J."],
       "keywords": ["arrest", "section 41", "section 41a", "section 498a", "arnesh kumar", "custody", "checklist"],
       "source": {"name": "Live app record 2014_8_128_143 (Supreme Court judgment metadata)", "url": "https://justice-akshat.onrender.com/api/v1/cases/2014_8_128_143", "accessed": "2026-11-13"}
+    },
+    {
+      "id": "sc-2022-neerajdutta",
+      "title": "Neeraj Dutta v. State (Govt. of NCT of Delhi)",
+      "citation": "(2023) 4 SCC 731",
+      "altCitations": ["[2023] 2 S.C.R. 997", "2023 4 SCC 731"],
+      "altTitles": ["Neeraj Dutta v. State (NCT of Delhi)"],
+      "court": "Supreme Court of India",
+      "benchType": "Constitution Bench",
+      "benchSize": 5,
+      "decisionYear": 2022,
+      "year": 2022,
+      "status": "UNKNOWN",
+      "statusLabel": "UNVERIFIED APP RECORD",
+      "statutes": ["Section 7, Prevention of Corruption Act 1988", "Section 13, Prevention of Corruption Act 1988", "Section 20, Prevention of Corruption Act 1988"],
+      "ratioSummary": "Demand and acceptance of illegal gratification under the Prevention of Corruption Act 1988 can be proved by circumstantial evidence when direct evidence is unavailable.",
+      "keywords": ["bribe", "bribery", "corruption", "illegal gratification", "prevention of corruption", "trap case"]
+    },
+    {
+      "id": "sc-2009-sarlaverma",
+      "title": "Sarla Verma v. Delhi Transport Corporation",
+      "citation": "(2009) 6 SCC 121",
+      "altCitations": ["2009 6 SCC 121"],
+      "altTitles": ["Sarla Verma v. DTC"],
+      "court": "Supreme Court of India",
+      "decisionYear": 2009,
+      "year": 2009,
+      "status": "UNKNOWN",
+      "statusLabel": "UNVERIFIED APP RECORD",
+      "statutes": ["Section 166, Motor Vehicles Act 1988", "Section 168, Motor Vehicles Act 1988"],
+      "ratioSummary": "Standardized the multiplier method for computing motor accident compensation under the Motor Vehicles Act 1988, including age-based multipliers and future-prospects additions.",
+      "keywords": ["motor vehicles", "vehicle", "traffic", "accident", "compensation", "multiplier", "motor accident claim"]
     }
   ]
 }

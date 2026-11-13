@@ -392,7 +392,8 @@ def compute_keyword_score(
     c_title = (case.get("title") or case.get("case_name") or case.get("common_name") or "").lower()
     c_aliases = [a.lower() for a in case.get("aliases", [])]
     c_statutes = [s.lower() for s in case.get("statutes", [])]
-    c_text = (case.get("text", "") or case.get("ratioSummary", "") or "").lower()
+    # Corpus keywords exist for retrieval; include them so keyword-only matches count.
+    c_text = (f"{case.get('text', '') or ''} {case.get('ratioSummary', '') or ''} {' '.join(case.get('keywords', []) or [])}").lower()
 
     score = 0.0
     # With an explicit article/section reference, the structural words say nothing about relevance
@@ -1854,8 +1855,10 @@ class QdrantService:
             if v_score < 0.40 and kw_score == 0 and not is_alias_match and not statute_info:
                 continue
 
-            t_matches = sum(1 for t in query_terms if t in f"{c.get('title', '')} {c.get('ratioSummary', '')} {c.get('text', '')}".lower())
-            if len(query_terms) >= 2 and not is_alias_match and not statute_info:
+            t_matches = sum(1 for t in query_terms if t in f"{c.get('title', '')} {c.get('ratioSummary', '')} {c.get('text', '')} {' '.join(c.get('keywords', []) or [])}".lower())
+            # Everyday-rights topic queries already passed the topic's required-keyword
+            # filter, which is the relevance definition for those queries.
+            if len(query_terms) >= 2 and not is_alias_match and not statute_info and not rights_topic:
                 if t_matches < 2 and v_score < 0.42:
                     continue
                 # For queries with 3+ terms (e.g. "cricket world cup"), require at least 70% of terms or a key noun match

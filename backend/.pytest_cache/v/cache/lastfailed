@@ -1,0 +1,13 @@
+{
+  "tests/test_case_chat_endpoints.py::test_case_chat_kesavananda": true,
+  "tests/test_case_chat_endpoints.py::test_case_chat_normal_sc_case": true,
+  "tests/test_case_chat_endpoints.py::test_case_chat_question_not_in_case": true,
+  "tests/test_case_comparison_endpoints.py::test_cases_search_by_citation": true,
+  "tests/test_case_comparison_endpoints.py::test_get_case_by_id_non_landmark_sc": true,
+  "tests/test_case_comparison_endpoints.py::test_cases_search_full_collection_queries": true,
+  "tests/test_case_comparison_endpoints.py::test_unverified_case_ratio_label": true,
+  "tests/test_citation_check.py::test_real_corpus_case_passes": true,
+  "tests/test_round4_regressions.py::test_preserved_babu_manmohan_and_dhanapal_chettiar": true,
+  "tests/test_search_quality.py::TestSearchQuality::test_typo_search_returns_landmark": true,
+  "tests/test_spelling_tolerance.py::TestSpellingTolerance::test_end_to_end_search_navtej_jauhar": true
+}
