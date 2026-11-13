@@ -24,6 +24,7 @@ from app.config import settings
 from app.services.answer_tiers import needs_specific_source, format_tier2_response, NOT_FOUND_SPECIFIC_MSG, UNRELIABLE_TIER2_MSG
 from app.services.citation_checker import citation_checker
 from app.services.statute_service import statute_service
+from app.services.holding_verification import verify_holding_claims
 
 logger = logging.getLogger("justice.llm")
 
@@ -2555,11 +2556,11 @@ class LLMService:
             "Answer the query in 2 to 4 concise, legally accurate sentences using strictly the retrieved precedents provided below.\n\n"
             "MANDATORY CITATION & ACCURACY RULES:\n"
             "1. For each holding or proposition stated, cite the source precedent from the retrieved list by Case Name, Year, and Bench (for example: 'In Justice K.S. Puttaswamy (Retd.) v. Union of India (2017, 9-judge Constitution Bench)...').\n"
-            "2. State holdings only if supported by the retrieved text.\n"
+            "2. State holdings only if supported by the retrieved text, and whenever you state what a court held, decided, declared, upheld, overruled, set aside, allowed or dismissed, you MUST back the sentence with an exact word-for-word quotation from the retrieved text in double quotes. If you cannot quote the exact words, do not make the statement.\n"
             "3. Every case named in your answer MUST exist in the retrieved list. Never invent a case, year, bench, or citation.\n"
             "4. Strictly adhere to established Indian law:\n"
             "   - Tenancy & Eviction: Eviction requires due process of law and a decree from a competent court or Rent Controller. Under V. Dhanapal Chettiar (1979) 4 SCC 214 (7-Judge Bench), where State Rent Control legislation applies, contractual notice under Section 106 TPA is not a condition precedent to an eviction petition; the landlord must establish statutory grounds for eviction. In non-rent-controlled premises, formal Section 106 notice is required. Under Atma Ram Properties (decided 2004, (2005) 1 SCC 705), once an eviction decree is passed (here for illegal subletting), an appellate court staying execution under Order XLI Rule 5 CPC has equitable jurisdiction to condition that stay on payment of reasonable compensation or mesne profits for continued use and occupation. Under Babu Manmohan Das Shah (decided 1966, (1967) 1 SCR 836), material alterations under Section 3(1)(c) of the U.P. Rent Act are grounds for eviction when they materially alter the accommodation or diminish its value.\n"
-            "   - Section 27 Contract Act: Restraints on trade operative AFTER termination of employment are VOID ab initio in India (Percept D'Mark (2006) 4 SCC 227; Superintendence Co. (1981) 2 SCC 246). Post-termination non-competes are never enforceable. Covenants during active employment are valid.\n"
+            "   - Section 27 Contract Act: Section 27 voids agreements in restraint of trade, subject to its exceptions. Percept D'Mark (2006) 4 SCC 227 was an enforcement case: the Court refused specific performance of a post-termination negative covenant under Section 14 of the Specific Relief Act (personal services), and addressed Section 27 only on an 'assuming without admitting' basis. NEVER state that Percept D'Mark held post-termination restraints void ab initio under Section 27 unless the retrieved text says so verbatim. State holdings only with an exact word-for-word quotation from the retrieved text in double quotes; if you cannot quote, say the retrieved text does not settle the point.\n"
             "   - Section 74 Contract Act: Under Kailash Nath Associates (2015) 4 SCC 136, Section 74 awards only reasonable compensation; proof of damage is essential where loss is capable of proof.\n"
             "   - Article 21 & Privacy: In K.S. Puttaswamy (2017) 10 SCC 1, a 9-judge Constitution Bench held that privacy is an intrinsic fundamental right under Article 21.\n"
             "   - Live-in Relationships: In S. Khushboo (2010) 5 SCC 600 and D. Velusamy (2010) 10 SCC 469, the Supreme Court held that consensual live-in relationships are not illegal, and women in relationship in the nature of marriage are protected under DV Act Section 2(f).\n"
@@ -2606,6 +2607,19 @@ class LLMService:
                             # Precedents did not answer the question; break to deterministic synthesis
                             break
 
+                        # Deterministic source-grounding check: every holding-claim
+                        # sentence must carry a verbatim quote from the retrieved
+                        # precedent text the model actually saw; otherwise fall back.
+                        _paras = []
+                        for _idx, _c in enumerate(retrieved_cases[:5]):
+                            _bt = _c.get("text") or _c.get("ratioSummary", "")
+                            _paras.append((_idx + 1, _bt[:1200] if len(_bt) > 1200 else _bt))
+                        _ok_ans, _ = verify_holding_claims(ans, _paras)
+                        _ok_ratio, _ = verify_holding_claims(parsed.get("ratio_decidendi") or "", _paras)
+                        if not (_ok_ans and _ok_ratio):
+                            logger.warning("Search synthesis made holding claims without verifiable quotes; using deterministic fallback.")
+                            break
+
                         parsed["answer"] = citation_checker.check_and_badge_text(parsed.get("answer", ""), is_tier2=False, allowed_cases=retrieved_cases)
                         parsed["ratio_decidendi"] = citation_checker.check_and_badge_text(parsed.get("ratio_decidendi", "") or parsed["answer"], is_tier2=False, allowed_cases=retrieved_cases)
                         parsed["citations"] = citation_checker.badge_citations_list(parsed.get("citations", []))
@@ -2642,11 +2656,11 @@ class LLMService:
         # Topic-specific grounded synthesis
         if any(w in q_low for w in ["non-compete", "non compete", "section 27", "restraint of trade"]):
             ans_str = (
-                f"Under Section 27 of the Indian Contract Act 1872, all post-termination non-compete clauses are void ab initio and unenforceable in India. "
-                f"In Percept D'Mark (India) (P) Ltd. v. Zaheer Khan (2006, 2-judge Division Bench), the Supreme Court ruled that the doctrine of restraint of trade is absolute and admits no exception of reasonableness for post-employment restrictions. "
-                f"Negative covenants are legally enforceable only during the active term of employment, as affirmed in Superintendence Co. of India (P) Ltd. v. Krishan Murgai (1981, 3-judge Bench)."
+                f"Section 27 of the Indian Contract Act 1872 renders agreements in restraint of trade void, subject to statutory exceptions. "
+                f"The app's stored record shows Percept D'Mark (India) (P) Ltd. v. Zaheer Khan (2006, 2-judge Division Bench) was decided on enforcement grounds: the Court refused to enforce a post-termination negative covenant by injunction because the services were of a personal nature (Section 14(1), Specific Relief Act 1963), and it addressed Section 27 only on an 'assuming without admitting' basis. "
+                f"Whether a particular post-termination restraint is void under Section 27 turns on the exact holdings of the retrieved judgments; read the cases below for the actual text. This summary is not verified against the full judgments."
             )
-            ratio_str = "Section 27 void ab initio post-employment non-compete doctrine."
+            ratio_str = "Percept D'Mark: enforcement of a post-termination negative covenant refused on Section 14 Specific Relief Act grounds; the Section 27 point was assumed, not finally decided (verify against the judgment)."
             source_refs = [
                 "Percept D'Mark (India) (P) Ltd. v. Zaheer Khan ((2006) 4 SCC 227)",
                 "Superintendence Company of India (P) Ltd. v. Krishan Murgai ((1981) 2 SCC 246)"
@@ -2766,7 +2780,7 @@ class LLMService:
         """Concise legal synthesis for agent trace visualizer."""
         audit = await self.verify_clause_ai(clause_text, contract_title)
         if audit.get("is_violation"):
-            return "Violates Section 27 Indian Contract Act 1872. Void ab initio under Percept D'Mark (2006). Risk: CRITICAL."
+            return "Restraint-of-trade concern under Section 27 Indian Contract Act 1872. Related: Percept D'Mark (2006) - enforcement refused on Section 14 Specific Relief Act grounds; verify the exact holding against the judgment. Risk: CRITICAL."
         return "Complies with Indian contractual standards. Enforceable during active engagement."
 
     async def check_health(self) -> Dict[str, Any]:

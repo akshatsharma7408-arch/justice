@@ -456,7 +456,7 @@ export default function CaseChatPanel({
           </form>
 
           <div className="chat-footer-disclaimer">
-            <span>AI answer, not legal advice &bull; Strictly grounded in case records</span>
+            <span>Not legal advice &bull; Grounded in stored case records; unverified excerpts are labelled</span>
           </div>
         </div>
       </motion.aside>

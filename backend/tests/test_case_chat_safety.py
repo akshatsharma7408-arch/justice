@@ -430,3 +430,101 @@ def test_endpoint_fallback_model_used_provenance(fixture_case):
     })
     assert resp.status_code == 200
     assert resp.json()["model_used"] == "deterministic_case_chat"
+
+
+# ---------------------------------------------------------------------------
+# Search synthesis: holding-claim quote verification + honest Percept framing
+# ---------------------------------------------------------------------------
+
+SEARCH_FIXTURE_CASE = {
+    "title": "Percept D'Mark (India) (P) Ltd. v. Zaheer Khan",
+    "citation": "(2006) 4 SCC 227",
+    "court": "Supreme Court of India",
+    "benchType": "Division Bench",
+    "benchSize": 2,
+    "decisionYear": 2006,
+    "statutes": ["Section 27 Contract Act", "Section 14 Specific Relief Act"],
+    "text": ("Held: Contract between the cricketer and the agent was for services which were of "
+             "personal, confidential and fiduciary in nature and its specific performance was "
+             "barred by Section 14(1)(a), (b) and (d) of Act of 1953. Assuming without admitting "
+             "that the negative covenant is not void under Section 27 of the Contract Act."),
+}
+
+
+def _make_search_svc(monkeypatch, model_answer, model_ratio=""):
+    """LLMService instance whose client returns a canned structured synthesis."""
+    import json as _json
+    import types as _types
+    from app.services import llm_service as llm_mod
+    import app.services.verified_statute_notes as vsn
+
+    monkeypatch.setattr(vsn, "verified_note_for", lambda q: None)
+    svc = llm_mod.LLMService()
+    payload = _json.dumps({"answer": model_answer, "ratio_decidendi": model_ratio, "citations": []})
+    fake_resp = _types.SimpleNamespace(text=payload)
+    fake_client = _types.SimpleNamespace(
+        models=_types.SimpleNamespace(generate_content=lambda **kw: fake_resp))
+    monkeypatch.setattr(svc, "_client", fake_client)
+    monkeypatch.setattr(svc, "is_active", True)
+
+    async def _identity(query, cases):
+        return cases
+    monkeypatch.setattr(svc, "_filter_topically_relevant_cases", _identity)
+    return svc
+
+
+def test_search_synthesis_unsupported_holding_falls_back(monkeypatch):
+    """A search answer that asserts a holding without a verbatim quote from the
+    retrieved text must be replaced by the deterministic honest synthesis."""
+    svc = _make_search_svc(
+        monkeypatch,
+        "In Percept D'Mark, the Supreme Court held that all post-termination restraints are void ab initio under Section 27.",
+    )
+    out = asyncio.run(svc.synthesize_search_answer("restraint of trade", [SEARCH_FIXTURE_CASE]))
+    assert "held that all post-termination restraints are void" not in out["answer"]
+    assert out["model_used"] != svc.model
+
+
+def test_search_synthesis_with_verified_quote_passes(monkeypatch):
+    """A search answer whose holding claim carries a verbatim quote from the
+    retrieved precedent text is served as a model answer."""
+    svc = _make_search_svc(
+        monkeypatch,
+        ('The Court held that specific performance was barred, stating "its specific '
+         'performance was barred by Section 14(1)(a), (b) and (d)".'),
+    )
+    out = asyncio.run(svc.synthesize_search_answer("restraint of trade", [SEARCH_FIXTURE_CASE]))
+    assert out["model_used"] == svc.model
+    assert "specific performance was barred" in out["answer"]
+
+
+def test_search_synthesis_deterministic_s27_is_honest(monkeypatch):
+    """The deterministic Section 27 fallback must not assert that Percept D'Mark
+    ruled post-termination restraints void ab initio."""
+    svc = _make_search_svc(monkeypatch, "not_found")
+    out = asyncio.run(svc.synthesize_search_answer("restraint of trade", [SEARCH_FIXTURE_CASE]))
+    assert "void ab initio" not in out["answer"]
+    assert "assuming without admitting" in out["answer"]
+    assert "not verified" in out["answer"]
+
+
+def test_no_hardcoded_percept_void_assertions_in_source():
+    """Source must not hardcode the materially wrong Percept holding."""
+    import pathlib
+    root = pathlib.Path(__file__).resolve().parents[1]
+    llm_src = (root / "app" / "services" / "llm_service.py").read_text()
+    assert "Post-termination non-competes are never enforceable" not in llm_src
+    assert "admits no exception of reasonableness" not in llm_src
+    assert "Void ab initio under Percept" not in llm_src
+
+
+def test_comparison_and_chat_ui_have_no_unqualified_authority_defaults():
+    """Frontend must not default to 'Good Law / Binding' or claim AI authorship
+    for deterministic answers."""
+    import pathlib
+    root = pathlib.Path(__file__).resolve().parents[2]
+    comparison = (root / "src" / "components" / "PrecedentComparison.jsx").read_text()
+    assert "Good Law / Binding" not in comparison
+    assert "Authoritative precedent of the Supreme Court of India" not in comparison
+    panel = (root / "src" / "components" / "CaseChatPanel.jsx").read_text()
+    assert "AI answer, not legal advice &bull; Strictly grounded" not in panel

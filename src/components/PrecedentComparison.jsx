@@ -761,19 +761,19 @@ export default function PrecedentComparison({ onSwitchToWorkspace }) {
                     <div className="axis-desc">Current validity and binding status</div>
                   </td>
                   <td className="td-val font-serif">
-                    <span className={`status-standing-badge status-${case1Data.status?.toLowerCase() || 'green'} mono`}>
-                      {case1Data.statusLabel || 'Good Law / Binding'}
+                    <span className={`status-standing-badge status-${case1Data.status?.toLowerCase() || 'yellow'} mono`}>
+                      {case1Data.statusLabel || 'Unverified app record'}
                     </span>
                     <p className="standing-desc">
-                      {case1Data.statusDescription || 'Authoritative precedent of the Supreme Court of India.'}
+                      {case1Data.statusDescription || 'The app has not verified this case\'s precedent standing against later cases.'}
                     </p>
                   </td>
                   <td className="td-val font-serif">
-                    <span className={`status-standing-badge status-${case2Data.status?.toLowerCase() || 'green'} mono`}>
-                      {case2Data.statusLabel || 'Good Law / Binding'}
+                    <span className={`status-standing-badge status-${case2Data.status?.toLowerCase() || 'yellow'} mono`}>
+                      {case2Data.statusLabel || 'Unverified app record'}
                     </span>
                     <p className="standing-desc">
-                      {case2Data.statusDescription || 'Authoritative precedent of the Supreme Court of India.'}
+                      {case2Data.statusDescription || 'The app has not verified this case\'s precedent standing against later cases.'}
                     </p>
                   </td>
                 </tr>
