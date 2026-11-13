@@ -137,3 +137,14 @@ def test_nonsense_queries_return_empty_list():
 
     res2 = qdrant_service.search_precedents("xyzzqwerty asdfgh", limit=8)
     assert len(res2) == 0
+
+
+def test_bare_statute_query_never_returns_unrelated_cases():
+    """A bare 'Section N Act' query must never rank cases that cite neither the
+    section nor the act (regression: 'Section 41 CrPC' used to return Section 27
+    Contract Act cases on vector similarity alone)."""
+    results = qdrant_service.search_precedents("Section 41 CrPC", limit=8)
+    for r in results:
+        comb = f"{r.get('title','')} {' '.join(r.get('statutes',[]))} {r.get('ratioSummary','')} {r.get('text','')}".lower()
+        assert ("section 41" in comb) or ("crpc" in comb) or ("criminal procedure" in comb), \
+            f"unrelated case returned for Section 41 CrPC: {r.get('title')}"

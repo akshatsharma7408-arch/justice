@@ -340,6 +340,27 @@
       "judges": ["K. Subba Rao, C.J.I.", "J.M. Shelat, J.", "R.S. Bachawat, J."],
       "keywords": ["material alterations", "diminish value", "section 3(1)(c)", "UP rent control", "accommodation", "babu manmohan das shah"],
       "source": {"name": "Indian Kanoon (free)", "url": "https://indiankanoon.org/doc/1073776/", "accessed": "2026-10-21"}
+    },
+    {
+      "id": "sc-2014-arnesh",
+      "title": "Arnesh Kumar v. State of Bihar",
+      "citation": "(2014) 8 SCC 273",
+      "altCitations": ["[2014] 8 S.C.R. 128", "AIR 2014 SC 2756", "2014 8 SCC 273"],
+      "altTitles": ["Arnesh Kumar vs State of Bihar & Anr"],
+      "court": "Supreme Court of India",
+      "benchType": "Division Bench",
+      "benchSize": 2,
+      "leadJudge": "Chandramauli Kr. Prasad, J.",
+      "decisionYear": 2014,
+      "year": 2014,
+      "decisionDate": "2014-07-02",
+      "status": "UNKNOWN",
+      "statusLabel": "UNVERIFIED APP RECORD",
+      "statutes": ["Section 41 CrPC", "Section 41A CrPC", "Section 498A IPC", "Article 21"],
+      "ratioSummary": "Guidelines and an arrest checklist under Section 41 CrPC to prevent routine arrests for offences punishable with up to seven years; police must record reasons for arrest and magistrates must scrutinize them.",
+      "judges": ["Chandramauli Kr. Prasad, J.", "Pinaki Chandra Ghose, J."],
+      "keywords": ["arrest", "section 41", "section 41a", "section 498a", "arnesh kumar", "custody", "checklist"],
+      "source": {"name": "Live app record 2014_8_128_143 (Supreme Court judgment metadata)", "url": "https://justice-akshat.onrender.com/api/v1/cases/2014_8_128_143", "accessed": "2026-11-13"}
     }
   ]
 }

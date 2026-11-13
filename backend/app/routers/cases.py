@@ -16,7 +16,11 @@ from app.services.qdrant_service import (
     clean_judgment_text,
     extract_statutes_from_text,
     SEARCH_STOPWORDS,
-    detect_citation
+    detect_citation,
+    extract_section_or_article,
+    ACT_MAP,
+    _ref_in,
+    _ss_in
 )
 from app.routers.casechat import (
     _init_case_data,
@@ -75,6 +79,34 @@ _REPORTER_DOT_FORMS = {
     "SCR": "S.C.R.", "SCC": "S.C.C.", "AIR": "A.I.R.", "SCALE": "S.C.A.L.E.", "JT": "J.T.",
 }
 
+def _statute_query_boost(statute_info: Optional[Dict[str, Any]], statutes: List[str], blob: str) -> float:
+    """Bounded boost for explicit 'Section N Act' / 'Article N' queries, mirroring the
+    semantic path's statute weighting so statute-citing cases outrank token-only matches.
+    Cross-act safe: a bare section number is not enough when an act was detected."""
+    if not statute_info:
+        return 0.0
+    kind = statute_info["type"]
+    num = str(statute_info["number"]).lower()
+    act = (statute_info.get("act") or "").lower()
+    act_aliases = [a.lower() for a in ACT_MAP.get(act, [])] if act and act != "statute" else []
+    stat_text = " ".join(str(s).lower() for s in (statutes or []))
+    blob_low = (blob or "").lower()
+    cites = _ref_in(kind, num, stat_text) or _ref_in(kind, num, blob_low)
+    if cites and kind == "section" and act_aliases:
+        if not any(a in stat_text or a in blob_low for a in act_aliases):
+            cites = False
+    if cites:
+        return 90.0
+    for ss in statute_info.get("search_strings", []):
+        if not _ss_in(ss, blob_low):
+            continue
+        if act_aliases and not any(a in ss for a in act_aliases):
+            if not any(a in stat_text or a in blob_low for a in act_aliases):
+                continue
+        return 45.0
+    return 0.0
+
+
 def _parse_citation_components(q: str):
     """Parse a citation-like query into (year, volume, reporter, page) when possible."""
     m = re.search(
@@ -127,6 +159,7 @@ def _search_full_case_collection(query: str, limit: int = 20) -> List[Dict[str, 
     q_low = q.lower()
     q_norm = normalize_citation(q) if q else ""
     q_tokens = [t for t in re.findall(r'[a-zA-Z0-9]{2,}', q_low) if t not in SEARCH_STOPWORDS]
+    statute_info = extract_section_or_article(q) if q else None
 
     scored_cases: List[tuple[float, str, Dict[str, Any]]] = []
     seen_ids = set()
@@ -198,6 +231,12 @@ def _search_full_case_collection(query: str, limit: int = 20) -> List[Dict[str, 
         if q_low in statutes_str:
             score += 30.0
 
+        # 7. Explicit section/article query boost (mirrors semantic path weighting)
+        score += _statute_query_boost(
+            statute_info, c.get("statutes"),
+            f"{title} {c.get('ratioSummary') or ''} {(c.get('text') or '')[:1500]}"
+        )
+
         if score > 0:
             scored_cases.append((score, cid, c))
 
@@ -249,6 +288,12 @@ def _search_full_case_collection(query: str, limit: int = 20) -> List[Dict[str, 
         # 6. Statute match
         if q_low in statutes_str:
             score += 20.0
+
+        # 7. Explicit section/article query boost
+        score += _statute_query_boost(
+            statute_info, c.get("statutes"),
+            f"{title} {c.get('ratioSummary') or ''} {(c.get('text') or '')[:1500]}"
+        )
 
         if score > 0:
             seen_ids.add(cid_clean.lower())
@@ -330,6 +375,12 @@ def _search_full_case_collection(query: str, limit: int = 20) -> List[Dict[str, 
                             score += 45.0
                         if q_components[2] and c_comp[2] == q_components[2]:
                             score += 20.0
+
+                # Explicit section/article query boost
+                score += _statute_query_boost(
+                    statute_info, payload.get("statutes") or [],
+                    f"{title} {payload.get('holding') or ''} {(payload.get('text') or payload.get('chunk_text') or '')[:1500]}"
+                )
 
                 case_record = {
                     "id": cid,

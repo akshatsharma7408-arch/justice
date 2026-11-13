@@ -1809,14 +1809,29 @@ class QdrantService:
 
             alias_boost = 0.40 if is_alias_match else 0.0
 
-            # A bare "article N" / "section N" query: only cases that actually cite that exact
+            # A bare "article N" / "section N [act]" query: only cases that actually cite that exact
             # provision (token boundary: 14 != 141 != 14A) or match by alias may appear.
+            # Act-alias words ("crpc", "contract", ...) are structural too: "Section 41 CrPC" must
+            # behave like a bare "Section 41" query, not rank unrelated cases that only survive
+            # the relevance floors on vector similarity.
             if statute_info and not is_alias_match:
-                _sub = [x for x in query_terms if x not in {"article", "articles", "section", "sections", "sec"}]
+                _structural = {"article", "articles", "section", "sections", "sec"}
+                _act = (statute_info.get("act") or "").lower()
+                _act_aliases = [a.lower() for a in ACT_MAP.get(_act, [])] if _act and _act != "statute" else []
+                _act_words = set()
+                for _a in _act_aliases:
+                    _act_words.update(re.findall(r"[a-z]+", _a))
+                _sub = [x for x in query_terms if x not in _structural and x not in _act_words]
                 if not _sub:
                     _kind, _num = statute_info["type"], statute_info["number"]
                     _txt = f"{c.get('title', '')} {c.get('ratioSummary', '')} {c.get('text', '')}".lower()
-                    _cites = any(_ref_in(_kind, _num, s) for s in (c.get("statutes") or [])) or _ref_in(_kind, _num, _txt)
+                    _stat_text = " ".join(str(s).lower() for s in (c.get("statutes") or []))
+                    _cites = _ref_in(_kind, _num, _stat_text) or _ref_in(_kind, _num, _txt)
+                    # Cross-act safety: a bare section number is not enough (Section 41 CrPC is not
+                    # Section 41 of another Act); the act must appear somewhere in the record.
+                    if _cites and _kind == "section" and _act_aliases:
+                        if not any(_a in _stat_text or _a in _txt for _a in _act_aliases):
+                            _cites = False
                     if not _cites:
                         continue
 
