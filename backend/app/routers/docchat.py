@@ -118,12 +118,14 @@ def is_qdrant_reachable() -> bool:
     except Exception:
         return False
 
-def mirror_to_qdrant_if_available(doc_id: str, chunks: List[ClauseChunk], title: str = "", raw_text: str = ""):
+def mirror_to_qdrant_if_available(doc_id: str, chunks: List[ClauseChunk], title: str = "", raw_text: str = "") -> bool:
     """Mirrors vectors into Qdrant collection if Qdrant is reachable.
     Also stores a meta point (id 0) with the document title and raw text so the
-    document can be rehydrated into DOC_STORE after a server restart."""
+    document can be rehydrated into DOC_STORE after a server restart.
+    Returns True only when the mirror actually persisted; False when Qdrant is
+    unreachable or the write failed, so callers never report false persistence."""
     if not is_qdrant_reachable():
-        return
+        return False
     try:
         from qdrant_client import QdrantClient
         from qdrant_client.models import PointStruct, VectorParams, Distance
@@ -152,8 +154,10 @@ def mirror_to_qdrant_if_available(doc_id: str, chunks: List[ClauseChunk], title:
             ]
             client.upsert(collection_name=collection_name, points=points)
             logger.info(f"Mirrored {len(points)} vectors to Qdrant collection '{collection_name}'")
+            return True
     except Exception as e:
         logger.warning(f"Could not mirror vectors to Qdrant: {e}")
+    return False
 
 
 def rehydrate_doc_from_qdrant(doc_id: str) -> Optional[DocumentRecord]:
@@ -623,11 +627,18 @@ async def upload_document_endpoint(
     )
     DOC_STORE[final_doc_id] = record
 
-    # 7. Mirror to Qdrant if reachable (persists uploads across server restarts)
-    if is_qdrant_reachable():
-        mirror_to_qdrant_if_available(final_doc_id, chunk_objects, doc_title, extracted_text)
-
-    qdrant_note = " (Qdrant reachable & mirrored)" if is_qdrant_reachable() else ""
+    # 7. Mirror to Qdrant if reachable (persists uploads across server restarts).
+    # The acknowledgement reflects the actual mirror result, never a second
+    # reachability probe: a failed mirror must not be reported as persistence.
+    mirrored = mirror_to_qdrant_if_available(final_doc_id, chunk_objects, doc_title, extracted_text)
+    if mirrored:
+        qdrant_note = " (Qdrant reachable & mirrored)"
+    else:
+        qdrant_note = " (session-only: not mirrored to persistent storage; will not survive a server restart)"
+        warnings.append(
+            "Document could not be mirrored to persistent storage (Qdrant unreachable or write failed); "
+            "it is available for this session only and will not survive a server restart - re-upload after any restart."
+        )
     logger.info(f"Indexed document '{doc_title}' ({final_doc_id}) with {len(chunk_objects)} chunks{qdrant_note}.")
 
     return DocUploadResponse(
