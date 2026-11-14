@@ -30,6 +30,7 @@ export default function Documents({ onTriggerAgentAnalysis }) {
   const [isUploading, setIsUploading] = useState(false);
   const [uploadProgress, setUploadProgress] = useState('');
   const [uploadError, setUploadError] = useState(null);
+  const [uploadNotices, setUploadNotices] = useState([]);
   const [pendingImages, setPendingImages] = useState([]); // [{ file, previewUrl, name }]
   const fileInputRef = useRef(null);
 
@@ -117,6 +118,7 @@ export default function Documents({ onTriggerAgentAnalysis }) {
     setIsUploading(true);
     setUploadProgress(filesToUpload.length > 1 ? `Preparing ${filesToUpload.length} images...` : 'Reading document...');
     setUploadError(null);
+    setUploadNotices([]);
 
     try {
       const formData = new FormData();
@@ -160,6 +162,7 @@ export default function Documents({ onTriggerAgentAnalysis }) {
       setDocData(resp);
       setEditedText(resp.raw_text || '');
       setSelectedClauseId(resp.clauses?.[0]?.chunk_id || 1);
+      setUploadNotices(Array.isArray(resp.warnings) ? resp.warnings : []);
       setChatMessages(initialChat);
       setExpandedCitations({});
       setPendingImages([]);
@@ -224,6 +227,7 @@ export default function Documents({ onTriggerAgentAnalysis }) {
       setSelectedClauseId(resp.clauses?.[0]?.chunk_id || 1);
       setIsEditingText(false);
       setExpandedCitations({});
+      setUploadNotices(Array.isArray(resp.warnings) ? resp.warnings : []);
 
       // Reset chat messages and citations to version message so stale Q&A from previous text is not preserved
       setChatMessages([
@@ -399,6 +403,27 @@ export default function Documents({ onTriggerAgentAnalysis }) {
             type="button"
             className="btn-friendly-retry mono"
             onClick={() => setUploadError(null)}
+          >
+            Dismiss
+          </button>
+        </div>
+      )}
+
+      {/* Backend warnings (e.g. session-only persistence) - visible, never silent */}
+      {uploadNotices.length > 0 && (
+        <div className="search-backend-error-card animate-fade-in" style={{ marginBottom: '20px' }}>
+          <div className="error-card-content">
+            <AlertCircle size={20} className="text-copper" />
+            <div>
+              {uploadNotices.map((n, i) => (
+                <p key={i} className="error-card-desc">{n}</p>
+              ))}
+            </div>
+          </div>
+          <button
+            type="button"
+            className="btn-friendly-retry mono"
+            onClick={() => setUploadNotices([])}
           >
             Dismiss
           </button>
