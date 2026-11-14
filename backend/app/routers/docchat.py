@@ -111,19 +111,23 @@ def is_qdrant_reachable() -> bool:
     try:
         url = f"{settings.QDRANT_URL.rstrip('/')}/healthz"
         req = urllib.request.Request(url, headers={"User-Agent": "Justice-DocChat/1.0"})
-        with urllib.request.urlopen(req, timeout=1.0) as resp:
+        if settings.QDRANT_API_KEY:
+            req.add_header("api-key", settings.QDRANT_API_KEY)
+        with urllib.request.urlopen(req, timeout=2.0) as resp:
             return resp.status == 200
     except Exception:
         return False
 
-def mirror_to_qdrant_if_available(doc_id: str, chunks: List[ClauseChunk]):
-    """Mirrors vectors into Qdrant collection if Qdrant is reachable."""
+def mirror_to_qdrant_if_available(doc_id: str, chunks: List[ClauseChunk], title: str = "", raw_text: str = ""):
+    """Mirrors vectors into Qdrant collection if Qdrant is reachable.
+    Also stores a meta point (id 0) with the document title and raw text so the
+    document can be rehydrated into DOC_STORE after a server restart."""
     if not is_qdrant_reachable():
         return
     try:
         from qdrant_client import QdrantClient
         from qdrant_client.models import PointStruct, VectorParams, Distance
-        client = QdrantClient(url=settings.QDRANT_URL, api_key=settings.QDRANT_API_KEY or None, timeout=2.0)
+        client = QdrantClient(url=settings.QDRANT_URL, api_key=settings.QDRANT_API_KEY or None, timeout=5.0)
         collection_name = f"doc_{doc_id}"
         valid_chunks = [c for c in chunks if c.embedding]
         if valid_chunks:
@@ -133,6 +137,12 @@ def mirror_to_qdrant_if_available(doc_id: str, chunks: List[ClauseChunk]):
                 vectors_config=VectorParams(size=dim, distance=Distance.COSINE)
             )
             points = [
+                PointStruct(
+                    id=0,
+                    vector=[0.0] * dim,
+                    payload={"meta": True, "title": title, "raw_text": raw_text}
+                )
+            ] + [
                 PointStruct(
                     id=idx + 1,
                     vector=c.embedding,
@@ -144,6 +154,54 @@ def mirror_to_qdrant_if_available(doc_id: str, chunks: List[ClauseChunk]):
             logger.info(f"Mirrored {len(points)} vectors to Qdrant collection '{collection_name}'")
     except Exception as e:
         logger.warning(f"Could not mirror vectors to Qdrant: {e}")
+
+
+def rehydrate_doc_from_qdrant(doc_id: str) -> Optional[DocumentRecord]:
+    """Rebuild a DocumentRecord from its mirrored Qdrant collection.
+    Used when a server restart wiped the in-memory DOC_STORE but the upload's
+    mirror persists in the user's own Qdrant instance."""
+    if not is_qdrant_reachable():
+        return None
+    try:
+        from qdrant_client import QdrantClient
+        client = QdrantClient(url=settings.QDRANT_URL, api_key=settings.QDRANT_API_KEY or None, timeout=5.0)
+        collection_name = f"doc_{doc_id}"
+        available = {c.name for c in client.get_collections().collections}
+        if collection_name not in available:
+            return None
+        points, _next = client.scroll(
+            collection_name=collection_name,
+            limit=2000,
+            with_payload=True,
+            with_vectors=True,
+        )
+        meta = next((p.payload for p in points if (p.payload or {}).get("meta")), {}) or {}
+        chunk_pts = [p for p in points if not (p.payload or {}).get("meta")]
+        chunk_pts.sort(key=lambda p: p.id if isinstance(p.id, int) else 0)
+        chunks = [
+            ClauseChunk(
+                chunk_id=int(p.id) if isinstance(p.id, int) else idx + 1,
+                clause_number=(p.payload or {}).get("clause_number", ""),
+                heading=(p.payload or {}).get("heading", ""),
+                text=(p.payload or {}).get("text", ""),
+                embedding=list(p.vector) if isinstance(p.vector, list) else [],
+            )
+            for idx, p in enumerate(chunk_pts)
+        ]
+        if not chunks:
+            return None
+        record = DocumentRecord(
+            doc_id=doc_id,
+            title=meta.get("title") or doc_id,
+            raw_text=meta.get("raw_text") or "\n\n".join(c.text for c in chunks),
+            chunks=chunks,
+        )
+        DOC_STORE[doc_id] = record
+        logger.info(f"Rehydrated document '{doc_id}' from Qdrant mirror ({len(chunks)} chunks).")
+        return record
+    except Exception as e:
+        logger.warning(f"Could not rehydrate document '{doc_id}' from Qdrant: {e}")
+        return None
 
 
 _GEMINI_COOLDOWN_UNTIL = 0.0
@@ -565,9 +623,9 @@ async def upload_document_endpoint(
     )
     DOC_STORE[final_doc_id] = record
 
-    # 7. Mirror to Qdrant if reachable
+    # 7. Mirror to Qdrant if reachable (persists uploads across server restarts)
     if is_qdrant_reachable():
-        mirror_to_qdrant_if_available(final_doc_id, chunk_objects)
+        mirror_to_qdrant_if_available(final_doc_id, chunk_objects, doc_title, extracted_text)
 
     qdrant_note = " (Qdrant reachable & mirrored)" if is_qdrant_reachable() else ""
     logger.info(f"Indexed document '{doc_title}' ({final_doc_id}) with {len(chunk_objects)} chunks{qdrant_note}.")
@@ -762,8 +820,10 @@ async def chat_with_document_endpoint(payload: DocChatRequest):
     if not question:
         raise HTTPException(status_code=400, detail="Question cannot be empty.")
 
-    # 1. Lookup document in in-memory store
+    # 1. Lookup document in in-memory store; if a restart wiped it, try the Qdrant mirror
     doc = DOC_STORE.get(doc_id)
+    if not doc:
+        doc = rehydrate_doc_from_qdrant(doc_id)
     if not doc:
         raise HTTPException(
             status_code=404, 
