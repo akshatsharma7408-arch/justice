@@ -2567,7 +2567,7 @@ class LLMService:
             "   - Article 21 & Privacy: In K.S. Puttaswamy (2017) 10 SCC 1, a 9-judge Constitution Bench held that privacy is an intrinsic fundamental right under Article 21.\n"
             "   - Live-in Relationships: In S. Khushboo (2010) 5 SCC 600 and D. Velusamy (2010) 10 SCC 469, the Supreme Court held that consensual live-in relationships are not illegal, and women in relationship in the nature of marriage are protected under DV Act Section 2(f).\n"
             "   - Basic Structure: In Kesavananda Bharati (1973) 4 SCC 225, a 13-judge Constitution Bench established the basic structure doctrine limiting Parliament's amending power under Article 368.\n"
-            "   - Arrest & Custody: Under Arnesh Kumar (2014) 8 SCC 273 and D.K. Basu (Decided 1996, reported (1997) 1 SCC 416), police must adhere strictly to Section 41/41A CrPC notice and arrest guidelines to prevent arbitrary detention."
+            "   - Arrest & Custody: Preserve every negation in the retrieved text. Never shorten a quotation with ellipses or omit no/not/cannot. Article 22(1) concerns being informed of arrest grounds and access to counsel; the magistrate-production requirement is in Article 22(2), not Article 22(1). Do not imply that the CrPC notice rules apply to every arrest or treat old procedural provisions as verified current law. State only safeguards supported by the retrieved text."
         )
 
         prompt = (
@@ -2708,14 +2708,10 @@ class LLMService:
             ]
         elif any(w in q_low for w in ["arrest", "section 41", "custody", "warrant"]):
             ans_str = (
-                f"The app's stored records for Arnesh Kumar v. State of Bihar (2014, 2-judge Division Bench) and D.K. Basu v. State of West Bengal (decided 1996, reported (1997) 1 SCC 416, 2-judge Division Bench) state that under Sections 41 and 41A of the Code of Criminal Procedure police officers cannot arrest individuals mechanically without recording reasons and serving a mandatory notice of appearance, and that failure to comply with the statutory arrest checklist exposes the police officer to departmental action and contempt of court. "
-                f"These summaries are not verified against the full judgments; read the cases below for the actual text."
+                "The generated arrest-safeguards answer could not be verified against the retrieved text, so the app is not stating a legal rule. Read the judgments below for the actual safeguards and their scope. Historical procedural provisions must not be assumed to be the current applicable law."
             )
-            ratio_str = "Stored records, unverified: arrest checklist and Section 41A notice safeguards (Arnesh Kumar / D.K. Basu)."
-            source_refs = [
-                "Arnesh Kumar v. State of Bihar ([2014] 8 S.C.R. 128)",
-                "D.K. Basu v. State of West Bengal ([1996] SUPP. 10 S.C.R. 284)"
-            ]
+            ratio_str = "Arrest-safeguards summary withheld: verify the retrieved judgments and applicable procedural law."
+            source_refs = [f"{c.get('title')} ({c.get('citation')})" for c in retrieved_cases[:3]]
         elif any(w in q_low for w in ["bail", "anticipatory bail", "section 438"]):
             ans_str = (
                 f"The app's stored records state that personal liberty under Article 21 is treated as making bail the rule and jail the exception, and that in matters of anticipatory bail under Section 438 CrPC courts balance individual liberty against the requirements of fair investigation, granting relief where custodial interrogation is not genuinely necessary. "

@@ -24,7 +24,7 @@ _HOLDING_CLAIM_RE = re.compile(
     r"(?:is|was|were|be|been|held|found)\s+void)",
     re.IGNORECASE,
 )
-_QUOTE_RE = re.compile(r'["\u201c]([^"\u201c\u201d]{20,600})["\u201d]')
+_QUOTE_RE = re.compile(r'["\u201c]([^"\u201c\u201d]{20,})["\u201d]')
 _CLAIM_STOPWORDS = {
     "the", "and", "for", "that", "this", "with", "from", "have", "has", "had",
     "was", "were", "are", "been", "being", "which", "who", "whom", "whose",
@@ -66,6 +66,34 @@ def verify_holding_claims(answer: str, paragraphs: List[Tuple[int, str]]) -> Tup
       holding-claim sentence carries a verbatim quotation from the retrieved text.
     - ok=False when any holding-claim sentence lacks a verifiable quotation.
     """
+    # Quotations are source claims even when the surrounding sentence avoids
+    # holding verbs. Check them BEFORE the no-holding-claims early return.
+    norm_paras = [(n, _normalize_ws(t)) for n, t in paragraphs]
+    for quote in _QUOTE_RE.findall(answer):
+        normalized = _normalize_ws(quote)
+        matches = []
+        for _, text in norm_paras:
+            start = text.find(normalized)
+            while start >= 0:
+                # A substring can be exact yet reverse polarity by starting
+                # immediately after "no" or "not". Do not accept that clipping.
+                prefix = re.split(r"[.!?;:]", text[:start])[-1].split()[-3:]
+                clipped_negation = any(w in {"no", "not", "never", "cannot"} for w in prefix)
+                if not clipped_negation:
+                    matches.append(True)
+                start = text.find(normalized, start + 1)
+        if not matches:
+            return False, []
+
+    # Article 22(1) concerns grounds and counsel, not the production deadline.
+    # Reject a blended attribution rather than silently editing legal advice.
+    # Source: Constitution of India, Article 22 clauses (1) and (2).
+    for sentence in _split_sentences(answer):
+        if (re.search(r"article\s*22\s*\(\s*1\s*\)", sentence, re.I)
+                and re.search(r"magistrate|twenty[- ]four|24\s*hours", sentence, re.I)
+                and not re.search(r"22\s*\(\s*2\s*\)", sentence)):
+            return False, []
+
     claims = [s for s in _split_sentences(answer) if _HOLDING_CLAIM_RE.search(s)]
     if not claims:
         return True, []
