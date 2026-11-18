@@ -2708,7 +2708,7 @@ class LLMService:
             ]
         elif any(w in q_low for w in ["arrest", "section 41", "custody", "warrant"]):
             ans_str = (
-                "The generated arrest-safeguards answer could not be verified against the retrieved text, so the app is not stating a legal rule. Read the judgments below for the actual safeguards and their scope. Historical procedural provisions must not be assumed to be the current applicable law."
+                "The generated arrest-safeguards answer is not verified against the retrieved text, so the app is not stating a legal rule. Read the judgments below for the actual safeguards and their scope. Historical procedural provisions must not be assumed to be the current applicable law."
             )
             ratio_str = "Arrest-safeguards summary withheld: verify the retrieved judgments and applicable procedural law."
             source_refs = [f"{c.get('title')} ({c.get('citation')})" for c in retrieved_cases[:3]]
